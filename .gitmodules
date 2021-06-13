@@ -4,3 +4,7 @@
 [submodule "lib/bigg"]
 	path = lib/bigg
 	url = git@github.com:Josh4428/bigg.git
+[submodule "lib/ImGuiFileDialog"]
+	path = lib/ImGuiFileDialog
+	url = git@github.com:aiekick/ImGuiFileDialog.git
+	branch = Lib_Only
