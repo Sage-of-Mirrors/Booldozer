@@ -1,3 +1,6 @@
 [submodule "lib/libgctools"]
 	path = lib/libgctools
 	url = git@github.com:Astral-C/libgctools.git
+[submodule "lib/bigg"]
+	path = lib/bigg
+	url = git@github.com:Josh4428/bigg.git
