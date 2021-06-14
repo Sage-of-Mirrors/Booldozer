@@ -8,3 +8,6 @@
 	path = lib/ImGuiFileDialog
 	url = git@github.com:aiekick/ImGuiFileDialog.git
 	branch = Lib_Only
+[submodule "lib/bStream"]
+	path = lib/bStream
+	url = git@github.com:Astral-C/bStream.git
