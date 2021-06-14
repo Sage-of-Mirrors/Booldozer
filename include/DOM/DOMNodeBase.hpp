@@ -18,7 +18,10 @@ enum class EDOMNodeType
 	BGRender,
 	Map,
 	Room,
+
+	// Entities
 	Entity,
+	Furniture,
 };
 
 // Base class for all DOM (Document Object Model) nodes.

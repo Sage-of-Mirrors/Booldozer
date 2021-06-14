@@ -1,7 +1,8 @@
 #pragma once
 
 #include "BGRenderDOMNode.hpp"
-#include "../lib/libgctools/include/stream.h"
+#include "JmpIO.hpp"
+#include "../lib/bStream/bstream.h"
 
 class LEntityDOMNode : public LBGRenderDOMNode
 {
@@ -10,8 +11,10 @@ public:
 
 	LEntityDOMNode(std::string name) : LBGRenderDOMNode(name) { mType = EDOMNodeType::Entity; }
 
-	virtual void Serialize(GCcontext* context, GCstream* reader) = 0;
-	virtual void Deserialize(GCcontext* context, GCstream* reader) = 0;
+	// Writes the data this JMP node into the given LJmpIO instance at the specified entry.
+	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) = 0;
+	// Reads the data from the specified entry in the given LJmpIO instance into this JMP node.
+	virtual void Deserialize(LJmpIO* JmpIO, uint32_t entry_index) = 0;
 
 /*=== Type operations ===*/
 	// Returns whether this node is of the given type, or derives from a node of that type.
