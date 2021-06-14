@@ -5,6 +5,8 @@
 // DOM node representing a single room, including its model and all of the objects within it.
 class LRoomDOMNode : LBGRenderDOMNode
 {
+	std::vector<std::string> mCompletedWaves;
+
 public:
 	typedef LBGRenderDOMNode Super;
 

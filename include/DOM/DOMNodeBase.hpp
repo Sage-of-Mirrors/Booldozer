@@ -17,7 +17,8 @@ enum class EDOMNodeType
 	UIRender,
 	BGRender,
 	Map,
-	Room
+	Room,
+	Entity,
 };
 
 // Base class for all DOM (Document Object Model) nodes.
