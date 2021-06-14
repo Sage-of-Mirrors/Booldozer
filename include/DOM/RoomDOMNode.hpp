@@ -2,6 +2,7 @@
 
 #include "BGRenderDOMNode.hpp"
 
+// DOM node representing a single room, including its model and all of the objects within it.
 class LRoomDOMNode : LBGRenderDOMNode
 {
 public:

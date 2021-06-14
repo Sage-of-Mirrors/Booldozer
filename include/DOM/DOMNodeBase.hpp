@@ -20,6 +20,7 @@ enum class EDOMNodeType
 	Room
 };
 
+// Base class for all DOM (Document Object Model) nodes.
 class LDOMNodeBase
 {
 	uint32_t mNodeState;

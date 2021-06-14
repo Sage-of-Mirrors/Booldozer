@@ -4,6 +4,7 @@
 #include "ui/EditorWindowMain.hpp"
 #include "ui/BooldozerEditor.hpp"
 
+// Main window's UI.
 class LBooldozerMainWindow : public bigg::Application
 {
   void onReset();

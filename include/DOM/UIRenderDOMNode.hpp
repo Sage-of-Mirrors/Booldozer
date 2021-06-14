@@ -2,6 +2,7 @@
 
 #include "DOMNodeBase.hpp"
 
+// DOM node with the ability to render ImGui controls to a window.
 class LUIRenderDOMNode : public LDOMNodeBase
 {
 public:

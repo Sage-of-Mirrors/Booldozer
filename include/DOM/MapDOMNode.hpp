@@ -2,6 +2,7 @@
 
 #include "DOMNodeBase.hpp"
 
+// DOM node representing an entire map, including rooms and objects.
 class LMapDOMNode : public LDOMNodeBase
 {
 public:

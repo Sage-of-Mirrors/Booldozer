@@ -2,6 +2,7 @@
 
 #include "UIRenderDOMNode.hpp"
 
+// DOM node with the ability to render models to the main window's background.
 class LBGRenderDOMNode : public LUIRenderDOMNode
 {
 public:
