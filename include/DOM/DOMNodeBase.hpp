@@ -33,7 +33,8 @@ protected:
 	EDOMNodeType mType;
 	std::string mName;
 
-	void GatherChildrenOfType(std::vector<std::shared_ptr<LDOMNodeBase>>& list, EDOMNodeType type);
+	template<typename T>
+	void GatherChildrenOfType(std::vector<std::shared_ptr<T>>& list, EDOMNodeType type);
 
 public:
 	LDOMNodeBase(std::string name) { mName = name; }
@@ -76,6 +77,6 @@ public:
 		return mType == type;
 	}
 
-	// Returns a vector of nodes, guaranteeing that they are at least of the given type.
-	std::vector<std::shared_ptr<LDOMNodeBase>> GetChildrenOfType(EDOMNodeType type);
+	template<typename T>
+	std::vector<std::shared_ptr<T>> GetChildrenOfType(EDOMNodeType type);
 };

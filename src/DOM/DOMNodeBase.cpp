@@ -1,20 +1,22 @@
 #include "DOM/DOMNodeBase.hpp"
 
-std::vector<std::shared_ptr<LDOMNodeBase>> LDOMNodeBase::GetChildrenOfType(EDOMNodeType type)
+template<typename T>
+std::vector<std::shared_ptr<T>> LDOMNodeBase::GetChildrenOfType(EDOMNodeType type)
 {
-	std::vector<std::shared_ptr<LDOMNodeBase>> matchingNodes;
+	std::vector<std::shared_ptr<T>> matchingNodes;
 
 	GatherChildrenOfType(matchingNodes, type);
 
 	return matchingNodes;
 }
 
-void LDOMNodeBase::GatherChildrenOfType(std::vector<std::shared_ptr<LDOMNodeBase>>& list, EDOMNodeType type)
+template<typename T>
+void LDOMNodeBase::GatherChildrenOfType(std::vector<std::shared_ptr<T>>& list, EDOMNodeType type)
 {
-	for (std::shared_ptr<LDOMNodeBase> child : Children)
+	for (std::shared_ptr<T> child : Children)
 	{
 		if (child->IsNodeType(type))
-			list.push_back(child);
+			list.push_back(std::static_pointer_cast<T>(child));
 
 		child->GatherChildrenOfType(list, type);
 	}
