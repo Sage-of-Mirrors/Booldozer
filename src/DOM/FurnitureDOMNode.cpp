@@ -10,7 +10,7 @@ LFurnitureDOMNode::LFurnitureDOMNode(std::string name) : LEntityDOMNode(name),
 	mType = EDOMNodeType::Furniture;
 }
 
-void LFurnitureDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index)
+void LFurnitureDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 {
 	JmpIO->SetString(entry_index, "name", mInternalName);
 	JmpIO->SetString(entry_index, "dmd_name", mModelName);

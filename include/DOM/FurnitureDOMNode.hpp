@@ -65,7 +65,7 @@ public:
 	LFurnitureDOMNode(std::string name);
 
 	// Writes the data this JMP node into the given LJmpIO instance at the specified entry.
-	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) override;
+	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const override;
 	// Reads the data from the specified entry in the given LJmpIO instance into this JMP node.
 	virtual void Deserialize(LJmpIO* JmpIO, uint32_t entry_index) override;
 };

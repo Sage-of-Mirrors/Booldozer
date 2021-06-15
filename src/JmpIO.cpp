@@ -1,0 +1,205 @@
+#include "JmpIO.hpp"
+#include "DOM/EntityDOMNode.hpp"
+
+LJmpIO::LJmpIO()
+	: mEntryCount(-1), mFieldCount(-1), mEntryStartOffset(0), mEntrySize(0), mData(nullptr)
+{
+
+}
+
+bool LJmpIO::Load(bStream::CMemoryStream* stream)
+{
+	mEntryCount = stream->readInt32();
+	mFieldCount = stream->readInt32();
+	mEntryStartOffset = stream->readUInt32();
+	mEntrySize = stream->readUInt32();
+
+	if (mEntrySize == 0 || mEntryStartOffset + mEntrySize * mEntryCount > stream->getSize())
+		return false;
+
+	mData = new uint8_t[mEntryCount * mEntrySize];
+
+	// Make our own copy of the entry data, since the stream will be
+	// destroyed when we're done reading.
+	memcpy(mData, stream->getBuffer() + mEntryStartOffset, mEntrySize * mEntryCount);
+
+	mFields.clear();
+	mFields.reserve(mFieldCount);
+
+	for (int32_t i = 0; i < mFieldCount; i++)
+	{
+		LJmpFieldInfo newField;
+		newField.Hash = stream->readUInt32();
+		newField.Bitmask = stream->readUInt32();
+		newField.Start = stream->readUInt16();
+		newField.Shift = stream->readUInt8();
+		newField.Type = (EJmpFieldType)stream->readUInt8();
+
+		mFields.push_back(newField);
+	}
+
+	return true;
+}
+
+const LJmpFieldInfo* LJmpIO::FetchJmpFieldInfo(std::string name)
+{
+	const LJmpFieldInfo* field = nullptr;
+	uint32_t nameHash = 0; //HashName(field_name) or HashDict[field_name]
+
+	for (const LJmpFieldInfo& f : mFields)
+	{
+		if (nameHash == f.Hash)
+		{
+			field = &f;
+			break;
+		}
+	}
+
+	return field;
+}
+
+uint32_t LJmpIO::FetchU32(uint32_t offset)
+{
+	return (
+		mData[offset] << 24 |
+		mData[offset + 1] << 16 |
+		mData[offset + 2] << 8 |
+		mData[offset + 3]
+	);
+}
+
+int32_t LJmpIO::FetchS32(uint32_t offset)
+{
+	return (int32_t)FetchU32(offset);
+}
+
+float LJmpIO::FetchF32(uint32_t offset)
+{
+	union {
+		uint32_t u32;
+		float f32;
+	} converter;
+
+	converter.u32 = FetchU32(offset);
+	return converter.f32;
+}
+
+uint32_t LJmpIO::GetUnsignedInt(uint32_t entry_index, std::string field_name)
+{
+	const LJmpFieldInfo* field = FetchJmpFieldInfo(field_name);
+
+	// If field is still nullptr, we failed to find a field matching the given name.
+	if (field == nullptr)
+		return 0;
+
+	uint32_t fieldOffset = entry_index * mEntrySize + field->Start;
+	uint32_t rawFieldValue = FetchU32(fieldOffset);
+
+	return (rawFieldValue & field->Bitmask) >> field->Shift;
+}
+
+int32_t LJmpIO::GetSignedInt(uint32_t entry_index, std::string field_name)
+{
+	const LJmpFieldInfo* field = FetchJmpFieldInfo(field_name);
+
+	// If field is still nullptr, we failed to find a field matching the given name.
+	if (field == nullptr)
+		return 0;
+
+	uint32_t fieldOffset = entry_index * mEntrySize + field->Start;
+
+	return FetchS32(fieldOffset);
+}
+
+float LJmpIO::GetFloat(uint32_t entry_index, std::string field_name)
+{
+	const LJmpFieldInfo* field = FetchJmpFieldInfo(field_name);
+
+	// If field is still nullptr, we failed to find a field matching the given name.
+	if (field == nullptr)
+		return 0.0f;
+
+	uint32_t fieldOffset = entry_index * mEntrySize + field->Start;
+
+	return FetchF32(fieldOffset);
+}
+
+bool LJmpIO::GetBoolean(uint32_t entry_index, std::string field_name)
+{
+	return GetUnsignedInt(entry_index, field_name) != 0;
+}
+
+std::string LJmpIO::GetString(uint32_t entry_index, std::string field_name)
+{
+	const LJmpFieldInfo* field = FetchJmpFieldInfo(field_name);
+
+	// If field is still nullptr, we failed to find a field matching the given name.
+	if (field == nullptr)
+		return "";
+
+	uint32_t fieldOffset = entry_index * mEntrySize + field->Start;
+
+	char strBuffer[33];
+	memcpy(strBuffer, mData + fieldOffset, JMP_FIXED_STRING_SIZE);
+	strBuffer[32] = 0;
+
+	return std::string(strBuffer);
+}
+
+uint32_t LJmpIO::CalculateNewEntrySize()
+{
+	uint32_t newSize = 0;
+
+	for (const LJmpFieldInfo f : mFields)
+	{
+		uint32_t tempNewSize = f.Start;
+
+		if (f.Type == EJmpFieldType::String)
+			tempNewSize += JMP_FIXED_STRING_SIZE;
+		else
+			tempNewSize += sizeof(uint32_t);
+
+		newSize = std::max(newSize, tempNewSize);
+	}
+
+	return newSize;
+}
+
+bool LJmpIO::Save(bStream::CMemoryStream* stream, std::vector<LEntityDOMNode> entities)
+{
+	stream->writeInt32(entities.size());
+	stream->writeInt32(mFieldCount);
+	stream->writeUInt32(mFieldCount * sizeof(LJmpFieldInfo) + JMP_HEADER_SIZE);
+
+	uint32_t newEntrySize = CalculateNewEntrySize();
+	stream->writeUInt32(newEntrySize);
+
+	// Write the field info data
+	for (const LJmpFieldInfo f : mFields)
+	{
+		stream->writeUInt32(f.Hash);
+		stream->writeUInt32(f.Bitmask);
+		stream->writeUInt16(f.Start);
+		stream->writeUInt8(f.Shift);
+		stream->writeUInt8((uint8_t)f.Type);
+	}
+
+	// Discard old entry data
+	delete[] mData;
+
+	uint32_t newDataSize = (entities.size() * newEntrySize + 31) & ~31;
+
+	// Allocate new entry data. Empty braces zero-initialize the memory region!
+	mData = new uint8_t[newDataSize] {};
+	if (mData == nullptr)
+		return false;
+
+	for (uint32_t i = 0; i < entities.size(); i++)
+	{
+		entities[i].Serialize(this, i);
+	}
+
+	stream->writeBytes((char*)mData, newDataSize);
+
+	return true;
+}
