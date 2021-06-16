@@ -6,6 +6,7 @@
 
 constexpr size_t JMP_HEADER_SIZE = 16;
 constexpr size_t JMP_FIXED_STRING_SIZE = 32;
+constexpr uint32_t JMP_HASH_PRIME = 33554393;
 
 class LEntityDOMNode;
 
@@ -49,15 +50,22 @@ class LJmpIO
 	// Pointer to the data blob containing the entries in this JMP file.
 	uint8_t* mData;
 
+	// Hashes the given field name so that the field can be found from the list of loaded instances.
+	uint32_t HashFieldName(std::string name) const;
+
 	// Returns a pointer to the field info corresponding to the given name if it exists within this JMP file,
 	// or nullptr if it does not exist.
 	const LJmpFieldInfo* FetchJmpFieldInfo(std::string name);
 	// Retrieves the unsigned integer at the given offset from this JMP file's entry data.
-	uint32_t FetchU32(uint32_t offset);
+	uint32_t PeekU32(uint32_t offset);
 	// Retrieves the signed integer at the given offset from this JMP file's entry data.
-	int32_t FetchS32(uint32_t offset);
+	int32_t PeekS32(uint32_t offset);
 	// Retrieves the float at the given offset from this JMP file's entry data.
-	float FetchF32(uint32_t offset);
+	float PeekF32(uint32_t offset);
+
+	bool PokeU32(uint32_t offset, uint32_t value);
+	bool PokeS32(uint32_t offset, int32_t value);
+	bool PokeF32(uint32_t offset, float value);
 
 	// Recalculates the size of each entry by examining the fields defining the entry data.
 	uint32_t CalculateNewEntrySize();
@@ -96,19 +104,19 @@ public:
 
 	// Writes an unsigned int to the given field in the specified JMP entry,
 	// packing into a bitfield if required.
-	void SetUnsignedInt(uint32_t entry_index, std::string field_name, uint32_t value);
+	bool SetUnsignedInt(uint32_t entry_index, std::string field_name, uint32_t value);
 
 	// Writes a signed int to the given field in the specified JMP entry.
-	void SetSignedInt(uint32_t entry_index, std::string field_name, int32_t value);
+	bool SetSignedInt(uint32_t entry_index, std::string field_name, int32_t value);
 
 	// Writes a float to the given field in the specified JMP entry.
-	void SetFloat(uint32_t entry_index, std::string field_name, float value);
+	bool SetFloat(uint32_t entry_index, std::string field_name, float value);
 
 	// Writes a boolean to the given field in the specified JMP entry,
 	// packing into a bitfield if required.
-	void SetBoolean(uint32_t entry_index, std::string field_name, bool value);
+	bool SetBoolean(uint32_t entry_index, std::string field_name, bool value);
 
 	// Writes a string to the given field in the specified JMP entry; pads the string
 	// to 32 bytes in length.
-	void SetString(uint32_t entry_index, std::string field_name, std::string value);
+	bool SetString(uint32_t entry_index, std::string field_name, std::string value);
 };

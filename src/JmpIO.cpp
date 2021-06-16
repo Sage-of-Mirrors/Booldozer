@@ -41,10 +41,22 @@ bool LJmpIO::Load(bStream::CMemoryStream* stream)
 	return true;
 }
 
+uint32_t LJmpIO::HashFieldName(std::string name) const
+{
+	uint32_t hash = 0;
+
+	for (char c : name)
+	{
+		hash = ((hash << 8) + c) % JMP_HASH_PRIME;
+	}
+
+	return hash;
+}
+
 const LJmpFieldInfo* LJmpIO::FetchJmpFieldInfo(std::string name)
 {
 	const LJmpFieldInfo* field = nullptr;
-	uint32_t nameHash = 0; //HashName(field_name) or HashDict[field_name]
+	uint32_t nameHash = HashFieldName(name);
 
 	for (const LJmpFieldInfo& f : mFields)
 	{
@@ -58,30 +70,62 @@ const LJmpFieldInfo* LJmpIO::FetchJmpFieldInfo(std::string name)
 	return field;
 }
 
-uint32_t LJmpIO::FetchU32(uint32_t offset)
+uint32_t LJmpIO::PeekU32(uint32_t offset)
 {
+	if (offset >= mEntryCount * mEntrySize)
+		return 0;
+
 	return (
-		mData[offset] << 24 |
+		mData[offset]     << 24 |
 		mData[offset + 1] << 16 |
 		mData[offset + 2] << 8 |
 		mData[offset + 3]
 	);
 }
 
-int32_t LJmpIO::FetchS32(uint32_t offset)
+int32_t LJmpIO::PeekS32(uint32_t offset)
 {
-	return (int32_t)FetchU32(offset);
+	return (int32_t)PeekU32(offset);
 }
 
-float LJmpIO::FetchF32(uint32_t offset)
+float LJmpIO::PeekF32(uint32_t offset)
 {
 	union {
 		uint32_t u32;
 		float f32;
 	} converter;
 
-	converter.u32 = FetchU32(offset);
+	converter.u32 = PeekU32(offset);
 	return converter.f32;
+}
+
+bool LJmpIO::PokeU32(uint32_t offset, uint32_t value)
+{
+	if (offset >= mEntryCount * mEntrySize)
+		return false;
+
+	mData[offset + 3] = (uint8_t)(value >> 24);
+	mData[offset + 2] = (uint8_t)(value >> 16);
+	mData[offset + 1] = (uint8_t)(value >> 8);
+	mData[offset]     = (uint8_t)(value);
+
+	return true;
+}
+
+bool LJmpIO::PokeS32(uint32_t offset, int32_t value)
+{
+	return PokeU32(offset, (uint32_t)value);
+}
+
+bool LJmpIO::PokeF32(uint32_t offset, float value)
+{
+	union {
+		uint32_t u32;
+		float f32;
+	} converter;
+
+	converter.f32 = value;
+	return PokeU32(offset, converter.u32);
 }
 
 uint32_t LJmpIO::GetUnsignedInt(uint32_t entry_index, std::string field_name)
@@ -93,7 +137,7 @@ uint32_t LJmpIO::GetUnsignedInt(uint32_t entry_index, std::string field_name)
 		return 0;
 
 	uint32_t fieldOffset = entry_index * mEntrySize + field->Start;
-	uint32_t rawFieldValue = FetchU32(fieldOffset);
+	uint32_t rawFieldValue = PeekU32(fieldOffset);
 
 	return (rawFieldValue & field->Bitmask) >> field->Shift;
 }
@@ -108,7 +152,7 @@ int32_t LJmpIO::GetSignedInt(uint32_t entry_index, std::string field_name)
 
 	uint32_t fieldOffset = entry_index * mEntrySize + field->Start;
 
-	return FetchS32(fieldOffset);
+	return PeekS32(fieldOffset);
 }
 
 float LJmpIO::GetFloat(uint32_t entry_index, std::string field_name)
@@ -121,7 +165,7 @@ float LJmpIO::GetFloat(uint32_t entry_index, std::string field_name)
 
 	uint32_t fieldOffset = entry_index * mEntrySize + field->Start;
 
-	return FetchF32(fieldOffset);
+	return PeekF32(fieldOffset);
 }
 
 bool LJmpIO::GetBoolean(uint32_t entry_index, std::string field_name)
@@ -200,6 +244,67 @@ bool LJmpIO::Save(bStream::CMemoryStream* stream, std::vector<LEntityDOMNode> en
 	}
 
 	stream->writeBytes((char*)mData, newDataSize);
+
+	return true;
+}
+
+bool LJmpIO::SetUnsignedInt(uint32_t entry_index, std::string field_name, uint32_t value)
+{
+	const LJmpFieldInfo* field = FetchJmpFieldInfo(field_name);
+
+	// If field is still nullptr, we failed to find a field matching the given name.
+	if (field == nullptr)
+		return false;
+
+	uint32_t fieldOffset = entry_index * mEntrySize + field->Start;
+
+	uint32_t curField = PeekU32(fieldOffset);
+	uint32_t packedValue = (value << field->Shift) & field->Bitmask;
+
+	return PokeU32(fieldOffset, (curField & ~field->Bitmask) | packedValue);
+}
+
+bool LJmpIO::SetSignedInt(uint32_t entry_index, std::string field_name, int32_t value)
+{
+	const LJmpFieldInfo* field = FetchJmpFieldInfo(field_name);
+
+	// If field is still nullptr, we failed to find a field matching the given name.
+	if (field == nullptr)
+		return false;
+
+	uint32_t fieldOffset = entry_index * mEntrySize + field->Start;
+
+	return PokeS32(fieldOffset, value);
+}
+
+bool LJmpIO::SetFloat(uint32_t entry_index, std::string field_name, float value)
+{
+	const LJmpFieldInfo* field = FetchJmpFieldInfo(field_name);
+
+	// If field is still nullptr, we failed to find a field matching the given name.
+	if (field == nullptr)
+		return false;
+
+	uint32_t fieldOffset = entry_index * mEntrySize + field->Start;
+
+	return PokeF32(fieldOffset, value);
+}
+
+bool LJmpIO::SetBoolean(uint32_t entry_index, std::string field_name, bool value)
+{
+	return SetUnsignedInt(entry_index, field_name, (uint32_t)value);
+}
+
+bool LJmpIO::SetString(uint32_t entry_index, std::string field_name, std::string value)
+{
+	const LJmpFieldInfo* field = FetchJmpFieldInfo(field_name);
+
+	// If field is still nullptr, we failed to find a field matching the given name.
+	if (field == nullptr)
+		return false;
+
+	uint32_t fieldOffset = entry_index * mEntrySize + field->Start;
+	memcpy(mData + fieldOffset, value.data(), std::min(JMP_FIXED_STRING_SIZE - 1, value.length()));
 
 	return true;
 }
