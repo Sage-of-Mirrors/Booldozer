@@ -34,7 +34,16 @@ protected:
 	std::string mName;
 
 	template<typename T>
-	void GatherChildrenOfType(std::vector<std::shared_ptr<T>>& list, EDOMNodeType type);
+	void GatherChildrenOfType(std::vector<std::shared_ptr<T>>& list, EDOMNodeType type)
+	{
+		for (std::shared_ptr<LDOMNodeBase> child : Children)
+		{
+			if (child->IsNodeType(type))
+				list.push_back(std::static_pointer_cast<T>(child));
+
+			child->GatherChildrenOfType(list, type);
+		}
+	}
 
 public:
 	LDOMNodeBase(std::string name) { mName = name; }
@@ -78,5 +87,12 @@ public:
 	}
 
 	template<typename T>
-	std::vector<std::shared_ptr<T>> GetChildrenOfType(EDOMNodeType type);
+	std::vector<std::shared_ptr<T>> GetChildrenOfType(EDOMNodeType type)
+	{
+		std::vector<std::shared_ptr<T>> matchingNodes;
+
+		GatherChildrenOfType(matchingNodes, type);
+
+		return matchingNodes;
+	}
 };

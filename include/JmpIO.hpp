@@ -73,6 +73,8 @@ class LJmpIO
 public:
 	LJmpIO();
 
+	int32_t GetEntryCount() { return mEntryCount; }
+
 /*== Input ==*/
 	// Attempts to load a JMP file from the given stream. Returns
 	// true if the load succeeded, false if not.
@@ -100,7 +102,7 @@ public:
 
 /*== Output ==*/
 	// Saves the current JMP data to the given stream.
-	bool Save(bStream::CMemoryStream* stream, std::vector<LEntityDOMNode> entities);
+	bool Save(bStream::CMemoryStream* stream, std::vector<LEntityDOMNode*> entities);
 
 	// Writes an unsigned int to the given field in the specified JMP entry,
 	// packing into a bitfield if required.

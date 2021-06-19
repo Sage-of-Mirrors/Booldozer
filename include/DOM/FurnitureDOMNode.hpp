@@ -2,7 +2,7 @@
 
 #include "EntityDOMNode.hpp"
 
-class LFurnitureDOMNode : LEntityDOMNode
+class LFurnitureDOMNode : public LEntityDOMNode
 {
 	// Furniture's name in the JMP file. Usually just the string "furniture".
 	std::string mInternalName;
@@ -10,9 +10,6 @@ class LFurnitureDOMNode : LEntityDOMNode
 	std::string mModelName;
 	// Name that allows enemies to link to and hide within this piece of furniture.
 	std::string mAccessName;
-
-	// Index of the room this piece of furniture belongs to.
-	int32_t mRoomNumber;
 
 	// Vertical offset of the item spawned when this piece of furniture is interacted with, if present.
 	float mVerticalItemSpawnOffset;

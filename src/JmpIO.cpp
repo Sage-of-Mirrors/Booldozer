@@ -104,10 +104,10 @@ bool LJmpIO::PokeU32(uint32_t offset, uint32_t value)
 	if (offset >= mEntryCount * mEntrySize)
 		return false;
 
-	mData[offset + 3] = (uint8_t)(value >> 24);
-	mData[offset + 2] = (uint8_t)(value >> 16);
-	mData[offset + 1] = (uint8_t)(value >> 8);
-	mData[offset]     = (uint8_t)(value);
+	mData[offset] = (uint8_t)(value >> 24);
+	mData[offset + 1] = (uint8_t)(value >> 16);
+	mData[offset + 2] = (uint8_t)(value >> 8);
+	mData[offset + 3] = (uint8_t)(value);
 
 	return true;
 }
@@ -209,9 +209,9 @@ uint32_t LJmpIO::CalculateNewEntrySize()
 	return newSize;
 }
 
-bool LJmpIO::Save(bStream::CMemoryStream* stream, std::vector<LEntityDOMNode> entities)
+bool LJmpIO::Save(bStream::CMemoryStream* stream, std::vector<LEntityDOMNode*> entities)
 {
-	stream->writeInt32(entities.size());
+	stream->writeInt32((int32_t)entities.size());
 	stream->writeInt32(mFieldCount);
 	stream->writeUInt32(mFieldCount * sizeof(LJmpFieldInfo) + JMP_HEADER_SIZE);
 
@@ -240,7 +240,7 @@ bool LJmpIO::Save(bStream::CMemoryStream* stream, std::vector<LEntityDOMNode> en
 
 	for (uint32_t i = 0; i < entities.size(); i++)
 	{
-		entities[i].Serialize(this, i);
+		entities[i]->Serialize(this, i);
 	}
 
 	stream->writeBytes((char*)mData, newDataSize);

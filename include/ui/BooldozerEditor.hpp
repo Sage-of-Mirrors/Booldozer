@@ -2,6 +2,8 @@
 
 #include "DOM.hpp"
 
+#include <filesystem>
+
 // Backend for the main window's UI.
 class LBooldozerEditor
 {

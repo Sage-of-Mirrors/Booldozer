@@ -14,4 +14,4 @@ file(GLOB BOOLDOZER_SRC
 
 add_executable(booldozer ${BOOLDOZER_SRC})
 target_include_directories(booldozer PUBLIC include)
-target_link_libraries( booldozer PUBLIC bigg )
+target_link_libraries( booldozer PUBLIC bigg gctools)

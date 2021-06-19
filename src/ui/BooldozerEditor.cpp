@@ -1,5 +1,11 @@
 #include "ui/BooldozerEditor.hpp"
+#include "JmpIO.hpp"
+#include "../lib/libgctools/include/compression.h"
+#include "../lib/bStream/bstream.h"
+#include "DOM/FurnitureDOMNode.hpp"
 #include <iostream>
+#include <vector>
+#include <memory>
 
 LBooldozerEditor::LBooldozerEditor()
 {
@@ -8,7 +14,7 @@ LBooldozerEditor::LBooldozerEditor()
 
 void LBooldozerEditor::onOpenMapCB()
 {
-	std::cout << "User selected open map!" << std::endl;
+	mLoadedMap.LoadMap(std::filesystem::path("D:\\SZS Tools\\Luigi's Mansion\\root\\files\\Map\\map2.szp"));
 }
 
 void LBooldozerEditor::onOpenRoomsCB()
