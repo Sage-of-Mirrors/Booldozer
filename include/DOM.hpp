@@ -8,3 +8,4 @@
 
 #include "DOM/EntityDOMNode.hpp"
 #include "DOM/FurnitureDOMNode.hpp"
+#include "DOM/ObserverDOMNode.hpp"

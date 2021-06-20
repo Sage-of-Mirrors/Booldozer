@@ -53,5 +53,46 @@ void LRoomDOMNode::SaveJmpInfo(uint32_t index, LJmpIO* jmp_io)
 
 bool LRoomDOMNode::CompleteLoad(GCarchive* room_arc)
 {
+	// Load the room models.
+	for (int32_t i = 0; i < room_arc->filenum; i++)
+	{
+		uint8_t* fileData = nullptr;
+		size_t fileSize = 0;
+		bool isRoomBin = false;
+		
+		if (strstr(room_arc->files[i].name, ".bin"))
+		{
+			if (strcmp(room_arc->files[i].name, "room.bin") == 0)
+			{
+				isRoomBin = true;
+			}
+
+			fileData = (uint8_t*)room_arc->files[i].data;
+			fileSize = room_arc->files[i].size;
+		}
+
+		// This file was determined to not be a BIN
+		if (fileData == nullptr)
+		{
+			continue;
+		}
+
+		bStream::CMemoryStream memStrm = bStream::CMemoryStream(fileData, fileSize, bStream::Endianess::Big, bStream::OpenMode::In);
+
+		// Load this file as the room's main model
+		if (isRoomBin)
+		{
+			mRoomModel.LoadBIN(&memStrm);
+		}
+		// Into the furniture pile you go!
+		else
+		{
+			auto furnModel = std::shared_ptr<LModel>(new LModel());
+			furnModel->LoadBIN(&memStrm);
+
+			mFurnitureModels.push_back(furnModel);
+		}
+	}
+
 	return true;
 }

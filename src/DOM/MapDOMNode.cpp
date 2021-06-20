@@ -127,7 +127,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 	// To finish loading the map we're going to delegate grabbing room data to the rooms themselves,
 	// where they'll also set up things like models for furniture
-	std::vector<std::shared_ptr<LRoomDOMNode>> rooms = GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
+	auto rooms = GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
 	for (std::shared_ptr<LRoomDOMNode> r : rooms)
 	{
 		std::filesystem::path parentDir = file_path.parent_path().parent_path();
@@ -158,6 +158,9 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 		{
 			case LEntityType_Furniture:
 				newNode = std::shared_ptr<LFurnitureDOMNode>(new LFurnitureDOMNode("furniture_" + i));
+				break;
+			case LEntityType_Observers:
+				newNode = std::shared_ptr<LObserverDOMNode>(new LObserverDOMNode("observer_" + i));
 				break;
 			default:
 				break;
@@ -241,7 +244,7 @@ std::shared_ptr<LRoomDOMNode> LMapDOMNode::GetRoomByNumber(int32_t number)
 {
 	std::shared_ptr<LRoomDOMNode> room = nullptr;
 
-	std::vector<std::shared_ptr<LRoomDOMNode>> roomVec = GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
+	auto roomVec = GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
 	for (std::shared_ptr<LRoomDOMNode> r : roomVec)
 	{
 		if (r->GetRoomNumber() == number)
