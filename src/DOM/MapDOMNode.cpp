@@ -162,6 +162,12 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 			case LEntityType_Observers:
 				newNode = std::shared_ptr<LObserverDOMNode>(new LObserverDOMNode("observer_" + i));
 				break;
+			case LEntityType_Enemies:
+				newNode = std::shared_ptr<LEnemyDOMNode>(new LEnemyDOMNode("enemy_" + i));
+				break;
+			case LEntityType_Events:
+				newNode = std::shared_ptr<LEventDOMNode>(new LEventDOMNode("event_" + i));
+				break;
 			default:
 				break;
 		}
@@ -169,6 +175,14 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 		if (newNode != nullptr)
 		{
 			newNode->Deserialize(jmp_io, i);
+
+			// If room number is -1, this entity doesn't actually belong to a specific room.
+			// Examples include: events
+			if (newNode->GetRoomNumber() == -1)
+			{
+				Children.push_back(newNode);
+				continue;
+			}
 
 			std::shared_ptr<LRoomDOMNode> entityRoom = GetRoomByNumber(newNode->GetRoomNumber());
 			if (entityRoom != nullptr)

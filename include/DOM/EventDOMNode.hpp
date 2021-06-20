@@ -2,33 +2,34 @@
 
 #include "EntityDOMNode.hpp"
 
-class LObserverDOMNode : public LEntityDOMNode
+class LEventDOMNode : public LEntityDOMNode
 {
 /*=== JMP properties ===*/
-	std::string mCodeName;
-	std::string mCondStringArg0;
-	std::string mStringArg0;
+	std::string mCharacterName;
 
-	int32_t mCondArg0;
-	int32_t mArg0;
-	int32_t mArg1;
-	int32_t mArg2;
-	int32_t mArg3;
-	int32_t mArg4;
-	int32_t mArg5;
-	int32_t mSpawnFlag;
+	int32_t mEventNo;
+	int32_t mActivationRadius;
+	int32_t mEventFlag;
+
+	int32_t mMinHour;
+	int32_t mMinMinute;
+	int32_t mMaxHour;
+	int32_t mMaxMinute;
+
+	int32_t mMaxTriggerCount;
 	int32_t mDespawnFlag;
 
-	uint32_t mCondType;
-	uint32_t mDoType;
+	int32_t mParameter;
+	
+	uint32_t mEventIf;
 
-	bool mIsVisible;
-	bool mUnkBool1;
+	bool mCanBeInterrupted;
+	bool mFreezePlayer;
 
 public:
 	typedef LEntityDOMNode Super;
 
-	LObserverDOMNode(std::string name);
+	LEventDOMNode(std::string name);
 
 	// Writes the data this JMP node into the given LJmpIO instance at the specified entry.
 	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const override;

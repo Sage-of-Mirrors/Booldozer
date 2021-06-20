@@ -1,7 +1,7 @@
 #include "DOM/FurnitureDOMNode.hpp"
 
 LFurnitureDOMNode::LFurnitureDOMNode(std::string name) : LEntityDOMNode(name),
-	mInternalName("(null)"), mModelName("(null)"), mAccessName("(null)"),
+	mModelName("(null)"), mAccessName("(null)"),
 	mVerticalItemSpawnOffset(0.0f), mItemTableIndex(-1), mGenerateNumber(-1), mBooHideChance(-1),
 	mShakeIntensity(-1), mVecArgs(glm::vec3(0.0f, 0.0f, 0.0f)), mSpawnFlag(-1), mDespawnFlag(-1),
 	mHitboxExtents(glm::ivec3(0, 0, 0)), mGBHScanID(-1), mBehaviorType(0), mSoundID(0), mSheetBehavior(0),
@@ -12,7 +12,7 @@ LFurnitureDOMNode::LFurnitureDOMNode(std::string name) : LEntityDOMNode(name),
 
 void LFurnitureDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 {
-	JmpIO->SetString(entry_index, "name", mInternalName);
+	JmpIO->SetString(entry_index, "name", mName);
 	JmpIO->SetString(entry_index, "dmd_name", mModelName);
 	JmpIO->SetString(entry_index, "access_name", mAccessName);
 
@@ -64,7 +64,7 @@ void LFurnitureDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 
 void LFurnitureDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 {
-	mInternalName = JmpIO->GetString(entry_index, "name");
+	mName = JmpIO->GetString(entry_index, "name");
 	mModelName = JmpIO->GetString(entry_index, "dmd_name");
 	mAccessName = JmpIO->GetString(entry_index, "access_name");
 

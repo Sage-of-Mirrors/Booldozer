@@ -1,7 +1,7 @@
 #include "DOM/ObserverDOMNode.hpp"
 
 LObserverDOMNode::LObserverDOMNode(std::string name) : Super(name),
-	mInternalName("observer"), mCodeName("(null)"), mCondStringArg0("(null)"), mStringArg0("(null)"),
+	mCodeName("(null)"), mCondStringArg0("(null)"), mStringArg0("(null)"),
 	mCondArg0(0), mArg0(0), mArg1(0), mArg2(0), mArg3(0), mArg4(0), mArg5(0), mSpawnFlag(0), mDespawnFlag(0),
 	mCondType(0), mDoType(0), mIsVisible(false), mUnkBool1(false)
 {
@@ -10,7 +10,7 @@ LObserverDOMNode::LObserverDOMNode(std::string name) : Super(name),
 
 void LObserverDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 {
-	JmpIO->SetString(entry_index, "name", mInternalName);
+	JmpIO->SetString(entry_index, "name", mName);
 	JmpIO->SetString(entry_index, "CodeName", mCodeName);
 	JmpIO->SetString(entry_index, "cond_string_arg0", mCondStringArg0);
 	JmpIO->SetString(entry_index, "string_arg0", mStringArg0);
@@ -50,7 +50,7 @@ void LObserverDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 
 void LObserverDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 {
-	mInternalName = JmpIO->GetString(entry_index, "name");
+	mName = JmpIO->GetString(entry_index, "name");
 	mCodeName = JmpIO->GetString(entry_index, "CodeName");
 	mCondStringArg0 = JmpIO->GetString(entry_index, "cond_string_arg0");
 	mStringArg0 = JmpIO->GetString(entry_index, "string_arg0");

@@ -4,8 +4,7 @@
 
 class LFurnitureDOMNode : public LEntityDOMNode
 {
-	// Furniture's name in the JMP file. Usually just the string "furniture".
-	std::string mInternalName;
+/*=== JMP properties ===*/
 	// Name of the *.bin file containing this piece of furniture's model, located in its room's *.arc file.
 	std::string mModelName;
 	// Name that allows enemies to link to and hide within this piece of furniture.

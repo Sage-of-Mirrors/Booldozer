@@ -23,6 +23,8 @@ enum class EDOMNodeType
 	Entity,
 	Furniture,
 	Observer,
+	Enemy,
+	Event,
 };
 
 // Base class for all DOM (Document Object Model) nodes.
