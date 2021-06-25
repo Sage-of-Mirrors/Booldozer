@@ -25,6 +25,13 @@ enum class EDOMNodeType
 	Observer,
 	Enemy,
 	Event,
+	Character,
+	Generator,
+	Object,
+	Path,
+	BlackoutCharacter,
+	BlackoutEnemy,
+	BlackoutObserver
 };
 
 // Base class for all DOM (Document Object Model) nodes.
@@ -49,9 +56,11 @@ protected:
 	}
 
 public:
-	LDOMNodeBase(std::string name) { mName = name; }
+	LDOMNodeBase(std::string name) { mName = name; SetIsSelected(false); SetIsRendered(true); }
 
 	std::vector<std::shared_ptr<LDOMNodeBase>> Children;
+
+	std::string GetName() { return mName; }
 
 /*=== Node state ===*/
 	bool GetIsExpanded() { return (mNodeState & EDOMNodeState_Expanded) != 0; }

@@ -10,8 +10,10 @@ public:
 
 	LUIRenderDOMNode(std::string name);
 
-	// Renders this node to an ImGui window.
-	virtual void RenderUI(float dt);
+	// Renders this node to the scene hierarchy window.
+	virtual void RenderHierarchyUI(float dt);
+	// Renders this node to the details window.
+	virtual void RenderDetailsUI(float dt);
 
 /*=== Type operations ===*/
 	// Returns whether this node is of the given type, or derives from a node of that type.

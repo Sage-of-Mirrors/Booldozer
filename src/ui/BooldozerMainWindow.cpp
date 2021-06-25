@@ -54,6 +54,10 @@ void LBooldozerMainWindow::render(float dt)
         ImGui::EndMainMenuBar();
     }
 
-	// All windows will be rendered here
-	mMainEditorWindow.render(dt);
+    ImGui::Begin("Scene Hierarchy");
+    mEditorContext.RenderSceneHierarchyUI(dt);
+    ImGui::End();
+
+    ImGui::Begin("Selected Object Details");
+    ImGui::End();
 }

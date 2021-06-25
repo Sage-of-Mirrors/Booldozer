@@ -13,6 +13,8 @@ class LBooldozerEditor
 public:
 	LBooldozerEditor();
 
+	void RenderSceneHierarchyUI(float dt);
+
 	// Callback for when the user requests to open a map folder.
 	void onOpenMapCB();
 	// Callback for when the user requests to open one or more room arcs.

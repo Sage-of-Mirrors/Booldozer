@@ -1,16 +1,33 @@
 #pragma once
 
 #include "BGRenderDOMNode.hpp"
+#include "EntityDOMNode.hpp"
 #include "JmpIO.hpp"
 #include "Model.hpp"
 #include "../lib/libgctools/include/archive.h"
 #include "glm/glm.hpp"
 
+extern std::string const LRoomEntityTreeNodeNames[];
+
+enum LRoomEntityType : uint32_t
+{
+	LRoomEntityType_Characters,
+	LRoomEntityType_Enemies,
+	LRoomEntityType_Furniture,
+	LRoomEntityType_Generators,
+	LRoomEntityType_Objects,
+	LRoomEntityType_Observers,
+	LRoomEntityType_Paths,
+	LRoomEntityType_BlackoutCharacters,
+	LRoomEntityType_BlackoutEnemies,
+	LRoomEntityType_BlackoutObservers,
+	LRoomEntityType_Max,
+};
+
 // DOM node representing a single room, including its model and all of the objects within it.
 class LRoomDOMNode : public LBGRenderDOMNode
 {
-	LModel mRoomModel;
-	std::vector<std::shared_ptr<LModel>> mFurnitureModels;
+	std::vector<std::shared_ptr<LEntityDOMNode>> mRoomEntities[LRoomEntityType_Max];
 
 /*=== Roominfo properties ===*/
 	// Room's name in the JMP file. Usually just the string "room".
@@ -48,6 +65,8 @@ public:
 
 	std::string GetName() { return mName; }
 	int32_t GetRoomNumber() { return mRoomNumber; }
+
+	virtual void RenderHierarchyUI(float dt) override;
 
 	// Reads the data from the specified entry in the given LJmpIO instance into this room's JMP properties.
 	void LoadJmpInfo(uint32_t index, LJmpIO* jmp_io);

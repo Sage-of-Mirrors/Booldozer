@@ -1,4 +1,6 @@
 #include "DOM/EventDOMNode.hpp"
+#include "imgui.h"
+#include "imgui_internal.h"
 
 LEventDOMNode::LEventDOMNode(std::string name) : Super(name),
 	mCharacterName("(null)"), mEventNo(0), mActivationRadius(0), mEventFlag(0),
@@ -8,6 +10,12 @@ LEventDOMNode::LEventDOMNode(std::string name) : Super(name),
 	mType = EDOMNodeType::Event;
 	mRoomNumber = -1;
 }
+
+//void LEventDOMNode::RenderHierarchyUI(float dt)
+//{
+//	char evtNo[16];
+//	snprintf(evtNo, 16, "Event %02d", mEventNo);
+//}
 
 void LEventDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 {

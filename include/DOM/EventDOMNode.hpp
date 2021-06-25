@@ -31,6 +31,8 @@ public:
 
 	LEventDOMNode(std::string name);
 
+	//virtual void RenderHierarchyUI(float dt) override;
+
 	// Writes the data this JMP node into the given LJmpIO instance at the specified entry.
 	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const override;
 	// Reads the data from the specified entry in the given LJmpIO instance into this JMP node.

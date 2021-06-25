@@ -6,10 +6,47 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+#include "imgui.h"
 
 LBooldozerEditor::LBooldozerEditor()
 {
 
+}
+
+void LBooldozerEditor::RenderSceneHierarchyUI(float dt)
+{
+	if (mLoadedMap.Children.empty())
+		return;
+
+	auto rooms = mLoadedMap.GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
+	if (ImGui::TreeNode("Rooms"))
+	{
+		for (uint32_t i = 0; i < rooms.size(); i++)
+		{
+			uint32_t selectionType = 0;
+
+			ImGui::PushID(i);
+			rooms[i]->RenderHierarchyUI(dt);
+			ImGui::PopID();
+		}
+
+		ImGui::TreePop();
+	}
+
+	auto events = mLoadedMap.GetChildrenOfType<LEventDOMNode>(EDOMNodeType::Event);
+	if (ImGui::TreeNode("Events"))
+	{
+		for (uint32_t i = 0; i < events.size(); i++)
+		{
+			uint32_t selectionType = 0;
+
+			ImGui::PushID(i);
+			events[i]->RenderHierarchyUI(dt);
+			ImGui::PopID();
+		}
+
+		ImGui::TreePop();
+	}
 }
 
 void LBooldozerEditor::onOpenMapCB()

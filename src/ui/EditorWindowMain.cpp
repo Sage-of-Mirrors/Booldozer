@@ -12,7 +12,5 @@ void LEditorWindowMain::update(float dt)
 
 void LEditorWindowMain::render(float dt)
 {
-    ImGui::Begin(mTitle.c_str());
 
-    ImGui::End();
 }

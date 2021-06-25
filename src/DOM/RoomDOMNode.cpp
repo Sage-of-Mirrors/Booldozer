@@ -1,8 +1,46 @@
 #include "DOM/RoomDOMNode.hpp"
+#include "UIUtil.hpp"
+
+std::string const LRoomEntityTreeNodeNames[LRoomEntityType_Max] = {
+	"Characters",
+	"Enemies",
+	"Furniture",
+	"Generators",
+	"Objects",
+	"Observers",
+	"Paths",
+	"Characters (Blackout)",
+	"Enemies (Blackout)",
+	"Observers (Blackout)"
+};
 
 LRoomDOMNode::LRoomDOMNode(std::string name) : LBGRenderDOMNode(name)
 {
 	mType = EDOMNodeType::Room;
+}
+
+void LRoomDOMNode::RenderHierarchyUI(float dt)
+{
+	LUIUtility::RenderCheckBox(this);
+	ImGui::SameLine();
+
+	if (ImGui::TreeNode(mName.c_str()))
+	{
+		for (uint32_t i = 0; i < LRoomEntityType_Max; i++)
+		{
+			if (ImGui::TreeNode(LRoomEntityTreeNodeNames[i].c_str()))
+			{
+				for (uint32_t j = 0; j < mRoomEntities[i].size(); j++)
+				{
+					mRoomEntities[i][j]->RenderHierarchyUI(dt);
+				}
+
+				ImGui::TreePop();
+			}
+		}
+
+		ImGui::TreePop();
+	}
 }
 
 void LRoomDOMNode::LoadJmpInfo(uint32_t index, LJmpIO* jmp_io)
@@ -53,45 +91,47 @@ void LRoomDOMNode::SaveJmpInfo(uint32_t index, LJmpIO* jmp_io)
 
 bool LRoomDOMNode::CompleteLoad(GCarchive* room_arc)
 {
-	// Load the room models.
-	for (int32_t i = 0; i < room_arc->filenum; i++)
+	for (uint32_t i = 0; i < LRoomEntityType_Max; i++)
 	{
-		uint8_t* fileData = nullptr;
-		size_t fileSize = 0;
-		bool isRoomBin = false;
-		
-		if (strstr(room_arc->files[i].name, ".bin"))
-		{
-			if (strcmp(room_arc->files[i].name, "room.bin") == 0)
-			{
-				isRoomBin = true;
-			}
+		EDOMNodeType findType = EDOMNodeType::Base;
 
-			fileData = (uint8_t*)room_arc->files[i].data;
-			fileSize = room_arc->files[i].size;
+		switch (i)
+		{
+			case LRoomEntityType_Characters:
+				findType = EDOMNodeType::Character;
+				break;
+			case LRoomEntityType_Enemies:
+				findType = EDOMNodeType::Enemy;
+				break;
+			case LRoomEntityType_Furniture:
+				findType = EDOMNodeType::Furniture;
+				break;
+			case LRoomEntityType_Generators:
+				findType = EDOMNodeType::Generator;
+				break;
+			case LRoomEntityType_Objects:
+				findType = EDOMNodeType::Object;
+				break;
+			case LRoomEntityType_Observers:
+				findType = EDOMNodeType::Observer;
+				break;
+			case LRoomEntityType_Paths:
+				findType = EDOMNodeType::Path;
+				break;
+			case LRoomEntityType_BlackoutCharacters:
+				findType = EDOMNodeType::BlackoutCharacter;
+				break;
+			case LRoomEntityType_BlackoutEnemies:
+				findType = EDOMNodeType::BlackoutEnemy;
+				break;
+			case LRoomEntityType_BlackoutObservers:
+				findType = EDOMNodeType::BlackoutObserver;
+				break;
+			default:
+				break;
 		}
 
-		// This file was determined to not be a BIN
-		if (fileData == nullptr)
-		{
-			continue;
-		}
-
-		bStream::CMemoryStream memStrm = bStream::CMemoryStream(fileData, fileSize, bStream::Endianess::Big, bStream::OpenMode::In);
-
-		// Load this file as the room's main model
-		if (isRoomBin)
-		{
-			mRoomModel.LoadBIN(&memStrm);
-		}
-		// Into the furniture pile you go!
-		else
-		{
-			auto furnModel = std::shared_ptr<LModel>(new LModel());
-			furnModel->LoadBIN(&memStrm);
-
-			mFurnitureModels.push_back(furnModel);
-		}
+		mRoomEntities[i] = GetChildrenOfType<LEntityDOMNode>(findType);
 	}
 
 	return true;
