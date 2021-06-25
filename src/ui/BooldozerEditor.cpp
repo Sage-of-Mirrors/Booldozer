@@ -14,7 +14,7 @@ LBooldozerEditor::LBooldozerEditor()
 
 void LBooldozerEditor::onOpenMapCB()
 {
-	mLoadedMap.LoadMap(std::filesystem::path("D:\\SZS Tools\\Luigi's Mansion\\root\\files\\Map\\map2.szp"));
+	mLoadedMap.LoadMap(std::filesystem::path("/home/spacey/Projects/LuigisMansion/Mods/LMArcade/files/Map/map2.szp"));
 }
 
 void LBooldozerEditor::onOpenRoomsCB()

@@ -23,6 +23,9 @@ void LBooldozerMainWindow::render(float dt)
 {
 	bgfx::touch(0);
 
+    mEditorScene.RenderSubmit(getWidth(), getHeight());
+
+
     // Menu bar
     if (ImGui::BeginMainMenuBar())
     {
