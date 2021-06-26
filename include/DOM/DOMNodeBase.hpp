@@ -60,7 +60,7 @@ public:
 
 	std::vector<std::shared_ptr<LDOMNodeBase>> Children;
 
-	std::string GetName() { return mName; }
+	virtual std::string GetName() { return mName; }
 
 /*=== Node state ===*/
 	bool GetIsExpanded() { return (mNodeState & EDOMNodeState_Expanded) != 0; }

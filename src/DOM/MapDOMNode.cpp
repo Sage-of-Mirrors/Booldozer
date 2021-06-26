@@ -168,6 +168,9 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 			case LEntityType_Events:
 				newNode = std::shared_ptr<LEventDOMNode>(new LEventDOMNode("event_" + i));
 				break;
+			case LEntityType_Characters:
+				newNode = std::shared_ptr<LCharacterDOMNode>(new LCharacterDOMNode("character_" + i));
+				break;
 			default:
 				break;
 		}

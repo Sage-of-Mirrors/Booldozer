@@ -54,10 +54,5 @@ void LBooldozerMainWindow::render(float dt)
         ImGui::EndMainMenuBar();
     }
 
-    ImGui::Begin("Scene Hierarchy");
-    mEditorContext.RenderSceneHierarchyUI(dt);
-    ImGui::End();
-
-    ImGui::Begin("Selected Object Details");
-    ImGui::End();
+    mEditorContext.Render(dt);
 }

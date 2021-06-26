@@ -11,3 +11,4 @@
 #include "DOM/ObserverDOMNode.hpp"
 #include "DOM/EnemyDOMNode.hpp"
 #include "DOM/EventDOMNode.hpp"
+#include "DOM/CharacterDOMNode.hpp"

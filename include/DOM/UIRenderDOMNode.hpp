@@ -1,5 +1,6 @@
 #pragma once
 
+#include "modes/EditorSelection.hpp"
 #include "DOMNodeBase.hpp"
 
 // DOM node with the ability to render ImGui controls to a window.
@@ -11,7 +12,7 @@ public:
 	LUIRenderDOMNode(std::string name);
 
 	// Renders this node to the scene hierarchy window.
-	virtual void RenderHierarchyUI(float dt);
+	virtual void RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection);
 	// Renders this node to the details window.
 	virtual void RenderDetailsUI(float dt);
 

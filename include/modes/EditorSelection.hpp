@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DOM.hpp"
+#include "DOM/DOMNodeBase.hpp"
 
 // Manager for node selection within the various modes.
 class LEditorSelection
@@ -16,7 +16,7 @@ public:
 	void RemoveFromSelection(std::shared_ptr<LDOMNodeBase> node);
 
 	// Returns the first selected node in the current selection, or nullptr if the selection is currently empty.
-	std::shared_ptr<LDOMNodeBase> GetPrimarySelection() { mCurrentSelection.size() >= 1 ? mCurrentSelection[0] : nullptr; }
+	std::shared_ptr<LDOMNodeBase> GetPrimarySelection() { return mCurrentSelection.size() >= 1 ? mCurrentSelection[0] : nullptr; }
 	// Returns the full collection of selected nodes.
 	std::vector<std::shared_ptr<LDOMNodeBase>> GetSelection() { return mCurrentSelection; }
 

@@ -13,8 +13,6 @@ protected:
 	LEditorHistory mHistoryManager;
 
 public:
-	LEditorModeBase();
-
 	virtual void Render(std::shared_ptr<LMapDOMNode> current_map/*, LEditorScene* renderer_scene*/) = 0;
 
 	// Called when this mode becomes the active (currently interactable) mode.

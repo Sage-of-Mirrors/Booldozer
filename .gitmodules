@@ -11,3 +11,6 @@
 [submodule "lib/bStream"]
 	path = lib/bStream
 	url = git@github.com:Astral-C/bStream.git
+[submodule "lib/magic_enum"]
+	path = lib/magic_enum
+	url = git@github.com:Neargye/magic_enum.git

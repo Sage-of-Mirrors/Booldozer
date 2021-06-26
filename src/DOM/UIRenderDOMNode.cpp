@@ -6,11 +6,11 @@ LUIRenderDOMNode::LUIRenderDOMNode(std::string name) : LDOMNodeBase(name)
     mType = EDOMNodeType::UIRender;
 }
 
-void LUIRenderDOMNode::RenderHierarchyUI(float dt)
+void LUIRenderDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection)
 {
     if (LUIUtility::RenderNodeSelectable(this))
     {
-        //ModeSelection->ModifySelection(this);
+        mode_selection->AddToSelection(self);
     }
 }
 

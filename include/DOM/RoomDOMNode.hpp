@@ -28,6 +28,20 @@ enum LRoomEntityType : uint32_t
 class LRoomDOMNode : public LBGRenderDOMNode
 {
 	std::vector<std::shared_ptr<LEntityDOMNode>> mRoomEntities[LRoomEntityType_Max];
+	bool mRoomEntityVisibility[LRoomEntityType_Max] = {
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true
+	};
+
+	LRoomEntityType t = LRoomEntityType_Characters;
 
 /*=== Roominfo properties ===*/
 	// Room's name in the JMP file. Usually just the string "room".
@@ -63,10 +77,9 @@ public:
 
 	LRoomDOMNode(std::string name);
 
-	std::string GetName() { return mName; }
 	int32_t GetRoomNumber() { return mRoomNumber; }
 
-	virtual void RenderHierarchyUI(float dt) override;
+	virtual void RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection) override;
 
 	// Reads the data from the specified entry in the given LJmpIO instance into this room's JMP properties.
 	void LoadJmpInfo(uint32_t index, LJmpIO* jmp_io);

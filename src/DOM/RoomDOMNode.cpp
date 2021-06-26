@@ -19,26 +19,71 @@ LRoomDOMNode::LRoomDOMNode(std::string name) : LBGRenderDOMNode(name)
 	mType = EDOMNodeType::Room;
 }
 
-void LRoomDOMNode::RenderHierarchyUI(float dt)
+void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection)
 {
+	if (LUIUtility::RenderComboEnum<LRoomEntityType>("Test Enum Combo", t))
+		printf("%s\n", LRoomEntityTreeNodeNames[t].c_str());
+
+	// This checkbox toggles rendering of the room and all of its children.
 	LUIUtility::RenderCheckBox(this);
 	ImGui::SameLine();
 
+	// Room tree start
 	if (ImGui::TreeNode(mName.c_str()))
 	{
+		// Iterating all of the entity types
 		for (uint32_t i = 0; i < LRoomEntityType_Max; i++)
 		{
+			// ImGui ID stack is now at <room name>##<i>
+			ImGui::PushID(i);
+
+			// This checkbox toggles rendering of this entire category of entities.
+			// Since it isn't a real node, we'll manually toggle the entities' visibility.
+			if (LUIUtility::RenderCheckBox("##type_is_rendered", &mRoomEntityVisibility[i]))
+			{
+				for (auto n : mRoomEntities[i])
+					n->SetIsRendered(mRoomEntityVisibility[i]);
+			}
+
+			// S t y l i n g
+			ImGui::SameLine();
+			ImGui::Indent();
+
+			// Entity tree <i> start
 			if (ImGui::TreeNode(LRoomEntityTreeNodeNames[i].c_str()))
 			{
+				// Iterating all of the entities of type <i>
 				for (uint32_t j = 0; j < mRoomEntities[i].size(); j++)
 				{
-					mRoomEntities[i][j]->RenderHierarchyUI(dt);
+					// ImGui ID stack is now at <room name>##<i>##<j>
+					ImGui::PushID(j);
+
+					// This checkbox toggles rendering of the individual node that
+					// we're currently building the UI for.
+					LUIUtility::RenderCheckBox(mRoomEntities[i][j].get());
+					ImGui::SameLine();
+
+					// Render the current node however it wants to be rendered
+					ImGui::Indent();
+					mRoomEntities[i][j]->RenderHierarchyUI(mRoomEntities[i][j], mode_selection);
+					ImGui::Unindent();
+
+					// ImGui ID stack returns to <room name>##<i>
+					ImGui::PopID();
 				}
 
+				// End entity tree <i>
 				ImGui::TreePop();
 			}
+
+			// U n s t y l i n g
+			ImGui::Unindent();
+
+			// ImGui ID stack returns to <room name>
+			ImGui::PopID();
 		}
 
+		// End room tree
 		ImGui::TreePop();
 	}
 }

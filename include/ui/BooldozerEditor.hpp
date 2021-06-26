@@ -1,6 +1,8 @@
 #pragma once
 
 #include "DOM.hpp"
+#include "modes/EditorModeBase.hpp"
+#include "modes/ActorMode.hpp"
 
 #include <filesystem>
 
@@ -8,12 +10,18 @@
 class LBooldozerEditor
 {
 	// The map that is currently being edited.
-	LMapDOMNode mLoadedMap;
+	std::shared_ptr<LMapDOMNode> mLoadedMap;
+
+/*=== Editor modes ===*/
+	// The mode that is currently executing.
+	LEditorModeBase* mCurrentMode;
+	// The mode responsible for general actor editing.
+	LActorMode mActorMode;
 
 public:
 	LBooldozerEditor();
 
-	void RenderSceneHierarchyUI(float dt);
+	void Render(float dt);
 
 	// Callback for when the user requests to open a map folder.
 	void onOpenMapCB();
