@@ -23,6 +23,20 @@ public:
 	// Renders this node to the main window's background.
 	virtual void RenderBG(float dt);
 
+	// Returns this node's position.
+	glm::vec3 GetPosition() { return mPosition; }
+	// Returns this node's rotation.
+	glm::quat GetRotation() { return mRotation; }
+	// Returns this node's scale.
+	glm::vec3 GetScale() { return mScale; }
+
+	// Sets this node's position to the given value.
+	void SetPosition(glm::vec3 newPos) { mPosition = newPos; }
+	// Sets this node's rotation to the given value.
+	void SetRotation(glm::quat newRot) { mRotation = newRot; }
+	// Sets this node's scale to the given value.
+	void SetScale(glm::vec3 newScale) { mScale = newScale; }
+
 /*=== Type operations ===*/
 	// Returns whether this node is of the given type, or derives from a node of that type.
 	virtual bool IsNodeType(EDOMNodeType type) const override
