@@ -21,4 +21,9 @@ public:
 	virtual void OnBecomeActive() = 0;
 	// Called when this mode becomes inactive.
 	virtual void OnBecomeInactive() = 0;
+
+	// Instructs the mode to attempt to perform an undo operation.
+	virtual void Undo() { mHistoryManager.PerformUndo(); }
+	// Instructs the mode to attempt to perform a redo operation.
+	virtual void Redo() { mHistoryManager.PerformRedo(); }
 };
