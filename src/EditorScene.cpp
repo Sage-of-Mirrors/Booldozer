@@ -33,15 +33,15 @@ static PosColorVertex s_cubeVertices[] =
 };
 static const uint16_t s_cubeTriList[] = { 2, 1, 0, 2, 3, 1, 5, 6, 4, 7, 6, 5, 4, 2, 0, 6, 2, 4, 3, 5, 1, 3, 7, 5, 1, 4, 0, 1, 5, 4, 6, 3, 2, 7, 3, 6 };
 
-LEditorScene::LEditorScene(){}
+LEditorScene::LEditorScene() : Initialized(false) {}
 
 void LEditorScene::init(){
 
     PosColorVertex::init();
+	mCubeShader = bigg::loadProgram("E:\\Github\\Booldozer\\build\\Debug\\vs_cubes.bin", "E:\\Github\\Booldozer\\build\\Debug\\fs_cubes.bin");
 	mCubeVbh = bgfx::createVertexBuffer( bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) ), PosColorVertex::ms_layout );
 	mCubeIbh = bgfx::createIndexBuffer( bgfx::makeRef(s_cubeTriList, sizeof(s_cubeTriList) ) );
-    mCubeShader = bigg::loadProgram( "shaders/vs_cubes.bin", "shaders/fs_cubes.bin" );
-    
+	Initialized = true;
 }
 
 LEditorScene::~LEditorScene(){
@@ -49,7 +49,7 @@ LEditorScene::~LEditorScene(){
 
 }
 
-void LEditorScene::RenderSubmit(u_int32_t m_width, u_int32_t m_height){
+void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
     
 	glm::mat4 view = glm::lookAt( glm::vec3( 0.0f, 0.0f, -35.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
 	glm::mat4 proj = glm::perspective( glm::radians( 60.0f ), float(m_width) / m_height, 0.1f, 100.0f );

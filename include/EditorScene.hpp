@@ -11,7 +11,7 @@ class LSceneModel {
 class LEditorScene {
 private:
 public:
-    
+    bool Initialized;
     bgfx::ProgramHandle mCubeShader;
     bgfx::InstanceDataBuffer mCubeInstaces;
     bgfx::VertexBufferHandle mCubeVbh;
@@ -23,7 +23,7 @@ public:
 	bx::Vec3 at  = { 0.0f, 0.0f,  0.0f };
 	bx::Vec3 eye = { 0.0f, 0.0f, -35.0f };
 
-    void RenderSubmit(u_int32_t, u_int32_t);
+    void RenderSubmit(uint32_t, uint32_t);
     void init();
 
     LEditorScene();
