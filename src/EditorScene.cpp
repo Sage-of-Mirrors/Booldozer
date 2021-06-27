@@ -105,11 +105,13 @@ void LCubeManager::render(){
 
 	bgfx::setTexture(0, mCubeTexUniform, mCubeTexture);
 
-	generateInstanceBuffer();
-	bgfx::setInstanceDataBuffer(&mModelInstances);	
-	
 	bgfx::setState( BGFX_STATE_DEFAULT );
-	bgfx::submit(0, mCubeShader);
+	
+	for(auto instance : mInstanceData){
+		bgfx::setTransform(&(instance.get())[0][0]);
+		bgfx::submit(0, mCubeShader);
+	}
+
 }
 
 LCubeManager::LCubeManager(){}
