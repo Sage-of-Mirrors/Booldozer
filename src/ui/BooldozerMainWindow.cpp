@@ -19,9 +19,16 @@ void LBooldozerMainWindow::update(float dt)
 	render(dt);
 }
 
+void LBooldozerMainWindow::initialize(int _argc, char** _argv)
+{
+    mEditorScene.init();
+}
+
 void LBooldozerMainWindow::render(float dt)
 {
 	bgfx::touch(0);
+
+    mEditorScene.RenderSubmit(getWidth(), getHeight());
 
     // Menu bar
     if (ImGui::BeginMainMenuBar())
