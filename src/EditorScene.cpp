@@ -22,14 +22,14 @@ bgfx::VertexLayout PosColorVertex::ms_layout;
 
 static PosColorVertex s_cubeVertices[] =
 {
-	{-1.0f,  1.0f,  1.0f, 0xff000000 },
-	{ 1.0f,  1.0f,  1.0f, 0xff0000ff },
+	{-1.0f,  1.0f,  1.0f, 0xffffff00 },
+	{ 1.0f,  1.0f,  1.0f, 0xffffffff },
 	{-1.0f, -1.0f,  1.0f, 0xff00ff00 },
 	{ 1.0f, -1.0f,  1.0f, 0xff00ffff },
 	{-1.0f,  1.0f, -1.0f, 0xffff0000 },
 	{ 1.0f,  1.0f, -1.0f, 0xffff00ff },
 	{-1.0f, -1.0f, -1.0f, 0xffffff00 },
-	{ 1.0f, -1.0f, -1.0f, 0xffffffff },
+	{ 10.0f, -1.0f, -1.0f, 0xffffffff },
 };
 static const uint16_t s_cubeTriList[] = { 2, 1, 0, 2, 3, 1, 5, 6, 4, 7, 6, 5, 4, 2, 0, 6, 2, 4, 3, 5, 1, 3, 7, 5, 1, 4, 0, 1, 5, 4, 6, 3, 2, 7, 3, 6 };
 
@@ -43,7 +43,7 @@ void LCubeManager::init(){
 	*/
     PosColorVertex::init();
 
-	mCubeShader = bigg::loadProgram("shaders/cube_shader_v.bin", "shaders/cube_shader_f.bin");
+	mCubeShader = bigg::loadProgram("E:\\Github\\Booldozer\\shaders\\vs_instancing.bin", "E:\\Github\\Booldozer\\shaders\\fs_instancing.bin");
 
 	mCubeVbh = bgfx::createVertexBuffer(bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices)), PosColorVertex::ms_layout );
 	mCubeIbh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeTriList, sizeof(s_cubeTriList)));
@@ -53,7 +53,7 @@ void LCubeManager::init(){
 
 void LCubeManager::updateInstanceBuffer(){
 	if(mInstanceData.size() == 0) return;
-
+	size_t test = sizeof(glm::mat4);
 	uint32_t drawableCubes = bgfx::getAvailInstanceDataBuffer(mInstanceData.size(), mCubeInstanceStride);
 	bgfx::allocInstanceDataBuffer(&mCubeInstances, drawableCubes, mCubeInstanceStride);
 
@@ -85,10 +85,11 @@ void LCubeManager::removeCube(size_t id){
 }
 
 void LCubeManager::render(){
-	if(mInstanceData.size() == 0 or mCubeInstances.data != nullptr) return;
+	if(mInstanceData.size() == 0 || mCubeInstances.data == nullptr) return;
 	bgfx::setVertexBuffer(0, mCubeVbh);
 	bgfx::setIndexBuffer(mCubeIbh);
 
+	updateInstanceBuffer();
 	bgfx::setInstanceDataBuffer(&mCubeInstances);	
 	
 	bgfx::setState( BGFX_STATE_DEFAULT );
@@ -107,6 +108,12 @@ void LEditorScene::init(){
 	mCubeManager.init();
 	glm::mat4 cube1 = glm::identity<glm::mat4>();
 	printf("%d", mCubeManager.addCube(cube1));
+
+	glm::mat4 f = glm::identity<glm::mat4>();
+	glm::vec3 a = glm::vec3(20.0f, 0.0f, 0.0f);
+	glm::mat4 t = glm::translate(f, a);
+	t = glm::transpose(t);
+	mCubeManager.addCube(t);
 }
 
 LEditorScene::~LEditorScene(){

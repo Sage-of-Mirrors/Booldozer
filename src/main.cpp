@@ -5,5 +5,5 @@
 int main(int argc, char** argv)
 {
   LBooldozerMainWindow app;
-  return app.run(argc, argv);
+  return app.run(argc, argv, bgfx::RendererType::OpenGL);
 }
