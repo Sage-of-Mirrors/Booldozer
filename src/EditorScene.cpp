@@ -69,16 +69,47 @@ static const uint16_t s_cubeTriList[] = {
 	21, 23, 22,
 };
 
-LSceneModel::LSceneModel(){ mNextID = 0; }
-LSceneModel::~LSceneModel(){}
 
-size_t LSceneModel::addInstance(glm::mat4 transform){
-	mInstanceData.insert(std::pair(mNextID, transform));
-	return mNextID++;
+LModelManager::LModelManager(){}
+LModelManager::~LModelManager(){}
+
+std::shared_ptr<glm::mat4> LModelManager::addInstance(glm::mat4 transform){
+	std::shared_ptr<glm::mat4> modelInstance =  std::make_shared<glm::mat4>(glm::mat4(transform));
+	
+	mInstanceData.push_back(modelInstance);
+	
+	return modelInstance;
 }
 
-void LSceneModel::setTransform(size_t id, glm::mat4 transform){
-	mInstanceData[id] = transform;
+void LModelManager::generateInstanceBuffer(){
+	if(mInstanceData.size() == 0) return;
+	uint32_t drawableInstances = bgfx::getAvailInstanceDataBuffer(mInstanceData.size(), mInstanceStride);
+	bgfx::allocInstanceDataBuffer(&mModelInstances, drawableInstances, mInstanceStride);
+
+	uint8_t* instanceData = mModelInstances.data;
+
+	for (auto& instance : mInstanceData) {
+		memcpy(instanceData, &(instance.get())[0][0], mInstanceStride);
+		instanceData += mInstanceStride;
+	}
+}
+
+void LModelManager::render(){
+	// this can't be implemented until after bin loading.
+}
+
+void LCubeManager::render(){
+	if(mInstanceData.size() == 0 || mModelInstances.data == nullptr) return;
+	bgfx::setVertexBuffer(0, mCubeVbh);
+	bgfx::setIndexBuffer(mCubeIbh);
+
+	bgfx::setTexture(0, mCubeTexUniform, mCubeTexture);
+
+	generateInstanceBuffer();
+	bgfx::setInstanceDataBuffer(&mModelInstances);	
+	
+	bgfx::setState( BGFX_STATE_DEFAULT );
+	bgfx::submit(0, mCubeShader);
 }
 
 LCubeManager::LCubeManager(){}
@@ -102,52 +133,6 @@ void LCubeManager::init(){
 	stbi_image_free(data);
 
 	mCubeTexUniform = bgfx::createUniform("s_texColor",  bgfx::UniformType::Sampler);
-
-	mNextId = 0;
-}
-
-void LCubeManager::updateInstanceBuffer(){
-	if(mInstanceData.size() == 0) return;
-	size_t test = sizeof(glm::mat4);
-	uint32_t drawableCubes = bgfx::getAvailInstanceDataBuffer(mInstanceData.size(), mCubeInstanceStride);
-	bgfx::allocInstanceDataBuffer(&mCubeInstances, drawableCubes, mCubeInstanceStride);
-
-	uint8_t* instanceData = mCubeInstances.data;
-
-	for (auto & [ key, value ] : mInstanceData) {
-		memcpy(instanceData, &value[0][0], mCubeInstanceStride);
-
-		instanceData += mCubeInstanceStride;
-	}
-}
-
-size_t LCubeManager::addCube(glm::mat4 transform){
-	size_t id = mNextId;
-	mInstanceData.insert(std::pair(id, transform));
-	mNextId++;
-	return id;
-}
-
-void LCubeManager::setTransform(size_t id, glm::mat4 transform){
-	mInstanceData[id] = transform;
-}
-
-void LCubeManager::removeCube(size_t id){
-	mInstanceData.erase(id);
-}
-
-void LCubeManager::render(){
-	if(mInstanceData.size() == 0 || mCubeInstances.data == nullptr) return;
-	bgfx::setVertexBuffer(0, mCubeVbh);
-	bgfx::setIndexBuffer(mCubeIbh);
-
-	bgfx::setTexture(0, mCubeTexUniform, mCubeTexture);
-
-	updateInstanceBuffer();
-	bgfx::setInstanceDataBuffer(&mCubeInstances);	
-	
-	bgfx::setState( BGFX_STATE_DEFAULT );
-	bgfx::submit(0, mCubeShader);
 }
 
 LCubeManager::~LCubeManager(){ 
@@ -166,24 +151,14 @@ LEditorScene::~LEditorScene(){}
 void LEditorScene::init(){
 	Initialized = true;
 	mCubeManager.init();
+
 }
 
-size_t LEditorScene::RegisterModel(std::string name, glm::mat4 transform){
+std::shared_ptr<glm::mat4> LEditorScene::InstanceModel(std::string name, glm::mat4 transform){
 	if (mSceneModels.count(name) == 0){
-		
-		//TODO: Try to load model here!
-
-		return mCubeManager.addCube(transform);
+		return mCubeManager.addInstance(transform);
 	} else {
 		return mSceneModels[name].addInstance(transform);
-	}
-}
-
-void LEditorScene::UpdateModelPosition(std::string name, size_t id, glm::mat4 transform){
-	if (mSceneModels.count(name) == 0){
-		mCubeManager.setTransform(id, transform);
-	} else {
-		mSceneModels[name].setTransform(id, transform);
 	}
 }
 
