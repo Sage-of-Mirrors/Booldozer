@@ -15,6 +15,8 @@ private:
     bgfx::InstanceDataBuffer mCubeInstances;
     bgfx::VertexBufferHandle mCubeVbh;
     bgfx::IndexBufferHandle mCubeIbh;
+    bgfx::TextureHandle mCubeTexture;
+    bgfx::UniformHandle mCubeTexUniform;
     std::map<size_t, glm::mat4> mInstanceData;
     size_t mNextId;
 
@@ -44,7 +46,7 @@ public:
     
 	bx::Vec3 at  = { 0.0f, 0.0f,  0.0f };
 	bx::Vec3 eye = { 0.0f, 0.0f, -35.0f };
-
+    
     void RenderSubmit(uint32_t, uint32_t);
     void init();
 

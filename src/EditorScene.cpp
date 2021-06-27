@@ -1,37 +1,71 @@
 #include "EditorScene.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <fstream>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
-struct PosColorVertex
+struct Vertex
 {
 	float x;
 	float y;
 	float z;
-	uint32_t abgr;
+	int16_t u;
+	int16_t v;
 	static void init()
 	{
 		ms_layout
 			.begin()
 			.add( bgfx::Attrib::Position, 3, bgfx::AttribType::Float )
-			.add( bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true )
+			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Int16, true, true)
 			.end();
 	}
 	static bgfx::VertexLayout ms_layout;
 };
-bgfx::VertexLayout PosColorVertex::ms_layout;
+bgfx::VertexLayout Vertex::ms_layout;
 
-static PosColorVertex s_cubeVertices[] =
+static Vertex s_cubeVertices[] =
 {
-	{-1.0f,  1.0f,  1.0f, 0xffffff00 },
-	{ 1.0f,  1.0f,  1.0f, 0xffffffff },
-	{-1.0f, -1.0f,  1.0f, 0xff00ff00 },
-	{ 1.0f, -1.0f,  1.0f, 0xff00ffff },
-	{-1.0f,  1.0f, -1.0f, 0xffff0000 },
-	{ 1.0f,  1.0f, -1.0f, 0xffff00ff },
-	{-1.0f, -1.0f, -1.0f, 0xffffff00 },
-	{ 10.0f, -1.0f, -1.0f, 0xffffffff },
+	{-1.0f,  1.0f,  1.0f,      0,      0 },
+	{ 1.0f,  1.0f,  1.0f, 0x7fff,      0 },
+	{-1.0f, -1.0f,  1.0f,      0, 0x7fff },
+	{ 1.0f, -1.0f,  1.0f, 0x7fff, 0x7fff },
+	{-1.0f,  1.0f, -1.0f,      0,      0 },
+	{ 1.0f,  1.0f, -1.0f, 0x7fff,      0 },
+	{-1.0f, -1.0f, -1.0f,      0, 0x7fff },
+	{ 1.0f, -1.0f, -1.0f, 0x7fff, 0x7fff },
+	{-1.0f,  1.0f,  1.0f,      0,      0 },
+	{ 1.0f,  1.0f,  1.0f, 0x7fff,      0 },
+	{-1.0f,  1.0f, -1.0f,      0, 0x7fff },
+	{ 1.0f,  1.0f, -1.0f, 0x7fff, 0x7fff },
+	{-1.0f, -1.0f,  1.0f,      0,      0 },
+	{ 1.0f, -1.0f,  1.0f, 0x7fff,      0 },
+	{-1.0f, -1.0f, -1.0f,      0, 0x7fff },
+	{ 1.0f, -1.0f, -1.0f, 0x7fff, 0x7fff },
+	{ 1.0f, -1.0f,  1.0f,      0,      0 },
+	{ 1.0f,  1.0f,  1.0f, 0x7fff,      0 },
+	{ 1.0f, -1.0f, -1.0f,      0, 0x7fff },
+	{ 1.0f,  1.0f, -1.0f, 0x7fff, 0x7fff },
+	{-1.0f, -1.0f,  1.0f,      0,      0 },
+	{-1.0f,  1.0f,  1.0f, 0x7fff,      0 },
+	{-1.0f, -1.0f, -1.0f,      0, 0x7fff },
+	{-1.0f,  1.0f, -1.0f, 0x7fff, 0x7fff },
 };
-static const uint16_t s_cubeTriList[] = { 2, 1, 0, 2, 3, 1, 5, 6, 4, 7, 6, 5, 4, 2, 0, 6, 2, 4, 3, 5, 1, 3, 7, 5, 1, 4, 0, 1, 5, 4, 6, 3, 2, 7, 3, 6 };
+static const uint16_t s_cubeTriList[] = { 
+	0,  2,  1,
+	1,  2,  3,
+	4,  5,  6,
+	5,  7,  6,
+
+	8, 10,  9,
+	9, 10, 11,
+	12, 13, 14,
+	13, 15, 14,
+
+	16, 18, 17,
+	17, 18, 19,
+	20, 21, 22,
+	21, 23, 22,
+};
 
 LEditorScene::LEditorScene() : Initialized(false) {}
 
@@ -41,13 +75,22 @@ void LCubeManager::init(){
 	/*
 		TODO: System Agnostic Paths. Embed cube shaders using header output option of shaderc? 
 	*/
-    PosColorVertex::init();
+    Vertex::init();
 
-	mCubeShader = bigg::loadProgram("E:\\Github\\Booldozer\\shaders\\vs_instancing.bin", "E:\\Github\\Booldozer\\shaders\\fs_instancing.bin");
+	mCubeShader = bigg::loadProgram("shaders/cube_shader_v.bin", "shaders/cube_shader_f.bin");
 
-	mCubeVbh = bgfx::createVertexBuffer(bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices)), PosColorVertex::ms_layout );
+	mCubeVbh = bgfx::createVertexBuffer(bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices)), Vertex::ms_layout );
 	mCubeIbh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeTriList, sizeof(s_cubeTriList)));
 	
+	int x, y, n;
+	uint8_t* data = stbi_load("cube.png", &x, &y, &n, 4);
+	
+	mCubeTexture = bgfx::createTexture2D((uint16_t)x, (uint16_t)y, false, 1, bgfx::TextureFormat::RGBA8, 0, bgfx::copy(data, x*y*4));
+	
+	stbi_image_free(data);
+
+	mCubeTexUniform = bgfx::createUniform("s_texColor",  bgfx::UniformType::Sampler);
+
 	mNextId = 0;
 }
 
@@ -69,25 +112,24 @@ void LCubeManager::updateInstanceBuffer(){
 size_t LCubeManager::addCube(glm::mat4 transform){
 	size_t id = mNextId;
 	mInstanceData.insert(std::pair(id, transform));
-	updateInstanceBuffer();
 	mNextId++;
 	return id;
 }
 
 void LCubeManager::setTransform(size_t id, glm::mat4 transform){
 	mInstanceData[id] = transform;
-	updateInstanceBuffer();
 }
 
 void LCubeManager::removeCube(size_t id){
 	mInstanceData.erase(id);
-	updateInstanceBuffer();
 }
 
 void LCubeManager::render(){
 	if(mInstanceData.size() == 0 || mCubeInstances.data == nullptr) return;
 	bgfx::setVertexBuffer(0, mCubeVbh);
 	bgfx::setIndexBuffer(mCubeIbh);
+
+	bgfx::setTexture(0, mCubeTexUniform, mCubeTexture);
 
 	updateInstanceBuffer();
 	bgfx::setInstanceDataBuffer(&mCubeInstances);	
@@ -100,20 +142,14 @@ LCubeManager::~LCubeManager(){
 	bgfx::destroy(mCubeShader);
 	bgfx::destroy(mCubeVbh);
 	bgfx::destroy(mCubeIbh);
+	bgfx::destroy(mCubeTexture);
+	bgfx::destroy(mCubeTexUniform);
 }
 
 void LEditorScene::init(){
 
 	Initialized = true;
 	mCubeManager.init();
-	glm::mat4 cube1 = glm::identity<glm::mat4>();
-	printf("%d", mCubeManager.addCube(cube1));
-
-	glm::mat4 f = glm::identity<glm::mat4>();
-	glm::vec3 a = glm::vec3(20.0f, 0.0f, 0.0f);
-	glm::mat4 t = glm::translate(f, a);
-	t = glm::transpose(t);
-	mCubeManager.addCube(t);
 }
 
 LEditorScene::~LEditorScene(){
