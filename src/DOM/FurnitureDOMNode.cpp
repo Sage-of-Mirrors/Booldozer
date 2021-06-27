@@ -1,13 +1,55 @@
 #include "DOM/FurnitureDOMNode.hpp"
+#include "UIUtil.hpp"
 
 LFurnitureDOMNode::LFurnitureDOMNode(std::string name) : LEntityDOMNode(name),
 	mModelName("(null)"), mAccessName("(null)"),
 	mVerticalItemSpawnOffset(0.0f), mItemTableIndex(-1), mGenerateNumber(-1), mBooHideChance(-1),
 	mShakeIntensity(-1), mVecArgs(glm::vec3(0.0f, 0.0f, 0.0f)), mSpawnFlag(-1), mDespawnFlag(-1),
-	mHitboxExtents(glm::ivec3(0, 0, 0)), mGBHScanID(-1), mBehaviorType(0), mSoundID(0), mSheetBehavior(0),
-	mMoneyType(0), mSheetTexture(0), mShouldCutaway(false), mCanSheetBeVaccuumed(false), mBooAppear(false)
+	mHitboxExtents(glm::ivec3(0, 0, 0)), mGBHScanID(-1), mBehaviorType(EMoveType::Heavy_No_Open), mSoundID(EFurnitureSound::Door_Opening), mSheetBehavior(ESheetBehavior::None),
+	mMoneyType(EMoneyType::None), mSheetTexture(ESheetTexture::Tablecloth_Gold), mShouldCutaway(false), mCanSheetBeVaccuumed(false), mBooAppear(false)
 {
 	mType = EDOMNodeType::Furniture;
+}
+
+void LFurnitureDOMNode::RenderDetailsUI(float dt)
+{
+	LUIUtility::RenderTransformUI(mPosition, mRotation, mScale);
+
+	LUIUtility::RenderTextInput("Name", &mName);
+	LUIUtility::RenderTextInput("Tag", &mAccessName);
+
+	ImGui::InputFloat("Item Spawn Vertical Offset", &mVerticalItemSpawnOffset);
+
+	ImGui::InputInt("Amount of Money Spawned", &mGenerateNumber);
+	ImGui::InputInt("Boo Preference", &mBooHideChance);
+	ImGui::InputInt("Shake Intensity", &mShakeIntensity);
+
+	ImGui::InputFloat("arg0", &mVecArgs.x);
+	ImGui::InputFloat("arg1", &mVecArgs.y);
+	ImGui::InputFloat("arg2", &mVecArgs.z);
+
+	ImGui::InputInt("Spawn Flag", &mSpawnFlag);
+	ImGui::InputInt("Despawn Flag", &mDespawnFlag);
+
+	ImGui::InputInt("GBH Scan ID", &mGBHScanID);
+
+	// Comboboxes
+	LUIUtility::RenderComboEnum<EMoveType>("Move Type", mBehaviorType);
+	LUIUtility::RenderComboEnum<EFurnitureSound>("Sound", mSoundID);
+
+	LUIUtility::RenderComboEnum<ESheetBehavior>("Sheet Behavior", mSheetBehavior);
+	if (mSheetBehavior != ESheetBehavior::None)
+	{
+		ImGui::Indent();
+		LUIUtility::RenderComboEnum<ESheetTexture>("Sheet Texture", mSheetTexture);
+		LUIUtility::RenderCheckBox("Vaccuumable?", &mCanSheetBeVaccuumed);
+		ImGui::Unindent();
+	}
+
+	LUIUtility::RenderComboEnum<EMoneyType>("Money Type", mMoneyType);
+
+	// Bools
+	LUIUtility::RenderCheckBox("Cutaway?", &mShouldCutaway);
 }
 
 void LFurnitureDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
@@ -20,10 +62,9 @@ void LFurnitureDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetFloat(entry_index, "pos_y", mPosition.y);
 	JmpIO->SetFloat(entry_index, "pos_z", mPosition.z);
 
-	glm::vec3 euler_angles = glm::eulerAngles(mRotation);
-	JmpIO->SetFloat(entry_index, "dir_x", glm::degrees(euler_angles.x));
-	JmpIO->SetFloat(entry_index, "dir_y", glm::degrees(euler_angles.y));
-	JmpIO->SetFloat(entry_index, "dir_z", glm::degrees(euler_angles.z));
+	JmpIO->SetFloat(entry_index, "dir_x", mRotation.x);
+	JmpIO->SetFloat(entry_index, "dir_y", mRotation.y);
+	JmpIO->SetFloat(entry_index, "dir_z", mRotation.z);
 
 	JmpIO->SetFloat(entry_index, "scale_x", mScale.x);
 	JmpIO->SetFloat(entry_index, "scale_y", mScale.y);
@@ -51,14 +92,15 @@ void LFurnitureDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 
 	JmpIO->SetSignedInt(entry_index, "counter", mGBHScanID);
 
-	JmpIO->SetUnsignedInt(entry_index, "move", mBehaviorType);
-	JmpIO->SetUnsignedInt(entry_index, "furniture_sound", mSoundID);
-	JmpIO->SetUnsignedInt(entry_index, "sheet", mSheetBehavior);
-	JmpIO->SetUnsignedInt(entry_index, "generate", mMoneyType);
-	JmpIO->SetUnsignedInt(entry_index, "sheet_texture", mSheetTexture);
+	JmpIO->SetUnsignedInt(entry_index, "move", (uint32_t)mBehaviorType);
+	JmpIO->SetUnsignedInt(entry_index, "furniture_sound", (uint32_t)mSoundID);
+	JmpIO->SetUnsignedInt(entry_index, "sheet", (uint32_t)mSheetBehavior);
+	JmpIO->SetUnsignedInt(entry_index, "generate", (uint32_t)mMoneyType);
+	JmpIO->SetUnsignedInt(entry_index, "sheet_texture", (uint32_t)mSheetTexture);
 
 	JmpIO->SetBoolean(entry_index, "not_transparent", mShouldCutaway);
-	JmpIO->SetBoolean(entry_index, "sheet_gum", mCanSheetBeVaccuumed);
+	JmpIO->SetBoolean(entry_index, "sheet_gum", !mCanSheetBeVaccuumed);
+
 	JmpIO->SetBoolean(entry_index, "telesa_appear", mBooAppear);
 }
 
@@ -72,10 +114,9 @@ void LFurnitureDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 	mPosition.y = JmpIO->GetFloat(entry_index, "pos_y");
 	mPosition.z = JmpIO->GetFloat(entry_index, "pos_z");
 
-	float rotX = glm::radians(JmpIO->GetFloat(entry_index, "dir_x"));
-	float rotY = glm::radians(JmpIO->GetFloat(entry_index, "dir_y"));
-	float rotZ = glm::radians(JmpIO->GetFloat(entry_index, "dir_z"));
-	mRotation = glm::quat(glm::vec3(rotX, rotY, rotZ));
+	mRotation.x = JmpIO->GetFloat(entry_index, "dir_x");
+	mRotation.y = JmpIO->GetFloat(entry_index, "dir_y");
+	mRotation.z = JmpIO->GetFloat(entry_index, "dir_z");
 
 	mScale.x = JmpIO->GetFloat(entry_index, "scale_x");
 	mScale.y = JmpIO->GetFloat(entry_index, "scale_y");
@@ -103,13 +144,14 @@ void LFurnitureDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 
 	mGBHScanID = JmpIO->GetSignedInt(entry_index, "counter");
 
-	mBehaviorType = JmpIO->GetUnsignedInt(entry_index, "move");
-	mSoundID = JmpIO->GetUnsignedInt(entry_index, "furniture_sound");
-	mSheetBehavior = JmpIO->GetUnsignedInt(entry_index, "sheet");
-	mMoneyType = JmpIO->GetUnsignedInt(entry_index, "generate");
-	mSheetTexture = JmpIO->GetUnsignedInt(entry_index, "sheet_texture");
+	mBehaviorType = (EMoveType)JmpIO->GetUnsignedInt(entry_index, "move");
+	mSoundID = (EFurnitureSound)JmpIO->GetUnsignedInt(entry_index, "furniture_sound");
+	mSheetBehavior = (ESheetBehavior)JmpIO->GetUnsignedInt(entry_index, "sheet");
+	mMoneyType = (EMoneyType)JmpIO->GetUnsignedInt(entry_index, "generate");
+	mSheetTexture = (ESheetTexture)JmpIO->GetUnsignedInt(entry_index, "sheet_texture");
 
 	mShouldCutaway = JmpIO->GetBoolean(entry_index, "not_transparent");
-	mCanSheetBeVaccuumed = JmpIO->GetBoolean(entry_index, "sheet_gum");
+	mCanSheetBeVaccuumed = !JmpIO->GetBoolean(entry_index, "sheet_gum");
+
 	mBooAppear = JmpIO->GetBoolean(entry_index, "telesa_appear");
 }

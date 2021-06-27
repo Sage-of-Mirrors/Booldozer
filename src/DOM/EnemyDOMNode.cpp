@@ -1,4 +1,73 @@
 #include "DOM/EnemyDOMNode.hpp"
+#include "UIUtil.hpp"
+
+std::map<std::string, std::string> EnemyNames = {
+	{ "yapoo1", "Gold Ghost" },
+	{ "yapoo2", "Temper Terror" },
+
+	{ "mapoo1", "Purple Basher" },
+	{ "mapoo2", "Flash" },
+
+	{ "mopoo1", "Blue Twirler" },
+	{ "mopoo2", "Blue Blaze" },
+
+	{ "banaoba", "Garbage Can Ghost" },
+
+	{ "topoo1", "Red Grabbing Ghost" },
+	{ "topoo2", "Turqoise Grabbing Ghost" },
+	{ "topoo3", "Purple Grabbing Ghost" },
+	{ "topoo4", "White Grabbing Ghost" },
+
+	{ "putcher1", "Bowling Ghost" },
+
+	{ "iyapoo1", "Speedy Spirit 1" },
+	{ "iyapoo2", "Speedy Spirit 2" },
+	{ "iyapoo3", "Speedy Spirit 3" },
+	{ "iyapoo4", "Speedy Spirit 4" },
+	{ "iyapoo5", "Speedy Spirit 5" },
+	{ "iyapoo6", "Speedy Spirit 6" },
+	{ "iyapoo7", "Speedy Spirit 7" },
+	{ "iyapoo8", "Speedy Spirit 8" },
+	{ "iyapoo9", "Speedy Spirit 9" },
+	{ "iyapoo10", "Speedy Spirit 10" },
+	{ "iyapoo11", "Speedy Spirit 11" },
+	{ "iyapoo12", "Speedy Spirit 12" },
+
+	{ "piero1", "Red Clown Doll" },
+	{ "piero2", "Blue Clown Doll" },
+
+	{ "heypo1", "Red Shy Guy Ghost" },
+	{ "heypo2", "Green Shy Guy Ghost" },
+	{ "heypo3", "White Shy Guy Ghost" },
+	{ "heypo4", "Orange Shy Guy Ghost" },
+	{ "heypo5", "Orange Shy Guy Ghost?" },
+	{ "heypo6", "Yellow Shy Guy Ghost" },
+	{ "heypo7", "Pink Shy Guy Ghost" },
+	{ "heypo8", "Purple Shy Guy Ghost" },
+
+	{ "tenjyo", "Purple Bomber" },
+	{ "tenjyo2", "Ceiling Surprise" },
+
+	{ "fakedoor", "Fake Square Door" },
+	{ "fkdoor2", "Fake Wooden Door" },
+	{ "fkdoor3", "Fake Round Door" },
+
+	{ "ifly", "Frying Pan" },
+	{ "inabe", "Pot" },
+	{ "ibookr", "Book" },
+	{ "polter1", "polter1" },
+
+	{ "skul", "Mr. Bones" },
+
+	{ "otub1", "Blue Vase" },
+	{ "otub2", "Grey Vase" },
+	{ "otub3", "Pink/White Vase" },
+	{ "otub4", "Red/Blue/White Vase" },
+	{ "otub5", "Blue/White Vase" },
+
+	{ "oufo1", "Plate" },
+	{ "oufo2", "Bowl" },
+};
 
 LEnemyDOMNode::LEnemyDOMNode(std::string name) : Super(name),
 	mCreateName("----"), mPathName("(null)"), mAccessName("(null)"), mCodeName("(null)"),
@@ -6,6 +75,11 @@ LEnemyDOMNode::LEnemyDOMNode(std::string name) : Super(name),
 	mCondType(0), mMoveType(0), mSearchType(0), mAppearType(0), mPlaceType(0), mIsVisible(true), mStay(false)
 {
 	mType = EDOMNodeType::Enemy;
+}
+
+void LEnemyDOMNode::RenderDetailsUI(float dt)
+{
+	LUIUtility::RenderComboBox("Enemy Type", EnemyNames, mName);
 }
 
 void LEnemyDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
@@ -20,10 +94,9 @@ void LEnemyDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetFloat(entry_index, "pos_y", mPosition.y);
 	JmpIO->SetFloat(entry_index, "pos_z", mPosition.z);
 
-	glm::vec3 euler_angles = glm::eulerAngles(mRotation);
-	JmpIO->SetFloat(entry_index, "dir_x", glm::degrees(euler_angles.x));
-	JmpIO->SetFloat(entry_index, "dir_y", glm::degrees(euler_angles.y));
-	JmpIO->SetFloat(entry_index, "dir_z", glm::degrees(euler_angles.z));
+	JmpIO->SetFloat(entry_index, "dir_x", mRotation.x);
+	JmpIO->SetFloat(entry_index, "dir_y", mRotation.y);
+	JmpIO->SetFloat(entry_index, "dir_z", mRotation.z);
 
 	JmpIO->SetFloat(entry_index, "scale_x", mScale.x);
 	JmpIO->SetFloat(entry_index, "scale_y", mScale.y);
@@ -62,10 +135,9 @@ void LEnemyDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 	mPosition.y = JmpIO->GetFloat(entry_index, "pos_y");
 	mPosition.z = JmpIO->GetFloat(entry_index, "pos_z");
 
-	float rotX = glm::radians(JmpIO->GetFloat(entry_index, "dir_x"));
-	float rotY = glm::radians(JmpIO->GetFloat(entry_index, "dir_y"));
-	float rotZ = glm::radians(JmpIO->GetFloat(entry_index, "dir_z"));
-	mRotation = glm::quat(glm::vec3(rotX, rotY, rotZ));
+	mRotation.x = JmpIO->GetFloat(entry_index, "dir_x");
+	mRotation.y = JmpIO->GetFloat(entry_index, "dir_y");
+	mRotation.z = JmpIO->GetFloat(entry_index, "dir_z");
 
 	mScale.x = JmpIO->GetFloat(entry_index, "scale_x");
 	mScale.y = JmpIO->GetFloat(entry_index, "scale_y");

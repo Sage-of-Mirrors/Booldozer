@@ -63,3 +63,90 @@ bool LUIUtility::RenderComboBox(std::string name, std::vector<std::shared_ptr<LE
 
 	return changed;
 }
+
+bool LUIUtility::RenderComboBox(std::string name, std::map<std::string, std::string>& options, std::string& value)
+{
+	bool changed = false;
+
+	if (ImGui::BeginCombo(name.c_str(), options[value].c_str()))
+	{
+		for (auto [ internal_name, visible_name ] : options)
+		{
+			char buff[100];
+			snprintf(buff, sizeof(buff), "%s##%s", visible_name.c_str(), internal_name.c_str());
+
+			bool is_selected = (value == internal_name);
+			if (ImGui::Selectable(buff, is_selected))
+			{
+				value = internal_name;
+				changed = true;
+			}
+
+			if (is_selected)
+				ImGui::SetItemDefaultFocus();
+		}
+
+		ImGui::EndCombo();
+	}
+
+	return changed;
+}
+
+bool LUIUtility::RenderTextInput(std::string name, std::string* value)
+{
+	return ImGui::InputText(name.c_str(), value->data(), value->size() + 1, ImGuiInputTextFlags_CallbackResize, LUIUtility::TextInputCallback, value);
+}
+
+int LUIUtility::TextInputCallback(ImGuiInputTextCallbackData* data)
+{
+	if (data->EventFlag == ImGuiInputTextFlags_CallbackResize) {
+		std::string* str;
+
+		str = static_cast<std::string*>(data->UserData);
+		str->resize(static_cast<size_t>(data->BufTextLen));
+		data->Buf = str->data();
+	}
+
+	return 0;
+}
+
+void LUIUtility::RenderTransformUI(glm::vec3& translation, glm::vec3& rotation, glm::vec3& scale)
+{
+	if (ImGui::TreeNode("Transform"))
+	{
+		ImGui::PushID("##pos");
+		ImGui::Indent();
+		ImGui::LabelText("", "Position");
+		ImGui::Indent();
+		ImGui::InputFloat("X", &translation.x);
+		ImGui::InputFloat("Y", &translation.y);
+		ImGui::InputFloat("Z", &translation.z);
+		ImGui::Unindent();
+		ImGui::Unindent();
+		ImGui::PopID();
+
+		ImGui::PushID("##rot");
+		ImGui::Indent();
+		ImGui::LabelText("", "Rotation");
+		ImGui::Indent();
+		ImGui::InputFloat("X", &rotation.x);
+		ImGui::InputFloat("Y", &rotation.y);
+		ImGui::InputFloat("Z", &rotation.z);
+		ImGui::Unindent();
+		ImGui::Unindent();
+		ImGui::PopID();
+
+		ImGui::PushID("##scale");
+		ImGui::Indent();
+		ImGui::LabelText("", "Scale");
+		ImGui::Indent();
+		ImGui::InputFloat("X", &scale.x);
+		ImGui::InputFloat("Y", &scale.y);
+		ImGui::InputFloat("Z", &scale.z);
+		ImGui::Unindent();
+		ImGui::Unindent();
+		ImGui::PopID();
+
+		ImGui::TreePop();
+	}
+}

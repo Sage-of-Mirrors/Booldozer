@@ -13,7 +13,7 @@ void LQuatHistoryItem::Undo()
 
 	glm::quat curQuat = mAffectedNode->GetRotation();
 	curQuat -= mDelta;
-	mAffectedNode->SetRotation(curQuat);
+	//mAffectedNode->SetRotation(curQuat);
 }
 
 void LQuatHistoryItem::Redo()
@@ -23,5 +23,5 @@ void LQuatHistoryItem::Redo()
 
 	glm::quat curQuat = mAffectedNode->GetRotation();
 	curQuat += mDelta;
-	mAffectedNode->SetRotation(curQuat);
+	//mAffectedNode->SetRotation(curQuat);
 }

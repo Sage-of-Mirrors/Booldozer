@@ -21,9 +21,6 @@ LRoomDOMNode::LRoomDOMNode(std::string name) : LBGRenderDOMNode(name)
 
 void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection)
 {
-	if (LUIUtility::RenderComboEnum<LRoomEntityType>("Test Enum Combo", t))
-		printf("%s\n", LRoomEntityTreeNodeNames[t].c_str());
-
 	// This checkbox toggles rendering of the room and all of its children.
 	LUIUtility::RenderCheckBox(this);
 	ImGui::SameLine();

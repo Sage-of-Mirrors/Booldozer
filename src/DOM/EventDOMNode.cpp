@@ -26,10 +26,9 @@ void LEventDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetFloat(entry_index, "pos_y", mPosition.y);
 	JmpIO->SetFloat(entry_index, "pos_z", mPosition.z);
 
-	glm::vec3 euler_angles = glm::eulerAngles(mRotation);
-	JmpIO->SetFloat(entry_index, "dir_x", glm::degrees(euler_angles.x));
-	JmpIO->SetFloat(entry_index, "dir_y", glm::degrees(euler_angles.y));
-	JmpIO->SetFloat(entry_index, "dir_z", glm::degrees(euler_angles.z));
+	JmpIO->SetFloat(entry_index, "dir_x", mRotation.x);
+	JmpIO->SetFloat(entry_index, "dir_y", mRotation.y);
+	JmpIO->SetFloat(entry_index, "dir_z", mRotation.z);
 
 	JmpIO->SetFloat(entry_index, "scale_x", mScale.x);
 	JmpIO->SetFloat(entry_index, "scale_y", mScale.y);
@@ -63,10 +62,9 @@ void LEventDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 	mPosition.y = JmpIO->GetFloat(entry_index, "pos_y");
 	mPosition.z = JmpIO->GetFloat(entry_index, "pos_z");
 
-	float rotX = glm::radians(JmpIO->GetFloat(entry_index, "dir_x"));
-	float rotY = glm::radians(JmpIO->GetFloat(entry_index, "dir_y"));
-	float rotZ = glm::radians(JmpIO->GetFloat(entry_index, "dir_z"));
-	mRotation = glm::quat(glm::vec3(rotX, rotY, rotZ));
+	mRotation.x = JmpIO->GetFloat(entry_index, "dir_x");
+	mRotation.y = JmpIO->GetFloat(entry_index, "dir_y");
+	mRotation.z = JmpIO->GetFloat(entry_index, "dir_z");
 
 	mScale.x = JmpIO->GetFloat(entry_index, "scale_x");
 	mScale.y = JmpIO->GetFloat(entry_index, "scale_y");
