@@ -21,6 +21,7 @@ struct Vertex
 	}
 	static bgfx::VertexLayout ms_layout;
 };
+
 bgfx::VertexLayout Vertex::ms_layout;
 
 static Vertex s_cubeVertices[] =
@@ -50,6 +51,7 @@ static Vertex s_cubeVertices[] =
 	{-1.0f, -1.0f, -1.0f,      0, 0x7fff },
 	{-1.0f,  1.0f, -1.0f, 0x7fff, 0x7fff },
 };
+
 static const uint16_t s_cubeTriList[] = { 
 	0,  2,  1,
 	1,  2,  3,
@@ -67,7 +69,17 @@ static const uint16_t s_cubeTriList[] = {
 	21, 23, 22,
 };
 
-LEditorScene::LEditorScene() : Initialized(false) {}
+LSceneModel::LSceneModel(){ mNextID = 0; }
+LSceneModel::~LSceneModel(){}
+
+size_t LSceneModel::addInstance(glm::mat4 transform){
+	mInstanceData.insert(std::pair(mNextID, transform));
+	return mNextID++;
+}
+
+void LSceneModel::setTransform(size_t id, glm::mat4 transform){
+	mInstanceData[id] = transform;
+}
 
 LCubeManager::LCubeManager(){}
 
@@ -146,20 +158,39 @@ LCubeManager::~LCubeManager(){
 	bgfx::destroy(mCubeTexUniform);
 }
 
-void LEditorScene::init(){
 
+LEditorScene::LEditorScene() : Initialized(false) {}
+
+LEditorScene::~LEditorScene(){}
+
+void LEditorScene::init(){
 	Initialized = true;
 	mCubeManager.init();
 }
 
-LEditorScene::~LEditorScene(){
+size_t LEditorScene::RegisterModel(std::string name, glm::mat4 transform){
+	if (mSceneModels.count(name) == 0){
+		
+		//TODO: Try to load model here!
 
+		return mCubeManager.addCube(transform);
+	} else {
+		return mSceneModels[name].addInstance(transform);
+	}
+}
+
+void LEditorScene::UpdateModelPosition(std::string name, size_t id, glm::mat4 transform){
+	if (mSceneModels.count(name) == 0){
+		mCubeManager.setTransform(id, transform);
+	} else {
+		mSceneModels[name].setTransform(id, transform);
+	}
 }
 
 void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
     
-	glm::mat4 view = glm::lookAt( glm::vec3( 0.0f, 0.0f, -35.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
-	glm::mat4 proj = glm::perspective( glm::radians( 60.0f ), float(m_width) / m_height, 0.1f, 100.0f );
+	glm::mat4 view = glm::lookAt(glm::vec3( 0.0f, 0.0f, -35.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ));
+	glm::mat4 proj = glm::perspective(glm::radians( 60.0f ), float(m_width) / m_height, 0.1f, 100.0f);
 
 	bgfx::setViewTransform(0, &view[0][0], &proj[0][0]);
     bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height));

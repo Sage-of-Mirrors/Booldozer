@@ -4,8 +4,22 @@
 #include <bx/math.h>
 #include <bgfx/bgfx.h>
 
+/*
+
+    TODO: Seriously clean up how scene model and cube manager works. Make parent LModelManager class?
+
+*/
+
 class LSceneModel {
-    //TODO: set this up properly
+private:
+    std::map<size_t, glm::mat4> mInstanceData;
+    size_t mNextID;
+public:
+    size_t addInstance(glm::mat4 transform);
+    void setTransform(size_t id, glm::mat4 transform);
+
+    LSceneModel();
+    ~LSceneModel();
 };
 
 class LCubeManager {
@@ -42,12 +56,14 @@ public:
     LCubeManager mCubeManager;
 
 
-    std::map<std::string, LSceneModel> models;
+    std::map<std::string, LSceneModel> mSceneModels;
     
 	bx::Vec3 at  = { 0.0f, 0.0f,  0.0f };
 	bx::Vec3 eye = { 0.0f, 0.0f, -35.0f };
     
-    void RenderSubmit(uint32_t, uint32_t);
+    size_t RegisterModel(std::string name, glm::mat4 transform);
+    void UpdateModelPosition(std::string name, size_t id, glm::mat4 transform);
+    void RenderSubmit(uint32_t m_width, uint32_t m_height);
     void init();
 
     LEditorScene();
