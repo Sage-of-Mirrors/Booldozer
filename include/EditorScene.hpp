@@ -8,14 +8,36 @@ class LSceneModel {
     //TODO: set this up properly
 };
 
+class LCubeManager {
+private:
+    const static uint32_t mCubeInstanceStride = 64;
+    bgfx::ProgramHandle mCubeShader;
+    bgfx::InstanceDataBuffer mCubeInstances;
+    bgfx::VertexBufferHandle mCubeVbh;
+    bgfx::IndexBufferHandle mCubeIbh;
+    std::map<size_t, glm::mat4> mInstanceData;
+    size_t mNextId;
+
+    void updateInstanceBuffer();
+
+public:
+    void init();
+    void setTransform(size_t id, glm::mat4 transform);
+    size_t addCube(glm::mat4 transform);
+    void removeCube(size_t id);
+    void render();
+
+    LCubeManager();
+    ~LCubeManager();
+
+};
+
+
 class LEditorScene {
 private:
 public:
     bool Initialized;
-    bgfx::ProgramHandle mCubeShader;
-    bgfx::InstanceDataBuffer mCubeInstaces;
-    bgfx::VertexBufferHandle mCubeVbh;
-    bgfx::IndexBufferHandle mCubeIbh;
+    LCubeManager mCubeManager;
 
 
     std::map<std::string, LSceneModel> models;

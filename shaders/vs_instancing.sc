@@ -1,31 +1,18 @@
-#version 420
+$input a_position, a_color0, i_data0, i_data1, i_data2, i_data3
+$output v_color0
 
-uniform mat4 projection_matrix;
-uniform mat4 model_matrix;
+/*
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ */
+
+#include "bgfx_shader.sh"
 
 void main()
 {
-    int tri = gl_VertexID / 3;
-    int idx = gl_VertexID % 3;
-    int face = tri / 2;
-    int top = tri % 2;
+	mat4 model = mtxFromCols(i_data0, i_data1, i_data2, i_data3);
 
-    int dir = face % 3;
-    int pos = face / 3;
-
-    int nz = dir >> 1;
-    int ny = dir & 1;
-    int nx = 1 ^ (ny | nz);
-
-    vec3 d = vec3(nx, ny, nz);
-    float flip = 1 - 2 * pos;
-
-    vec3 n = flip * d;
-    vec3 u = -d.yzx;
-    vec3 v = flip * d.zxy;
-
-    float mirror = -1 + 2 * top;
-    vec3 xyz = n + mirror*(1-2*(idx&1))*u + mirror*(1-2*(idx>>1))*v;
-
-    gl_Position = projection_matrix * model_matrix * vec4(xyz, 1.0);
+	vec4 worldPos = mul(model, vec4(a_position, 1.0) );
+	gl_Position = mul(u_viewProj, worldPos);
+	v_color0 = a_color0;
 }

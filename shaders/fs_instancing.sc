@@ -1,7 +1,13 @@
-#version 440 core
-out vec4 FragColor;
+$input v_color0
+
+/*
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ */
+
+#include "bgfx_shader.sh"
 
 void main()
 {
-    FragColor = vec4(1.0, 0.0, 1.0, 1.0);
-} 
+	gl_FragColor = v_color0;
+}
