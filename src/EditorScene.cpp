@@ -100,14 +100,14 @@ void LModelManager::render(){
 
 void LCubeManager::render(){
 	if(mInstanceData.size() == 0 || mModelInstances.data == nullptr) return;
-	bgfx::setVertexBuffer(0, mCubeVbh);
-	bgfx::setIndexBuffer(mCubeIbh);
-
-	bgfx::setTexture(0, mCubeTexUniform, mCubeTexture);
-
-	bgfx::setState( BGFX_STATE_DEFAULT );
-	
 	for(auto instance : mInstanceData){
+		bgfx::setVertexBuffer(0, mCubeVbh);
+		bgfx::setIndexBuffer(mCubeIbh);
+	
+		bgfx::setTexture(0, mCubeTexUniform, mCubeTexture);
+	
+		bgfx::setState( BGFX_STATE_DEFAULT );
+	
 		bgfx::setTransform(&(instance.get())[0][0]);
 		bgfx::submit(0, mCubeShader);
 	}
