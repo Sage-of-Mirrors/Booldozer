@@ -1,6 +1,7 @@
 #pragma once
 
 #include "UIRenderDOMNode.hpp"
+#include "scene/EditorScene.hpp"
 #include "glm/glm.hpp"
 #include "glm/gtx/quaternion.hpp"
 
@@ -14,6 +15,8 @@ protected:
 	glm::vec3 mRotation;
 	// 3D scale of this node.
 	glm::vec3 mScale;
+	// Rendered Model's Transform Matrix
+	std::shared_ptr<glm::mat4> mTransform;
 
 public:
 	typedef LUIRenderDOMNode Super;
@@ -21,7 +24,7 @@ public:
 	LBGRenderDOMNode(std::string name);
 
 	// Renders this node to the main window's background.
-	virtual void RenderBG(float dt);
+	virtual void RenderBG(float dt, LEditorScene* scene);
 
 	// Returns this node's position.
 	glm::vec3 GetPosition() { return mPosition; }
@@ -29,6 +32,8 @@ public:
 	glm::vec3 GetRotation() { return mRotation; }
 	// Returns this node's scale.
 	glm::vec3 GetScale() { return mScale; }
+
+	glm::mat4* GetMat() { return mTransform.get(); }
 
 	// Sets this node's position to the given value.
 	void SetPosition(glm::vec3 newPos) { mPosition = newPos; }

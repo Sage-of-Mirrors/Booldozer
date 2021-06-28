@@ -2,6 +2,7 @@
 
 #include "modes/ActorMode.hpp"
 #include "imgui.h"
+#include "ImGuizmo.h"
 
 LActorMode::LActorMode()
 {
@@ -57,10 +58,22 @@ void LActorMode::RenderDetailsWindow()
 	ImGui::End();
 }
 
-void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map/*, LEditorScene* renderer_scene*/)
+void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene)
 {
 	RenderSceneHierarchy(current_map);
 	RenderDetailsWindow();
+	
+	for(auto& node : current_map.get()->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture)){
+		node->RenderBG(0, renderer_scene);
+	}
+
+	if(mSelectionManager.GetPrimarySelection() != nullptr){
+		glm::mat4* m = ((LBGRenderDOMNode*)(mSelectionManager.GetPrimarySelection().get()))->GetMat();
+		glm::mat4 view = renderer_scene->getCameraView();
+		glm::mat4 proj = renderer_scene->getCameraProj();
+		ImGuizmo::Manipulate(&view[0][0], &proj[0][0], ImGuizmo::TRANSLATE, ImGuizmo::LOCAL, &(*m)[0][0], NULL, NULL);
+	}
+
 }
 
 void LActorMode::OnBecomeActive()

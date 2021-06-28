@@ -3,7 +3,7 @@
 #include "bigg.hpp"
 #include "ui/EditorWindowMain.hpp"
 #include "ui/BooldozerEditor.hpp"
-#include "EditorScene.hpp"
+#include "scene/EditorScene.hpp"
 
 // Main window's UI.
 class LBooldozerMainWindow : public bigg::Application
