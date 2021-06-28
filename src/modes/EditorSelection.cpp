@@ -1,6 +1,7 @@
 #include "modes/EditorSelection.hpp"
 #include "imgui.h"
 #include "../lib/bigg/include/bigg.hpp"
+#include <algorithm>
 
 void LEditorSelection::AddToSelection(std::shared_ptr<LDOMNodeBase> node)
 {

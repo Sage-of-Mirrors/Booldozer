@@ -6,7 +6,7 @@
 
 enum EDOMNodeState
 {
-	EDOMNodeState_Expanded = 0x01,
+	EDOMNodeState_Initialized = 0x01,
 	EDOMNodeState_Rendered = 0x02,
 	EDOMNodeState_Selected = 0x04
 };
@@ -63,16 +63,16 @@ public:
 	virtual std::string GetName() { return mName; }
 
 /*=== Node state ===*/
-	bool GetIsExpanded() { return (mNodeState & EDOMNodeState_Expanded) != 0; }
+	bool GetIsInitialized() { return (mNodeState & EDOMNodeState_Initialized) != 0; }
 	bool GetIsRendered() { return (mNodeState & EDOMNodeState_Rendered) != 0; }
 	bool GetIsSelected() { return (mNodeState & EDOMNodeState_Selected) != 0; }
 
-	void SetIsExpanded(bool expanded)
+	void SetIsInitialized(bool initialized)
 	{
-		if (expanded)
-			mNodeState |= EDOMNodeState_Expanded;
+		if (initialized)
+			mNodeState |= EDOMNodeState_Initialized;
 		else
-			mNodeState &= ~EDOMNodeState_Expanded;
+			mNodeState &= ~EDOMNodeState_Initialized;
 	}
 
 	void SetIsRendered(bool rendered)

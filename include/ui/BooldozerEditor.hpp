@@ -21,7 +21,7 @@ class LBooldozerEditor
 public:
 	LBooldozerEditor();
 
-	void Render(float dt);
+	void Render(float dt, LEditorScene* renderer_scene);
 
 	// Callback for when the user requests to open a map folder.
 	void onOpenMapCB();

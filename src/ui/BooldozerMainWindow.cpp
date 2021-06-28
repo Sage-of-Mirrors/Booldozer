@@ -1,4 +1,5 @@
 #include "ui/BooldozerMainWindow.hpp"
+#include "ImGuizmo.h"
 
 LBooldozerMainWindow::LBooldozerMainWindow() : bigg::Application("Booldozer")
 {
@@ -24,7 +25,7 @@ void LBooldozerMainWindow::initialize(int _argc, char** _argv)
 {
     mEditorScene.init();
 
-    mEditorScene.InstanceModel("literallly any string, it will load cubes for models it cant load or dont exist", glm::identity<glm::mat4>());
+    //mEditorScene.InstanceModel("literallly any string, it will load cubes for models it cant load or dont exist", glm::identity<glm::mat4>());
 }
 
 void LBooldozerMainWindow::render(float dt)
@@ -64,5 +65,7 @@ void LBooldozerMainWindow::render(float dt)
         ImGui::EndMainMenuBar();
     }
 
-    mEditorContext.Render(dt);
+	ImGuizmo::BeginFrame();
+	ImGuizmo::SetRect(0,0, (float)getWidth(), (float)getHeight());
+    mEditorContext.Render(dt, &mEditorScene);
 }
