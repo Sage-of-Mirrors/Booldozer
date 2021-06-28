@@ -3,6 +3,8 @@
 #include <fstream>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include "cube_shader_f.h"
+#include "cube_shader_v.h"
 
 struct Vertex
 {
@@ -122,7 +124,11 @@ void LCubeManager::init(){
 	*/
     Vertex::init();
 
-	mCubeShader = bigg::loadProgram("shaders/cube_shader_v.bin", "shaders/cube_shader_f.bin");
+	bgfx::ShaderHandle vs = bgfx::createShader(bgfx::makeRef(cube_shader_v, cube_shader_v_len));
+	bgfx::ShaderHandle fs = bgfx::createShader(bgfx::makeRef(cube_shader_f, cube_shader_f_len));
+	mCubeShader = bgfx::createProgram(vs, fs, true);
+
+	//mCubeShader = bigg::loadProgram("shaders/cube_shader_v.bin", "shaders/cube_shader_f.bin");
 
 	mCubeVbh = bgfx::createVertexBuffer(bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices)), Vertex::ms_layout );
 	mCubeIbh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeTriList, sizeof(s_cubeTriList)));
