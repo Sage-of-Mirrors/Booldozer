@@ -6,6 +6,8 @@
 #include <bx/math.h>
 #include <bgfx/bgfx.h>
 
+#include "scene/Camera.hpp"
+
 class LModelManager {
 private:
     const static uint32_t mInstanceStride = 64;
@@ -46,18 +48,18 @@ public:
 
 class LEditorScene {
 private:
+    LSceneCamera mCamera;
+
 public:
     bool Initialized;
 
     LCubeManager mCubeManager;
     std::map<std::string, LModelManager> mSceneModels;
     
-	bx::Vec3 at  = { 0.0f, 0.0f,  0.0f };
-	bx::Vec3 eye = { 0.0f, 0.0f, -35.0f };
-    
     std::shared_ptr<glm::mat4> InstanceModel(std::string name, glm::mat4 transform);
     void RenderSubmit(uint32_t m_width, uint32_t m_height);
     void init();
+    void update(GLFWwindow* window, float dt);
 
     LEditorScene();
     ~LEditorScene();

@@ -13,6 +13,7 @@ void LBooldozerMainWindow::onReset()
 void LBooldozerMainWindow::update(float dt)
 {
 	// Update state here
+    mEditorScene.update(mWindow, dt);
 	mMainEditorWindow.update(dt);
 
 	// Now render!
@@ -22,6 +23,8 @@ void LBooldozerMainWindow::update(float dt)
 void LBooldozerMainWindow::initialize(int _argc, char** _argv)
 {
     mEditorScene.init();
+
+    mEditorScene.InstanceModel("literallly any string, it will load cubes for models it cant load or dont exist", glm::identity<glm::mat4>());
 }
 
 void LBooldozerMainWindow::render(float dt)

@@ -134,7 +134,7 @@ void LCubeManager::init(){
 	mCubeIbh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeTriList, sizeof(s_cubeTriList)));
 	
 	int x, y, n;
-	uint8_t* data = stbi_load("cube.png", &x, &y, &n, 4);
+	uint8_t* data = stbi_load("../cube.png", &x, &y, &n, 4);
 	
 	mCubeTexture = bgfx::createTexture2D((uint16_t)x, (uint16_t)y, false, 1, bgfx::TextureFormat::RGBA8, 0, bgfx::copy(data, x*y*4));
 	
@@ -171,13 +171,19 @@ std::shared_ptr<glm::mat4> LEditorScene::InstanceModel(std::string name, glm::ma
 }
 
 void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
-    
-	glm::mat4 view = glm::lookAt(glm::vec3( 0.0f, 0.0f, -35.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ));
-	glm::mat4 proj = glm::perspective(glm::radians( 60.0f ), float(m_width) / m_height, 0.1f, 100.0f);
+	mCamera.SetAspectRatio(m_width, m_height);
+
+	glm::mat4 view = mCamera.GetViewMatrix();
+	glm::mat4 proj = mCamera.GetProjectionMatrix();
 
 	bgfx::setViewTransform(0, &view[0][0], &proj[0][0]);
     bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height));
     bgfx::touch(0);
     
 	mCubeManager.render();
+}
+
+void LEditorScene::update(GLFWwindow* window, float dt)
+{
+	mCamera.Update(window, dt);
 }
