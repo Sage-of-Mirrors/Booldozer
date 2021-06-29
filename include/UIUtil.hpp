@@ -22,7 +22,7 @@ namespace LUIUtility
 	bool RenderTextInput(std::string name, std::string* value);
 	int TextInputCallback(ImGuiInputTextCallbackData* data);
 
-	void RenderTransformUI(glm::vec3& translation, glm::vec3& rotation, glm::vec3& scale);
+	void RenderTransformUI(glm::mat4* transform, glm::vec3& translation, glm::vec3& rotation, glm::vec3& scale);
 
 	template<typename T>
 	// Renders a combobox for the given enum.

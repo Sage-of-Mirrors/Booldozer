@@ -56,7 +56,7 @@ protected:
 	}
 
 public:
-	LDOMNodeBase(std::string name) { mName = name; SetIsSelected(false); SetIsRendered(true); }
+	LDOMNodeBase(std::string name) { mName = name; SetIsSelected(false); SetIsRendered(true); SetIsInitialized(false); }
 
 	std::vector<std::shared_ptr<LDOMNodeBase>> Children;
 

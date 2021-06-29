@@ -63,7 +63,7 @@ void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 	RenderSceneHierarchy(current_map);
 	RenderDetailsWindow();
 	
-	for(auto& node : current_map.get()->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture)){
+	for(auto& node : current_map.get()->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)){
 		node->RenderBG(0, renderer_scene);
 	}
 

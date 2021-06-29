@@ -13,7 +13,7 @@ LFurnitureDOMNode::LFurnitureDOMNode(std::string name) : LEntityDOMNode(name),
 
 void LFurnitureDOMNode::RenderDetailsUI(float dt)
 {
-	LUIUtility::RenderTransformUI(mPosition, mRotation, mScale);
+	LUIUtility::RenderTransformUI(mTransform.get(), mPosition, mRotation, mScale);
 
 	LUIUtility::RenderTextInput("Name", &mName);
 	LUIUtility::RenderTextInput("Tag", &mAccessName);

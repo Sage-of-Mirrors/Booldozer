@@ -12,6 +12,7 @@ file(GLOB BOOLDOZER_SRC
     "src/DOM/*.cpp"
     "src/modes/*.cpp"
     "src/history/*.cpp"
+    "src/scene/*.cpp"
 )
 
 add_executable(booldozer ${BOOLDOZER_SRC})

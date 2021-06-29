@@ -1,4 +1,5 @@
 #include "UIUtil.hpp"
+#include <glm/gtx/matrix_decompose.hpp>
 
 bool LUIUtility::RenderCheckBox(std::string name, bool* c)
 {
@@ -110,17 +111,26 @@ int LUIUtility::TextInputCallback(ImGuiInputTextCallbackData* data)
 	return 0;
 }
 
-void LUIUtility::RenderTransformUI(glm::vec3& translation, glm::vec3& rotation, glm::vec3& scale)
+void LUIUtility::RenderTransformUI(glm::mat4* transform, glm::vec3& translation, glm::vec3& rotation, glm::vec3& scale)
 {
+	bool transChanged = false;
+	glm::vec3 oldPos;
+	glm::quat oldRot;
+	glm::vec3 oldScale;
+	glm::vec3 skew;
+	glm::vec4 persp;
+
+	glm::decompose(*transform, oldScale, oldRot, oldPos, skew, persp);
+
 	if (ImGui::TreeNode("Transform"))
 	{
 		ImGui::PushID("##pos");
 		ImGui::Indent();
 		ImGui::LabelText("", "Position");
 		ImGui::Indent();
-		ImGui::InputFloat("X", &translation.x);
-		ImGui::InputFloat("Y", &translation.y);
-		ImGui::InputFloat("Z", &translation.z);
+		if (ImGui::InputFloat("X", &translation.x) || ImGui::InputFloat("Y", &translation.y) || ImGui::InputFloat("Z", &translation.z))
+			transChanged = true;
+
 		ImGui::Unindent();
 		ImGui::Unindent();
 		ImGui::PopID();
@@ -149,4 +159,7 @@ void LUIUtility::RenderTransformUI(glm::vec3& translation, glm::vec3& rotation, 
 
 		ImGui::TreePop();
 	}
+
+	if (transChanged)
+		(*transform) = glm::translate(*transform, translation - oldPos);
 }
