@@ -16,20 +16,35 @@ void LFurnitureDOMNode::RenderDetailsUI(float dt)
 	LUIUtility::RenderTransformUI(mTransform.get(), mPosition, mRotation, mScale);
 
 	LUIUtility::RenderTextInput("Name", &mName);
+	LUIUtility::RenderTooltip("The name of this furniture object. The game doesn't do anything with this, so feel free to use it for notes.");
+
 	LUIUtility::RenderTextInput("Tag", &mAccessName);
+	LUIUtility::RenderTooltip("A unique identifier that other objects will use to reference this piece of furniture. Often used by ghosts to be hidden inside furniture.");
 
 	ImGui::InputFloat("Item Spawn Vertical Offset", &mVerticalItemSpawnOffset);
+	LUIUtility::RenderTooltip("The vertical offset of the item spawned from this furniture object, relative to the furniture's position.");
+
+	LUIUtility::RenderComboEnum<EMoneyType>("Money Type", mMoneyType);
+	LUIUtility::RenderTooltip("If this piece of furniture is supposed to spawn money, this is what kind of currency it spawns.");
 
 	ImGui::InputInt("Amount of Money Spawned", &mGenerateNumber);
+	LUIUtility::RenderTooltip("If this piece of furniture is supposed to spawn money, this value is how much if it is spawned.");
+
 	ImGui::InputInt("Boo Preference", &mBooHideChance);
+	LUIUtility::RenderTooltip("How likely it is that a Boo will hide inside this piece of furniture. The higher this value, the more likely it is.");
+
 	ImGui::InputInt("Shake Intensity", &mShakeIntensity);
+	LUIUtility::RenderTooltip("How intensely this piece of furniture will shake when Luigi interacts with it.");
 
 	ImGui::InputFloat("arg0", &mVecArgs.x);
 	ImGui::InputFloat("arg1", &mVecArgs.y);
 	ImGui::InputFloat("arg2", &mVecArgs.z);
 
 	ImGui::InputInt("Spawn Flag", &mSpawnFlag);
+	LUIUtility::RenderTooltip("The flag that must be set before this piece of furniture will begin spawning.");
+
 	ImGui::InputInt("Despawn Flag", &mDespawnFlag);
+	LUIUtility::RenderTooltip("If this flag is set, this piece of furniture will no longer spawn.");
 
 	if (ImGui::TreeNode("Interaction Hitbox"))
 	{
@@ -41,26 +56,34 @@ void LFurnitureDOMNode::RenderDetailsUI(float dt)
 
 		ImGui::TreePop();
 	}
+	LUIUtility::RenderTooltip("The side lengths of the hitbox that allows Luigi to interact with this furniture object. The hitbox is centered at the furniture's position.");
 
 	ImGui::InputInt("GBH Scan ID", &mGBHScanID);
+	LUIUtility::RenderTooltip("The ID that determines what Luigi will say about this piece of furniture when scanned with the GameBoy Horror.");
 
 	// Comboboxes
 	LUIUtility::RenderComboEnum<EMoveType>("Move Type", mBehaviorType);
+	LUIUtility::RenderTooltip("How Luigi can interact with this piece of furniture.");
+
 	LUIUtility::RenderComboEnum<EFurnitureSound>("Sound", mSoundID);
+	LUIUtility::RenderTooltip("The sound played when Luigi interacts with this piece of furniture.");
 
 	LUIUtility::RenderComboEnum<ESheetBehavior>("Sheet Behavior", mSheetBehavior);
+	LUIUtility::RenderTooltip("Whether a sheet is placed on this piece of furniture, and if so, how it behaves.");
 	if (mSheetBehavior != ESheetBehavior::None)
 	{
 		ImGui::Indent();
 		LUIUtility::RenderComboEnum<ESheetTexture>("Sheet Texture", mSheetTexture);
+		LUIUtility::RenderTooltip("The texture that the sheet placed on this piece of furniture will use.");
+
 		LUIUtility::RenderCheckBox("Vaccuumable?", &mCanSheetBeVaccuumed);
+		LUIUtility::RenderTooltip("Whether Luigi can vaccuum up the sheet. If unchecked, the sheet will eventually snap back and damage Luigi when vaccuumed.");
 		ImGui::Unindent();
 	}
 
-	LUIUtility::RenderComboEnum<EMoneyType>("Money Type", mMoneyType);
-
 	// Bools
 	LUIUtility::RenderCheckBox("Cutaway?", &mShouldCutaway);
+	LUIUtility::RenderTooltip("Whether this piece of furniture should disappear when Luigi walks behind it.");
 }
 
 void LFurnitureDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const

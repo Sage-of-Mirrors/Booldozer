@@ -163,3 +163,17 @@ void LUIUtility::RenderTransformUI(glm::mat4* transform, glm::vec3& translation,
 	if (transChanged)
 		(*transform) = glm::translate(*transform, translation - oldPos);
 }
+
+void LUIUtility::RenderTooltip(std::string tip)
+{
+	ImGui::SameLine();
+	ImGui::TextDisabled("(?)");
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+		ImGui::TextUnformatted(tip.c_str());
+		ImGui::PopTextWrapPos();
+		ImGui::EndTooltip();
+	}
+}

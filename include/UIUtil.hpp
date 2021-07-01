@@ -24,6 +24,8 @@ namespace LUIUtility
 
 	void RenderTransformUI(glm::mat4* transform, glm::vec3& translation, glm::vec3& rotation, glm::vec3& scale);
 
+	void RenderTooltip(std::string tip);
+
 	template<typename T>
 	// Renders a combobox for the given enum.
 	bool RenderComboEnum(std::string name, T& current_value)
