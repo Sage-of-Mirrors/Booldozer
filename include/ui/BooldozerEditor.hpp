@@ -5,6 +5,7 @@
 #include "modes/ActorMode.hpp"
 
 #include <filesystem>
+#include <memory>
 
 // Backend for the main window's UI.
 class LBooldozerEditor

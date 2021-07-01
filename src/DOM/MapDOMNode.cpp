@@ -32,6 +32,11 @@ std::string const LEntityFileNames[LEntityType_Max] = {
 LMapDOMNode::LMapDOMNode() : Super("map")
 {
 	mType = EDOMNodeType::Map;
+
+	GCerror err;
+	if ((err = gcInitContext(&mArcLoaderContext)) != GC_ERROR_SUCCESS) {
+		printf("Error initing arc loader context: %s\n", gcGetErrorMessage(err));
+	}
 }
 
 bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
@@ -82,10 +87,10 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	{
 		char roomName[16];
 		snprintf(roomName, 16, "room_%02d", i);
-		std::shared_ptr<LRoomDOMNode> newRoom = std::shared_ptr<LRoomDOMNode>(new LRoomDOMNode(std::string(roomName)));
+		std::shared_ptr<LRoomDOMNode> newRoom = std::make_shared<LRoomDOMNode>(std::string(roomName));
 
 		newRoom->LoadJmpInfo(i, &JmpIOManagers[LEntityType_Rooms]);
-		Children.push_back(static_cast<std::shared_ptr<LDOMNodeBase>>(newRoom));
+		AddChild(newRoom);
 	}
 
 	// Now load the other data from the archive.
@@ -157,19 +162,19 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 		switch (type)
 		{
 			case LEntityType_Furniture:
-				newNode = std::shared_ptr<LFurnitureDOMNode>(new LFurnitureDOMNode("furniture_" + i));
+				newNode = std::make_shared<LFurnitureDOMNode>("furniture_" + i);
 				break;
 			case LEntityType_Observers:
-				newNode = std::shared_ptr<LObserverDOMNode>(new LObserverDOMNode("observer_" + i));
+				newNode = std::make_shared<LObserverDOMNode>("observer_" + i);
 				break;
 			case LEntityType_Enemies:
-				newNode = std::shared_ptr<LEnemyDOMNode>(new LEnemyDOMNode("enemy_" + i));
+				newNode = std::make_shared<LEnemyDOMNode>("enemy_" + i);
 				break;
 			case LEntityType_Events:
-				newNode = std::shared_ptr<LEventDOMNode>(new LEventDOMNode("event_" + i));
+				newNode = std::make_shared<LEventDOMNode>("event_" + i);
 				break;
 			case LEntityType_Characters:
-				newNode = std::shared_ptr<LCharacterDOMNode>(new LCharacterDOMNode("character_" + i));
+				newNode = std::make_shared<LCharacterDOMNode>("character_" + i);
 				break;
 			default:
 				break;
@@ -183,13 +188,13 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 			// Examples include: events
 			if (newNode->GetRoomNumber() == -1)
 			{
-				Children.push_back(newNode);
+				AddChild(newNode);
 				continue;
 			}
 
 			std::shared_ptr<LRoomDOMNode> entityRoom = GetRoomByNumber(newNode->GetRoomNumber());
 			if (entityRoom != nullptr)
-				entityRoom->Children.push_back(newNode);
+				entityRoom->AddChild(newNode);
 		}
 	}
 
@@ -199,10 +204,6 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 bool LMapDOMNode::LoadArchive(const char* path, GCarchive* archive)
 {
 	GCerror err;
-	if ((err = gcInitContext(&mArcLoaderContext)) != GC_ERROR_SUCCESS) {
-		printf("Error initing arc loader context: %s\n", gcGetErrorMessage(err));
-		return false;
-	}
 
 	FILE* f = fopen(path, "rb");
 	if (f == nullptr)

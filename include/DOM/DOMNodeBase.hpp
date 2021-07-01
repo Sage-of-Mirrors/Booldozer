@@ -35,7 +35,7 @@ enum class EDOMNodeType
 };
 
 // Base class for all DOM (Document Object Model) nodes.
-class LDOMNodeBase
+class LDOMNodeBase : public std::enable_shared_from_this<LDOMNodeBase>
 {
 	uint32_t mNodeState;
 
@@ -58,6 +58,7 @@ protected:
 public:
 	LDOMNodeBase(std::string name) { mName = name; SetIsSelected(false); SetIsRendered(true); SetIsInitialized(false); }
 
+	std::shared_ptr<LDOMNodeBase> Parent;
 	std::vector<std::shared_ptr<LDOMNodeBase>> Children;
 
 	virtual std::string GetName() { return mName; }
@@ -98,6 +99,40 @@ public:
 		return mType == type;
 	}
 
+	// Returns a shared_ptr representing this node of the given type, if possible;
+	// returns nullptr if this node cannot be cast to the given type.
+	template<typename T>
+	std::shared_ptr<T> GetSharedPtr(EDOMNodeType type)
+	{
+		if (IsNodeType(type))
+			return std::static_pointer_cast<T>(shared_from_this());
+
+		return nullptr;
+	}
+
+	// Adds the given new child to this node's Children collection, and sets
+	// the child's parent to a shared_ptr of this node.
+	void AddChild(std::shared_ptr<LDOMNodeBase> new_child)
+	{
+		Children.push_back(new_child);
+		new_child->Parent = shared_from_this();
+	}
+
+	// Returns the ancestor of this node of the given type, recursing up the hierarchy;
+	// returns nullptr if no parent of the requested type is found.
+	template<typename T>
+	std::shared_ptr<T> GetParentOfType(EDOMNodeType type)
+	{
+		if (Parent == nullptr)
+			return nullptr;
+
+		if (Parent->IsNodeType(type))
+			return std::static_pointer_cast<T>(Parent);
+
+		return Parent->GetParentOfType(type);
+	}
+
+	// Returns a collection of children of this node of the requested type, recursing down the hierarchy.
 	template<typename T>
 	std::vector<std::shared_ptr<T>> GetChildrenOfType(EDOMNodeType type)
 	{

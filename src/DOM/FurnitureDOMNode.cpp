@@ -31,6 +31,17 @@ void LFurnitureDOMNode::RenderDetailsUI(float dt)
 	ImGui::InputInt("Spawn Flag", &mSpawnFlag);
 	ImGui::InputInt("Despawn Flag", &mDespawnFlag);
 
+	if (ImGui::TreeNode("Interaction Hitbox"))
+	{
+		ImGui::Indent();
+		ImGui::InputInt("X", &mHitboxExtents.x);
+		ImGui::InputInt("Y", &mHitboxExtents.y);
+		ImGui::InputInt("Z", &mHitboxExtents.z);
+		ImGui::Unindent();
+
+		ImGui::TreePop();
+	}
+
 	ImGui::InputInt("GBH Scan ID", &mGBHScanID);
 
 	// Comboboxes
