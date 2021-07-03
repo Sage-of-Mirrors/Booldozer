@@ -7,9 +7,10 @@ $input v_texcoord0
 
 #include "bgfx_shader.sh"
 
+layout(location = 0) out vec4 f_fragcolor0; // gl_FragColor is deprecated, so this will be our output color
 SAMPLER2D(s_texColor, 0);
 
 void main()
 {
-	gl_FragColor = texture2D(s_texColor, v_texcoord0);
+	f_fragcolor0 = texture2D(s_texColor, v_texcoord0);
 }

@@ -24,8 +24,9 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 void LBooldozerEditor::onOpenMapCB()
 {
 	mLoadedMap = std::make_shared<LMapDOMNode>();
-	mLoadedMap->LoadMap(std::filesystem::path("D:\\SZS Tools\\Luigi's Mansion\\root\\files\\Map\\map2.szp"));
-	//mLoadedMap->LoadMap(std::filesystem::path("/home/spacey/Projects/LuigisMansion/Mods/LMArcade/files/Map/map2.szp"));
+	//mLoadedMap->LoadMap(std::filesystem::path("D:\\SZS Tools\\Luigi's Mansion\\root\\files\\Map\\map2.szp")); /* Gamma PC */
+	mLoadedMap->LoadMap(std::filesystem::path("/home/mu/GC Games/Luigi's Mansion/files/Map/map2.szp")); /* Gamma Laptop */ 
+	//mLoadedMap->LoadMap(std::filesystem::path("/home/spacey/Projects/LuigisMansion/Mods/LMArcade/files/Map/map2.szp")); /* Space */
 }
 
 void LBooldozerEditor::onOpenRoomsCB()
