@@ -7,6 +7,16 @@
 #include <filesystem>
 #include <memory>
 
+enum class EEditorMode : uint32_t
+{
+	Actor_Mode,
+	Enemy_Mode,
+	Door_Mode,
+	Item_Mode,
+	Event_Mode,
+	Collision_Mode
+};
+
 // Backend for the main window's UI.
 class LBooldozerEditor
 {
