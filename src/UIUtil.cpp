@@ -177,3 +177,43 @@ void LUIUtility::RenderTooltip(std::string tip)
 		ImGui::EndTooltip();
 	}
 }
+
+uint32_t LUIUtility::RenderGizmoToggle()
+{
+	uint32_t t = 0;
+
+	// Translate
+    ImGui::SetNextWindowPos(ImVec2(380, 25));
+    ImGui::SetNextWindowSize(ImVec2(60, 35));
+
+    ImGui::Begin("transform gadget window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
+
+    if (ImGui::Button("Trans"));
+		t = 0;
+
+    ImGui::End();
+
+	// Rotate
+    ImGui::SetNextWindowPos(ImVec2(445, 25));
+    ImGui::SetNextWindowSize(ImVec2(60, 35));
+
+    ImGui::Begin("rotate gadget window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
+
+    if (ImGui::Button("Rot"));
+		t = 1;
+
+    ImGui::End();
+
+	// Scale
+    ImGui::SetNextWindowPos(ImVec2(510, 25));
+    ImGui::SetNextWindowSize(ImVec2(60, 35));
+
+    ImGui::Begin("scale gadget window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
+
+    if (ImGui::Button("Scale"));
+		t = 1;
+
+    ImGui::End();
+
+	return t;
+}

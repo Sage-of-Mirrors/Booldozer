@@ -35,6 +35,31 @@ void LBooldozerMainWindow::render(float dt)
 
     mEditorScene.RenderSubmit(getWidth(), getHeight());
 
+    // Mode combo
+    ImGui::SetNextWindowPos(ImVec2(5, 25));
+    ImGui::SetNextWindowSize(ImVec2(195, 35));
+
+    ImGui::Begin("mode combo window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
+    ImGui::SetNextItemWidth(150);
+    
+    if (LUIUtility::RenderComboEnum<EEditorMode>("##modecombo", mEditorContext.CurrentMode))
+        mEditorContext.ChangeMode();
+    
+    LUIUtility::RenderTooltip("Editor mode. Determines what objects are visible and what can be edited.");
+    ImGui::End();
+
+    // Render distance slider
+    ImGui::SetNextWindowPos(ImVec2(205, 25));
+    ImGui::SetNextWindowSize(ImVec2(150, 35));
+
+    ImGui::Begin("render distance window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
+    ImGui::SetNextItemWidth(105);
+
+    ImGui::SliderFloat("##renderdistance", &mEditorScene.Camera.FarPlane, 1.0f, 20000.0f);
+
+    LUIUtility::RenderTooltip("Render distance. Determines how far away objects must be before they are no longer visible.");
+    ImGui::End();
+
     // Menu bar
     if (ImGui::BeginMainMenuBar())
     {
@@ -69,27 +94,4 @@ void LBooldozerMainWindow::render(float dt)
 	ImGuizmo::BeginFrame();
 	ImGuizmo::SetRect(0,0, (float)getWidth(), (float)getHeight());
     mEditorContext.Render(dt, &mEditorScene);
-    
-    EEditorMode t;
-    float ta = 0.0f;
-
-    // Mode combo
-    ImGui::SetNextWindowPos(ImVec2(5, 25));
-    ImGui::SetNextWindowSize(ImVec2(195, 35));
-
-    ImGui::Begin("mode combo window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
-    ImGui::SetNextItemWidth(150);
-    LUIUtility::RenderComboEnum<EEditorMode>("##modecombo", t);
-    LUIUtility::RenderTooltip("Editor mode. Determines what objects are visible and what can be edited.");
-    ImGui::End();
-
-    // Render distance slider
-    ImGui::SetNextWindowPos(ImVec2(205, 25));
-    ImGui::SetNextWindowSize(ImVec2(150, 35));
-
-    ImGui::Begin("render distance window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
-    ImGui::SetNextItemWidth(105);
-    ImGui::DragFloat("##renderdistance", &ta);
-    LUIUtility::RenderTooltip("Render distance. Determines how far away objects must be before they are no longer visible.");
-    ImGui::End();
 }

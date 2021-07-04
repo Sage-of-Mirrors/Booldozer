@@ -6,9 +6,9 @@
 #include <glm/gtx/quaternion.hpp>
 
 LSceneCamera::LSceneCamera() :
-	mNearPlane(0.1f), mFarPlane(10000.0f), mFovy(glm::radians(60.0f)), mCenter(ZERO), mEye(ZERO),
+	NearPlane(0.1f), FarPlane(10000.0f), Fovy(glm::radians(60.0f)), mCenter(ZERO), mEye(ZERO),
 	mPitch(0.0f), mYaw(0.0f), mUp(UNIT_Y), mRight(UNIT_X), mForward(UNIT_Z),
-	mAspectRatio(16.0f / 9.0f), mAllowUpdates(true), mMoveSpeed(1000.0f), mMouseSensitivity(15.0f),
+	AspectRatio(16.0f / 9.0f), mAllowUpdates(true), mMoveSpeed(1000.0f), mMouseSensitivity(15.0f),
 	mPrevMouseX(0.0f), mPrevMouseY(0.0f), mClickedThisFrame(true)
 {
 	mCenter = mEye + mForward;

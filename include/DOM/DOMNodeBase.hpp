@@ -129,7 +129,7 @@ public:
 		if (Parent->IsNodeType(type))
 			return std::static_pointer_cast<T>(Parent);
 
-		return Parent->GetParentOfType(type);
+		return Parent->GetParentOfType<T>(type);
 	}
 
 	// Returns a collection of children of this node of the requested type, recursing down the hierarchy.

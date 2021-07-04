@@ -32,10 +32,14 @@ class LBooldozerEditor
 public:
 	LBooldozerEditor();
 
+	EEditorMode CurrentMode;
+
 	void Render(float dt, LEditorScene* renderer_scene);
 
 	// Callback for when the user requests to open a map folder.
 	void onOpenMapCB();
 	// Callback for when the user requests to open one or more room arcs.
 	void onOpenRoomsCB();
+	// Switches the current mode to the given new one.
+	void ChangeMode();
 };

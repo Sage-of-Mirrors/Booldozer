@@ -10,6 +10,7 @@
 
 LBooldozerEditor::LBooldozerEditor()
 {
+	CurrentMode = EEditorMode::Actor_Mode;
 	mCurrentMode = &mActorMode;
 }
 
@@ -32,4 +33,32 @@ void LBooldozerEditor::onOpenMapCB()
 void LBooldozerEditor::onOpenRoomsCB()
 {
 	std::cout << "User selected open room(s)!" << std::endl;
+}
+
+void LBooldozerEditor::ChangeMode()
+{
+	if (mCurrentMode != nullptr)
+		mCurrentMode->OnBecomeInactive();
+	
+	switch(CurrentMode)
+	{
+		case EEditorMode::Actor_Mode:
+			break;
+		case EEditorMode::Collision_Mode:
+			break;
+		case EEditorMode::Door_Mode:
+			break;
+		case EEditorMode::Enemy_Mode:
+			break;
+		case EEditorMode::Event_Mode:
+			break;
+		case EEditorMode::Item_Mode:
+			break;
+		default:
+			mCurrentMode = nullptr;
+			break;
+	}
+
+	if (mCurrentMode != nullptr)
+		mCurrentMode->OnBecomeActive();
 }

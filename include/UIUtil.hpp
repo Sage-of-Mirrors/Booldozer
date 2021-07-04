@@ -4,6 +4,7 @@
 #include "DOM.hpp"
 #include "../lib/magic_enum/include/magic_enum.hpp"
 #include <type_traits>
+#include <algorithm>
 
 namespace LUIUtility
 {
@@ -26,6 +27,8 @@ namespace LUIUtility
 
 	void RenderTooltip(std::string tip);
 
+	uint32_t RenderGizmoToggle();
+
 	template<typename T>
 	// Renders a combobox for the given enum.
 	bool RenderComboEnum(std::string name, T& current_value)
@@ -33,19 +36,25 @@ namespace LUIUtility
 		static_assert(std::is_enum_v<T>, "T must be an enum!");
 
 		bool changed = false;
+		auto origName = magic_enum::enum_name(current_value);
+		std::string curName { origName.begin(), origName.end() };
+		std::replace(curName.begin(), curName.end(), '_', ' ');
 
 		// Combobox start
-		if (ImGui::BeginCombo(name.c_str(), magic_enum::enum_name(current_value).data()))
+		if (ImGui::BeginCombo(name.c_str(), curName.c_str()))
 		{
 			// Iterating the possible enum values...
 			for (auto [enum_value, enum_name] : magic_enum::enum_entries<T>())
 			{
+				std::string displayName { enum_name.begin(), enum_name.end() };
+				std::replace(displayName.begin(), displayName.end(), '_', ' ');
+
 				// ImGui ID stack is now at <previous value>##<enum value>
 				ImGui::PushID(static_cast<int>(enum_value));
 
 				// Render the combobox item for this enum value
 				bool is_selected = (current_value == enum_value);
-				if (ImGui::Selectable(enum_name.data(), is_selected))
+				if (ImGui::Selectable(displayName.c_str(), is_selected))
 				{
 					current_value = enum_value;
 					changed = true;

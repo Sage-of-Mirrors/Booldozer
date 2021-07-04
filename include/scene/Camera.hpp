@@ -22,11 +22,6 @@ class LSceneCamera
 	glm::vec3 mRight;
 	glm::vec3 mUp;
 
-	float mNearPlane;
-	float mFarPlane;
-	float mFovy;
-	float mAspectRatio;
-
 /*=== Movement ===*/
 	bool mAllowUpdates;
 	bool mClickedThisFrame;
@@ -39,6 +34,11 @@ class LSceneCamera
 	void Rotate(float dt, float x_delta, float y_delta);
 
 public:
+	float NearPlane;
+	float FarPlane;
+	float Fovy;
+	float AspectRatio;
+
 	LSceneCamera();
 
 	// Handles user input for the given window.
@@ -47,23 +47,5 @@ public:
 	// Calculates and returns the view matrix for this camera's position and look-at direction.
 	glm::mat4 GetViewMatrix() { return glm::lookAt(mEye, mCenter, mUp); }
 	// Calculates and returns the projection matrix from this camera's settings.
-	glm::mat4 GetProjectionMatrix() { return glm::perspective<float>(mFovy, mAspectRatio, mNearPlane, mFarPlane); }
-
-	// Returns this camera's near plane value.
-	float GetNearPlane() { return mNearPlane; }
-	// Returns this camera's far plane value.
-	float GetFarPlane() { return mFarPlane; }
-	// Returns this camera's field of view.
-	float GetFovy() { return mFovy; }
-	// Returns this camera's aspect ratio.
-	float GetAspectRatio() { return mAspectRatio; }
-
-	// Sets this camera's near plane to the given value.
-	void SetNearPlane(float near) { mNearPlane = near; }
-	// Sets this camera's far plane to the given value.
-	void SetFarPlane(float far) { mFarPlane = far; }
-	// Sets this camera's field of view to the given value.
-	void setFovy(float fovy) { mFovy = fovy; }
-	// Sets this camera's aspect ratio to the ratio of the given width and height.
-	void SetAspectRatio(float width, float height) { mAspectRatio = width / height; }
+	glm::mat4 GetProjectionMatrix() { return glm::perspective<float>(Fovy, AspectRatio, NearPlane, FarPlane); }
 };

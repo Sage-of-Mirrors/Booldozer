@@ -3,6 +3,7 @@
 #include "modes/ActorMode.hpp"
 #include "imgui.h"
 #include "ImGuizmo.h"
+#include "UIUtil.hpp"
 
 LActorMode::LActorMode()
 {
@@ -60,6 +61,7 @@ void LActorMode::RenderDetailsWindow()
 
 void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene)
 {
+	LUIUtility::RenderGizmoToggle();
 	RenderSceneHierarchy(current_map);
 	RenderDetailsWindow();
 	

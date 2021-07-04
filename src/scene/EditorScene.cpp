@@ -167,11 +167,11 @@ void LEditorScene::init(){
 }
 
 glm::mat4 LEditorScene::getCameraView(){
-	return mCamera.GetViewMatrix();
+	return Camera.GetViewMatrix();
 }
 
 glm::mat4 LEditorScene::getCameraProj(){
-	return mCamera.GetProjectionMatrix();
+	return Camera.GetProjectionMatrix();
 }
 
 std::shared_ptr<glm::mat4> LEditorScene::InstanceModel(std::string name, glm::mat4 transform){
@@ -183,10 +183,10 @@ std::shared_ptr<glm::mat4> LEditorScene::InstanceModel(std::string name, glm::ma
 }
 
 void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
-	mCamera.SetAspectRatio(m_width, m_height);
+	Camera.AspectRatio = m_width / m_height;
 
-	glm::mat4 view = mCamera.GetViewMatrix();
-	glm::mat4 proj = mCamera.GetProjectionMatrix();
+	glm::mat4 view = Camera.GetViewMatrix();
+	glm::mat4 proj = Camera.GetProjectionMatrix();
 
 	bgfx::setViewTransform(0, &view[0][0], &proj[0][0]);
     bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height));
@@ -197,5 +197,5 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 
 void LEditorScene::update(GLFWwindow* window, float dt)
 {
-	mCamera.Update(window, dt);
+	Camera.Update(window, dt);
 }

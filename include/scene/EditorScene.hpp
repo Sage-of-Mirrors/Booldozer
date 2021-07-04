@@ -48,11 +48,8 @@ public:
 };
 
 
-class LEditorScene {
-private:
-    LSceneCamera mCamera;
-
-public:
+struct LEditorScene {
+    LSceneCamera Camera;
     bool Initialized;
 
     LCubeManager mCubeManager;
