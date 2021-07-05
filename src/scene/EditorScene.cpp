@@ -105,18 +105,19 @@ void LModelManager::render(){
 
 void LCubeManager::render(){
 	if(mInstanceData.size() == 0 || mModelInstances.data == nullptr) return;
-	for(auto instance : mInstanceData){
-		bgfx::setVertexBuffer(0, mCubeVbh);
-		bgfx::setIndexBuffer(mCubeIbh);
-	
-		bgfx::setTexture(0, mCubeTexUniform, mCubeTexture);
-	
-	    uint64_t  _state = 0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_MSAA;
 
-		bgfx::setState( _state );
+	bgfx::setVertexBuffer(0, mCubeVbh);
+	bgfx::setIndexBuffer(mCubeIbh);
+
+	bgfx::setTexture(0, mCubeTexUniform, mCubeTexture);
+
+	uint64_t  _state = 0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_MSAA;
+	bgfx::setState( _state );
+
+	for(auto instance : mInstanceData){
 
 		bgfx::setTransform(&(instance.get())[0][0]);
-		bgfx::submit(0, mCubeShader);
+		bgfx::submit(0, mCubeShader, 0, BGFX_DISCARD_NONE);
 	}
 
 }
