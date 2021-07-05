@@ -7,6 +7,7 @@
 #include "cube_shader_f.h"
 #include "cube_shader_v.h"
 #include "cube_tex.h"
+#include "ImGuizmo.h"
 
 struct Vertex
 {
@@ -139,9 +140,7 @@ void LCubeManager::init(){
 	
 	int x, y, n;
 	uint8_t* data = stbi_load_from_memory(&cube_png[0], cube_png_size, &x, &y, &n, 4);
-	
 	mCubeTexture = bgfx::createTexture2D((uint16_t)x, (uint16_t)y, false, 1, bgfx::TextureFormat::RGBA8, 0, bgfx::copy(data, x*y*4));
-	
 	stbi_image_free(data);
 
 	mCubeTexUniform = bgfx::createUniform("s_texColor",  bgfx::UniformType::Sampler);

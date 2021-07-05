@@ -51,6 +51,7 @@ public:
 struct LEditorScene {
     LSceneCamera Camera;
     bool Initialized;
+    glm::mat4 gridMatrix;
 
     LCubeManager mCubeManager;
     std::map<std::string, LModelManager> mSceneModels;
