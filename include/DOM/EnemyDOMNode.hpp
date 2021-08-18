@@ -38,6 +38,8 @@ public:
 
 	LEnemyDOMNode(std::string name);
 
+	virtual std::string GetCreateName() const override { return mCreateName; }
+
 	virtual std::string GetName() override { return EnemyNames[mName]; }
 	virtual void RenderDetailsUI(float dt) override;
 

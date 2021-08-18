@@ -33,6 +33,13 @@ bool LUIUtility::RenderNodeSelectable(LDOMNodeBase* node)
         return true;
     }
 
+	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+	{
+		ImGui::SetDragDropPayload("DOM_NODE_BASE", &node, sizeof(LDOMNodeBase**));
+		ImGui::Text("%s", node->GetName().c_str());
+		ImGui::EndDragDropSource();
+	}
+
     return false;
 }
 

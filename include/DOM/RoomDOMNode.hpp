@@ -6,6 +6,10 @@
 #include "Model.hpp"
 #include "../lib/libgctools/include/archive.h"
 #include "glm/glm.hpp"
+#include <memory>
+
+class LObserverDOMNode;
+class LEnemyDOMNode;
 
 extern std::string const LRoomEntityTreeNodeNames[];
 
@@ -22,6 +26,14 @@ enum LRoomEntityType : uint32_t
 	LRoomEntityType_BlackoutEnemies,
 	LRoomEntityType_BlackoutObservers,
 	LRoomEntityType_Max,
+};
+
+struct LObserverGroup
+{
+	bool IsWaveCompleted = false;
+	std::string Name = "";
+	std::shared_ptr<LObserverDOMNode> ObserverNode = nullptr;
+	std::vector<std::shared_ptr<LEntityDOMNode>> EntityNodes;
 };
 
 // DOM node representing a single room, including its model and all of the objects within it.
@@ -70,7 +82,9 @@ class LRoomDOMNode : public LBGRenderDOMNode
 /*=== map.dat properties ===*/
 	// TODO
 
-	std::vector<std::string> mCompletedWaves;
+	std::vector<LObserverGroup> Groups;
+
+	void GetEntitiesWithCreateName(const std::string CreateName, const LRoomEntityType Type, std::vector<std::shared_ptr<LEntityDOMNode>>& TargetVec);
 
 public:
 	typedef LBGRenderDOMNode Super;
@@ -80,6 +94,7 @@ public:
 	int32_t GetRoomNumber() { return mRoomNumber; }
 
 	virtual void RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection) override;
+	void RenderWaveHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection);
 
 	// Reads the data from the specified entry in the given LJmpIO instance into this room's JMP properties.
 	void LoadJmpInfo(uint32_t index, LJmpIO* jmp_io);

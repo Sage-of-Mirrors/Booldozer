@@ -1,3 +1,6 @@
+#define _USE_MATH_DEFINES
+#include <cmath>
+
 #include "ui/BooldozerMainWindow.hpp"
 #include "ImGuizmo.h"
 #include "UIUtil.hpp"

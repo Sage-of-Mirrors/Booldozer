@@ -3,6 +3,7 @@
 #include "DOM.hpp"
 #include "modes/EditorModeBase.hpp"
 #include "modes/ActorMode.hpp"
+#include "modes/EnemyMode.hpp"
 
 #include <filesystem>
 #include <memory>
@@ -28,6 +29,7 @@ class LBooldozerEditor
 	LEditorModeBase* mCurrentMode;
 	// The mode responsible for general actor editing.
 	LActorMode mActorMode;
+	LEnemyMode mEnemyMode;
 
 public:
 	LBooldozerEditor();

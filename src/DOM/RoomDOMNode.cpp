@@ -1,4 +1,6 @@
 #include "DOM/RoomDOMNode.hpp"
+#include "DOM/ObserverDOMNode.hpp"
+#include "DOM/EnemyDOMNode.hpp"
 #include "UIUtil.hpp"
 
 std::string const LRoomEntityTreeNodeNames[LRoomEntityType_Max] = {
@@ -81,6 +83,54 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 		}
 
 		// End room tree
+		ImGui::TreePop();
+	}
+}
+
+void LRoomDOMNode::RenderWaveHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection)
+{
+	// This checkbox toggles rendering of the room and all of its children.
+	LUIUtility::RenderCheckBox(this);
+	ImGui::SameLine();
+
+	// Room tree start
+	if (ImGui::TreeNode(mName.c_str()))
+	{
+		if (Groups.size() > 0)
+		{
+			for (uint32_t i = 0; i < Groups.size(); i++)
+			{
+				ImGui::PushID(i);
+
+				ImGui::Indent();
+				if (ImGui::TreeNode(Groups[i].Name.c_str()))
+				{
+					if (ImGui::BeginDragDropTarget())
+					{
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DOM_NODE_BASE"))
+						{
+							IM_ASSERT(payload->DataSize == sizeof(LDOMNodeBase*));
+							LDOMNodeBase* payload_n = *(LDOMNodeBase**)payload->Data;
+							std::cout << "Dropped " << payload_n->GetName() << std::endl;
+						}
+					}
+
+					for (auto entity : Groups[i].EntityNodes)
+					{
+						ImGui::Indent();
+						entity->RenderHierarchyUI(entity, mode_selection);
+						ImGui::Unindent();
+					}
+
+					ImGui::TreePop();
+				}
+
+				ImGui::Unindent();
+
+				ImGui::PopID();
+			}
+		}
+
 		ImGui::TreePop();
 	}
 }
@@ -176,5 +226,43 @@ bool LRoomDOMNode::CompleteLoad(GCarchive* room_arc)
 		mRoomEntities[i] = GetChildrenOfType<LEntityDOMNode>(findType);
 	}
 
+	LObserverGroup defaultGroup;
+	defaultGroup.Name = "Default";
+	GetEntitiesWithCreateName("----", LRoomEntityType_Enemies, defaultGroup.EntityNodes);
+	GetEntitiesWithCreateName("----", LRoomEntityType_Characters, defaultGroup.EntityNodes);
+	Groups.push_back(defaultGroup);
+
+
+
+	std::vector<std::shared_ptr<LEntityDOMNode>> observers = mRoomEntities[LRoomEntityType_Observers];
+	auto it = std::find_if(observers.begin(), observers.end(),
+		[=](std::shared_ptr<LEntityDOMNode> const& object) {
+			std::shared_ptr<LObserverDOMNode> castObserver = object->GetSharedPtr<LObserverDOMNode>(EDOMNodeType::Observer);
+			return (castObserver->GetDoType() == LDoType::Spawn_Create_Name_Entities && castObserver->GetConditionType() != LConditionType::Enemy_Group_Dead && castObserver->GetConditionType() != LConditionType::All_Candles_Lit);
+		}
+	);
+
+	for (auto obs : observers)
+	{
+		std::shared_ptr<LObserverDOMNode> castObs = obs->GetSharedPtr<LObserverDOMNode>(EDOMNodeType::Observer);
+		if (castObs->GetStringArg() == "(null)")
+			continue;
+
+		LObserverGroup newGroup;
+		newGroup.Name = "Group \"" + castObs->GetStringArg() + "\"";
+		GetEntitiesWithCreateName(castObs->GetStringArg(), LRoomEntityType_Enemies, newGroup.EntityNodes);
+		GetEntitiesWithCreateName(castObs->GetStringArg(), LRoomEntityType_Characters, newGroup.EntityNodes);
+		Groups.push_back(newGroup);
+	}
+
 	return true;
+}
+
+void LRoomDOMNode::GetEntitiesWithCreateName(const std::string CreateName, const LRoomEntityType Type, std::vector<std::shared_ptr<LEntityDOMNode>>& TargetVec)
+{
+	for (auto object : mRoomEntities[Type])
+	{
+		if (object->GetCreateName() == CreateName)
+			TargetVec.push_back(object);
+	}
 }

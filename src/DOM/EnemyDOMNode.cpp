@@ -5,7 +5,7 @@ std::map<std::string, std::string> EnemyNames = {
 	{ "yapoo1", "Gold Ghost" },
 	{ "yapoo2", "Temper Terror" },
 
-	{ "mapoo1", "Purple Basher" },
+	{ "mapoo1", "Purple Puncher" },
 	{ "mapoo2", "Flash" },
 
 	{ "mopoo1", "Blue Twirler" },
@@ -55,7 +55,7 @@ std::map<std::string, std::string> EnemyNames = {
 	{ "ifly", "Frying Pan" },
 	{ "inabe", "Pot" },
 	{ "ibookr", "Book" },
-	{ "polter1", "polter1" },
+	{ "polter1", "Flying Object Manager" },
 
 	{ "skul", "Mr. Bones" },
 

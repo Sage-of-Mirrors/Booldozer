@@ -45,6 +45,7 @@ public:
 	LEntityDOMNode(std::string name) : LBGRenderDOMNode(name) { mType = EDOMNodeType::Entity; mRoomNumber = -1; }
 
 	int32_t GetRoomNumber() { return mRoomNumber; }
+	virtual std::string GetCreateName() const { return "(null)"; }
 
 	// Writes the data this JMP node into the given LJmpIO instance at the specified entry.
 	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const = 0;
