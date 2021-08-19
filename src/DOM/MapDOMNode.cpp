@@ -1,5 +1,6 @@
 #include "DOM.hpp"
 #include "../lib/libgctools/include/compression.h"
+#include <fstream>
 
 std::string const LEntityFileNames[LEntityType_Max] = {
 	"characterinfo",
@@ -147,6 +148,21 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 		r->CompleteLoad(&roomArc);
 	}
+
+	return true;
+}
+
+bool LMapDOMNode::SaveMap(std::filesystem::path file_path)
+{
+	auto characters = GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Character);
+
+	bStream::CMemoryStream fileWriter = bStream::CMemoryStream(characters.size() * 184, bStream::Endianess::Big, bStream::OpenMode::Out);
+	JmpIOManagers[LEntityType_Characters].Save(&fileWriter, GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Character));
+
+	std::ofstream outStr;
+	outStr.open("D://SZS Tools//Luigi's Mansion//Booldozer//characterinfo", std::ios::binary | std::ios::out);
+	outStr.write((const char*)fileWriter.getBuffer(), fileWriter.getSize());
+	outStr.close();
 
 	return true;
 }

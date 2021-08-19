@@ -26,6 +26,7 @@ public:
 	LMapDOMNode();
 
 	bool LoadMap(std::filesystem::path file_path);
+	bool SaveMap(std::filesystem::path file_path);
 	std::shared_ptr<LRoomDOMNode> GetRoomByNumber(int32_t number);
 
 /*=== Type operations ===*/

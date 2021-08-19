@@ -42,6 +42,10 @@ public:
 	void onOpenMapCB();
 	// Callback for when the user requests to open one or more room arcs.
 	void onOpenRoomsCB();
+
+	// Callback for when the user requests to save a map
+	void onSaveMapCB();
+
 	// Switches the current mode to the given new one.
 	void ChangeMode();
 };

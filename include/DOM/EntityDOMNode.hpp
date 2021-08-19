@@ -46,6 +46,7 @@ public:
 
 	int32_t GetRoomNumber() { return mRoomNumber; }
 	virtual std::string GetCreateName() const { return "(null)"; }
+	virtual void SetCreateName(std::string newCreateName) { };
 
 	// Writes the data this JMP node into the given LJmpIO instance at the specified entry.
 	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const = 0;

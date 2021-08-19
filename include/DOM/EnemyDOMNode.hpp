@@ -39,6 +39,7 @@ public:
 	LEnemyDOMNode(std::string name);
 
 	virtual std::string GetCreateName() const override { return mCreateName; }
+	virtual void SetCreateName(std::string newCreateName) override { mCreateName = newCreateName; }
 
 	virtual std::string GetName() override { return EnemyNames[mName]; }
 	virtual void RenderDetailsUI(float dt) override;
@@ -49,6 +50,8 @@ public:
 	virtual void Deserialize(LJmpIO* JmpIO, uint32_t entry_index) override;
 
 /*=== Type operations ===*/
+	virtual const char* GetNodeTypeString() override { return "DOM_NODE_ENEMY"; }
+
 	// Returns whether this node is of the given type, or derives from a node of that type.
 	virtual bool IsNodeType(EDOMNodeType type) const override
 	{

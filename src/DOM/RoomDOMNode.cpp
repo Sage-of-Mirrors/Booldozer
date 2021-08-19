@@ -103,18 +103,46 @@ void LRoomDOMNode::RenderWaveHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEd
 				ImGui::PushID(i);
 
 				ImGui::Indent();
-				if (ImGui::TreeNode(Groups[i].Name.c_str()))
+
+				bool bTreeExpanded = ImGui::TreeNode(Groups[i].GetGroupName().c_str());
+
+				// Handle drag and drop
+				if (ImGui::BeginDragDropTarget())
 				{
-					if (ImGui::BeginDragDropTarget())
+					LDOMNodeBase* dragDropNode = GetSpawnGroupDragDropNode();
+
+					// Skip if there's no pending drag and drop to handle
+					if (dragDropNode != nullptr)
 					{
-						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DOM_NODE_BASE"))
+						std::shared_ptr<LEntityDOMNode> sharedNode = GetSpawnGroupDragDropNode()->GetSharedPtr<LEntityDOMNode>(EDOMNodeType::Entity);
+						LSpawnGroup* originGroup = GetSpawnGroupWithCreateName(sharedNode->GetCreateName());
+
+						// Skip if source and destination groups are the same
+						if (Groups[i].CreateName != originGroup->CreateName)
 						{
-							IM_ASSERT(payload->DataSize == sizeof(LDOMNodeBase*));
-							LDOMNodeBase* payload_n = *(LDOMNodeBase**)payload->Data;
-							std::cout << "Dropped " << payload_n->GetName() << std::endl;
+							// Remove the node from its original group
+							for (auto iter = originGroup->EntityNodes.begin(); iter != originGroup->EntityNodes.end(); ++iter)
+							{
+								if (*iter == sharedNode)
+								{
+									originGroup->EntityNodes.erase(iter);
+									break;
+								}
+							}
+
+							// Add the node to its new group and update its create name
+							Groups[i].EntityNodes.push_back(sharedNode);
+							sharedNode->SetCreateName(Groups[i].CreateName);
+
+							std::cout << "Moved " << dragDropNode->GetName() << " from group " << originGroup->CreateName << " to group " << sharedNode->GetCreateName() << std::endl;
 						}
 					}
 
+					ImGui::EndDragDropTarget();
+				}
+
+				if (bTreeExpanded)
+				{
 					for (auto entity : Groups[i].EntityNodes)
 					{
 						ImGui::Indent();
@@ -226,12 +254,10 @@ bool LRoomDOMNode::CompleteLoad(GCarchive* room_arc)
 		mRoomEntities[i] = GetChildrenOfType<LEntityDOMNode>(findType);
 	}
 
-	LObserverGroup defaultGroup;
-	defaultGroup.Name = "Default";
+	LSpawnGroup defaultGroup;
 	GetEntitiesWithCreateName("----", LRoomEntityType_Enemies, defaultGroup.EntityNodes);
 	GetEntitiesWithCreateName("----", LRoomEntityType_Characters, defaultGroup.EntityNodes);
 	Groups.push_back(defaultGroup);
-
 
 
 	std::vector<std::shared_ptr<LEntityDOMNode>> observers = mRoomEntities[LRoomEntityType_Observers];
@@ -248,8 +274,7 @@ bool LRoomDOMNode::CompleteLoad(GCarchive* room_arc)
 		if (castObs->GetStringArg() == "(null)")
 			continue;
 
-		LObserverGroup newGroup;
-		newGroup.Name = "Group \"" + castObs->GetStringArg() + "\"";
+		LSpawnGroup newGroup(castObs->GetStringArg(), castObs);
 		GetEntitiesWithCreateName(castObs->GetStringArg(), LRoomEntityType_Enemies, newGroup.EntityNodes);
 		GetEntitiesWithCreateName(castObs->GetStringArg(), LRoomEntityType_Characters, newGroup.EntityNodes);
 		Groups.push_back(newGroup);
@@ -265,4 +290,38 @@ void LRoomDOMNode::GetEntitiesWithCreateName(const std::string CreateName, const
 		if (object->GetCreateName() == CreateName)
 			TargetVec.push_back(object);
 	}
+}
+
+LSpawnGroup* LRoomDOMNode::GetSpawnGroupWithCreateName(std::string createName)
+{
+	auto it = std::find_if(Groups.begin(), Groups.end(),
+		[=](LSpawnGroup const& object) {
+			return object.CreateName == createName;
+		}
+	);
+
+	if (it == Groups.end())
+		return nullptr;
+
+	return &(*it);
+}
+
+LEntityDOMNode* LRoomDOMNode::GetSpawnGroupDragDropNode()
+{
+	const ImGuiPayload* payload = ImGui::GetDragDropPayload();
+
+	if (payload != nullptr && payload->Data != nullptr)
+	{
+		if (payload->IsDataType("DOM_NODE_CHARACTER") || payload->IsDataType("DOM_NODE_ENEMY") || payload->IsDataType("DOM_NODE_KEY") ||
+			payload->IsDataType("DOM_NODE_CHARACTER_BLACKOUT") || payload->IsDataType("DOM_NODE_ENEMY_BLACKOUT") || payload->IsDataType("DOM_NODE_KEY_BLACKOUT"))
+		{
+			if (ImGui::AcceptDragDropPayload(payload->DataType) == nullptr)
+				return nullptr;
+
+			IM_ASSERT(payload->DataSize == sizeof(LDOMNodeBase*));
+			return *(LEntityDOMNode**)payload->Data;
+		}
+	}
+
+	return nullptr;
 }

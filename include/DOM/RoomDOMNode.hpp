@@ -28,12 +28,24 @@ enum LRoomEntityType : uint32_t
 	LRoomEntityType_Max,
 };
 
-struct LObserverGroup
+struct LSpawnGroup
 {
 	bool IsWaveCompleted = false;
-	std::string Name = "";
-	std::shared_ptr<LObserverDOMNode> ObserverNode = nullptr;
+
+	std::string CreateName;
+
+	std::shared_ptr<LObserverDOMNode> ObserverNode;
 	std::vector<std::shared_ptr<LEntityDOMNode>> EntityNodes;
+
+	LSpawnGroup(std::string createName = "----", std::shared_ptr<LObserverDOMNode> observer = nullptr) { CreateName = createName; ObserverNode = observer; }
+
+	std::string GetGroupName()
+	{
+		if (CreateName == "----")
+			return "Default Group";
+		
+		return "Group " + CreateName;
+	}
 };
 
 // DOM node representing a single room, including its model and all of the objects within it.
@@ -82,9 +94,11 @@ class LRoomDOMNode : public LBGRenderDOMNode
 /*=== map.dat properties ===*/
 	// TODO
 
-	std::vector<LObserverGroup> Groups;
+	std::vector<LSpawnGroup> Groups;
 
 	void GetEntitiesWithCreateName(const std::string CreateName, const LRoomEntityType Type, std::vector<std::shared_ptr<LEntityDOMNode>>& TargetVec);
+	LSpawnGroup* GetSpawnGroupWithCreateName(std::string createName);
+	LEntityDOMNode* GetSpawnGroupDragDropNode();
 
 public:
 	typedef LBGRenderDOMNode Super;
@@ -104,6 +118,8 @@ public:
 	bool CompleteLoad(GCarchive* room_arc);
 
 /*=== Type operations ===*/
+	virtual const char* GetNodeTypeString() override { return "DOM_NODE_ROOM"; }
+
 	// Returns whether this node is of the given type, or derives from a node of that type.
 	virtual bool IsNodeType(EDOMNodeType type) const override
 	{

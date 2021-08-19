@@ -102,7 +102,7 @@ public:
 
 /*== Output ==*/
 	// Saves the current JMP data to the given stream.
-	bool Save(bStream::CMemoryStream* stream, std::vector<LEntityDOMNode*> entities);
+	bool Save(bStream::CMemoryStream* stream, std::vector<std::shared_ptr<LEntityDOMNode>> entities);
 
 	// Writes an unsigned int to the given field in the specified JMP entry,
 	// packing into a bitfield if required.

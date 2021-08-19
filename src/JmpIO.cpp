@@ -209,7 +209,7 @@ uint32_t LJmpIO::CalculateNewEntrySize()
 	return newSize;
 }
 
-bool LJmpIO::Save(bStream::CMemoryStream* stream, std::vector<LEntityDOMNode*> entities)
+bool LJmpIO::Save(bStream::CMemoryStream* stream, std::vector<std::shared_ptr<LEntityDOMNode>> entities)
 {
 	stream->writeInt32((int32_t)entities.size());
 	stream->writeInt32(mFieldCount);

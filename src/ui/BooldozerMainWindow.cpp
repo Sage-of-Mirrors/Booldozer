@@ -101,6 +101,11 @@ void LBooldozerMainWindow::render(float dt)
             if (ImGui::MenuItem("Open Room(s)..."))
                 mEditorContext.onOpenRoomsCB();
 
+            ImGui::Separator();
+
+            if (ImGui::MenuItem("Save Map..."))
+                mEditorContext.onSaveMapCB();
+
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Edit"))

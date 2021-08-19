@@ -33,14 +33,19 @@ bool LUIUtility::RenderNodeSelectable(LDOMNodeBase* node)
         return true;
     }
 
+	RenderNodeSelectableDragSource(node);
+
+    return false;
+}
+
+void LUIUtility::RenderNodeSelectableDragSource(LDOMNodeBase* node)
+{
 	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
 	{
-		ImGui::SetDragDropPayload("DOM_NODE_BASE", &node, sizeof(LDOMNodeBase**));
+		ImGui::SetDragDropPayload(node->GetNodeTypeString(), &node, sizeof(LDOMNodeBase*));
 		ImGui::Text("%s", node->GetName().c_str());
 		ImGui::EndDragDropSource();
 	}
-
-    return false;
 }
 
 bool LUIUtility::RenderComboBox(std::string name, std::vector<std::shared_ptr<LEntityDOMNode>> options, std::shared_ptr<LEntityDOMNode> current_selection)

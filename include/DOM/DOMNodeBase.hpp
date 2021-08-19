@@ -93,6 +93,11 @@ public:
 	}
 
 /*=== Type operations ===*/
+	virtual const char* GetNodeTypeString() { return "DOM_NODE_BASE"; }
+
+	// Returns the underlying type of this node.
+	virtual EDOMNodeType GetNodeType() const { return mType; }
+
 	// Returns whether this node is of the given type, or derives from a node of that type.
 	virtual bool IsNodeType(EDOMNodeType type) const
 	{

@@ -30,6 +30,7 @@ public:
 	LCharacterDOMNode(std::string name);
 
 	virtual std::string GetCreateName() const override { return mCreateName; }
+	virtual void SetCreateName(std::string newCreateName) override { mCreateName = newCreateName; }
 
 	// Writes the data this JMP node into the given LJmpIO instance at the specified entry.
 	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const override;
@@ -37,6 +38,8 @@ public:
 	virtual void Deserialize(LJmpIO* JmpIO, uint32_t entry_index) override;
 
 /*=== Type operations ===*/
+	virtual const char* GetNodeTypeString() override { return "DOM_NODE_CHARACTER"; }
+
 	// Returns whether this node is of the given type, or derives from a node of that type.
 	virtual bool IsNodeType(EDOMNodeType type) const override
 	{

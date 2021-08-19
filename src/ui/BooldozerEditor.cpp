@@ -35,6 +35,12 @@ void LBooldozerEditor::onOpenRoomsCB()
 	std::cout << "User selected open room(s)!" << std::endl;
 }
 
+void LBooldozerEditor::onSaveMapCB()
+{
+	if (mLoadedMap != nullptr)
+		mLoadedMap->SaveMap(std::filesystem::path("D:\\SZS Tools\\Luigi's Mansion\\Booldozer\\jmptest"));
+}
+
 void LBooldozerEditor::ChangeMode()
 {
 	if (mCurrentMode != nullptr)
