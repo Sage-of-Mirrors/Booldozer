@@ -38,7 +38,7 @@ void LBooldozerEditor::onOpenRoomsCB()
 void LBooldozerEditor::onSaveMapCB()
 {
 	if (mLoadedMap != nullptr)
-		mLoadedMap->SaveMap(std::filesystem::path("D:\\SZS Tools\\Luigi's Mansion\\Booldozer\\jmptest"));
+		mLoadedMap->SaveMapToFiles(std::filesystem::path("D:\\SZS Tools\\Luigi's Mansion\\Booldozer\\jmptest"));
 }
 
 void LBooldozerEditor::ChangeMode()

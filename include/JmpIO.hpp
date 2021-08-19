@@ -5,6 +5,7 @@
 #include <vector>
 
 constexpr size_t JMP_HEADER_SIZE = 16;
+constexpr size_t JMP_FIELD_DEF_SIZE = 12;
 constexpr size_t JMP_FIXED_STRING_SIZE = 32;
 constexpr uint32_t JMP_HASH_PRIME = 33554393;
 
@@ -73,7 +74,9 @@ class LJmpIO
 public:
 	LJmpIO();
 
-	int32_t GetEntryCount() { return mEntryCount; }
+	int32_t GetEntryCount() const { return mEntryCount; }
+	uint32_t GetEntrySize() const { return mEntrySize; }
+	int32_t GetFieldCount() const { return mFieldCount; }
 
 /*== Input ==*/
 	// Attempts to load a JMP file from the given stream. Returns
@@ -102,7 +105,7 @@ public:
 
 /*== Output ==*/
 	// Saves the current JMP data to the given stream.
-	bool Save(bStream::CMemoryStream* stream, std::vector<std::shared_ptr<LEntityDOMNode>> entities);
+	bool Save(std::vector<std::shared_ptr<LEntityDOMNode>> entities, bStream::CMemoryStream& stream);
 
 	// Writes an unsigned int to the given field in the specified JMP entry,
 	// packing into a bitfield if required.

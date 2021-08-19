@@ -209,23 +209,27 @@ uint32_t LJmpIO::CalculateNewEntrySize()
 	return newSize;
 }
 
-bool LJmpIO::Save(bStream::CMemoryStream* stream, std::vector<std::shared_ptr<LEntityDOMNode>> entities)
+bool LJmpIO::Save(std::vector<std::shared_ptr<LEntityDOMNode>> entities, bStream::CMemoryStream& stream)
 {
-	stream->writeInt32((int32_t)entities.size());
-	stream->writeInt32(mFieldCount);
-	stream->writeUInt32(mFieldCount * sizeof(LJmpFieldInfo) + JMP_HEADER_SIZE);
+	// Calculate the size of the required buffer. Header size + number of fields * field size + number of entities * entity size
+	size_t newFileSize = JMP_HEADER_SIZE + (mFieldCount * JMP_FIELD_DEF_SIZE) + (entities.size() * mEntrySize);
+	stream = bStream::CMemoryStream(newFileSize, bStream::Endianess::Big, bStream::OpenMode::Out);
+
+	stream.writeInt32((int32_t)entities.size());
+	stream.writeInt32(mFieldCount);
+	stream.writeUInt32(mFieldCount * sizeof(LJmpFieldInfo) + JMP_HEADER_SIZE);
 
 	uint32_t newEntrySize = CalculateNewEntrySize();
-	stream->writeUInt32(newEntrySize);
+	stream.writeUInt32(newEntrySize);
 
 	// Write the field info data
 	for (const LJmpFieldInfo f : mFields)
 	{
-		stream->writeUInt32(f.Hash);
-		stream->writeUInt32(f.Bitmask);
-		stream->writeUInt16(f.Start);
-		stream->writeUInt8(f.Shift);
-		stream->writeUInt8((uint8_t)f.Type);
+		stream.writeUInt32(f.Hash);
+		stream.writeUInt32(f.Bitmask);
+		stream.writeUInt16(f.Start);
+		stream.writeUInt8(f.Shift);
+		stream.writeUInt8((uint8_t)f.Type);
 	}
 
 	// Discard old entry data
@@ -243,7 +247,7 @@ bool LJmpIO::Save(bStream::CMemoryStream* stream, std::vector<std::shared_ptr<LE
 		entities[i]->Serialize(this, i);
 	}
 
-	stream->writeBytes((char*)mData, newDataSize);
+	stream.writeBytes((char*)mData, newDataSize);
 
 	return true;
 }

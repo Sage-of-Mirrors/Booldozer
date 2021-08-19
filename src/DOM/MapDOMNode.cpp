@@ -152,17 +152,24 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	return true;
 }
 
-bool LMapDOMNode::SaveMap(std::filesystem::path file_path)
+bool LMapDOMNode::SaveMapToFiles(std::filesystem::path folder_path)
 {
-	auto characters = GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Character);
+	for (int32_t entityType = 0; entityType < LEntityType_Max; entityType++)
+	{
+		std::filesystem::path entityFilePath = folder_path / LEntityFileNames[entityType];
+		auto entitiesOfType = GetChildrenOfType<LEntityDOMNode>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType));
 
-	bStream::CMemoryStream fileWriter = bStream::CMemoryStream(characters.size() * 184, bStream::Endianess::Big, bStream::OpenMode::Out);
-	JmpIOManagers[LEntityType_Characters].Save(&fileWriter, GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Character));
+		if (entitiesOfType.size() == 0)
+			continue;
 
-	std::ofstream outStr;
-	outStr.open("D://SZS Tools//Luigi's Mansion//Booldozer//characterinfo", std::ios::binary | std::ios::out);
-	outStr.write((const char*)fileWriter.getBuffer(), fileWriter.getSize());
-	outStr.close();
+		bStream::CMemoryStream memWriter;
+		JmpIOManagers[entityType].Save(entitiesOfType, memWriter);
+
+		std::ofstream fileStream;
+		fileStream.open(entityFilePath.c_str(), std::ios::binary | std::ios::out);
+		fileStream.write((const char*)memWriter.getBuffer(), memWriter.getSize());
+		fileStream.close();
+	}
 
 	return true;
 }

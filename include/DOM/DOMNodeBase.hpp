@@ -31,7 +31,9 @@ enum class EDOMNodeType
 	Path,
 	BlackoutCharacter,
 	BlackoutEnemy,
-	BlackoutObserver
+	BlackoutObserver,
+	BlackoutKey,
+	Key
 };
 
 // Base class for all DOM (Document Object Model) nodes.

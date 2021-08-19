@@ -62,4 +62,44 @@ public:
 
 		return Super::IsNodeType(type);
 	}
+
+	static EDOMNodeType EntityTypeToDOMNodeType(LEntityType t)
+	{
+		switch (t)
+		{
+		case LEntityType_Characters:
+			return EDOMNodeType::Character;
+		case LEntityType_BlackoutCharacters:
+			return EDOMNodeType::BlackoutCharacter;
+
+		case LEntityType_Enemies:
+			return EDOMNodeType::Enemy;
+		case LEntityType_BlackoutEnemies:
+			return EDOMNodeType::BlackoutEnemy;
+
+		case LEntityType_Keys:
+			return EDOMNodeType::Key;
+		case LEntityType_BlackoutKeys:
+			return EDOMNodeType::BlackoutKey;
+
+		case LEntityType_Observers:
+			return EDOMNodeType::Observer;
+		case LEntityType_BlackoutObservers:
+			return EDOMNodeType::BlackoutObserver;
+
+		case LEntityType_Events:
+			return EDOMNodeType::Event;
+		case LEntityType_Furniture:
+			return EDOMNodeType::Furniture;
+		case LEntityType_Generators:
+			return EDOMNodeType::Generator;
+		case LEntityType_Objects:
+			return EDOMNodeType::Object;
+		case LEntityType_Paths:
+			return EDOMNodeType::Path;
+
+		default:
+			return EDOMNodeType::Map;
+		}
+	}
 };
