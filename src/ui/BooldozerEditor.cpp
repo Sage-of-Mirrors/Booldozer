@@ -7,6 +7,7 @@
 #include <vector>
 #include <memory>
 #include "imgui.h"
+#include "ImGuiFileDialog/ImGuiFileDialog.h"
 
 LBooldozerEditor::LBooldozerEditor()
 {
@@ -16,18 +17,37 @@ LBooldozerEditor::LBooldozerEditor()
 
 void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 {
+	// Render file dialog for opening map
+	if (ImGuiFileDialog::Instance()->Display("OpenMapDlg"))
+	{
+		// action if OK
+		if (ImGuiFileDialog::Instance()->IsOk())
+		{
+			std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+			OpenMap(filePathName);
+		}
+
+		// close
+		ImGuiFileDialog::Instance()->Close();
+	}
+
 	if (mLoadedMap == nullptr || mLoadedMap->Children.empty() || mCurrentMode == nullptr)
 		return;
 
 	mCurrentMode->Render(mLoadedMap, renderer_scene);
 }
 
-void LBooldozerEditor::onOpenMapCB()
+void LBooldozerEditor::OpenMap(std::string file_path)
 {
 	mLoadedMap = std::make_shared<LMapDOMNode>();
-	mLoadedMap->LoadMap(std::filesystem::path("D:\\SZS Tools\\Luigi's Mansion\\root\\files\\Map\\map2.szp")); /* Gamma PC */
-	//mLoadedMap->LoadMap(std::filesystem::path("/home/mu/GC Games/Luigi's Mansion/files/Map/map2.szp")); /* Gamma Laptop */ 
+	mLoadedMap->LoadMap(std::filesystem::path(file_path));
+
 	//mLoadedMap->LoadMap(std::filesystem::path("/home/spacey/Projects/LuigisMansion/Mods/LMArcade/files/Map/map2.szp")); /* Space */
+}
+
+void LBooldozerEditor::onOpenMapCB()
+{
+	ImGuiFileDialog::Instance()->OpenDialog("OpenMapDlg", "Open map archive", ".szp,.arc,.szs", ".");
 }
 
 void LBooldozerEditor::onOpenRoomsCB()

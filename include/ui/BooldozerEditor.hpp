@@ -31,6 +31,8 @@ class LBooldozerEditor
 	LActorMode mActorMode;
 	LEnemyMode mEnemyMode;
 
+	void OpenMap(std::string file_path);
+
 public:
 	LBooldozerEditor();
 
