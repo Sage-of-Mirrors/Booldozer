@@ -3,7 +3,7 @@
 	url = git@github.com:Astral-C/libgctools.git
 [submodule "lib/bigg"]
 	path = lib/bigg
-	url = git@github.com:Josh4428/bigg.git
+url=git@github.com:Sage-of-Mirrors/bigg.git
 [submodule "lib/ImGuiFileDialog"]
 	path = lib/ImGuiFileDialog
 	url = git@github.com:aiekick/ImGuiFileDialog.git
