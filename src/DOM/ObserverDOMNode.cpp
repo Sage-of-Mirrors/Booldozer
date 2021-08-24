@@ -3,7 +3,7 @@
 LObserverDOMNode::LObserverDOMNode(std::string name) : Super(name),
 	mCodeName("(null)"), mCondStringArg0("(null)"), mStringArg0("(null)"),
 	mCondArg0(0), mArg0(0), mArg1(0), mArg2(0), mArg3(0), mArg4(0), mArg5(0), mSpawnFlag(0), mDespawnFlag(0),
-	mCondType(LConditionType::Always_True), mDoType(LDoType::Nothing), mIsVisible(false), mUnkBool1(false)
+	mCondType(EConditionType::Always_True), mDoType(EDoType::Nothing), mIsVisible(false), mUnkBool1(false)
 {
 	mType = EDOMNodeType::Observer;
 }
@@ -80,8 +80,8 @@ void LObserverDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 	mSpawnFlag = JmpIO->GetSignedInt(entry_index, "appear_flag");
 	mDespawnFlag = JmpIO->GetSignedInt(entry_index, "disappear_flag");
 
-	mCondType = (LConditionType)JmpIO->GetUnsignedInt(entry_index, "cond_type");
-	mDoType = (LDoType)JmpIO->GetUnsignedInt(entry_index, "do_type");
+	mCondType = (EConditionType)JmpIO->GetUnsignedInt(entry_index, "cond_type");
+	mDoType = (EDoType)JmpIO->GetUnsignedInt(entry_index, "do_type");
 
 	mIsVisible = JmpIO->GetBoolean(entry_index, "invisible");
 }

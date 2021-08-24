@@ -162,7 +162,10 @@ bool LMapDOMNode::SaveMapToFiles(std::filesystem::path folder_path)
 		if (entitiesOfType.size() == 0)
 			continue;
 
-		bStream::CMemoryStream memWriter;
+		// Calculate the size of the required buffer. Header size + number of fields * field size + number of entities * entity size
+		size_t newFileSize = JmpIOManagers[entityType].CalculateNewFileSize(entitiesOfType.size());
+		bStream::CMemoryStream memWriter = bStream::CMemoryStream(newFileSize, bStream::Endianess::Big, bStream::OpenMode::Out);;
+
 		JmpIOManagers[entityType].Save(entitiesOfType, memWriter);
 
 		std::ofstream fileStream;

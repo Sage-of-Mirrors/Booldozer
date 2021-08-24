@@ -53,6 +53,11 @@ public:
 	// Reads the data from the specified entry in the given LJmpIO instance into this JMP node.
 	virtual void Deserialize(LJmpIO* JmpIO, uint32_t entry_index) = 0;
 
+	// Fixes up things that need to be done post-load, like generating node reference members from indices or names.
+	virtual void PostProcess();
+	// Ensures that things that need to be done prior to saving are done, like converting from reference member to indices or names.
+	virtual void PreProcess();
+
 /*=== Type operations ===*/
 	// Returns whether this node is of the given type, or derives from a node of that type.
 	virtual bool IsNodeType(EDOMNodeType type) const override

@@ -2,31 +2,31 @@
 
 #include "EntityDOMNode.hpp"
 
-enum class LConditionType : uint32_t
+enum class EConditionType : uint32_t
 {
 	Always_True,
-	Find_Player_On_Path,
+	Find_Player_along_Path,
 	Always_True_2,
-	All_Enemies_Dead,
-	Check_GBH_Timer,
+	All_Enemies_are_Dead,
+	Check_GBH_Time,
 	Always_True_3,
-	Find_Player_Far,
-	Find_Player_Near,
-	Find_Player_Infinite,
-	All_Candles_Lit,
-	All_Candles_Extinguished,
-	Flag_91_Set,
-	All_Water_Generators_Off,
-	Room_Lights_On,
-	Enemy_Group_Dead,
-	In_Same_Room,
-	Room_Lights_Off,
-	Access_Name_Valid,
-	Flag_Arg_Set,
-	Flag_Arg_Not_Set
+	Find_Player_at_Long_Range,
+	Find_Player_at_Close_Range,
+	Find_Player_at_Infinite_Range,
+	All_Candles_are_Lit,
+	All_Candles_are_Extinguished,
+	Flag_91_is_Set,
+	All_Water_Generators_are_Off,
+	Room_Lights_are_On,
+	Spawn_Group_is_Dead,
+	Object_is_in_Same_Room_as_Player,
+	Room_Lights_are_Off,
+	Access_Name_is_Valid,
+	Flag_Arg_is_Set,
+	Flag_Arg_is_Not_Set
 };
 
-enum class LDoType : uint32_t
+enum class EDoType : uint32_t
 {
 	Nothing,
 	Turn_Room_Lights_On,
@@ -36,9 +36,9 @@ enum class LDoType : uint32_t
 	Path_Loop_Middle,
 	Path_Loop_End,
 	Set_Flag_Arg,
-	Chandelier_Fall_UNUSED,
+	UNUSED_Chandelier_Fall,
 	Play_Sound_or_Anim,
-	Spawn_Create_Name_Entities,
+	Trigger_Spawn_Group,
 	Lock_All_Doors,
 	Unlock_All_Doors
 };
@@ -60,8 +60,8 @@ class LObserverDOMNode : public LEntityDOMNode
 	int32_t mSpawnFlag;
 	int32_t mDespawnFlag;
 
-	LConditionType mCondType;
-	LDoType mDoType;
+	EConditionType mCondType;
+	EDoType mDoType;
 
 	bool mIsVisible;
 	bool mUnkBool1;
@@ -77,8 +77,8 @@ public:
 	virtual void Deserialize(LJmpIO* JmpIO, uint32_t entry_index) override;
 
 	std::string GetStringArg() { return mStringArg0; }
-	LConditionType GetConditionType() { return mCondType; }
-	LDoType GetDoType() { return mDoType; }
+	EConditionType GetConditionType() { return mCondType; }
+	EDoType GetDoType() { return mDoType; }
 
 /*=== Type operations ===*/
 	// Returns whether this node is of the given type, or derives from a node of that type.

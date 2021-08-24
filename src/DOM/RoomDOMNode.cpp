@@ -264,7 +264,7 @@ bool LRoomDOMNode::CompleteLoad(GCarchive* room_arc)
 	auto it = std::find_if(observers.begin(), observers.end(),
 		[=](std::shared_ptr<LEntityDOMNode> const& object) {
 			std::shared_ptr<LObserverDOMNode> castObserver = object->GetSharedPtr<LObserverDOMNode>(EDOMNodeType::Observer);
-			return (castObserver->GetDoType() == LDoType::Spawn_Create_Name_Entities && castObserver->GetConditionType() != LConditionType::Enemy_Group_Dead && castObserver->GetConditionType() != LConditionType::All_Candles_Lit);
+			return (castObserver->GetDoType() == EDoType::Trigger_Spawn_Group && castObserver->GetConditionType() != EConditionType::Spawn_Group_is_Dead && castObserver->GetConditionType() != EConditionType::All_Candles_are_Lit);
 		}
 	);
 

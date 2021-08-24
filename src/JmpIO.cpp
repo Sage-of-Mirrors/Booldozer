@@ -211,10 +211,6 @@ uint32_t LJmpIO::CalculateNewEntrySize()
 
 bool LJmpIO::Save(std::vector<std::shared_ptr<LEntityDOMNode>> entities, bStream::CMemoryStream& stream)
 {
-	// Calculate the size of the required buffer. Header size + number of fields * field size + number of entities * entity size
-	size_t newFileSize = JMP_HEADER_SIZE + (mFieldCount * JMP_FIELD_DEF_SIZE) + (entities.size() * mEntrySize);
-	stream = bStream::CMemoryStream(newFileSize, bStream::Endianess::Big, bStream::OpenMode::Out);
-
 	stream.writeInt32((int32_t)entities.size());
 	stream.writeInt32(mFieldCount);
 	stream.writeUInt32(mFieldCount * sizeof(LJmpFieldInfo) + JMP_HEADER_SIZE);

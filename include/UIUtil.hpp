@@ -30,8 +30,8 @@ namespace LUIUtility
 
 	uint32_t RenderGizmoToggle();
 
-	template<typename T>
 	// Renders a combobox for the given enum.
+	template<typename T>
 	bool RenderComboEnum(std::string name, T& current_value)
 	{
 		static_assert(std::is_enum_v<T>, "T must be an enum!");
@@ -70,6 +70,61 @@ namespace LUIUtility
 			}
 
 			// End combobox
+			ImGui::EndCombo();
+		}
+
+		return changed;
+	}
+
+	// Renders a combobox allowing the user to pick from a list of nodes of type T, fetched from the given parent node.
+	template<typename T>
+	bool RenderNodeReferenceCombo(std::string name, EDOMNodeType desiredType, std::shared_ptr<LDOMNodeBase> parent, std::shared_ptr<T>& currentReference)
+	{
+		std::string previewName = currentReference != nullptr ? currentReference->GetName() : "[None]";
+
+		bool changed = false;
+		std::vector<std::shared_ptr<T>> candidates = parent->GetChildrenOfType<T>(desiredType);
+
+		if (ImGui::BeginCombo(name.c_str(), previewName.c_str()))
+		{
+			// First, add a "None" option for nullptrs.
+			ImGui::PushID(0);
+
+			bool is_selected = (currentReference == nullptr);
+			if (ImGui::Selectable("[None]", is_selected))
+			{
+				currentReference = nullptr;
+				changed = true;
+			}
+
+			// Set initial focus when opening the combo
+			if (is_selected)
+				ImGui::SetItemDefaultFocus();
+
+			ImGui::PopID();
+
+			// Then fill the combobox with the collected nodes.
+			for (uint32_t i = 0; i < candidates.size(); i++)
+			{
+				// ImGui ID stack is now at <previous value>##<i>
+				ImGui::PushID(i + 1);
+
+				// Render the combobox item for this node
+				bool is_selected = (currentReference == candidates[i]);
+				if (ImGui::Selectable(candidates[i]->GetName().c_str(), is_selected))
+				{
+					currentReference = candidates[i];
+					changed = true;
+				}
+
+				// Set initial focus when opening the combo
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+
+				// ImGui ID stack returns to <previous value>
+				ImGui::PopID();
+			}
+
 			ImGui::EndCombo();
 		}
 

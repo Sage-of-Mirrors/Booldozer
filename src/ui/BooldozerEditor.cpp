@@ -47,7 +47,7 @@ void LBooldozerEditor::OpenMap(std::string file_path)
 
 void LBooldozerEditor::onOpenMapCB()
 {
-	ImGuiFileDialog::Instance()->OpenDialog("OpenMapDlg", "Open map archive", ".szp,.arc,.szs", ".");
+	ImGuiFileDialog::Instance()->OpenDialog("OpenMapDlg", "Open map archive", "Archives (*.arc *.szs *.szp){.arc,.szs,.szp}", ".");
 }
 
 void LBooldozerEditor::onOpenRoomsCB()

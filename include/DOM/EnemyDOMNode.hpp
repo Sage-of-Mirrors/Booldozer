@@ -6,6 +6,26 @@
 constexpr size_t ENEMY_TYPE_COUNT = 51;
 
 extern std::map<std::string, std::string> EnemyNames;
+enum class EConditionType : uint32_t;
+class LFurnitureDOMNode;
+
+enum class EAppearType : uint32_t
+{
+	Normal,
+	UNUSED_WILL_CRASH,
+	Normal_2,
+	Unknown_1,
+	Unknown_2,
+	Unknown_3,
+	Find_Partner_for_Ghost_Guys
+};
+
+enum class EPlaceType : uint32_t
+{
+	Always_Spawn_at_Initial_Position,
+	Always_Spawn_at_Initial_Position_2,
+	Spawn_along_Path
+};
 
 class LEnemyDOMNode : public LEntityDOMNode
 {
@@ -24,14 +44,16 @@ class LEnemyDOMNode : public LEntityDOMNode
 	int32_t mEventNumber;
 	int32_t mItemTable;
 
-	uint32_t mCondType;
+	EConditionType mCondType;
 	uint32_t mMoveType;
 	uint32_t mSearchType;
-	uint32_t mAppearType;
-	uint32_t mPlaceType;
+	EAppearType mAppearType;
+	EPlaceType mPlaceType;
 	
 	bool mIsVisible;
 	bool mStay;
+
+	std::shared_ptr<LFurnitureDOMNode> mFurnitureNodeRef;
 
 public:
 	typedef LEntityDOMNode Super;

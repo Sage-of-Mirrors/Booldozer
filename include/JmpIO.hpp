@@ -78,6 +78,8 @@ public:
 	uint32_t GetEntrySize() const { return mEntrySize; }
 	int32_t GetFieldCount() const { return mFieldCount; }
 
+	size_t CalculateNewFileSize(size_t entityCount) { return JMP_HEADER_SIZE + (mFieldCount * JMP_FIELD_DEF_SIZE) + (entityCount * mEntrySize); }
+
 /*== Input ==*/
 	// Attempts to load a JMP file from the given stream. Returns
 	// true if the load succeeded, false if not.

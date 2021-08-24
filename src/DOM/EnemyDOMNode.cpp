@@ -1,5 +1,7 @@
 #include "DOM/EnemyDOMNode.hpp"
 #include "UIUtil.hpp"
+#include "DOM/ObserverDOMNode.hpp"
+#include "DOM/FurnitureDOMNode.hpp"
 
 std::map<std::string, std::string> EnemyNames = {
 	{ "yapoo1", "Gold Ghost" },
@@ -72,14 +74,65 @@ std::map<std::string, std::string> EnemyNames = {
 LEnemyDOMNode::LEnemyDOMNode(std::string name) : Super(name),
 	mCreateName("----"), mPathName("(null)"), mAccessName("(null)"), mCodeName("(null)"),
 	mFloatingHeight(0), mAppearChance(64), mSpawnFlag(0), mDespawnFlag(0), mEventNumber(0), mItemTable(0),
-	mCondType(0), mMoveType(0), mSearchType(0), mAppearType(0), mPlaceType(0), mIsVisible(true), mStay(false)
+	mCondType(EConditionType::Always_True), mMoveType(0), mSearchType(0), mAppearType(EAppearType::Normal), mPlaceType(EPlaceType::Always_Spawn_at_Initial_Position), mIsVisible(true), mStay(false),
+	mFurnitureNodeRef(nullptr)
 {
 	mType = EDOMNodeType::Enemy;
 }
 
 void LEnemyDOMNode::RenderDetailsUI(float dt)
 {
+	LUIUtility::RenderTransformUI(mTransform.get(), mPosition, mRotation, mScale);
+
 	LUIUtility::RenderComboBox("Enemy Type", EnemyNames, mName);
+	LUIUtility::RenderTooltip("What kind of enemy this actor is.");
+
+	// Strings
+	LUIUtility::RenderTextInput("Spawn Group", &mCreateName);
+	LUIUtility::RenderTooltip("What Spawn Group this enemy is in. Set this to ---- to spawn when Luigi enters the room. This is also known as create_name.");
+
+	LUIUtility::RenderTextInput("Path Name", &mPathName);
+	LUIUtility::RenderTooltip("The name of a path file that this enemy will use. Set this to (null) for no path.");
+
+	LUIUtility::RenderTextInput("Furniture Tag", &mAccessName);
+	LUIUtility::RenderTooltip("The tag of a furniture object that the enemy will hide inside. Set this to (null) to disable this feature.");
+
+	LUIUtility::RenderTextInput("Script Name", &mCodeName);
+	LUIUtility::RenderTooltip("The name that can be used to reference this enemy in an event.");
+
+	// Integers
+	ImGui::InputInt("Floating Height", &mFloatingHeight);
+	LUIUtility::RenderTooltip("How far above or below the enemy's Y position to actually spawn the enemy.");
+
+	ImGui::InputInt("Spawn Chance", &mAppearChance);
+	LUIUtility::RenderTooltip("The % chance that the enemy will spawn.");
+
+	ImGui::InputInt("Spawn Flag", &mSpawnFlag);
+	LUIUtility::RenderTooltip("The flag that must be set before this enemy will begin spawning.");
+	ImGui::InputInt("Despawn Flag", &mDespawnFlag);
+	LUIUtility::RenderTooltip("If this flag is set, this enemy will no longer spawn.");
+
+	ImGui::InputInt("Associated Event Index", &mEventNumber);
+	LUIUtility::RenderTooltip("The index of an event this enemy is associated with. The event becomes disabled if the enemy has despawned.");
+
+	// Comboboxes
+	LUIUtility::RenderComboEnum<EConditionType>("Spawn Condition", mCondType);
+	LUIUtility::RenderTooltip("The condition governing whether the enemy is allowed to spawn.");
+
+	LUIUtility::RenderComboEnum<EAppearType>("Spawn Type", mAppearType);
+	LUIUtility::RenderTooltip("The way in which the enemy will spawn. Using the second option WILL crash the game.");
+
+	LUIUtility::RenderComboEnum<EPlaceType>("Placement Type", mPlaceType);
+	LUIUtility::RenderTooltip("The location at which the enemy will spawn. If Spawn on Path is selected, you must specify a valid Path Name.");
+
+	LUIUtility::RenderNodeReferenceCombo<LFurnitureDOMNode>("Test Reference Combo", EDOMNodeType::Furniture, Parent, mFurnitureNodeRef);
+
+	// Bools
+	LUIUtility::RenderCheckBox("Visible?", &mIsVisible);
+	LUIUtility::RenderTooltip("Whether this enemy should be visible.");
+
+	LUIUtility::RenderCheckBox("Stay on path between rooms?", &mStay);
+	LUIUtility::RenderTooltip("Whether this enemy should remain on a path when Luigi moves between rooms.");
 }
 
 void LEnemyDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
@@ -113,11 +166,11 @@ void LEnemyDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetSignedInt(entry_index, "event_set_no", mEventNumber);
 	JmpIO->SetSignedInt(entry_index, "item_table", mItemTable);
 
-	JmpIO->SetUnsignedInt(entry_index, "cond_type", mCondType);
+	JmpIO->SetUnsignedInt(entry_index, "cond_type", (uint32_t)mCondType);
 	JmpIO->SetUnsignedInt(entry_index, "move_type", mMoveType);
 	JmpIO->SetUnsignedInt(entry_index, "search_type", mSearchType);
-	JmpIO->SetUnsignedInt(entry_index, "appear_type", mAppearType);
-	JmpIO->SetUnsignedInt(entry_index, "place_type", mPlaceType);
+	JmpIO->SetUnsignedInt(entry_index, "appear_type", (uint32_t)mAppearType);
+	JmpIO->SetUnsignedInt(entry_index, "place_type", (uint32_t)mPlaceType);
 
 	JmpIO->SetBoolean(entry_index, "invisible", mIsVisible);
 	JmpIO->SetBoolean(entry_index, "stay", mStay);
@@ -154,11 +207,11 @@ void LEnemyDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 	mEventNumber = JmpIO->GetSignedInt(entry_index, "event_set_no");
 	mItemTable = JmpIO->GetSignedInt(entry_index, "item_table");
 
-	mCondType = JmpIO->GetUnsignedInt(entry_index, "cond_type");
+	mCondType = (EConditionType)JmpIO->GetUnsignedInt(entry_index, "cond_type");
 	mMoveType = JmpIO->GetUnsignedInt(entry_index, "move_type");
 	mSearchType = JmpIO->GetUnsignedInt(entry_index, "search_type");
-	mAppearType = JmpIO->GetUnsignedInt(entry_index, "appear_type");
-	mPlaceType = JmpIO->GetUnsignedInt(entry_index, "place_type");
+	mAppearType = (EAppearType)JmpIO->GetUnsignedInt(entry_index, "appear_type");
+	mPlaceType = (EPlaceType)JmpIO->GetUnsignedInt(entry_index, "place_type");
 
 	mIsVisible = JmpIO->GetBoolean(entry_index, "invisible");
 	mStay = JmpIO->GetBoolean(entry_index, "stay");

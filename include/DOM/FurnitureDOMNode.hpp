@@ -7,7 +7,7 @@ enum class EMoneyType : uint32_t
 	None,
 	Coins,
 	Bills,
-	Coins_Bills,
+	Coins_and_Bills,
 	Sapphires,
 	Rubies,
 	Emeralds,
@@ -234,7 +234,7 @@ public:
 
 	LFurnitureDOMNode(std::string name);
 
-	virtual std::string GetName() override { return mModelName; }
+	virtual std::string GetName() override { return mAccessName == "(null)" ? mModelName : mModelName + " [" + mAccessName + "]"; }
 
 	virtual void RenderDetailsUI(float dt) override;
 
