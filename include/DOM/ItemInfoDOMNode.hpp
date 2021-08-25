@@ -2,36 +2,22 @@
 
 #include "EntityDOMNode.hpp"
 
-class LEventDOMNode : public LEntityDOMNode
+class LItemInfoDOMNode : public LEntityDOMNode
 {
 /*=== JMP properties ===*/
 	std::string mCharacterName;
-
-	int32_t mEventNo;
-	int32_t mActivationRadius;
-	int32_t mEventFlag;
-
-	int32_t mMinHour;
-	int32_t mMinMinute;
-	int32_t mMaxHour;
-	int32_t mMaxMinute;
-
-	int32_t mMaxTriggerCount;
-	int32_t mDespawnFlag;
-
-	int32_t mParameter;
 	
-	uint32_t mEventIf;
+	int32_t mOpenDoorNumber;
+	int32_t mHPAmount;
 
-	bool mCanBeInterrupted;
-	bool mFreezePlayer;
+	bool mAllowMovement;
 
 public:
 	typedef LEntityDOMNode Super;
 
-	LEventDOMNode(std::string name);
+	LItemInfoDOMNode(std::string name);
 
-	//virtual void RenderHierarchyUI(float dt) override;
+	virtual void RenderDetailsUI(float dt) override;
 
 	// Writes the data this JMP node into the given LJmpIO instance at the specified entry.
 	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const override;
@@ -45,7 +31,7 @@ public:
 	// Returns whether this node is of the given type, or derives from a node of that type.
 	virtual bool IsNodeType(EDOMNodeType type) const override
 	{
-		if (type == EDOMNodeType::Event)
+		if (type == EDOMNodeType::ItemInfo)
 			return true;
 
 		return Super::IsNodeType(type);

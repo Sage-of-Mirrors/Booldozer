@@ -235,6 +235,9 @@ public:
 	LFurnitureDOMNode(std::string name);
 
 	virtual std::string GetName() override { return mAccessName == "(null)" ? mModelName : mModelName + " [" + mAccessName + "]"; }
+	
+	std::string GetAccessName() const { return mAccessName; }
+	void SetAccessName(std::string newAccessName) { mAccessName = newAccessName; }
 
 	virtual void RenderDetailsUI(float dt) override;
 
@@ -242,6 +245,9 @@ public:
 	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const override;
 	// Reads the data from the specified entry in the given LJmpIO instance into this JMP node.
 	virtual void Deserialize(LJmpIO* JmpIO, uint32_t entry_index) override;
+
+	virtual void PostProcess() override { };
+	virtual void PreProcess() override { };
 
 /*=== Type operations ===*/
 	// Returns whether this node is of the given type, or derives from a node of that type.

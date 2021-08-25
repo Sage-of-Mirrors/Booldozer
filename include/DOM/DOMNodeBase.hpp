@@ -33,7 +33,8 @@ enum class EDOMNodeType
 	BlackoutEnemy,
 	BlackoutObserver,
 	BlackoutKey,
-	Key
+	Key,
+	ItemInfo
 };
 
 // Base class for all DOM (Document Object Model) nodes.
@@ -60,7 +61,7 @@ protected:
 public:
 	LDOMNodeBase(std::string name) { mName = name; SetIsSelected(false); SetIsRendered(true); SetIsInitialized(false); }
 
-	std::shared_ptr<LDOMNodeBase> Parent;
+	std::weak_ptr<LDOMNodeBase> Parent;
 	std::vector<std::shared_ptr<LDOMNodeBase>> Children;
 
 	virtual std::string GetName() { return mName; }

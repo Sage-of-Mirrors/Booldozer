@@ -78,22 +78,28 @@ namespace LUIUtility
 
 	// Renders a combobox allowing the user to pick from a list of nodes of type T, fetched from the given parent node.
 	template<typename T>
-	bool RenderNodeReferenceCombo(std::string name, EDOMNodeType desiredType, std::shared_ptr<LDOMNodeBase> parent, std::shared_ptr<T>& currentReference)
+	bool RenderNodeReferenceCombo(std::string name, EDOMNodeType desiredType, std::weak_ptr<LDOMNodeBase> parent, std::weak_ptr<T>& currentReference)
 	{
-		std::string previewName = currentReference != nullptr ? currentReference->GetName() : "[None]";
+		if (parent.expired())
+			return false;
 
+		auto parentLock = parent.lock();
+		auto referenceLocked = currentReference.lock();
+
+		std::string previewName = referenceLocked != nullptr ? referenceLocked->GetName() : "[None]";
 		bool changed = false;
-		std::vector<std::shared_ptr<T>> candidates = parent->GetChildrenOfType<T>(desiredType);
+
+		std::vector<std::shared_ptr<T>> candidates = parentLock->GetChildrenOfType<T>(desiredType);
 
 		if (ImGui::BeginCombo(name.c_str(), previewName.c_str()))
 		{
 			// First, add a "None" option for nullptrs.
 			ImGui::PushID(0);
 
-			bool is_selected = (currentReference == nullptr);
+			bool is_selected = (referenceLocked == nullptr);
 			if (ImGui::Selectable("[None]", is_selected))
 			{
-				currentReference = nullptr;
+				currentReference = std::make_shared<T>(nullptr);
 				changed = true;
 			}
 
@@ -110,7 +116,7 @@ namespace LUIUtility
 				ImGui::PushID(i + 1);
 
 				// Render the combobox item for this node
-				bool is_selected = (currentReference == candidates[i]);
+				bool is_selected = (referenceLocked == candidates[i]);
 				if (ImGui::Selectable(candidates[i]->GetName().c_str(), is_selected))
 				{
 					currentReference = candidates[i];

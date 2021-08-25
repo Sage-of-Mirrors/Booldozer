@@ -85,3 +85,13 @@ void LObserverDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 
 	mIsVisible = JmpIO->GetBoolean(entry_index, "invisible");
 }
+
+void LObserverDOMNode::PostProcess()
+{
+
+}
+
+void LObserverDOMNode::PreProcess()
+{
+
+}

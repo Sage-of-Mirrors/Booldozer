@@ -89,3 +89,13 @@ void LEventDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 	mCanBeInterrupted = JmpIO->GetBoolean(entry_index, "EventLock");
 	mFreezePlayer = JmpIO->GetBoolean(entry_index, "PlayerStop");
 }
+
+void LEventDOMNode::PostProcess()
+{
+
+}
+
+void LEventDOMNode::PreProcess()
+{
+
+}

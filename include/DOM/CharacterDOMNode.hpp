@@ -37,6 +37,9 @@ public:
 	// Reads the data from the specified entry in the given LJmpIO instance into this JMP node.
 	virtual void Deserialize(LJmpIO* JmpIO, uint32_t entry_index) override;
 
+	virtual void PostProcess() override { };
+	virtual void PreProcess() override { };
+
 /*=== Type operations ===*/
 	virtual const char* GetNodeTypeString() override { return "DOM_NODE_CHARACTER"; }
 

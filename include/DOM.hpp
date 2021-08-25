@@ -12,3 +12,4 @@
 #include "DOM/EnemyDOMNode.hpp"
 #include "DOM/EventDOMNode.hpp"
 #include "DOM/CharacterDOMNode.hpp"
+#include "DOM/ItemInfoDOMNode.hpp"

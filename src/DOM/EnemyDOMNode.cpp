@@ -1,5 +1,6 @@
 #include "DOM/EnemyDOMNode.hpp"
 #include "UIUtil.hpp"
+#include "GenUtil.hpp"
 #include "DOM/ObserverDOMNode.hpp"
 #include "DOM/FurnitureDOMNode.hpp"
 
@@ -75,7 +76,7 @@ LEnemyDOMNode::LEnemyDOMNode(std::string name) : Super(name),
 	mCreateName("----"), mPathName("(null)"), mAccessName("(null)"), mCodeName("(null)"),
 	mFloatingHeight(0), mAppearChance(64), mSpawnFlag(0), mDespawnFlag(0), mEventNumber(0), mItemTable(0),
 	mCondType(EConditionType::Always_True), mMoveType(0), mSearchType(0), mAppearType(EAppearType::Normal), mPlaceType(EPlaceType::Always_Spawn_at_Initial_Position), mIsVisible(true), mStay(false),
-	mFurnitureNodeRef(nullptr)
+	mFurnitureNodeRef(std::weak_ptr<LFurnitureDOMNode>())
 {
 	mType = EDOMNodeType::Enemy;
 }
@@ -116,6 +117,9 @@ void LEnemyDOMNode::RenderDetailsUI(float dt)
 	LUIUtility::RenderTooltip("The index of an event this enemy is associated with. The event becomes disabled if the enemy has despawned.");
 
 	// Comboboxes
+	LUIUtility::RenderNodeReferenceCombo<LFurnitureDOMNode>("Furniture Access", EDOMNodeType::Furniture, Parent, mFurnitureNodeRef);
+	LUIUtility::RenderTooltip("Allows the enemy to be hidden within a piece of furniture. That furniture must be interacted with to spawn the enemy.");
+
 	LUIUtility::RenderComboEnum<EConditionType>("Spawn Condition", mCondType);
 	LUIUtility::RenderTooltip("The condition governing whether the enemy is allowed to spawn.");
 
@@ -124,8 +128,6 @@ void LEnemyDOMNode::RenderDetailsUI(float dt)
 
 	LUIUtility::RenderComboEnum<EPlaceType>("Placement Type", mPlaceType);
 	LUIUtility::RenderTooltip("The location at which the enemy will spawn. If Spawn on Path is selected, you must specify a valid Path Name.");
-
-	LUIUtility::RenderNodeReferenceCombo<LFurnitureDOMNode>("Test Reference Combo", EDOMNodeType::Furniture, Parent, mFurnitureNodeRef);
 
 	// Bools
 	LUIUtility::RenderCheckBox("Visible?", &mIsVisible);
@@ -215,4 +217,71 @@ void LEnemyDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 
 	mIsVisible = JmpIO->GetBoolean(entry_index, "invisible");
 	mStay = JmpIO->GetBoolean(entry_index, "stay");
+}
+
+void LEnemyDOMNode::PostProcess()
+{
+	// On the off chance that the parent is invalid, don't try to do anything.
+	if (Parent.expired())
+		return;
+
+	// Grab a temporary shared_ptr for the parent.
+	auto parentShared = Parent.lock();
+
+	if (mAccessName != "(null)")
+	{
+		auto furnitureNodes = parentShared->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
+
+		for (auto furnitureNode : furnitureNodes)
+		{
+			if (furnitureNode->GetAccessName() == mAccessName)
+			{
+				mFurnitureNodeRef = furnitureNode;
+				break;
+			}
+		}
+	}
+}
+
+void LEnemyDOMNode::PreProcess()
+{
+	// On the off chance that the parent is invalid, don't try to do anything.
+	if (Parent.expired())
+		return;
+
+	// Grab a temporary shared_ptr for the parent.
+	auto parentShared = Parent.lock();
+
+	// If the furniture reference is valid, set the access name.
+	if (auto furnitureShared = mFurnitureNodeRef.lock())
+	{
+		// We'll allow the user to specify a furniture node without a valid access name;
+		// we'll create one by combining the room number with the index of the furniture node.
+		if (furnitureShared->GetAccessName() == "(null)")
+		{
+			auto furnitureNodes = parentShared->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
+
+			// Grab the index of the furniture node in the list of furniture. Report an error if it doesn't exist, because that shouldn't happen.
+			int32_t furnitureIndex = LGenUtility::VectorIndexOf<LFurnitureDOMNode>(furnitureNodes, furnitureShared);
+			if (furnitureIndex == -1)
+			{
+				std::cout << "Tried to set furniture access name to nonexistent furniture node!";
+				return;
+			}
+
+			// Format the new access name.
+			char printBuffer[16];
+			snprintf(printBuffer, 16, "%d_%d", mRoomNumber, furnitureIndex);
+
+			// Set the new access name in this enemy and in the associated furniture node.
+			mAccessName = std::string(printBuffer);
+			furnitureShared->SetAccessName(mAccessName);
+		}
+		// Furniture already has a valid access name, so we'll just grab it.
+		else
+			mAccessName = furnitureShared->GetAccessName();
+	}
+	// Otherwise, if the furniture reference is invalid, reset the enemy's access name to null.
+	else
+		mAccessName = "(null)";
 }

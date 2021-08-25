@@ -53,7 +53,7 @@ class LEnemyDOMNode : public LEntityDOMNode
 	bool mIsVisible;
 	bool mStay;
 
-	std::shared_ptr<LFurnitureDOMNode> mFurnitureNodeRef;
+	std::weak_ptr<LFurnitureDOMNode> mFurnitureNodeRef;
 
 public:
 	typedef LEntityDOMNode Super;
@@ -70,6 +70,9 @@ public:
 	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const override;
 	// Reads the data from the specified entry in the given LJmpIO instance into this JMP node.
 	virtual void Deserialize(LJmpIO* JmpIO, uint32_t entry_index) override;
+
+	virtual void PostProcess() override;
+	virtual void PreProcess() override;
 
 /*=== Type operations ===*/
 	virtual const char* GetNodeTypeString() override { return "DOM_NODE_ENEMY"; }

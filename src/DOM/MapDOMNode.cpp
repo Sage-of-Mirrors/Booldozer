@@ -131,6 +131,10 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		}
 	}
 
+	std::vector<std::shared_ptr<LEntityDOMNode>> loadedNodes = GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Entity);
+	for (auto loadedNode : loadedNodes)
+		loadedNode->PostProcess();
+
 	// To finish loading the map we're going to delegate grabbing room data to the rooms themselves,
 	// where they'll also set up things like models for furniture
 	auto rooms = GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
@@ -161,6 +165,9 @@ bool LMapDOMNode::SaveMapToFiles(std::filesystem::path folder_path)
 
 		if (entitiesOfType.size() == 0)
 			continue;
+
+		for (auto ent : entitiesOfType)
+			ent->PreProcess();
 
 		// Calculate the size of the required buffer. Header size + number of fields * field size + number of entities * entity size
 		size_t newFileSize = JmpIOManagers[entityType].CalculateNewFileSize(entitiesOfType.size());
@@ -201,6 +208,9 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 				break;
 			case LEntityType_Characters:
 				newNode = std::make_shared<LCharacterDOMNode>("character_" + i);
+				break;
+			case LEntityType::LEntityType_ItemInfoTable:
+				newNode = std::make_shared<LItemInfoDOMNode>("iteminfo_" + i);
 				break;
 			default:
 				break;

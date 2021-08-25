@@ -44,6 +44,21 @@ void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 		ImGui::TreePop();
 	}
 
+	auto iteminfos = current_map->GetChildrenOfType<LItemInfoDOMNode>(EDOMNodeType::ItemInfo);
+	if (ImGui::TreeNode("Item Info Table"))
+	{
+		for (uint32_t i = 0; i < iteminfos.size(); i++)
+		{
+			uint32_t selectionType = 0;
+
+			ImGui::PushID(i);
+			iteminfos[i]->RenderHierarchyUI(iteminfos[i], &mSelectionManager);
+			ImGui::PopID();
+		}
+
+		ImGui::TreePop();
+	}
+
 	ImGui::End();
 }
 
