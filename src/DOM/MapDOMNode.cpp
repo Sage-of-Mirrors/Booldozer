@@ -1,6 +1,7 @@
 #include "DOM.hpp"
 #include "../lib/libgctools/include/compression.h"
 #include <fstream>
+#include "GenUtil.hpp"
 
 std::string const LEntityFileNames[LEntityType_Max] = {
 	"characterinfo",
@@ -86,9 +87,8 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 	for (int32_t i = 0; i < JmpIOManagers[LEntityType_Rooms].GetEntryCount(); i++)
 	{
-		char roomName[16];
-		snprintf(roomName, 16, "room_%02d", i);
-		std::shared_ptr<LRoomDOMNode> newRoom = std::make_shared<LRoomDOMNode>(std::string(roomName));
+		std::string roomName = LGenUtility::Format("room_", std::setfill('0'), std::setw(2), i);
+		std::shared_ptr<LRoomDOMNode> newRoom = std::make_shared<LRoomDOMNode>(roomName);
 
 		newRoom->LoadJmpInfo(i, &JmpIOManagers[LEntityType_Rooms]);
 		AddChild(newRoom);
@@ -116,6 +116,10 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		// This JMP file doesn't exist in the arc we loaded.
 		if (fileData == nullptr)
 			continue;
+
+		// Some JMP files have strings that aren't 32 bytes, so this is a way to handle that.
+		if (entityType == LEntityType_ItemInfoTable)
+			JmpIOManagers[entityType].SetStringSize(16);
 
 		bStream::CMemoryStream fileReader = bStream::CMemoryStream(fileData, fileSize, bStream::Endianess::Big, bStream::OpenMode::In);
 		if (!JmpIOManagers[entityType].Load(&fileReader))

@@ -2,7 +2,7 @@
 #include "DOM/EntityDOMNode.hpp"
 
 LJmpIO::LJmpIO()
-	: mEntryCount(-1), mFieldCount(-1), mEntryStartOffset(0), mEntrySize(0), mData(nullptr)
+	: mEntryCount(-1), mFieldCount(-1), mEntryStartOffset(0), mEntrySize(0), mStringSize(32), mData(nullptr)
 {
 
 }
@@ -184,7 +184,7 @@ std::string LJmpIO::GetString(uint32_t entry_index, std::string field_name)
 	uint32_t fieldOffset = entry_index * mEntrySize + field->Start;
 
 	char strBuffer[33];
-	memcpy(strBuffer, mData + fieldOffset, JMP_FIXED_STRING_SIZE);
+	memcpy(strBuffer, mData + fieldOffset, mStringSize);
 	strBuffer[32] = 0;
 
 	return std::string(strBuffer);
@@ -199,7 +199,7 @@ uint32_t LJmpIO::CalculateNewEntrySize()
 		uint32_t tempNewSize = f.Start;
 
 		if (f.Type == EJmpFieldType::String)
-			tempNewSize += JMP_FIXED_STRING_SIZE;
+			tempNewSize += mStringSize;
 		else
 			tempNewSize += sizeof(uint32_t);
 
@@ -304,7 +304,7 @@ bool LJmpIO::SetString(uint32_t entry_index, std::string field_name, std::string
 		return false;
 
 	uint32_t fieldOffset = entry_index * mEntrySize + field->Start;
-	memcpy(mData + fieldOffset, value.data(), std::min(JMP_FIXED_STRING_SIZE - 1, value.length()));
+	memcpy(mData + fieldOffset, value.data(), std::min(mStringSize - 1, value.length()));
 
 	return true;
 }

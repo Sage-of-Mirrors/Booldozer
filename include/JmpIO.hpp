@@ -6,7 +6,6 @@
 
 constexpr size_t JMP_HEADER_SIZE = 16;
 constexpr size_t JMP_FIELD_DEF_SIZE = 12;
-constexpr size_t JMP_FIXED_STRING_SIZE = 32;
 constexpr uint32_t JMP_HASH_PRIME = 33554393;
 
 class LEntityDOMNode;
@@ -45,6 +44,9 @@ class LJmpIO
 	// Size of an entry in this JMP file.
 	uint32_t mEntrySize;
 
+	// Size of a string. Can vary between 16 and 32.
+	size_t mStringSize;
+
 	// A vector of the fields that define the data within the JMP entries.
 	std::vector<LJmpFieldInfo> mFields;
 
@@ -77,6 +79,9 @@ public:
 	int32_t GetEntryCount() const { return mEntryCount; }
 	uint32_t GetEntrySize() const { return mEntrySize; }
 	int32_t GetFieldCount() const { return mFieldCount; }
+
+	size_t GetStringSize() const { return mStringSize; }
+	void SetStringSize(uint32_t newStringSize) { mStringSize = newStringSize; }
 
 	size_t CalculateNewFileSize(size_t entityCount) { return JMP_HEADER_SIZE + (mFieldCount * JMP_FIELD_DEF_SIZE) + (entityCount * mEntrySize); }
 

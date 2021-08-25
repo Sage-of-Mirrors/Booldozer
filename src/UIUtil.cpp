@@ -1,5 +1,6 @@
 #include "UIUtil.hpp"
 #include <glm/gtx/matrix_decompose.hpp>
+#include "GenUtil.hpp"
 
 bool LUIUtility::RenderCheckBox(std::string name, bool* c)
 {
@@ -85,11 +86,10 @@ bool LUIUtility::RenderComboBox(std::string name, std::map<std::string, std::str
 	{
 		for (auto [ internal_name, visible_name ] : options)
 		{
-			char buff[100];
-			snprintf(buff, sizeof(buff), "%s##%s", visible_name.c_str(), internal_name.c_str());
-
+			std::string selectableName = LGenUtility::Format(visible_name, "##", internal_name);
 			bool is_selected = (value == internal_name);
-			if (ImGui::Selectable(buff, is_selected))
+
+			if (ImGui::Selectable(selectableName.c_str(), is_selected))
 			{
 				value = internal_name;
 				changed = true;

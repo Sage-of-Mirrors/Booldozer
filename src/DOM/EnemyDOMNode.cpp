@@ -3,6 +3,7 @@
 #include "GenUtil.hpp"
 #include "DOM/ObserverDOMNode.hpp"
 #include "DOM/FurnitureDOMNode.hpp"
+#include <sstream>
 
 std::map<std::string, std::string> EnemyNames = {
 	{ "yapoo1", "Gold Ghost" },
@@ -262,19 +263,15 @@ void LEnemyDOMNode::PreProcess()
 			auto furnitureNodes = parentShared->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
 
 			// Grab the index of the furniture node in the list of furniture. Report an error if it doesn't exist, because that shouldn't happen.
-			int32_t furnitureIndex = LGenUtility::VectorIndexOf<LFurnitureDOMNode>(furnitureNodes, furnitureShared);
+			ptrdiff_t furnitureIndex = LGenUtility::VectorIndexOf<LFurnitureDOMNode>(furnitureNodes, furnitureShared);
 			if (furnitureIndex == -1)
 			{
 				std::cout << "Tried to set furniture access name to nonexistent furniture node!";
 				return;
 			}
 
-			// Format the new access name.
-			char printBuffer[16];
-			snprintf(printBuffer, 16, "%d_%d", mRoomNumber, furnitureIndex);
-
 			// Set the new access name in this enemy and in the associated furniture node.
-			mAccessName = std::string(printBuffer);
+			mAccessName = LGenUtility::Format(mRoomNumber, '_', furnitureIndex);
 			furnitureShared->SetAccessName(mAccessName);
 		}
 		// Furniture already has a valid access name, so we'll just grab it.
