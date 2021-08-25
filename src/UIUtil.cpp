@@ -200,7 +200,7 @@ uint32_t LUIUtility::RenderGizmoToggle()
 
     ImGui::Begin("transform gadget window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
 
-    if (ImGui::Button("Trans"));
+    if (ImGui::Button("Trans"))
 		t = 0;
 
     ImGui::End();
@@ -211,7 +211,7 @@ uint32_t LUIUtility::RenderGizmoToggle()
 
     ImGui::Begin("rotate gadget window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
 
-    if (ImGui::Button("Rot"));
+    if (ImGui::Button("Rot"))
 		t = 1;
 
     ImGui::End();
@@ -222,7 +222,7 @@ uint32_t LUIUtility::RenderGizmoToggle()
 
     ImGui::Begin("scale gadget window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
 
-    if (ImGui::Button("Scale"));
+    if (ImGui::Button("Scale"))
 		t = 1;
 
     ImGui::End();

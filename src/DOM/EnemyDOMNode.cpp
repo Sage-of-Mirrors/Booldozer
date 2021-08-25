@@ -18,8 +18,8 @@ std::map<std::string, std::string> EnemyNames = {
     { "banaoba", "Garbage Can Ghost" },
 
     { "topoo1", "Red Grabbing Ghost" },
-    { "topoo2", "Turqoise Grabbing Ghost" },
-    { "topoo3", "Purple Grabbing Ghost" },
+    { "topoo2", "Mirror Ghost" },
+    { "topoo3", "Cinema Ghost" },
     { "topoo4", "White Grabbing Ghost" },
 
     { "putcher1", "Bowling Ghost" },
@@ -36,6 +36,14 @@ std::map<std::string, std::string> EnemyNames = {
     { "iyapoo10", "Speedy Spirit 10" },
     { "iyapoo11", "Speedy Spirit 11" },
     { "iyapoo12", "Speedy Spirit 12" },
+    { "iyapoo13", "Speedy Spirit 13" },
+    { "iyapoo14", "Speedy Spirit 14" },
+    { "iyapoo15", "Speedy Spirit 15" },
+    { "iyapoo16", "Speedy Spirit 16" },
+    { "iyapoo17", "Speedy Spirit 17" },
+    { "iyapoo18", "Speedy Spirit 18" },
+    { "iyapoo19", "Speedy Spirit 19" },
+    { "iyapoo20", "Speedy Spirit 20" },
 
     { "piero1", "Red Clown Doll" },
     { "piero2", "Blue Clown Doll" },
@@ -43,8 +51,8 @@ std::map<std::string, std::string> EnemyNames = {
     { "heypo1", "Red Shy Guy Ghost" },
     { "heypo2", "Green Shy Guy Ghost" },
     { "heypo3", "White Shy Guy Ghost" },
-    { "heypo4", "Orange Shy Guy Ghost" },
-    { "heypo5", "Orange Shy Guy Ghost?" },
+    { "heypo4", "Brown Shy Guy Ghost" },
+    { "heypo5", "Orange Shy Guy Ghost" },
     { "heypo6", "Yellow Shy Guy Ghost" },
     { "heypo7", "Pink Shy Guy Ghost" },
     { "heypo8", "Purple Shy Guy Ghost" },
@@ -61,7 +69,7 @@ std::map<std::string, std::string> EnemyNames = {
     { "ibookr", "Book" },
     { "polter1", "Flying Object Manager" },
 
-    { "skul", "Mr. Bones" },
+    { "skul", "Skeleton Ghost" },
 
     { "otub1", "Blue Vase" },
     { "otub2", "Grey Vase" },

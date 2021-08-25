@@ -10,7 +10,7 @@ namespace LGenUtility
 {
     // Returns the index of the given element in the given vector, or -1 if the element is not in that vector.
     template<typename T>
-    ptrdiff_t VectorIndexOf(std::vector<T> vec, T elem)
+    ptrdiff_t VectorIndexOf(const std::vector<T>& vec, const T& elem)
     {
         ptrdiff_t result = -1;
 
