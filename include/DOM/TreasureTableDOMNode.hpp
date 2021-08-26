@@ -44,6 +44,8 @@ public:
 
 	LTreasureTableDOMNode(std::string name);
 
+	virtual std::string GetName() override;
+
 	virtual void RenderDetailsUI(float dt) override;
 
 	// Writes the data this JMP node into the given LJmpIO instance at the specified entry.

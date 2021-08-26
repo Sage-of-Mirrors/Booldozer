@@ -4,6 +4,7 @@
 #include "modes/EditorModeBase.hpp"
 #include "modes/ActorMode.hpp"
 #include "modes/EnemyMode.hpp"
+#include "modes/ItemMode.hpp"
 
 #include <filesystem>
 #include <memory>
@@ -30,6 +31,7 @@ class LBooldozerEditor
 	// The mode responsible for general actor editing.
 	LActorMode mActorMode;
 	LEnemyMode mEnemyMode;
+	LItemMode mItemMode;
 
 	void OpenMap(std::string file_path);
 

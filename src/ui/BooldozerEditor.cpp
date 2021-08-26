@@ -81,6 +81,7 @@ void LBooldozerEditor::ChangeMode()
 		case EEditorMode::Event_Mode:
 			break;
 		case EEditorMode::Item_Mode:
+			mCurrentMode = &mItemMode;
 			break;
 		default:
 			mCurrentMode = nullptr;

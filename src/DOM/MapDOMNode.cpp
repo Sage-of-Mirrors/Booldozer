@@ -217,13 +217,13 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 				newNode = std::make_shared<LItemInfoDOMNode>(LGenUtility::Format("Item Info ", i));
 				break;
 			case LEntityType_ItemAppear:
-				newNode = std::make_shared<LItemAppearDOMNode>(LGenUtility::Format("Drop Group ", i));
+				newNode = std::make_shared<LItemAppearDOMNode>(LGenUtility::Format("Item Drop Group ", i));
 				break;
 			case LEntityType_ItemFishing:
-				newNode = std::make_shared<LItemFishingDOMNode>(LGenUtility::Format("Vacuuming Group ", i));
+				newNode = std::make_shared<LItemFishingDOMNode>(LGenUtility::Format("Capture Item Group ", i));
 				break;
 			case LEntityType_TreasureTable:
-				newNode = std::make_shared<LTreasureTableDOMNode>(LGenUtility::Format("Vacuuming Group ", i));
+				newNode = std::make_shared<LTreasureTableDOMNode>(LGenUtility::Format("Treasure Table ", i));
 				break;
 			default:
 				break;

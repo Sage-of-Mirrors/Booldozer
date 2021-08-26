@@ -14,6 +14,14 @@ LTreasureTableDOMNode::LTreasureTableDOMNode(std::string name) : Super(name),
     mRoomNumber = -1;
 }
 
+std::string LTreasureTableDOMNode::GetName()
+{
+    if (auto room = mRoomNodeRef.lock())
+        return LGenUtility::Format("Treasure Table [", room->GetName(), "]");
+    else
+        return "Treasure Table [Invalid Room]";
+}
+
 void LTreasureTableDOMNode::RenderDetailsUI(float dt)
 {
     // Integers
