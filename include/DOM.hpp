@@ -13,3 +13,6 @@
 #include "DOM/EventDOMNode.hpp"
 #include "DOM/CharacterDOMNode.hpp"
 #include "DOM/ItemInfoDOMNode.hpp"
+#include "DOM/ItemAppearDOMNode.hpp"
+#include "DOM/ItemFishingDOMNode.hpp"
+#include "DOM/TreasureTableDOMNode.hpp"

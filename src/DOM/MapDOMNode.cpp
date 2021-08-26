@@ -199,22 +199,31 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 		switch (type)
 		{
 			case LEntityType_Furniture:
-				newNode = std::make_shared<LFurnitureDOMNode>("furniture_" + i);
+				newNode = std::make_shared<LFurnitureDOMNode>(LGenUtility::Format("Furniture ", i));
 				break;
 			case LEntityType_Observers:
-				newNode = std::make_shared<LObserverDOMNode>("observer_" + i);
+				newNode = std::make_shared<LObserverDOMNode>(LGenUtility::Format("Observer ", i));
 				break;
 			case LEntityType_Enemies:
-				newNode = std::make_shared<LEnemyDOMNode>("enemy_" + i);
+				newNode = std::make_shared<LEnemyDOMNode>(LGenUtility::Format("Enemy ", i));
 				break;
 			case LEntityType_Events:
-				newNode = std::make_shared<LEventDOMNode>("event_" + i);
+				newNode = std::make_shared<LEventDOMNode>(LGenUtility::Format("Event ", i));
 				break;
 			case LEntityType_Characters:
-				newNode = std::make_shared<LCharacterDOMNode>("character_" + i);
+				newNode = std::make_shared<LCharacterDOMNode>(LGenUtility::Format("Character ", i));
 				break;
-			case LEntityType::LEntityType_ItemInfoTable:
-				newNode = std::make_shared<LItemInfoDOMNode>("iteminfo_" + i);
+			case LEntityType_ItemInfoTable:
+				newNode = std::make_shared<LItemInfoDOMNode>(LGenUtility::Format("Item Info ", i));
+				break;
+			case LEntityType_ItemAppear:
+				newNode = std::make_shared<LItemAppearDOMNode>(LGenUtility::Format("Drop Group ", i));
+				break;
+			case LEntityType_ItemFishing:
+				newNode = std::make_shared<LItemFishingDOMNode>(LGenUtility::Format("Vacuuming Group ", i));
+				break;
+			case LEntityType_TreasureTable:
+				newNode = std::make_shared<LTreasureTableDOMNode>(LGenUtility::Format("Vacuuming Group ", i));
 				break;
 			default:
 				break;

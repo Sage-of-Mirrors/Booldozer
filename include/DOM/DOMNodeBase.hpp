@@ -34,7 +34,10 @@ enum class EDOMNodeType
 	BlackoutObserver,
 	BlackoutKey,
 	Key,
-	ItemInfo
+	ItemInfo,
+	ItemAppear,
+	ItemFishing,
+	TreasureTable
 };
 
 // Base class for all DOM (Document Object Model) nodes.
@@ -129,15 +132,19 @@ public:
 	// Returns the ancestor of this node of the given type, recursing up the hierarchy;
 	// returns nullptr if no parent of the requested type is found.
 	template<typename T>
-	std::shared_ptr<T> GetParentOfType(EDOMNodeType type)
+	std::weak_ptr<T> GetParentOfType(EDOMNodeType type)
 	{
-		if (Parent == nullptr)
-			return nullptr;
+		// On the off chance that the parent is invalid, don't try to do anything.
+		if (Parent.expired())
+			return std::weak_ptr<T>();
 
-		if (Parent->IsNodeType(type))
-			return std::static_pointer_cast<T>(Parent);
+		// Grab a temporary shared_ptr for the parent.
+		auto parentShared = Parent.lock();
 
-		return Parent->GetParentOfType<T>(type);
+		if (parentShared->IsNodeType(type))
+			return std::static_pointer_cast<T>(parentShared);
+
+		return parentShared->GetParentOfType<T>(type);
 	}
 
 	// Returns a collection of children of this node of the requested type, recursing down the hierarchy.

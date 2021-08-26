@@ -30,7 +30,7 @@ enum LEntityType
 	LEntityType_BlackoutKeys,
 	LEntityType_BlackoutObservers,
 	LEntityType_Boos,
-	LEntityType_TreasureChests,
+	LEntityType_TreasureTable,
 	LEntityType_Max,
 };
 
