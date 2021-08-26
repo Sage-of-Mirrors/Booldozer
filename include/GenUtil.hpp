@@ -30,4 +30,9 @@ namespace LGenUtility
 
         return buff.str();
     }
+
+    inline size_t PadToBoundary(size_t original, size_t boundary)
+    {
+        return (original + (boundary - 1)) & ~(boundary - 1);
+    }
 }

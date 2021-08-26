@@ -102,8 +102,15 @@ public:
 			return EDOMNodeType::Object;
 		case LEntityType_Paths:
 			return EDOMNodeType::Path;
+
 		case LEntityType_ItemInfoTable:
 			return EDOMNodeType::ItemInfo;
+		case LEntityType_ItemAppear:
+			return EDOMNodeType::ItemAppear;
+		case LEntityType_ItemFishing:
+			return EDOMNodeType::ItemFishing;
+		case LEntityType_TreasureTable:
+			return EDOMNodeType::TreasureTable;
 
 		default:
 			return EDOMNodeType::Map;

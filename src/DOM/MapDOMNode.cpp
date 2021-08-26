@@ -118,7 +118,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 			continue;
 
 		// Some JMP files have strings that aren't 32 bytes, so this is a way to handle that.
-		if (entityType == LEntityType_ItemInfoTable)
+		if (entityType == LEntityType_ItemInfoTable || entityType == LEntityType_ItemAppear || entityType == LEntityType_ItemFishing || entityType == LEntityType_TreasureTable)
 			JmpIOManagers[entityType].SetStringSize(16);
 
 		bStream::CMemoryStream fileReader = bStream::CMemoryStream(fileData, fileSize, bStream::Endianess::Big, bStream::OpenMode::In);

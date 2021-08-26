@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../lib/bStream/bstream.h"
+#include "GenUtil.hpp"
 #include <memory>
 #include <vector>
 
@@ -83,7 +84,7 @@ public:
 	size_t GetStringSize() const { return mStringSize; }
 	void SetStringSize(uint32_t newStringSize) { mStringSize = newStringSize; }
 
-	size_t CalculateNewFileSize(size_t entityCount) { return JMP_HEADER_SIZE + (mFieldCount * JMP_FIELD_DEF_SIZE) + (entityCount * mEntrySize); }
+	size_t CalculateNewFileSize(size_t entityCount) { return LGenUtility::PadToBoundary(JMP_HEADER_SIZE + (mFieldCount * JMP_FIELD_DEF_SIZE) + (entityCount * mEntrySize), 32); }
 
 /*== Input ==*/
 	// Attempts to load a JMP file from the given stream. Returns
