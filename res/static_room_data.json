@@ -1,0 +1,17 @@
+{
+  "map0": {
+    "GLME01": 0x2FE284,
+    "GLMP01": 0x3033A4,
+    "GLMJ01": 0x2F3484
+  },
+  "map1": {
+    "GLME01": 0x2FE30C,
+    "GLMP01": 0x30342C,
+    "GLMJ01": 0x2F350C
+  },
+  "map2": {
+    "GLME01": 0x30077C,
+    "GLMP01": 0x30589C,
+    "GLMJ01": 0x2F597C
+  }
+}
