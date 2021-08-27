@@ -228,6 +228,9 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 			case LEntityType_Generators:
 				newNode = std::make_shared<LGeneratorDOMNode>("generator");
 				break;
+			case LEntityType_Objects:
+				newNode = std::make_shared<LObjectDOMNode>(LGenUtility::Format("Object ", i));
+				break;
 			default:
 				break;
 		}

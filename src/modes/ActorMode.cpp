@@ -42,15 +42,15 @@ void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 		ImGui::TreePop();
 	}
 
-	auto generators = current_map->GetChildrenOfType<LGeneratorDOMNode>(EDOMNodeType::Generator);
-	if (ImGui::TreeNode("Generators"))
+	auto objects = current_map->GetChildrenOfType<LObjectDOMNode>(EDOMNodeType::Object);
+	if (ImGui::TreeNode("Objects"))
 	{
-		for (uint32_t i = 0; i < generators.size(); i++)
+		for (uint32_t i = 0; i < objects.size(); i++)
 		{
 			uint32_t selectionType = 0;
 
 			ImGui::PushID(i);
-			generators[i]->RenderHierarchyUI(generators[i], &mSelectionManager);
+			objects[i]->RenderHierarchyUI(objects[i], &mSelectionManager);
 			ImGui::PopID();
 		}
 

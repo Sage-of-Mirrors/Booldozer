@@ -183,6 +183,9 @@ std::shared_ptr<glm::mat4> LEditorScene::InstanceModel(std::string name, glm::ma
 }
 
 void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
+	if (m_height == 0)
+		m_height = 1;
+
 	Camera.AspectRatio = m_width / m_height;
 
 	glm::mat4 view = Camera.GetViewMatrix();
