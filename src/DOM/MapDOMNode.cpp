@@ -225,6 +225,9 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 			case LEntityType_TreasureTable:
 				newNode = std::make_shared<LTreasureTableDOMNode>(LGenUtility::Format("Treasure Table ", i));
 				break;
+			case LEntityType_Generators:
+				newNode = std::make_shared<LGeneratorDOMNode>("generator");
+				break;
 			default:
 				break;
 		}

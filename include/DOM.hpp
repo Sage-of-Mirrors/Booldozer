@@ -16,3 +16,4 @@
 #include "DOM/ItemAppearDOMNode.hpp"
 #include "DOM/ItemFishingDOMNode.hpp"
 #include "DOM/TreasureTableDOMNode.hpp"
+#include "DOM/GeneratorDOMNode.hpp"
