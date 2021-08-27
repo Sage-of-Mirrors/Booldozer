@@ -12,30 +12,9 @@
 
 namespace LResUtility
 {
-	nlohmann::json DeserializeJSON(std::filesystem::path file_path)
-	{
-		nlohmann::json j;
+	nlohmann::json DeserializeJSON(std::filesystem::path file_path);
 
-		if (file_path.empty() || !std::filesystem::exists(file_path))
-		{
-			std::cout << LGenUtility::Format("Unable to load JSON file from ", file_path);
-			return j;
-		}
+	nlohmann::json GetMapRoomNames(std::string mapName);
 
-		std::ifstream srcFile(file_path);
-		if (srcFile.is_open())
-		{
-			srcFile >> j;
-		}
-
-		return j;
-	}
-
-	nlohmann::json GetMapRoomNames(std::string mapName)
-	{
-		std::string fileName = LGenUtility::Format(mapName, "_rooms.json");
-		std::filesystem::path fullPath = std::filesystem::current_path() / NAMES_BASE_PATH / fileName;
-
-		return DeserializeJSON(fullPath);
-	}
+	uint32_t GetStaticMapDataOffset(std::string mapName, std::string region);
 }
