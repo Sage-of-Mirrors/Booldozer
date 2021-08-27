@@ -18,3 +18,5 @@
 #include "DOM/TreasureTableDOMNode.hpp"
 #include "DOM/GeneratorDOMNode.hpp"
 #include "DOM/ObjectDOMNode.hpp"
+#include "DOM/KeyDOMNode.hpp"
+#include "DOM/SpeedySpiritDropDOMNode.hpp"

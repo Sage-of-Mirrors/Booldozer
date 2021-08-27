@@ -57,6 +57,36 @@ void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 		ImGui::TreePop();
 	}
 
+	auto keys = current_map->GetChildrenOfType<LKeyDOMNode>(EDOMNodeType::Key);
+	if (ImGui::TreeNode("Keys"))
+	{
+		for (uint32_t i = 0; i < keys.size(); i++)
+		{
+			uint32_t selectionType = 0;
+
+			ImGui::PushID(i);
+			keys[i]->RenderHierarchyUI(keys[i], &mSelectionManager);
+			ImGui::PopID();
+		}
+
+		ImGui::TreePop();
+	}
+
+	auto speedys = current_map->GetChildrenOfType<LSpeedySpiritDropDOMNode>(EDOMNodeType::SpeedySpiritDrop);
+	if (ImGui::TreeNode("Speedy Spirit Drops"))
+	{
+		for (uint32_t i = 0; i < speedys.size(); i++)
+		{
+			uint32_t selectionType = 0;
+
+			ImGui::PushID(i);
+			speedys[i]->RenderHierarchyUI(speedys[i], &mSelectionManager);
+			ImGui::PopID();
+		}
+
+		ImGui::TreePop();
+	}
+
 	ImGui::End();
 }
 

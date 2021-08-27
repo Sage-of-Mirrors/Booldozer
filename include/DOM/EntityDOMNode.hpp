@@ -111,6 +111,8 @@ public:
 			return EDOMNodeType::ItemFishing;
 		case LEntityType_TreasureTable:
 			return EDOMNodeType::TreasureTable;
+		case LEntityType_SpeedySpiritDrops:
+			return EDOMNodeType::SpeedySpiritDrop;
 
 		default:
 			return EDOMNodeType::Map;
