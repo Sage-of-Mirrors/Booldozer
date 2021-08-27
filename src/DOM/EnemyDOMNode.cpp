@@ -85,7 +85,7 @@ LEnemyDOMNode::LEnemyDOMNode(std::string name) : Super(name),
     mCreateName("----"), mPathName("(null)"), mAccessName("(null)"), mCodeName("(null)"),
     mFloatingHeight(0), mAppearChance(64), mSpawnFlag(0), mDespawnFlag(0), mEventNumber(0), mItemTable(0),
     mCondType(EConditionType::Always_True), mMoveType(0), mSearchType(0), mAppearType(EAppearType::Normal), mPlaceType(EPlaceType::Always_Spawn_at_Initial_Position), mIsVisible(true), mStay(false),
-    mFurnitureNodeRef(std::weak_ptr<LFurnitureDOMNode>())
+    mFurnitureNodeRef(std::weak_ptr<LFurnitureDOMNode>()), mIsBlackoutEnemy(false)
 {
     mType = EDOMNodeType::Enemy;
 }

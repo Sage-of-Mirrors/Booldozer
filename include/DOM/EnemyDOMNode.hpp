@@ -55,16 +55,22 @@ class LEnemyDOMNode : public LEntityDOMNode
 
 	std::weak_ptr<LFurnitureDOMNode> mFurnitureNodeRef;
 
+	bool mIsBlackoutEnemy;
+
 public:
 	typedef LEntityDOMNode Super;
 
 	LEnemyDOMNode(std::string name);
+	LEnemyDOMNode(std::string name, bool isBlackoutEnemy) : LEnemyDOMNode(name) { mIsBlackoutEnemy = isBlackoutEnemy; }
 
 	virtual std::string GetCreateName() const override { return mCreateName; }
 	virtual void SetCreateName(std::string newCreateName) override { mCreateName = newCreateName; }
 
 	virtual std::string GetName() override { return EnemyNames[mName]; }
 	virtual void RenderDetailsUI(float dt) override;
+
+	bool GetIsBlackoutEnemy() { return mIsBlackoutEnemy; }
+	void SetIsBlackoutEnemy(bool isBlackoutEnemy) { mIsBlackoutEnemy = isBlackoutEnemy; }
 
 	// Writes the data this JMP node into the given LJmpIO instance at the specified entry.
 	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const override;

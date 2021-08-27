@@ -63,6 +63,23 @@ protected:
 		}
 	}
 
+	/*template<typename T, typename U>
+	void GatherChildrenOfType(std::vector<std::shared_ptr<T>>& list, EDOMNodeType type, U predicate)
+	{
+		for (std::shared_ptr<LDOMNodeBase> child : Children)
+		{
+			if (child->IsNodeType(type))
+			{
+				auto typed = std::static_pointer_cast<T>(child);
+
+				if (predicate && predicate(typed))
+					list.push_back(typed);
+			}
+
+			child->GatherChildrenOfType(list, type, predicate);
+		}
+	}*/
+
 public:
 	LDOMNodeBase(std::string name) { mName = name; SetIsSelected(false); SetIsRendered(true); SetIsInitialized(false); }
 
@@ -159,4 +176,14 @@ public:
 
 		return matchingNodes;
 	}
+
+	/*template<typename T, typename U>
+	std::vector<std::shared_ptr<T>> GetChildrenOfType(EDOMNodeType type, U predicate)
+	{
+		std::vector<std::shared_ptr<T>> matchingNodes;
+
+		GatherChildrenOfType(matchingNodes, type, predicate);
+
+		return matchingNodes;
+	}*/
 };

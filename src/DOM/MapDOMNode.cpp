@@ -2,6 +2,7 @@
 #include "../lib/libgctools/include/compression.h"
 #include <fstream>
 #include "GenUtil.hpp"
+#include "ResUtil.hpp"
 
 std::string const LEntityFileNames[LEntityType_Max] = {
 	"characterinfo",
@@ -81,6 +82,8 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	// We'll call ourselves whatever the root directory of the archive is
 	mName = std::string(mapArc.dirs[0].name);
 
+	nlohmann::json roomNames = LResUtility::GetMapRoomNames(mName);
+
 	// Load the room nodes using roominfo
 	bStream::CMemoryStream roomMemStream(roominfoData, roomInfoSize, bStream::Endianess::Big, bStream::OpenMode::In);
 	JmpIOManagers[LEntityType_Rooms].Load(&roomMemStream);
@@ -88,6 +91,9 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	for (int32_t i = 0; i < JmpIOManagers[LEntityType_Rooms].GetEntryCount(); i++)
 	{
 		std::string roomName = LGenUtility::Format("room_", std::setfill('0'), std::setw(2), i);
+		if (roomNames.find(roomName) != roomNames.end())
+			roomName = roomNames[roomName];
+
 		std::shared_ptr<LRoomDOMNode> newRoom = std::make_shared<LRoomDOMNode>(roomName);
 
 		newRoom->LoadJmpInfo(i, &JmpIOManagers[LEntityType_Rooms]);
@@ -145,7 +151,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	for (std::shared_ptr<LRoomDOMNode> r : rooms)
 	{
 		std::filesystem::path parentDir = file_path.parent_path().parent_path();
-		std::filesystem::path roomArcPath = std::filesystem::path(parentDir / "Iwamoto" / mName / r->GetName() );
+		std::filesystem::path roomArcPath = std::filesystem::path(parentDir / "Iwamoto" / mName / LGenUtility::Format("room_", std::setfill('0'), std::setw(2), r->GetRoomNumber()));
 		roomArcPath.replace_extension(".arc");
 
 		GCarchive roomArc;
@@ -239,6 +245,9 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 				break;
 			case LEntityType_Boos:
 				newNode = std::make_shared<LBooDOMNode>("Boo");
+				break;
+			case LEntityType_BlackoutEnemies:
+				newNode = std::make_shared<LEnemyDOMNode>("Enemy", true);
 				break;
 			default:
 				break;
