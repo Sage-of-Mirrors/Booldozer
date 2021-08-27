@@ -113,6 +113,8 @@ public:
 			return EDOMNodeType::TreasureTable;
 		case LEntityType_SpeedySpiritDrops:
 			return EDOMNodeType::SpeedySpiritDrop;
+		case LEntityType_Boos:
+			return EDOMNodeType::Boo;
 
 		default:
 			return EDOMNodeType::Map;

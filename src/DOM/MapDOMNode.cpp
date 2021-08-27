@@ -235,7 +235,10 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 				newNode = std::make_shared<LKeyDOMNode>("key01");
 				break;
 			case LEntityType_SpeedySpiritDrops:
-				newNode = newNode = std::make_shared<LSpeedySpiritDropDOMNode>("iyapoo1");
+				newNode = std::make_shared<LSpeedySpiritDropDOMNode>("iyapoo1");
+				break;
+			case LEntityType_Boos:
+				newNode = std::make_shared<LBooDOMNode>("Boo");
 				break;
 			default:
 				break;

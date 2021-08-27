@@ -38,7 +38,8 @@ enum class EDOMNodeType
 	ItemAppear,
 	ItemFishing,
 	TreasureTable,
-	SpeedySpiritDrop
+	SpeedySpiritDrop,
+	Boo
 };
 
 // Base class for all DOM (Document Object Model) nodes.

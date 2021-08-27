@@ -20,3 +20,4 @@
 #include "DOM/ObjectDOMNode.hpp"
 #include "DOM/KeyDOMNode.hpp"
 #include "DOM/SpeedySpiritDropDOMNode.hpp"
+#include "DOM/BooDOMNode.hpp"
