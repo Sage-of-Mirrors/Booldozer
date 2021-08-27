@@ -34,6 +34,7 @@ class LBooldozerEditor
 	LItemMode mItemMode;
 
 	void OpenMap(std::string file_path);
+	void SaveMapToFiles(std::string folder_path);
 
 public:
 	LBooldozerEditor();

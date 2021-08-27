@@ -31,6 +31,20 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGuiFileDialog::Instance()->Close();
 	}
 
+	// Render file dialog for saving map to files
+	if (ImGuiFileDialog::Instance()->Display("SaveMapFilesDlg"))
+	{
+		// action if OK
+		if (ImGuiFileDialog::Instance()->IsOk())
+		{
+			std::string folderPathName = ImGuiFileDialog::Instance()->GetFilePathName();
+			SaveMapToFiles(folderPathName);
+		}
+
+		// close
+		ImGuiFileDialog::Instance()->Close();
+	}
+
 	if (mLoadedMap == nullptr || mLoadedMap->Children.empty() || mCurrentMode == nullptr)
 		return;
 
@@ -58,7 +72,13 @@ void LBooldozerEditor::onOpenRoomsCB()
 void LBooldozerEditor::onSaveMapCB()
 {
 	if (mLoadedMap != nullptr)
-		mLoadedMap->SaveMapToFiles(std::filesystem::path("D:\\SZS Tools\\Luigi's Mansion\\Booldozer\\jmptest"));
+		ImGuiFileDialog::Instance()->OpenDialog("SaveMapFilesDlg", "Choose a Folder", nullptr, ".");
+}
+
+void LBooldozerEditor::SaveMapToFiles(std::string folder_path)
+{
+	if (mLoadedMap != nullptr)
+		mLoadedMap->SaveMapToFiles(folder_path);
 }
 
 void LBooldozerEditor::ChangeMode()
