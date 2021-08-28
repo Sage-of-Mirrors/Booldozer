@@ -28,6 +28,37 @@ enum LRoomEntityType : uint32_t
 	LRoomEntityType_Max,
 };
 
+struct LAlternateResource
+{
+	uint32_t mRoomNumber;
+	uint32_t mUnknown1;
+	uint32_t mUnknown2;
+	uint32_t mUnknown3;
+
+	std::string mAltResourceName;
+};
+
+struct LStaticRoomDefinition
+{
+	uint8_t mCameraPositionIndex;
+	uint8_t mGBHFloor;
+	uint8_t mDoorZone;
+	uint8_t mRoomID;
+
+	uint32_t mCameraBehavior;
+	
+	glm::vec3 mBoundingBoxMin;
+	glm::vec3 mBoundingBoxMax;
+	glm::vec3 mBoundingBoxCenter;
+
+	uint32_t mUnknown1;
+	uint32_t mUnknown2;
+
+	//std::vector<std::weak_ptr<LDoorDOMNode>> mDoors;
+
+	glm::vec4 mDarkLighting;
+};
+
 struct LSpawnGroup
 {
 	bool IsWaveCompleted = false;
@@ -92,7 +123,14 @@ class LRoomDOMNode : public LBGRenderDOMNode
 	uint32_t mSoundRoomSize;
 
 /*=== map.dat properties ===*/
-	// TODO
+	// Name of the resource file, either a raw BIN or an archive.
+	std::string mResourceName;
+	// Which rooms should be loaded/visible from this room.
+	std::vector<std::weak_ptr<LRoomDOMNode>> mAdjacentRooms;
+	// Definition of an alternate resource to use for a room's main model. Only used for Guest Room (room_28)?
+	LAlternateResource mAlternateResource;
+	// This is the definition of the room from the DOL.
+	LStaticRoomDefinition mStaticDefinition;
 
 	std::vector<LSpawnGroup> Groups;
 
