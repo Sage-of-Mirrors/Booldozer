@@ -8,11 +8,17 @@
 #include <memory>
 #include "imgui.h"
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
+#include "ResUtil.hpp"
 
 LBooldozerEditor::LBooldozerEditor()
 {
 	CurrentMode = EEditorMode::Actor_Mode;
 	mCurrentMode = &mActorMode;
+
+	// Attempt to load settings; if JSON is empty, create a new file.
+	mUserSettings = LResUtility::GetUserSettings();
+	if (mUserSettings.empty())
+		LResUtility::CreateUserSettings(mUserSettings);
 }
 
 void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
@@ -25,6 +31,9 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		{
 			std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
 			OpenMap(filePathName);
+
+			mUserSettings["last_open_path"] = filePathName;
+			LResUtility::SaveUserSettings(mUserSettings);
 		}
 
 		// close
@@ -39,6 +48,9 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		{
 			std::string folderPathName = ImGuiFileDialog::Instance()->GetFilePathName();
 			SaveMapToFiles(folderPathName);
+
+			mUserSettings["last_save_path"] = folderPathName;
+			LResUtility::SaveUserSettings(mUserSettings);
 		}
 
 		// close
@@ -61,7 +73,7 @@ void LBooldozerEditor::OpenMap(std::string file_path)
 
 void LBooldozerEditor::onOpenMapCB()
 {
-	ImGuiFileDialog::Instance()->OpenDialog("OpenMapDlg", "Open map archive", "Archives (*.arc *.szs *.szp){.arc,.szs,.szp}", ".");
+	ImGuiFileDialog::Instance()->OpenDialog("OpenMapDlg", "Open map archive", "Archives (*.arc *.szs *.szp){.arc,.szs,.szp}", mUserSettings["last_open_path"]);
 }
 
 void LBooldozerEditor::onOpenRoomsCB()
@@ -72,7 +84,7 @@ void LBooldozerEditor::onOpenRoomsCB()
 void LBooldozerEditor::onSaveMapCB()
 {
 	if (mLoadedMap != nullptr)
-		ImGuiFileDialog::Instance()->OpenDialog("SaveMapFilesDlg", "Choose a Folder", nullptr, ".");
+		ImGuiFileDialog::Instance()->OpenDialog("SaveMapFilesDlg", "Choose a Folder", nullptr, mUserSettings["last_save_path"]);
 }
 
 void LBooldozerEditor::SaveMapToFiles(std::string folder_path)

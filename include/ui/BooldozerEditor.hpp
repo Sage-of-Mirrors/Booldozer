@@ -8,6 +8,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <nlohmann/json.hpp>
 
 enum class EEditorMode : uint32_t
 {
@@ -24,6 +25,9 @@ class LBooldozerEditor
 {
 	// The map that is currently being edited.
 	std::shared_ptr<LMapDOMNode> mLoadedMap;
+	
+	// JSON object holding user settings
+	nlohmann::json mUserSettings;
 
 /*=== Editor modes ===*/
 	// The mode that is currently executing.

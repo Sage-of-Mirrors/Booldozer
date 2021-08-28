@@ -46,3 +46,30 @@ uint32_t LResUtility::GetStaticMapDataOffset(std::string mapName, std::string re
 
 	return deserializedJson[mapName][region];
 }
+
+nlohmann::json LResUtility::GetUserSettings()
+{
+	std::filesystem::path fullPath = std::filesystem::current_path() / "user_settings.json";
+	return DeserializeJSON(fullPath);
+}
+
+void LResUtility::CreateUserSettings(nlohmann::json& settings)
+{
+	settings["root_path"] = ".";
+	settings["last_open_path"] = ".";
+	settings["last_save_path"] = ".";
+	settings["is_dol_patched"] = false;
+
+	SaveUserSettings(settings);
+}
+
+void LResUtility::SaveUserSettings(nlohmann::json settings)
+{
+	std::filesystem::path fullPath = std::filesystem::current_path() / "user_settings.json";
+
+	std::ofstream destFile(fullPath);
+	if (destFile.is_open())
+	{
+		destFile << settings;
+	}
+}
