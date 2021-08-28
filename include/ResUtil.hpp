@@ -20,5 +20,5 @@ namespace LResUtility
 
 	nlohmann::json GetUserSettings();
 	void CreateUserSettings(nlohmann::json& settings);
-	void SaveUserSettings(nlohmann::json settings);
+	void SaveUserSettings(nlohmann::json& settings);
 }

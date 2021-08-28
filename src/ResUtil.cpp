@@ -63,13 +63,13 @@ void LResUtility::CreateUserSettings(nlohmann::json& settings)
 	SaveUserSettings(settings);
 }
 
-void LResUtility::SaveUserSettings(nlohmann::json settings)
+void LResUtility::SaveUserSettings(nlohmann::json& settings)
 {
 	std::filesystem::path fullPath = std::filesystem::current_path() / "user_settings.json";
 
 	std::ofstream destFile(fullPath);
 	if (destFile.is_open())
-	{
 		destFile << settings;
-	}
+	else
+		std::cout << LGenUtility::Format("Error saving user settings to ", fullPath);
 }
