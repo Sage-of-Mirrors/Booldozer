@@ -110,7 +110,9 @@ void LBooldozerMainWindow::render(float dt)
         }
         if (ImGui::BeginMenu("Edit"))
         {
-            ImGui::Text("Edit Stuff");
+            if (ImGui::MenuItem("Options"))
+                mEditorContext.onOpenOptionsCB();
+
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Tools"))

@@ -1,4 +1,5 @@
 #include "ResUtil.hpp"
+#include "Settings.hpp"
 
 nlohmann::json LResUtility::DeserializeJSON(std::filesystem::path file_path)
 {
@@ -47,29 +48,30 @@ uint32_t LResUtility::GetStaticMapDataOffset(std::string mapName, std::string re
 	return deserializedJson[mapName][region];
 }
 
-nlohmann::json LResUtility::GetUserSettings()
+void LResUtility::LoadUserSettings()
 {
 	std::filesystem::path fullPath = std::filesystem::current_path() / "user_settings.json";
-	return DeserializeJSON(fullPath);
+
+	// If the settings file doesn't exist, cause it to be created with the default settings.
+	if (!std::filesystem::exists(fullPath))
+	{
+		SaveUserSettings();
+		return;
+	}
+
+	nlohmann::json deserialized = DeserializeJSON(fullPath);
+	LUserOptions::FromJson(deserialized, OPTIONS);
 }
 
-void LResUtility::CreateUserSettings(nlohmann::json& settings)
-{
-	settings["root_path"] = ".";
-	settings["last_open_path"] = ".";
-	settings["last_save_path"] = ".";
-	settings["is_dol_patched"] = false;
-
-	SaveUserSettings(settings);
-}
-
-void LResUtility::SaveUserSettings(nlohmann::json& settings)
+void LResUtility::SaveUserSettings()
 {
 	std::filesystem::path fullPath = std::filesystem::current_path() / "user_settings.json";
+	nlohmann::json serialize;
+	LUserOptions::ToJson(serialize, OPTIONS);
 
 	std::ofstream destFile(fullPath);
 	if (destFile.is_open())
-		destFile << settings;
+		destFile << serialize;
 	else
 		std::cout << LGenUtility::Format("Error saving user settings to ", fullPath);
 }

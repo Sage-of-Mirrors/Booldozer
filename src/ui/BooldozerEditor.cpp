@@ -9,16 +9,15 @@
 #include "imgui.h"
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
 #include "ResUtil.hpp"
+#include "UIUtil.hpp"
 
 LBooldozerEditor::LBooldozerEditor()
 {
 	CurrentMode = EEditorMode::Actor_Mode;
 	mCurrentMode = &mActorMode;
+	mOpenOptions = false;
 
-	// Attempt to load settings; if JSON is empty, create a new file.
-	mUserSettings = LResUtility::GetUserSettings();
-	if (mUserSettings.empty())
-		LResUtility::CreateUserSettings(mUserSettings);
+	LResUtility::LoadUserSettings();
 }
 
 void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
@@ -32,8 +31,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 			std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
 			OpenMap(filePathName);
 
-			mUserSettings["last_open_path"] = filePathName;
-			LResUtility::SaveUserSettings(mUserSettings);
+			OPTIONS.mLastOpenedMap = filePathName;
 		}
 
 		// close
@@ -49,13 +47,20 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 			std::string folderPathName = ImGuiFileDialog::Instance()->GetFilePathName();
 			SaveMapToFiles(folderPathName);
 
-			mUserSettings["last_save_path"] = folderPathName;
-			LResUtility::SaveUserSettings(mUserSettings);
+			OPTIONS.mLastSavedDirectory = folderPathName;
 		}
 
 		// close
 		ImGuiFileDialog::Instance()->Close();
 	}
+
+	if (mOpenOptions)
+	{
+		mOptionsMenu.OpenMenu();
+		mOpenOptions = false;
+	}
+
+	mOptionsMenu.RenderOptionsPopup();
 
 	if (mLoadedMap == nullptr || mLoadedMap->Children.empty() || mCurrentMode == nullptr)
 		return;
@@ -73,7 +78,7 @@ void LBooldozerEditor::OpenMap(std::string file_path)
 
 void LBooldozerEditor::onOpenMapCB()
 {
-	ImGuiFileDialog::Instance()->OpenDialog("OpenMapDlg", "Open map archive", "Archives (*.arc *.szs *.szp){.arc,.szs,.szp}", mUserSettings["last_open_path"]);
+	ImGuiFileDialog::Instance()->OpenDialog("OpenMapDlg", "Open map archive", "Archives (*.arc *.szs *.szp){.arc,.szs,.szp}", OPTIONS.mLastOpenedMap);
 }
 
 void LBooldozerEditor::onOpenRoomsCB()
@@ -84,7 +89,12 @@ void LBooldozerEditor::onOpenRoomsCB()
 void LBooldozerEditor::onSaveMapCB()
 {
 	if (mLoadedMap != nullptr)
-		ImGuiFileDialog::Instance()->OpenDialog("SaveMapFilesDlg", "Choose a Folder", nullptr, mUserSettings["last_save_path"]);
+		ImGuiFileDialog::Instance()->OpenDialog("SaveMapFilesDlg", "Choose a Folder", nullptr, OPTIONS.mLastSavedDirectory);
+}
+
+void LBooldozerEditor::onOpenOptionsCB()
+{
+	mOpenOptions = true;
 }
 
 void LBooldozerEditor::SaveMapToFiles(std::string folder_path)
