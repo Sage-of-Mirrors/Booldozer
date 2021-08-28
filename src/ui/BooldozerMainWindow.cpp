@@ -117,7 +117,9 @@ void LBooldozerMainWindow::render(float dt)
         }
         if (ImGui::BeginMenu("Tools"))
         {
-            ImGui::Text("Tool Stuff");
+            if (ImGui::MenuItem("Playtest"))
+                mEditorContext.onPlaytestCB();
+
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Help"))

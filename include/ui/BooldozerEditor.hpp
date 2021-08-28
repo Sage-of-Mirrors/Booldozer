@@ -59,6 +59,8 @@ public:
 	// Callback for when the user requests to open the options menu
 	void onOpenOptionsCB();
 
+	void onPlaytestCB();
+
 	// Switches the current mode to the given new one.
 	void ChangeMode();
 };

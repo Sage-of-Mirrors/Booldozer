@@ -97,6 +97,12 @@ void LBooldozerEditor::onOpenOptionsCB()
 	mOpenOptions = true;
 }
 
+void LBooldozerEditor::onPlaytestCB()
+{
+	std::string args = LGenUtility::Format('\"', '\"', OPTIONS.mDolphinPath, "\" -b -e ", '\"', OPTIONS.mRootPath, "\\sys", "\\main.dol\"", '\"');
+	int ret = system(args.c_str());
+}
+
 void LBooldozerEditor::SaveMapToFiles(std::string folder_path)
 {
 	if (mLoadedMap != nullptr)
