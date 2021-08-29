@@ -1,5 +1,5 @@
 #include "ui/BooldozerEditor.hpp"
-#include "JmpIO.hpp"
+#include "io/JmpIO.hpp"
 #include "../lib/libgctools/include/compression.h"
 #include "../lib/bStream/bstream.h"
 #include "DOM/FurnitureDOMNode.hpp"

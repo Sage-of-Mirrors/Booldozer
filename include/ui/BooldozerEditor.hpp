@@ -9,7 +9,7 @@
 #include <filesystem>
 #include <memory>
 #include <nlohmann/json.hpp>
-#include "Settings.hpp"
+#include "Options.hpp"
 
 enum class EEditorMode : uint32_t
 {

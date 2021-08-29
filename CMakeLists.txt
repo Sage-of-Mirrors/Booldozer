@@ -8,11 +8,22 @@ add_subdirectory(lib/libgctools)
 
 file(GLOB BOOLDOZER_SRC 
     "src/*.cpp"
+    "include/*.hpp"
+    "include/*.h"
     "src/ui/*.cpp"
+    "include/ui/*.hpp"
     "src/DOM/*.cpp"
+    "include/DOM/*.hpp"
     "src/modes/*.cpp"
+    "include/modes/*.hpp"
     "src/history/*.cpp"
+    "include/history/*.hpp"
     "src/scene/*.cpp"
+    "include/scene/*.hpp"
+    "src/io/*.cpp"
+    "include/io/*.hpp"
+    "include/nlohmann/*.hpp"
+    "include/ImGuiFileDialog/*.h"
 )
 
 add_executable(booldozer ${BOOLDOZER_SRC})

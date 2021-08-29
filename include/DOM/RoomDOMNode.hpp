@@ -2,7 +2,7 @@
 
 #include "BGRenderDOMNode.hpp"
 #include "EntityDOMNode.hpp"
-#include "JmpIO.hpp"
+#include "io/JmpIO.hpp"
 #include "Model.hpp"
 #include "../lib/libgctools/include/archive.h"
 #include "glm/glm.hpp"

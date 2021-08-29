@@ -1,7 +1,7 @@
 #pragma once
 
 #include "BGRenderDOMNode.hpp"
-#include "JmpIO.hpp"
+#include "io/JmpIO.hpp"
 #include "../lib/bStream/bstream.h"
 
 enum LEntityType
