@@ -40,6 +40,9 @@ bool DOL::LoadDOLFile(std::filesystem::path dolPath)
 
 uint32_t DOL::ConvertAddressToOffset(uint32_t address) const
 {
+	if (address == 0)
+		return 0;
+
 	for (uint32_t i = 0; i < DOL_SECTION_COUNT; i++)
 	{
 		if (mTextDataRAMAddresses[i] == 0)

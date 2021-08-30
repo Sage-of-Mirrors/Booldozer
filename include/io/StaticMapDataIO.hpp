@@ -6,7 +6,7 @@
 
 #include <filesystem>
 
-constexpr size_t FILE_HEADER_SIZE = 48;
+constexpr size_t FILE_HEADER_SIZE = 64;
 constexpr size_t ROOM_DATA_SIZE = 48;
 constexpr size_t MAP_DATA_SIZE = 28;
 constexpr size_t RES_STRING_SIZE = 28;
@@ -135,6 +135,10 @@ class LStaticMapDataIO
 	size_t mDoorListCount;
 	uint32_t mDoorListDataOffset;
 
+	// This list tells the game what rooms should be loaded when you're in a specific room.
+	size_t mRoomAdjacencyListCount;
+	uint32_t mRoomAdjacencyListDataOffset;
+
 	// Blob of data used to read stuff from.
 	uint8_t* mData;
 
@@ -146,6 +150,9 @@ class LStaticMapDataIO
 	std::vector<LStaticDoorData> GetDoorDataFromDOL(bStream::CFileStream* stream, uint32_t offset);
 	std::vector<std::string> GetResDataFromDOL(bStream::CFileStream* stream, const DOL& dol, uint32_t count, uint32_t offset);
 	std::vector<LStaticAltRoomResourceData> GetAltResDataFromDOL(bStream::CFileStream* stream, const DOL& dol, uint32_t offset);
+	std::vector<std::vector<uint16_t>> GetRoomAdjDataFromDOL(bStream::CFileStream* stream, const DOL& dol, uint32_t count, uint32_t offset);
+	std::vector<std::string> GetAltResPathsFromDOL(bStream::CFileStream* stream, const DOL& dol, const std::vector<LStaticAltRoomResourceData>& altRes);
+	std::vector<std::vector<uint16_t>> GetRoomDoorListsFromDOL(bStream::CFileStream* stream, const DOL& dol, const std::vector<LStaticRoomData>& rooms);
 
 public:
 	LStaticMapDataIO();
@@ -166,5 +173,5 @@ public:
 	bool SetAltResourceData(const uint32_t& index, LStaticAltRoomResourceData data);
 	bool SetDoorListData(const uint32_t& starting_index, const size_t& count, uint16_t* data);
 
-	bool RipStaticDataFromExecutable(DOL& dol, std::filesystem::path dest_path, std::string map, std::string region);
+	bool RipStaticDataFromExecutable(const DOL& dol, std::filesystem::path dest_path, std::string map, std::string region);
 };

@@ -31,8 +31,11 @@ bool LStaticMapDataIO::Load(bStream::CMemoryStream* stream)
 	mDoorListCount = stream->readUInt32();
 	mDoorListDataOffset = stream->readUInt32();
 
+	mRoomAdjacencyListCount = stream->readUInt32();
+	mRoomAdjacencyListDataOffset = stream->readUInt32();
+
 	// Padding
-	stream->skip(4);
+	stream->skip(16);
 
 	mData = new uint8_t[mFileSize - FILE_HEADER_SIZE];
 	memcpy(mData, stream->getBuffer() + FILE_HEADER_SIZE, mFileSize - FILE_HEADER_SIZE);
@@ -157,7 +160,7 @@ void LStaticMapDataIO::SwapStaticAltResDataEndianness(LStaticAltRoomResourceData
 	data.mPathOffset = LGenUtility::SwapEndian(data.mPathOffset);
 }
 
-bool LStaticMapDataIO::RipStaticDataFromExecutable(DOL& dol, std::filesystem::path dest_path, std::string map, std::string region)
+bool LStaticMapDataIO::RipStaticDataFromExecutable(const DOL& dol, std::filesystem::path dest_path, std::string map, std::string region)
 {
 	if (!dol.IsOpen() || dest_path.empty() || map.empty() || region.empty())
 		return false;
@@ -169,8 +172,8 @@ bool LStaticMapDataIO::RipStaticDataFromExecutable(DOL& dol, std::filesystem::pa
 	bStream::CFileStream* stream = dol.GetFileStream();
 	stream->seek(mapDataOffset);
 
-	uint8_t* mapDataBuffer = new uint8_t[MAP_DATA_SIZE];
-	stream->readBytesTo(mapDataBuffer, MAP_DATA_SIZE);
+	alignas(LStaticMapData) char mapDataBuffer[sizeof(LStaticMapData)];
+	stream->readBytesTo((uint8_t*)mapDataBuffer, MAP_DATA_SIZE);
 
 	LStaticMapData* mapData = static_cast<LStaticMapData*>((void*)mapDataBuffer);
 
@@ -184,19 +187,25 @@ bool LStaticMapDataIO::RipStaticDataFromExecutable(DOL& dol, std::filesystem::pa
 	mapData->mRoomDataAddress = LGenUtility::SwapEndian(mapData->mRoomDataAddress);
 	mapData->mDoorDataAddress = LGenUtility::SwapEndian(mapData->mDoorDataAddress);
 
-	std::vector<LStaticRoomData> roomData = GetRoomDataFromDOL(stream, mapData->mRoomCount, dol.ConvertAddressToOffset(mapData->mRoomDataAddress));
 	std::vector<std::string> roomResData = GetResDataFromDOL(stream, dol, mapData->mRoomCount, dol.ConvertAddressToOffset(mapData->mRoomResTableAddress));
+	std::vector<std::vector<uint16_t>> roomAdjacencyData = GetRoomAdjDataFromDOL(stream, dol, mapData->mRoomCount, dol.ConvertAddressToOffset(mapData->mRoomAdjacencyListAddress));
+	std::vector<LStaticRoomData> roomData = GetRoomDataFromDOL(stream, mapData->mRoomCount, dol.ConvertAddressToOffset(mapData->mRoomDataAddress));
+	
 	std::vector<LStaticAltRoomResourceData> altResData = GetAltResDataFromDOL(stream, dol, dol.ConvertAddressToOffset(mapData->mAltResDataAddress));
+	std::vector<std::string> altResPathData = GetAltResPathsFromDOL(stream, dol, altResData);
 
 	std::vector<LStaticDoorData> doorData = GetDoorDataFromDOL(stream, dol.ConvertAddressToOffset(mapData->mDoorDataAddress));
+	std::vector<std::vector<uint16_t>> doorLists = GetRoomDoorListsFromDOL(stream, dol, roomData);
 
-	delete mapData;
 	return true;
 }
 
 std::vector<LStaticRoomData> LStaticMapDataIO::GetRoomDataFromDOL(bStream::CFileStream* stream, uint32_t count, uint32_t offset)
 {
 	std::vector<LStaticRoomData> rooms;
+
+	if (offset == 0)
+		return rooms;
 
 	stream->seek(offset);
 	alignas(LStaticRoomData) char buffer[sizeof(LStaticRoomData)];
@@ -217,6 +226,9 @@ std::vector<LStaticRoomData> LStaticMapDataIO::GetRoomDataFromDOL(bStream::CFile
 std::vector<LStaticDoorData> LStaticMapDataIO::GetDoorDataFromDOL(bStream::CFileStream* stream, uint32_t offset)
 {
 	std::vector<LStaticDoorData> doors;
+
+	if (offset == 0)
+		return doors;
 
 	stream->seek(offset);
 	alignas(LStaticDoorData) char buffer[sizeof(LStaticDoorData)];
@@ -244,6 +256,9 @@ std::vector<std::string> LStaticMapDataIO::GetResDataFromDOL(bStream::CFileStrea
 {
 	std::vector<std::string> resPaths;
 
+	if (offset == 0)
+		return resPaths;
+
 	stream->seek(offset);
 	char buffer[RES_STRING_SIZE];
 
@@ -267,6 +282,9 @@ std::vector<LStaticAltRoomResourceData> LStaticMapDataIO::GetAltResDataFromDOL(b
 {
 	std::vector<LStaticAltRoomResourceData> altRes;
 
+	if (offset == 0)
+		return altRes;
+
 	stream->seek(offset);
 	alignas(LStaticAltRoomResourceData) char buffer[sizeof(LStaticAltRoomResourceData)];
 
@@ -286,4 +304,87 @@ std::vector<LStaticAltRoomResourceData> LStaticMapDataIO::GetAltResDataFromDOL(b
 	}
 
 	return altRes;
+}
+
+std::vector<std::vector<uint16_t>> LStaticMapDataIO::GetRoomAdjDataFromDOL(bStream::CFileStream* stream, const DOL& dol, uint32_t count, uint32_t offset)
+{
+	std::vector<std::vector<uint16_t>> adjData;
+
+	if (offset == 0)
+		return adjData;
+
+	stream->seek(offset);
+
+	for (uint32_t i = 0; i < count; i++)
+	{
+		uint32_t adjAddress = stream->readUInt32();
+
+		uint32_t curOffset = stream->getStream().tellg();
+		stream->seek(dol.ConvertAddressToOffset(adjAddress));
+
+		std::vector<uint16_t> curAdjData;
+
+		while (true)
+		{
+			uint16_t adj = stream->readUInt16();
+			if (adj == 0xFFFF)
+				break;
+
+			curAdjData.push_back(adj);
+		}
+
+		adjData.push_back(curAdjData);
+
+		stream->seek(curOffset);
+	}
+
+	return adjData;
+}
+
+std::vector<std::string> LStaticMapDataIO::GetAltResPathsFromDOL(bStream::CFileStream* stream, const DOL& dol, const std::vector<LStaticAltRoomResourceData>& altRes)
+{
+	std::vector<std::string> altPaths;
+	
+	char buffer[RES_STRING_SIZE];
+
+	for (auto ar : altRes)
+	{
+		uint32_t curOffset = stream->getStream().tellg();
+		stream->seek(dol.ConvertAddressToOffset(ar.mPathOffset));
+
+		stream->readBytesTo((uint8_t*)buffer, RES_STRING_SIZE);
+		altPaths.push_back(std::string((char*)buffer));
+
+		stream->seek(curOffset);
+	}
+
+	return altPaths;
+}
+
+std::vector<std::vector<uint16_t>> LStaticMapDataIO::GetRoomDoorListsFromDOL(bStream::CFileStream* stream, const DOL& dol, const std::vector<LStaticRoomData>& rooms)
+{
+	std::vector<std::vector<uint16_t>> doorListData;
+
+	for (const LStaticRoomData& room : rooms)
+	{
+		uint32_t curOffset = stream->getStream().tellg();
+		stream->seek(dol.ConvertAddressToOffset(room.mDoorListIndex));
+
+		std::vector<uint16_t> curDoorList;
+
+		while (true)
+		{
+			uint16_t door = stream->readUInt16();
+			if (door == 0xFFFF)
+				break;
+
+			curDoorList.push_back(door);
+		}
+
+		doorListData.push_back(curDoorList);
+
+		stream->seek(curOffset);
+	}
+
+	return doorListData;
 }

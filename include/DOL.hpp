@@ -17,9 +17,9 @@ public:
 	~DOL();
 
 	// Returns whether this DOL object has an open file stream.
-	bool IsOpen() { return mFileStream != nullptr && mFileStream->getStream().is_open(); }
+	bool IsOpen() const { return mFileStream != nullptr && mFileStream->getStream().is_open(); }
 
-	bStream::CFileStream* GetFileStream() { return mFileStream; }
+	bStream::CFileStream* GetFileStream() const { return mFileStream; }
 
 	// Attempts to load a DOL from the given file path.
 	bool LoadDOLFile(std::filesystem::path dolPath);
