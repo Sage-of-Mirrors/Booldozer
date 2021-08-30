@@ -154,6 +154,12 @@ class LStaticMapDataIO
 	std::vector<std::string> GetAltResPathsFromDOL(bStream::CFileStream* stream, const DOL& dol, const std::vector<LStaticAltRoomResourceData>& altRes);
 	std::vector<std::vector<uint16_t>> GetRoomDoorListsFromDOL(bStream::CFileStream* stream, const DOL& dol, const std::vector<LStaticRoomData>& rooms);
 
+	void WriteResStrings(bStream::CMemoryStream& stream, const std::vector<std::string>& resStrings);
+	void WriteAdjacencyLists(bStream::CMemoryStream& stream, const std::vector<std::vector<uint16_t>>& adjacencyLists);
+	void WriteAltResData(bStream::CMemoryStream& stream, std::vector<LStaticAltRoomResourceData>& altResData, const std::vector<std::string>& altResPaths);
+	void WriteDoorData(bStream::CMemoryStream& stream, const std::vector<LStaticDoorData>& doors);
+	void WriteRoomAndDoorListData(bStream::CMemoryStream& roomDataStream, bStream::CMemoryStream& listDataStream, std::vector<LStaticRoomData>& rooms, const std::vector<std::vector<uint16_t>>& doorLists);
+
 public:
 	LStaticMapDataIO();
 
