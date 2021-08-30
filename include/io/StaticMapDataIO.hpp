@@ -8,9 +8,25 @@
 
 constexpr size_t FILE_HEADER_SIZE = 48;
 constexpr size_t ROOM_DATA_SIZE = 48;
+constexpr size_t MAP_DATA_SIZE = 28;
 constexpr size_t RES_STRING_SIZE = 28;
 constexpr size_t DOOR_DATA_SIZE = 28;
 constexpr size_t ALT_RES_DATA_SIZE = 8;
+
+struct LStaticMapData
+{
+	uint8_t mRoomCount;
+	uint8_t mRoomCount2;
+	uint16_t mPadding;
+
+	uint32_t mRoomResTableAddress;
+	uint32_t mRoomAdjacencyListAddress;
+	uint32_t mAltResDataAddress;
+	uint32_t mPadding2;
+
+	uint32_t mRoomDataAddress;
+	uint32_t mDoorDataAddress;
+};
 
 struct LStaticRoomData
 {
@@ -24,7 +40,8 @@ struct LStaticRoomData
 	glm::vec<3, int> mBoundingBoxMin;
 	glm::vec<3, int> mBoundingBoxMax;
 
-	uint16_t mPadding;
+	uint32_t mUnknown1;
+	uint32_t mUnknown2;
 
 	uint32_t mDoorListIndex;
 
@@ -90,6 +107,10 @@ struct LStaticAltRoomResourceData
 	uint16_t mPadding;
 
 	uint32_t mPathOffset;
+
+	std::string mPath;
+
+	LStaticAltRoomResourceData() : mRoomNumber(0), mUnknown1(0), mPadding(0), mPathOffset(0), mPath("") { }
 };
 
 class LStaticMapDataIO
@@ -117,6 +138,15 @@ class LStaticMapDataIO
 	// Blob of data used to read stuff from.
 	uint8_t* mData;
 
+	void SwapStaticRoomDataEndianness(LStaticRoomData& data);
+	void SwapStaticDoorDataEndianness(LStaticDoorData& data);
+	void SwapStaticAltResDataEndianness(LStaticAltRoomResourceData& data);
+
+	std::vector<LStaticRoomData> GetRoomDataFromDOL(bStream::CFileStream* stream, uint32_t count, uint32_t offset);
+	std::vector<LStaticDoorData> GetDoorDataFromDOL(bStream::CFileStream* stream, uint32_t offset);
+	std::vector<std::string> GetResDataFromDOL(bStream::CFileStream* stream, DOL dol, uint32_t count, uint32_t offset);
+	std::vector<LStaticAltRoomResourceData> GetAltResDataFromDOL(bStream::CFileStream* stream, DOL dol, uint32_t offset);
+
 public:
 	LStaticMapDataIO();
 
@@ -136,5 +166,5 @@ public:
 	bool SetAltResourceData(const uint32_t& index, LStaticAltRoomResourceData data);
 	bool SetDoorListData(const uint32_t& starting_index, const size_t& count, uint16_t* data);
 
-	bool RipStaticDataFromExecutable(const DOL& dol, std::filesystem::path dest_path, std::string map, std::string region);
+	bool RipStaticDataFromExecutable(DOL& dol, std::filesystem::path dest_path, std::string map, std::string region);
 };
