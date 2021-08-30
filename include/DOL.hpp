@@ -25,5 +25,5 @@ public:
 	bool LoadDOLFile(std::filesystem::path dolPath);
 
 	// Uses the DOL header data to convert the given RAM address to an offset in the DOL file.
-	uint32_t ConvertAddressToOffset(uint32_t address);
+	uint32_t ConvertAddressToOffset(uint32_t address) const;
 };

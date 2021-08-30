@@ -108,9 +108,9 @@ struct LStaticAltRoomResourceData
 
 	uint32_t mPathOffset;
 
-	std::string mPath;
+	//std::string mPath;
 
-	LStaticAltRoomResourceData() : mRoomNumber(0), mUnknown1(0), mPadding(0), mPathOffset(0), mPath("") { }
+	LStaticAltRoomResourceData() : mRoomNumber(0), mUnknown1(0), mPadding(0), mPathOffset(0) { }
 };
 
 class LStaticMapDataIO
@@ -144,8 +144,8 @@ class LStaticMapDataIO
 
 	std::vector<LStaticRoomData> GetRoomDataFromDOL(bStream::CFileStream* stream, uint32_t count, uint32_t offset);
 	std::vector<LStaticDoorData> GetDoorDataFromDOL(bStream::CFileStream* stream, uint32_t offset);
-	std::vector<std::string> GetResDataFromDOL(bStream::CFileStream* stream, DOL dol, uint32_t count, uint32_t offset);
-	std::vector<LStaticAltRoomResourceData> GetAltResDataFromDOL(bStream::CFileStream* stream, DOL dol, uint32_t offset);
+	std::vector<std::string> GetResDataFromDOL(bStream::CFileStream* stream, const DOL& dol, uint32_t count, uint32_t offset);
+	std::vector<LStaticAltRoomResourceData> GetAltResDataFromDOL(bStream::CFileStream* stream, const DOL& dol, uint32_t offset);
 
 public:
 	LStaticMapDataIO();

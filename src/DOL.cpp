@@ -38,7 +38,7 @@ bool DOL::LoadDOLFile(std::filesystem::path dolPath)
 	return true;
 }
 
-uint32_t DOL::ConvertAddressToOffset(uint32_t address)
+uint32_t DOL::ConvertAddressToOffset(uint32_t address) const
 {
 	for (uint32_t i = 0; i < DOL_SECTION_COUNT; i++)
 	{

@@ -185,9 +185,10 @@ bool LStaticMapDataIO::RipStaticDataFromExecutable(DOL& dol, std::filesystem::pa
 	mapData->mDoorDataAddress = LGenUtility::SwapEndian(mapData->mDoorDataAddress);
 
 	std::vector<LStaticRoomData> roomData = GetRoomDataFromDOL(stream, mapData->mRoomCount, dol.ConvertAddressToOffset(mapData->mRoomDataAddress));
-	std::vector<LStaticDoorData> doorData = GetDoorDataFromDOL(stream, dol.ConvertAddressToOffset(mapData->mDoorDataAddress));
-	//std::vector<std::string> roomResData = GetResDataFromDOL(stream, dol, mapData->mRoomCount, dol.ConvertAddressToOffset(mapData->mRoomResTableAddress));
+	std::vector<std::string> roomResData = GetResDataFromDOL(stream, dol, mapData->mRoomCount, dol.ConvertAddressToOffset(mapData->mRoomResTableAddress));
 	std::vector<LStaticAltRoomResourceData> altResData = GetAltResDataFromDOL(stream, dol, dol.ConvertAddressToOffset(mapData->mAltResDataAddress));
+
+	std::vector<LStaticDoorData> doorData = GetDoorDataFromDOL(stream, dol.ConvertAddressToOffset(mapData->mDoorDataAddress));
 
 	delete mapData;
 	return true;
@@ -198,11 +199,11 @@ std::vector<LStaticRoomData> LStaticMapDataIO::GetRoomDataFromDOL(bStream::CFile
 	std::vector<LStaticRoomData> rooms;
 
 	stream->seek(offset);
-	uint8_t buffer[ROOM_DATA_SIZE];
+	alignas(LStaticRoomData) char buffer[sizeof(LStaticRoomData)];
 
 	for (uint32_t i = 0; i < count; i++)
 	{
-		stream->readBytesTo(buffer, ROOM_DATA_SIZE);
+		stream->readBytesTo((uint8_t*)buffer, sizeof(LStaticRoomData));
 
 		LStaticRoomData newRoom = *static_cast<LStaticRoomData*>((void*)buffer);
 
@@ -218,11 +219,11 @@ std::vector<LStaticDoorData> LStaticMapDataIO::GetDoorDataFromDOL(bStream::CFile
 	std::vector<LStaticDoorData> doors;
 
 	stream->seek(offset);
-	uint8_t buffer[DOOR_DATA_SIZE];
+	alignas(LStaticDoorData) char buffer[sizeof(LStaticDoorData)];
 
 	while (true)
 	{
-		stream->readBytesTo(buffer, DOOR_DATA_SIZE);
+		stream->readBytesTo((uint8_t*)buffer, sizeof(LStaticDoorData));
 
 		LStaticDoorData newDoor = *static_cast<LStaticDoorData*>((void*)buffer);
 
@@ -239,12 +240,12 @@ std::vector<LStaticDoorData> LStaticMapDataIO::GetDoorDataFromDOL(bStream::CFile
 	return doors;
 }
 
-std::vector<std::string> LStaticMapDataIO::GetResDataFromDOL(bStream::CFileStream* stream, DOL dol, uint32_t count, uint32_t offset)
+std::vector<std::string> LStaticMapDataIO::GetResDataFromDOL(bStream::CFileStream* stream, const DOL& dol, uint32_t count, uint32_t offset)
 {
 	std::vector<std::string> resPaths;
 
 	stream->seek(offset);
-	uint8_t buffer[RES_STRING_SIZE];
+	char buffer[RES_STRING_SIZE];
 
 	for (uint32_t i = 0; i < count; i++)
 	{
@@ -253,7 +254,7 @@ std::vector<std::string> LStaticMapDataIO::GetResDataFromDOL(bStream::CFileStrea
 		uint32_t curOffset = stream->getStream().tellg();
 		stream->seek(dol.ConvertAddressToOffset(resAddress));
 
-		stream->readBytesTo(buffer, RES_STRING_SIZE);
+		stream->readBytesTo((uint8_t*)buffer, RES_STRING_SIZE);
 		resPaths.push_back(std::string((char*)buffer));
 
 		stream->seek(curOffset);
@@ -262,36 +263,24 @@ std::vector<std::string> LStaticMapDataIO::GetResDataFromDOL(bStream::CFileStrea
 	return resPaths;
 }
 
-std::vector<LStaticAltRoomResourceData> LStaticMapDataIO::GetAltResDataFromDOL(bStream::CFileStream* stream, DOL dol, uint32_t offset)
+std::vector<LStaticAltRoomResourceData> LStaticMapDataIO::GetAltResDataFromDOL(bStream::CFileStream* stream, const DOL& dol, uint32_t offset)
 {
 	std::vector<LStaticAltRoomResourceData> altRes;
 
 	stream->seek(offset);
-	uint8_t buffer[ALT_RES_DATA_SIZE];
-	uint8_t pathBuffer[RES_STRING_SIZE];
+	alignas(LStaticAltRoomResourceData) char buffer[sizeof(LStaticAltRoomResourceData)];
 
 	while (true)
 	{
-		stream->readBytesTo(buffer, ALT_RES_DATA_SIZE);
+		stream->readBytesTo((uint8_t*)buffer, sizeof(LStaticAltRoomResourceData));
 
 		LStaticAltRoomResourceData newAlt = *static_cast<LStaticAltRoomResourceData*>((void*)buffer);
 
-		// The list appears to be terminated with an entry 
-		// with room number == 255.
+		// The list appears to be terminated with an entry with room number == 255.
 		if (newAlt.mRoomNumber == 255)
 			break;
 
 		SwapStaticAltResDataEndianness(newAlt);
-
-		// Unlike normal rooms, the string for the alt res structs are embedded in it.
-		// So we're going to grab it.
-		uint32_t curOffset = stream->getStream().tellg();
-		stream->seek(dol.ConvertAddressToOffset(newAlt.mPathOffset));
-
-		stream->readBytesTo(pathBuffer, RES_STRING_SIZE);
-		newAlt.mPath = std::string((char*)buffer);
-
-		stream->seek(curOffset);
 
 		altRes.push_back(newAlt);
 	}
