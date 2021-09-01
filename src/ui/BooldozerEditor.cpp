@@ -22,10 +22,11 @@ LBooldozerEditor::LBooldozerEditor()
 	LResUtility::LoadUserSettings();
 
 	DOL dol;
-	dol.LoadDOLFile("D:\\SZS Tools\\Luigi's Mansion\\PAL Sys\\sys\\main.dol");
+	//dol.LoadDOLFile("D:\\SZS Tools\\Luigi's Mansion\\PAL Sys\\sys\\main.dol");
 
 	LStaticMapDataIO test;
-	test.RipStaticDataFromExecutable(dol, "D:\\SZS Tools\\Luigi's Mansion\\Booldozer\\static_test.dat", "map2", "GLMP01");
+	//test.RipStaticDataFromExecutable(dol, "D:\\SZS Tools\\Luigi's Mansion\\Booldozer\\static_test.dat", "map2", "GLMP01");
+
 }
 
 void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
@@ -69,6 +70,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	}
 
 	mOptionsMenu.RenderOptionsPopup();
+	mGhostConfigs.RenderUI();
 
 	if (mLoadedMap == nullptr || mLoadedMap->Children.empty() || mCurrentMode == nullptr)
 		return;
@@ -80,7 +82,7 @@ void LBooldozerEditor::OpenMap(std::string file_path)
 {
 	mLoadedMap = std::make_shared<LMapDOMNode>();
 	mLoadedMap->LoadMap(std::filesystem::path(file_path));
-
+	mGhostConfigs.LoadConfigs(mLoadedMap);
 	//mLoadedMap->LoadMap(std::filesystem::path("/home/spacey/Projects/LuigisMansion/Mods/LMArcade/files/Map/map2.szp")); /* Space */
 }
 

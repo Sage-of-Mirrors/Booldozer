@@ -5,6 +5,7 @@
 #include "modes/ActorMode.hpp"
 #include "modes/EnemyMode.hpp"
 #include "modes/ItemMode.hpp"
+#include "io/PrmIO.hpp"
 
 #include <filesystem>
 #include <memory>
@@ -26,6 +27,9 @@ class LBooldozerEditor
 {
 	// The map that is currently being edited.
 	std::shared_ptr<LMapDOMNode> mLoadedMap;
+
+	// Param files for this root
+	LPrmIO mGhostConfigs;
 
 	bool mOpenOptions;
 	LOptionsMenu mOptionsMenu;

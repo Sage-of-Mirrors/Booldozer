@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <sstream>
+#include <climits>
 
 namespace LGenUtility
 {

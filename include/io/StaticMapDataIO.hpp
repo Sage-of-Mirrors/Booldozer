@@ -5,6 +5,7 @@
 #include "glm/glm.hpp"
 
 #include <filesystem>
+#include <vector>
 
 constexpr size_t FILE_HEADER_SIZE = 64;
 constexpr size_t ROOM_DATA_SIZE = 48;

@@ -1,5 +1,5 @@
-#include "DOM\ItemAppearDOMNode.hpp"
-#include "DOM\ItemInfoDOMNode.hpp"
+#include "DOM/ItemAppearDOMNode.hpp"
+#include "DOM/ItemInfoDOMNode.hpp"
 #include "UIUtil.hpp"
 #include "GenUtil.hpp"
 #include <algorithm>
