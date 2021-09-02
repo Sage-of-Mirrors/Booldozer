@@ -66,8 +66,8 @@ struct LCTPrm {
     bool mActAfterFa;
     EShieldType mElement;
     bool mCheckbox;
-    //uint32_t mTsuriItemTblId;
-    //uint32_t mNormalItemTblId;
+    std::weak_ptr<LItemFishingDOMNode>  mTsuriItemTblId;
+    std::weak_ptr<LItemAppearDOMNode>  mNormalItemTblId;
     float mPointerRange;
     glm::vec4 mBrightColor;
     glm::vec4 mAmbColor;
@@ -77,8 +77,6 @@ struct LCTPrm {
     float mKiryuCount;
     float mNumGround;
     uint8_t mFlag;
-    std::weak_ptr<LItemFishingDOMNode>  mTsuriItemTblId;
-    std::weak_ptr<LItemAppearDOMNode>  mNormalItemTblId;
 };
 
 class LPrmIO {
@@ -90,7 +88,9 @@ class LPrmIO {
 
 public:
     void LoadConfigs(std::shared_ptr<LMapDOMNode>& map);
+    void SaveConfigs();
     void Load(std::string name, bStream::CFileStream* stream);
+    void Save(std::string name, bStream::CFileStream* stream);
     void RenderUI();
 
     LPrmIO();

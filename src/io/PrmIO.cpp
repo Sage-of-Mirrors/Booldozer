@@ -4,7 +4,8 @@
 
 #include <filesystem>
 
-void SwapVec4(glm::vec4* s){
+void SwapVec4(glm::vec4* s)
+{
     float a = s->r;
     s->r = s->a;
     s->a = a;
@@ -16,15 +17,18 @@ void SwapVec4(glm::vec4* s){
 LPrmIO::LPrmIO() : mConfigsLoaded(false){}
 LPrmIO::~LPrmIO(){}
 
-void LPrmIO::LoadConfigs(std::shared_ptr<LMapDOMNode>& map){
-    if(!std::filesystem::exists("ctp")){
+void LPrmIO::LoadConfigs(std::shared_ptr<LMapDOMNode>& map)
+{
+    if(!std::filesystem::exists("ctp"))
+    {
         std::cout << "params folder not found" << std::endl;
         return;
     }
     
     mMap = map;
 
-    for (const auto& entry : std::filesystem::directory_iterator("ctp")) {
+    for (const auto& entry : std::filesystem::directory_iterator("ctp"))
+    {
         if (entry.is_regular_file()) {
             bStream::CFileStream test(entry.path().string(), bStream::Endianess::Big, bStream::OpenMode::In);
             Load(entry.path().filename().stem().string(), &test);
@@ -34,9 +38,88 @@ void LPrmIO::LoadConfigs(std::shared_ptr<LMapDOMNode>& map){
     mConfigsLoaded = true;
 }
 
+void LPrmIO::SaveConfigs()
+{
+    if(!std::filesystem::exists("new_ctp"))
+    {
+        std::cout << "params folder not found" << std::endl;
+        return;
+    }
+    
+    for (const auto& file : mLoadedConfigs)
+    {
+        bStream::CFileStream test(std::filesystem::path("ctp").append(file+".prm"), bStream::Endianess::Big, bStream::OpenMode::Out);
+        Save(file, &test);
+    }
+    mConfigsLoaded = true;
+}
+
 // Because these properties are consistent, we can write all of them and the game wont really care, so long as the ones it is looking for are present.
 
-void LPrmIO::Load(std::string name, bStream::CFileStream* stream){
+void WritePropertyInt32(bStream::CFileStream* stream, uint16_t hash, std::string name, uint32_t v){
+    stream->writeUInt16(hash);
+    stream->writeUInt16(name.size());
+    stream->writeString(name);
+    stream->writeUInt32(4);
+    stream->writeUInt32(v);
+};
+
+void WritePropertyFloat(bStream::CFileStream* stream, uint16_t hash, std::string name, float v){
+    stream->writeUInt16(hash);
+    stream->writeUInt16(name.size());
+    stream->writeString(name);
+    stream->writeUInt32(4);
+    stream->writeFloat(v);
+};
+
+void WritePropertyInt16(bStream::CFileStream* stream, uint16_t hash, std::string name, uint16_t v){
+    stream->writeUInt16(hash);
+    stream->writeUInt16(name.size());
+    stream->writeString(name);
+    stream->writeUInt32(2);
+    stream->writeUInt16(v);
+};
+
+void LPrmIO::Save(std::string name, bStream::CFileStream* stream)
+{
+    auto itemFishingNodes = mMap.lock()->GetChildrenOfType<LItemFishingDOMNode>(EDOMNodeType::ItemFishing);
+    auto itemAppearNodes = mMap.lock()->GetChildrenOfType<LItemAppearDOMNode>(EDOMNodeType::ItemAppear);
+    auto prm = mCtpParams[name];
+    stream->writeUInt32(32);
+    WritePropertyInt32(stream, 0xa62f, "mLife", prm->mLife);
+    WritePropertyInt32(stream, 0x2528, "mHitDamage", prm->mHitDamage);
+    WritePropertyInt32(stream, 0xad88, "mSpeed", prm->mSpeed);
+    WritePropertyInt32(stream, 0x93d1, "mSpeedUnseen", prm->mSpeedUnseen);
+    WritePropertyInt32(stream, 0x4b45, "mSpeedFight", prm->mSpeedFight);
+    WritePropertyInt32(stream, 0x5f6a, "mEyesight", prm->mEyesight);
+    WritePropertyInt32(stream, 0xd9f9, "mLightBingFrame", prm->mLightBindFrame);
+    WritePropertyFloat(stream, 0x29fe, "mMinLightBindRange", prm->mMinLightBindRange);
+    WritePropertyFloat(stream, 0xac49, "mMaxLightBindRange", prm->mMaxLightBindRange);
+    WritePropertyInt32(stream, 0x30aa, "mNumAtkKarakai", prm->mNumAtkKarakai);
+    WritePropertyInt32(stream, 0x560a, "mNumAtkOrooro", prm->mNumAtkOrooro);
+    WritePropertyFloat(stream, 0xcc48, "mHikiPower", prm->mHikiPower);
+    WritePropertyFloat(stream, 0xc42e, "mEffectiveDegree", prm->mEffectiveDegree);
+    WritePropertyFloat(stream, 0x7a1c, "mTsuriHeight", prm->mTsuriHeight);
+    WritePropertyInt32(stream, 0xe753, "mDissapearFrame", prm->mDissapearFrame);
+    WritePropertyInt32(stream, 0x11db, "mActAfterSu", prm->mActAfterSu);
+    WritePropertyInt32(stream, 0x04a9, "mActAfterFa", prm->mActAfterFa);
+    WritePropertyInt32(stream, 0x3960, "mTsuriType", prm->mTsuriType);
+    WritePropertyInt32(stream, 0x1f58, "mAttackPattern", prm->mAttackPattern);
+    WritePropertyInt32(stream, 0xf8f2, "mElement", prm->mElement);
+    ptrdiff_t tsuriTblId = LGenUtility::VectorIndexOf(itemFishingNodes, prm->mTsuriItemTblId.lock());
+    ptrdiff_t normalTblId = LGenUtility::VectorIndexOf(itemAppearNodes, prm->mNormalItemTblId.lock());
+    WritePropertyInt32(stream, 0x55a0, "mTsuriItemTblId", tsuriTblId);
+    WritePropertyInt32(stream, 0x7d81, "mNormalItemTblId", normalTblId);
+    WritePropertyFloat(stream, 0x9b49, "mPointerRange", prm->mPointerRange);
+    WritePropertyInt32(stream, 0x61f8, "mBrightColor", ((uint8_t)prm->mBrightColor.r) << 24 | ((uint8_t)(prm->mBrightColor.g*255)) << 16 | ((uint8_t)(prm->mBrightColor.b*255)) << 8 | ((uint8_t)prm->mBrightColor.a*255));
+    WritePropertyInt32(stream, 0xcf8a, "mAmbColor", ((uint8_t)prm->mAmbColor.r) << 24 | ((uint8_t)(prm->mAmbColor.g*255)) << 16 | ((uint8_t)(prm->mAmbColor.b*255)) << 8 | ((uint8_t)prm->mAmbColor.a*255));
+    WritePropertyInt32(stream, 0x97f5, "mKiryuCount", prm->mKiryuCount);
+    WritePropertyInt32(stream, 0xc135, "mNumGround", prm->mNumGround);
+    WritePropertyInt16(stream, 0x31d1, "mCheckbox", prm->mCheckbox);
+}
+
+void LPrmIO::Load(std::string name, bStream::CFileStream* stream)
+{
     mCtpParams[name] = std::make_shared<LCTPrm>();
 
     auto itemFishingNodes = mMap.lock()->GetChildrenOfType<LItemFishingDOMNode>(EDOMNodeType::ItemFishing);
@@ -140,7 +223,8 @@ void LPrmIO::Load(std::string name, bStream::CFileStream* stream){
     }
 }
 
-void LPrmIO::RenderUI(){
+void LPrmIO::RenderUI()
+{
     if(!mConfigsLoaded) return;
     ImGui::Begin("Ghost Configurations");
     
@@ -227,6 +311,10 @@ void LPrmIO::RenderUI(){
     ImGui::InputInt("Kiryu Count", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mKiryuCount);
     ImGui::InputInt("Num Ground", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mNumGround);
     ImGui::Checkbox("Check", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mCheckbox);
-    
+
+    if(ImGui::Button("Save all configs")){
+        SaveConfigs();
+    }
+
     ImGui::End();
 }
