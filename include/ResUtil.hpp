@@ -18,6 +18,8 @@ namespace LResUtility
 
 	uint32_t GetStaticMapDataOffset(std::string mapName, std::string region);
 
+	std::filesystem::path GetStaticMapDataPath(std::string mapName);
+
 	void LoadUserSettings();
 	void SaveUserSettings();
 }

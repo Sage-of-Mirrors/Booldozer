@@ -163,6 +163,39 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		r->CompleteLoad(&roomArc);
 	}
 
+	//LoadStaticData(rooms);
+
+	return true;
+}
+
+bool LMapDOMNode::LoadStaticData(std::vector<std::shared_ptr<LRoomDOMNode>> rooms)
+{
+	std::filesystem::path dataPath = LResUtility::GetStaticMapDataPath(mName);
+	if (dataPath == "")
+		return false;
+
+	bStream::CFileStream fileStream = bStream::CFileStream(dataPath.u8string(), bStream::Endianess::Big, bStream::OpenMode::In);
+
+	uint8_t* buf = new uint8_t[fileStream.getSize()];
+	fileStream.readBytesTo(buf, fileStream.getSize());
+
+	bStream::CMemoryStream memStream = bStream::CMemoryStream(buf, fileStream.getSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+
+	if (!mStaticMapIO.Load(&memStream))
+		return false;
+
+	LStaticRoomData t;
+	mStaticMapIO.GetRoomData(0, t);
+
+	std::string t_res;
+	mStaticMapIO.GetRoomResourcePath(0, t_res);
+
+	std::vector<uint16_t> t_doors;
+	mStaticMapIO.GetDoorListData(t.mDoorListIndex, t_doors);
+
+	LStaticDoorData t_door;
+	mStaticMapIO.GetDoorData(t_doors[0], t_door);
+
 	return true;
 }
 

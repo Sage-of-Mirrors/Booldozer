@@ -20,13 +20,6 @@ LBooldozerEditor::LBooldozerEditor()
 	mOpenOptions = false;
 
 	LResUtility::LoadUserSettings();
-
-	DOL dol;
-	//dol.LoadDOLFile("D:\\SZS Tools\\Luigi's Mansion\\PAL Sys\\sys\\main.dol");
-
-	LStaticMapDataIO test;
-	//test.RipStaticDataFromExecutable(dol, "D:\\SZS Tools\\Luigi's Mansion\\Booldozer\\static_test.dat", "map2", "GLMP01");
-
 }
 
 void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)

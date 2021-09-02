@@ -155,11 +155,11 @@ class LStaticMapDataIO
 	std::vector<std::string> GetAltResPathsFromDOL(bStream::CFileStream* stream, const DOL& dol, const std::vector<LStaticAltRoomResourceData>& altRes);
 	std::vector<std::vector<uint16_t>> GetRoomDoorListsFromDOL(bStream::CFileStream* stream, const DOL& dol, const std::vector<LStaticRoomData>& rooms);
 
-	void WriteResStrings(bStream::CDynamicMemoryStream& stream, const std::vector<std::string>& resStrings);
-	void WriteAdjacencyLists(bStream::CDynamicMemoryStream& stream, const std::vector<std::vector<uint16_t>>& adjacencyLists);
-	void WriteAltResData(bStream::CDynamicMemoryStream& stream, std::vector<LStaticAltRoomResourceData>& altResData, const std::vector<std::string>& altResPaths);
-	void WriteDoorData(bStream::CDynamicMemoryStream& stream, const std::vector<LStaticDoorData>& doors);
-	void WriteRoomAndDoorListData(bStream::CDynamicMemoryStream& stream, std::vector<LStaticRoomData>& rooms, const std::vector<std::vector<uint16_t>>& doorLists);
+	void WriteResStrings(bStream::CMemoryStream& stream, const std::vector<std::string>& resStrings);
+	void WriteAdjacencyLists(bStream::CMemoryStream& stream, const std::vector<std::vector<uint16_t>>& adjacencyLists);
+	void WriteAltResData(bStream::CMemoryStream& stream, std::vector<LStaticAltRoomResourceData>& altResData, const std::vector<std::string>& altResPaths);
+	void WriteDoorData(bStream::CMemoryStream& stream, const std::vector<LStaticDoorData>& doors);
+	void WriteRoomAndDoorListData(bStream::CMemoryStream& stream, std::vector<LStaticRoomData>& rooms, const std::vector<std::vector<uint16_t>>& doorLists);
 
 public:
 	LStaticMapDataIO();
@@ -170,7 +170,7 @@ public:
 	bool GetRoomResourcePath(const uint32_t& index, std::string& data);
 	bool GetDoorData(const uint32_t& index, LStaticDoorData& data);
 	bool GetAltResourceData(const uint32_t& index, LStaticAltRoomResourceData& data);
-	bool GetDoorListData(const uint32_t& starting_index, size_t& count, uint16_t*& data);
+	bool GetDoorListData(const uint32_t& starting_offset, std::vector<uint16_t>& data);
 
 	bool Save(bStream::CFileStream& stream);
 
