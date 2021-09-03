@@ -49,40 +49,6 @@ struct LStaticRoomData
 	glm::vec<4, char> mDarkColor;
 };
 
-/*
-enum class EDoorOrientation : uint32_t
-{
-	Invisible,
-	Front_Facing,
-	Side_Facing
-};
-
-enum class EDoorType : uint32_t
-{
-	Door,
-	Viewport,
-	Window
-};
-
-enum class EDoorModel : uint32_t
-{
-	Square_Mansion_Door = 1,
-	Round_Topped_Mansion_Door,
-	Parlor_Double_Door,
-	Anteroom_Double_Door,
-	Lab_Door,
-	Gallery_Door,
-	Nursery_Door,
-	Twins_Door,
-	Wooden_Door,
-	Basement_Hallway_Door,
-	Hearts_Double_Door,
-	Clubs_Door,
-	Diamonds_Door,
-	Spades_Door
-};
-*/
-
 struct LStaticDoorData
 {
 	uint8_t mOrientation;
@@ -163,6 +129,8 @@ class LStaticMapDataIO
 
 public:
 	LStaticMapDataIO();
+
+	size_t GetDoorCount() { return mDoorCount; }
 
 	bool Load(bStream::CMemoryStream* stream);
 
