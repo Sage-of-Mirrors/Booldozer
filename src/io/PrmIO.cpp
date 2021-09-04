@@ -14,6 +14,12 @@ void SwapVec4(glm::vec4* s)
     s->b = a;
 }
 
+void DrawEffectiveDegree(){
+    auto drawlist = ImGui::GetWindowDrawList();
+
+    drawlist->AddCircle(ImVec2(10,10), 525, 0x2222aaff, 32);
+}
+
 LPrmIO::LPrmIO() : mConfigsLoaded(false){}
 LPrmIO::~LPrmIO(){}
 
@@ -99,6 +105,7 @@ void LPrmIO::Save(std::string name, bStream::CFileStream* stream)
     WritePropertyInt32(stream, 0x560a, "mNumAtkOrooro", prm->mNumAtkOrooro);
     WritePropertyFloat(stream, 0xcc48, "mHikiPower", prm->mHikiPower);
     WritePropertyFloat(stream, 0xc42e, "mEffectiveDegree", prm->mEffectiveDegree);
+    DrawEffectiveDegree();
     WritePropertyFloat(stream, 0x7a1c, "mTsuriHeight", prm->mTsuriHeight);
     WritePropertyInt32(stream, 0xe753, "mDissapearFrame", prm->mDissapearFrame);
     WritePropertyInt32(stream, 0x11db, "mActAfterSu", prm->mActAfterSu);
@@ -111,8 +118,8 @@ void LPrmIO::Save(std::string name, bStream::CFileStream* stream)
     WritePropertyInt32(stream, 0x55a0, "mTsuriItemTblId", tsuriTblId);
     WritePropertyInt32(stream, 0x7d81, "mNormalItemTblId", normalTblId);
     WritePropertyFloat(stream, 0x9b49, "mPointerRange", prm->mPointerRange);
-    WritePropertyInt32(stream, 0x61f8, "mBrightColor", ((uint8_t)prm->mBrightColor.r) << 24 | ((uint8_t)(prm->mBrightColor.g*255)) << 16 | ((uint8_t)(prm->mBrightColor.b*255)) << 8 | ((uint8_t)prm->mBrightColor.a*255));
-    WritePropertyInt32(stream, 0xcf8a, "mAmbColor", ((uint8_t)prm->mAmbColor.r) << 24 | ((uint8_t)(prm->mAmbColor.g*255)) << 16 | ((uint8_t)(prm->mAmbColor.b*255)) << 8 | ((uint8_t)prm->mAmbColor.a*255));
+    WritePropertyInt32(stream, 0x61f8, "mBrightColor", ((uint8_t)prm->mBrightColor.r) << 24 | ((uint8_t)(prm->mBrightColor.b*255)) << 16 | ((uint8_t)(prm->mBrightColor.g*255)) << 8 | ((uint8_t)prm->mBrightColor.a*255));
+    WritePropertyInt32(stream, 0xcf8a, "mAmbColor", ((uint8_t)prm->mAmbColor.r) << 24 | ((uint8_t)(prm->mAmbColor.b*255)) << 16 | ((uint8_t)(prm->mAmbColor.g*255)) << 8 | ((uint8_t)prm->mAmbColor.a*255));
     WritePropertyInt32(stream, 0x97f5, "mKiryuCount", prm->mKiryuCount);
     WritePropertyInt32(stream, 0xc135, "mNumGround", prm->mNumGround);
     WritePropertyInt16(stream, 0x31d1, "mCheckbox", prm->mCheckbox);
@@ -192,10 +199,16 @@ void LPrmIO::Load(std::string name, bStream::CFileStream* stream)
             mCtpParams[name]->mElement = (EShieldType)stream->readUInt32();
             break;
         case 0x55a0:
-            mCtpParams[name]->mTsuriItemTblId = itemFishingNodes.at(stream->readUInt32());
+            {
+                size_t fid = stream->readUInt32();
+                mCtpParams[name]->mTsuriItemTblId = itemFishingNodes.at(fid <= itemFishingNodes.size() ? fid : itemFishingNodes.size() - 1);
+            }
             break;
         case 0x7d81:
-            mCtpParams[name]->mNormalItemTblId = itemAppearNodes.at(stream->readUInt32());
+            {
+                size_t nid = stream->readUInt32();
+                mCtpParams[name]->mNormalItemTblId = itemAppearNodes.at(nid <= itemAppearNodes.size() ? nid : itemAppearNodes.size() - 1);
+            }
             break;
         case 0x9b49:
             mCtpParams[name]->mPointerRange = stream->readFloat();
