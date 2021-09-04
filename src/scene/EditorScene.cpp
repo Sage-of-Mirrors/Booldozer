@@ -147,13 +147,7 @@ void LCubeManager::init(){
 	mCubeTexUniform = bgfx::createUniform("s_texColor",  bgfx::UniformType::Sampler);
 }
 
-LCubeManager::~LCubeManager(){ 
-	bgfx::destroy(mCubeShader);
-	bgfx::destroy(mCubeVbh);
-	bgfx::destroy(mCubeIbh);
-	bgfx::destroy(mCubeTexture);
-	bgfx::destroy(mCubeTexUniform);
-}
+LCubeManager::~LCubeManager(){} //Should destroy bgfx things here, but it segfault?
 
 
 LEditorScene::LEditorScene() : Initialized(false) {}
