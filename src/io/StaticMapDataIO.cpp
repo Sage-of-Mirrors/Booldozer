@@ -43,7 +43,7 @@ bool LStaticMapDataIO::Load(bStream::CMemoryStream* stream)
 	return true;
 }
 
-bool LStaticMapDataIO::GetRoomData(const uint32_t& index, LStaticRoomData& data)
+bool LStaticMapDataIO::GetRoomData(const uint32_t& index, LStaticRoomData& data) const
 {
 	if (index < 0 || index >= mRoomCount)
 		return false;
@@ -59,12 +59,12 @@ bool LStaticMapDataIO::GetRoomData(const uint32_t& index, LStaticRoomData& data)
 	return true;
 }
 
-bool LStaticMapDataIO::GetRoomResourcePath(const uint32_t& index, std::string& data)
+bool LStaticMapDataIO::GetRoomResourcePath(const uint32_t& index, std::string& data) const
 {
  	if (index < 0 || index >= mRoomCount)
 		return false;
 
-	uint32_t offset = mRoomResourcePathOffset + (index * RES_STRING_SIZE) - FILE_HEADER_SIZE;
+	uint32_t offset = mRoomResourcePathOffset + (index * sizeof(uint32_t)) - FILE_HEADER_SIZE;
 	void* rawOffsetPtr = mData + offset;
 
 	uint32_t offsetToString = LGenUtility::SwapEndian(*static_cast<uint32_t*>(rawOffsetPtr));
@@ -78,7 +78,7 @@ bool LStaticMapDataIO::GetRoomResourcePath(const uint32_t& index, std::string& d
 	return true;
 }
 
-bool LStaticMapDataIO::GetDoorData(const uint32_t& index, LStaticDoorData& data)
+bool LStaticMapDataIO::GetDoorData(const uint32_t& index, LStaticDoorData& data) const
 {
 	if (index < 0 || index >= mDoorCount)
 		return false;
@@ -92,7 +92,7 @@ bool LStaticMapDataIO::GetDoorData(const uint32_t& index, LStaticDoorData& data)
 	return true;
 }
 
-bool LStaticMapDataIO::GetAltResourceData(const uint32_t& index, LStaticAltRoomResourceData& data)
+bool LStaticMapDataIO::GetAltResourceData(const uint32_t& index, LStaticAltRoomResourceData& data) const
 {
 	if (index < 0 || index >= mAltResourceCount)
 		return false;
@@ -106,7 +106,7 @@ bool LStaticMapDataIO::GetAltResourceData(const uint32_t& index, LStaticAltRoomR
 	return true;
 }
 
-bool LStaticMapDataIO::GetDoorListData(const uint32_t& starting_offset, std::vector<uint16_t>& data)
+bool LStaticMapDataIO::GetDoorListData(const uint32_t& starting_offset, std::vector<uint16_t>& data) const
 {
 	data = std::vector<uint16_t>();
 
@@ -128,7 +128,31 @@ bool LStaticMapDataIO::GetDoorListData(const uint32_t& starting_offset, std::vec
 	return true;
 }
 
-void LStaticMapDataIO::SwapStaticRoomDataEndianness(LStaticRoomData& data)
+bool LStaticMapDataIO::GetAdjacentRoomListData(const uint32_t& index, std::vector<uint16_t>& data) const
+{
+	if (index < 0 || index >= mRoomAdjacencyListCount)
+		return false;
+
+	uint32_t offset = mRoomAdjacencyListDataOffset + (index * sizeof(uint32_t)) - FILE_HEADER_SIZE;
+	void* rawOffsetPtr = mData + offset;
+
+	uint32_t offsetToList = LGenUtility::SwapEndian(*static_cast<uint32_t*>(rawOffsetPtr));
+
+	while (true)
+	{
+		void* rawPtr = mData + mRoomAdjacencyListDataOffset + offsetToList - FILE_HEADER_SIZE;
+
+		uint16_t temp = *static_cast<uint16_t*>(rawPtr);
+		if (temp == 0xFFFF)
+			break;
+
+		data.push_back(LGenUtility::SwapEndian(temp));
+
+		offsetToList += 2;
+	}
+}
+
+void LStaticMapDataIO::SwapStaticRoomDataEndianness(LStaticRoomData& data) const
 {
 	data.mCameraBehavior = LGenUtility::SwapEndian(data.mCameraBehavior);
 
@@ -146,7 +170,7 @@ void LStaticMapDataIO::SwapStaticRoomDataEndianness(LStaticRoomData& data)
 	data.mDoorListIndex = LGenUtility::SwapEndian(data.mDoorListIndex);
 }
 
-void LStaticMapDataIO::SwapStaticDoorDataEndianness(LStaticDoorData& data)
+void LStaticMapDataIO::SwapStaticDoorDataEndianness(LStaticDoorData& data) const
 {
 	data.mJmpID = LGenUtility::SwapEndian(data.mJmpID);
 
@@ -159,7 +183,7 @@ void LStaticMapDataIO::SwapStaticDoorDataEndianness(LStaticDoorData& data)
 	data.mViewportSize.z = LGenUtility::SwapEndian(data.mViewportSize.z);
 }
 
-void LStaticMapDataIO::SwapStaticAltResDataEndianness(LStaticAltRoomResourceData& data)
+void LStaticMapDataIO::SwapStaticAltResDataEndianness(LStaticAltRoomResourceData& data) const
 {
 	data.mPathOffset = LGenUtility::SwapEndian(data.mPathOffset);
 }

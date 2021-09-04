@@ -109,9 +109,9 @@ class LStaticMapDataIO
 	// Blob of data used to read stuff from.
 	uint8_t* mData;
 
-	void SwapStaticRoomDataEndianness(LStaticRoomData& data);
-	void SwapStaticDoorDataEndianness(LStaticDoorData& data);
-	void SwapStaticAltResDataEndianness(LStaticAltRoomResourceData& data);
+	void SwapStaticRoomDataEndianness(LStaticRoomData& data) const;
+	void SwapStaticDoorDataEndianness(LStaticDoorData& data) const;
+	void SwapStaticAltResDataEndianness(LStaticAltRoomResourceData& data) const;
 
 	std::vector<LStaticRoomData> GetRoomDataFromDOL(bStream::CFileStream* stream, uint32_t count, uint32_t offset);
 	std::vector<LStaticDoorData> GetDoorDataFromDOL(bStream::CFileStream* stream, uint32_t offset);
@@ -130,15 +130,17 @@ class LStaticMapDataIO
 public:
 	LStaticMapDataIO();
 
+	size_t GetRoomCount() { return mRoomCount; }
 	size_t GetDoorCount() { return mDoorCount; }
 
 	bool Load(bStream::CMemoryStream* stream);
 
-	bool GetRoomData(const uint32_t& index, LStaticRoomData& data);
-	bool GetRoomResourcePath(const uint32_t& index, std::string& data);
-	bool GetDoorData(const uint32_t& index, LStaticDoorData& data);
-	bool GetAltResourceData(const uint32_t& index, LStaticAltRoomResourceData& data);
-	bool GetDoorListData(const uint32_t& starting_offset, std::vector<uint16_t>& data);
+	bool GetRoomData(const uint32_t& index, LStaticRoomData& data) const;
+	bool GetRoomResourcePath(const uint32_t& index, std::string& data) const;
+	bool GetDoorData(const uint32_t& index, LStaticDoorData& data) const;
+	bool GetAltResourceData(const uint32_t& index, LStaticAltRoomResourceData& data) const;
+	bool GetDoorListData(const uint32_t& starting_offset, std::vector<uint16_t>& data) const;
+	bool GetAdjacentRoomListData(const uint32_t& index, std::vector<uint16_t>& data) const;
 
 	bool Save(bStream::CFileStream& stream);
 

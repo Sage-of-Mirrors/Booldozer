@@ -4,7 +4,7 @@
 #include "io/BinIO.hpp"
 #include "../lib/bigg/deps/bgfx.cmake/bimg/3rdparty/libsquish/colourblock.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
+//#include "stb_image_write.h"
 /*
 *
 * The bin loader needs *serious* cleanup. As it is now, it exists just to make bin loading possible.

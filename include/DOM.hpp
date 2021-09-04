@@ -22,3 +22,4 @@
 #include "DOM/SpeedySpiritDropDOMNode.hpp"
 #include "DOM/BooDOMNode.hpp"
 #include "DOM/DoorDOMNode.hpp"
+#include "DOM/RoomDataDOMNode.hpp"

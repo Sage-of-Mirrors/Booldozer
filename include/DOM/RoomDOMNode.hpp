@@ -153,7 +153,7 @@ public:
 	// Writes the JMP data from this room into the given LJmpIO instance at the specified entry.
 	void SaveJmpInfo(uint32_t index, LJmpIO* jmp_io);
 	// Loads the BIN models from the given archive, distributes them to entities that need them, and does various other room-specific loading stuff.
-	bool CompleteLoad(GCarchive* room_arc);
+	bool CompleteLoad();
 
 /*=== Type operations ===*/
 	virtual const char* GetNodeTypeString() override { return "DOM_NODE_ROOM"; }

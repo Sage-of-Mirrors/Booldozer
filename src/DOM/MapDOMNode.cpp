@@ -81,7 +81,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		return false;
 	}
 
-	// We're going to try to get the JMP file "roominfo." This will help us load the room archives from Iwamoto/<our map>.
+	// We're going to try to get the JMP file "roominfo." This will help us load the room room data.
 	// If we can't find a roominfo file, we're going to assume this archive isn't from the Map/ directory and error out
 	uint8_t* roominfoData = nullptr;
 	size_t roomInfoSize = 0;
@@ -102,13 +102,16 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		return false;
 	}
 
+	// Grab the friendly room names for this map
 	nlohmann::json roomNames = LResUtility::GetMapRoomNames(mName);
 
-	// Load the room nodes using roominfo
+	// Prep the roominfo data to be read from
 	bStream::CMemoryStream roomMemStream(roominfoData, roomInfoSize, bStream::Endianess::Big, bStream::OpenMode::In);
 	JmpIOManagers[LEntityType_Rooms].Load(&roomMemStream);
 
-	for (int32_t i = 0; i < JmpIOManagers[LEntityType_Rooms].GetEntryCount(); i++)
+	// As it turns out, roominfo might not list all of the rooms in the map.
+	// Therefore, we're going to use the static data (extracted into rooms.map) as ground truth for room count.
+	for (size_t i = 0; i < mStaticMapIO.GetRoomCount(); i++)
 	{
 		std::string roomName = LGenUtility::Format("room_", std::setfill('0'), std::setw(2), i);
 		if (roomNames.find(roomName) != roomNames.end())
@@ -116,11 +119,19 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 		std::shared_ptr<LRoomDOMNode> newRoom = std::make_shared<LRoomDOMNode>(roomName);
 
-		newRoom->LoadJmpInfo(i, &JmpIOManagers[LEntityType_Rooms]);
+		// roominfo might not have this room defined in it, so only try to read if the index is within the bounds.
+		if (i < JmpIOManagers[LEntityType_Rooms].GetEntryCount())
+			newRoom->LoadJmpInfo(i, &JmpIOManagers[LEntityType_Rooms]);
+
 		AddChild(newRoom);
 	}
 
-	// Now load the other data from the archive.
+	auto rooms = GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
+
+	// Complete loading the basic map data
+	LoadStaticData(rooms);
+
+	// Now load the entity data from the map's archive.
 	for (int32_t entityType = 0; entityType < LEntityType_Max; entityType++)
 	{
 		// Skip roominfo because we already loaded it
@@ -161,29 +172,15 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		}
 	}
 
+	// Shore up things like entity references now that all of the entity data has been loaded
 	std::vector<std::shared_ptr<LEntityDOMNode>> loadedNodes = GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Entity);
 	for (auto loadedNode : loadedNodes)
 		loadedNode->PostProcess();
 
 	// To finish loading the map we're going to delegate grabbing room data to the rooms themselves,
 	// where they'll also set up things like models for furniture
-	auto rooms = GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
 	for (std::shared_ptr<LRoomDOMNode> r : rooms)
-	{
-		std::filesystem::path parentDir = file_path.parent_path().parent_path();
-		std::filesystem::path roomArcPath = std::filesystem::path(parentDir / "Iwamoto" / mName / LGenUtility::Format("room_", std::setfill('0'), std::setw(2), r->GetRoomNumber()));
-		roomArcPath.replace_extension(".arc");
-
-		GCarchive roomArc;
-		if (!LoadArchive(roomArcPath.string().c_str(), &roomArc))
-		{
-			continue;
-		}
-
-		r->CompleteLoad(&roomArc);
-	}
-
-	LoadStaticData(rooms);
+		r->CompleteLoad();
 
 	return true;
 }
@@ -213,6 +210,14 @@ bool LMapDOMNode::LoadStaticData(std::vector<std::shared_ptr<LRoomDOMNode>> room
 		std::shared_ptr<LDoorDOMNode> doorNode = std::make_shared<LDoorDOMNode>(LGenUtility::Format("Door ", i));
 		doorNode->Load(d);
 		AddChild(doorNode);
+	}
+
+	for (size_t i = 0; i < rooms.size(); i++)
+	{
+		std::shared_ptr<LRoomDataDOMNode> roomData = std::make_shared<LRoomDataDOMNode>(LGenUtility::Format("room data ", i));
+		roomData->Load(i, mStaticMapIO, rooms, GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door));
+
+		rooms[i]->AddChild(roomData);
 	}
 
 	return true;

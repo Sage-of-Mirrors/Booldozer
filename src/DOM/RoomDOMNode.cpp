@@ -2,6 +2,7 @@
 #include "DOM/ObserverDOMNode.hpp"
 #include "DOM/EnemyDOMNode.hpp"
 #include "UIUtil.hpp"
+#include "Options.hpp"
 
 std::string const LRoomEntityTreeNodeNames[LRoomEntityType_Max] = {
 	"Characters",
@@ -209,8 +210,19 @@ void LRoomDOMNode::SaveJmpInfo(uint32_t index, LJmpIO* jmp_io)
 	jmp_io->SetUnsignedInt(index, "sound_room_size", mSoundRoomSize);
 }
 
-bool LRoomDOMNode::CompleteLoad(GCarchive* room_arc)
+bool LRoomDOMNode::CompleteLoad()
 {
+	std::filesystem::path basePath = std::filesystem::path(OPTIONS.mRootPath) / "files";
+	auto roomData = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
+
+	std::filesystem::path t = roomData->GetResourcePath();
+	std::filesystem::path fullResPath = basePath / t.relative_path();
+
+	if (std::filesystem::exists(fullResPath))
+		std::cout << LGenUtility::Format(mName, " has resource at ", fullResPath) << std::endl;
+
+	// Load models here
+
 	for (uint32_t i = 0; i < LRoomEntityType_Max; i++)
 	{
 		EDOMNodeType findType = EDOMNodeType::Base;
@@ -258,7 +270,6 @@ bool LRoomDOMNode::CompleteLoad(GCarchive* room_arc)
 	GetEntitiesWithCreateName("----", LRoomEntityType_Enemies, defaultGroup.EntityNodes);
 	GetEntitiesWithCreateName("----", LRoomEntityType_Characters, defaultGroup.EntityNodes);
 	Groups.push_back(defaultGroup);
-
 
 	std::vector<std::shared_ptr<LEntityDOMNode>> observers = mRoomEntities[LRoomEntityType_Observers];
 	auto it = std::find_if(observers.begin(), observers.end(),

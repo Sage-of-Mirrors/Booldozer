@@ -40,7 +40,7 @@ enum class EDOMNodeType
 	TreasureTable,
 	SpeedySpiritDrop,
 	Boo,
-	StaticRoomData,
+	RoomData,
 	Door
 };
 

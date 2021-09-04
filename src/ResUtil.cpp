@@ -8,7 +8,7 @@ nlohmann::json LResUtility::DeserializeJSON(std::filesystem::path file_path)
 
 	if (file_path.empty() || !std::filesystem::exists(file_path))
 	{
-		std::cout << LGenUtility::Format("Unable to load JSON file from ", file_path);
+		std::cout << LGenUtility::Format("Unable to load JSON file from ", file_path) << std::endl;
 		return j;
 	}
 
