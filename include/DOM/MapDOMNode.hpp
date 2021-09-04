@@ -21,6 +21,8 @@ class LMapDOMNode : public LDOMNodeBase
 
 	bool LoadArchive(const char* path, GCarchive* archive);
 	bool LoadEntityNodes(LJmpIO* jmp_io, LEntityType type);
+
+	bool ReadStaticData(std::filesystem::path filePath);
 	bool LoadStaticData(std::vector<std::shared_ptr<LRoomDOMNode>> rooms);
 
 public:

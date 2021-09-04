@@ -91,6 +91,8 @@ void LBooldozerMainWindow::render(float dt)
     LUIUtility::RenderTooltip("Render distance. Determines how far away objects must be before they are no longer visible.");
     ImGui::End();
 
+    bool openOptionsMenu = false;
+
     // Menu bar
     if (ImGui::BeginMainMenuBar())
     {
@@ -111,7 +113,7 @@ void LBooldozerMainWindow::render(float dt)
         if (ImGui::BeginMenu("Edit"))
         {
             if (ImGui::MenuItem("Options"))
-                mEditorContext.onOpenOptionsCB();
+                openOptionsMenu = true;
 
             ImGui::EndMenu();
         }
@@ -131,7 +133,12 @@ void LBooldozerMainWindow::render(float dt)
         ImGui::EndMainMenuBar();
     }
 
+    if (openOptionsMenu)
+        mOptionsMenu.OpenMenu();
+
 	ImGuizmo::BeginFrame();
 	ImGuizmo::SetRect(0,0, (float)getWidth(), (float)getHeight());
     mEditorContext.Render(dt, &mEditorScene);
+
+    mOptionsMenu.RenderOptionsPopup();
 }

@@ -1,6 +1,7 @@
 #include "Options.hpp"
-#include "UIUtil.hpp";
+#include "UIUtil.hpp"
 #include "ResUtil.hpp"
+#include "ImGuiFileDialog/ImGuiFileDialog.h"
 
 #include <imgui.h>
 
@@ -44,12 +45,44 @@ void LOptionsMenu::RenderOptionsPopup()
 
 	if (ImGui::BeginPopupModal("Options", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 	{
-		LUIUtility::RenderTextInput("Game Root", &mTempOptions.mRootPath);
+		std::string path = "";
+
+/*=== Game Root ===*/
+		// Text input box
+		LUIUtility::RenderTextInput("Game Root", &mTempOptions.mRootPath, 500);
+		ImGui::SameLine(605);
+		
+		// Button for folder dialog
+		if (ImGui::Button("...##Root"))
+			ImGuiFileDialog::Instance()->OpenModal("SetGameRoot", "Choose Game Root", nullptr, mTempOptions.mRootPath);
+
+		// Render folder dialog if open
+		if (LUIUtility::RenderFileDialog("SetGameRoot", path))
+			mTempOptions.mRootPath = path;
+
+		// Tooltip
 		LUIUtility::RenderTooltip("This is the copy of the game that you are currently editing. All models, events, etc. will be loaded from here.");
 
-		LUIUtility::RenderTextInput("Dolphin Path", &mTempOptions.mDolphinPath);
+/*=== Dolphin Path ===*/
+		// Text input box
+		LUIUtility::RenderTextInput("Dolphin Path", &mTempOptions.mDolphinPath, 500);
+		ImGui::SameLine(605);
+
+		// Button for file dialog
+		if (ImGui::Button("...##Dolphin"))
+			ImGuiFileDialog::Instance()->OpenModal("SetDolphinPath", "Choose Dolphin Installation", "Executables (*.exe){.exe}", mTempOptions.mDolphinPath);
+
+		// Render file dialog if open
+		if (LUIUtility::RenderFileDialog("SetDolphinPath", path))
+			mTempOptions.mDolphinPath = path;
+
+		// Tooltip
 		LUIUtility::RenderTooltip("This is the installation of Dolphin that will be used to run playtests.");
 
+/*=== Saving/Canceling ===*/
+		ImGui::Separator();
+
+		// Save button
 		if (ImGui::Button("Save", ImVec2(120, 0)))
 		{
 			OPTIONS = mTempOptions;
@@ -61,6 +94,7 @@ void LOptionsMenu::RenderOptionsPopup()
 		ImGui::SetItemDefaultFocus();
 		ImGui::SameLine();
 
+		// Cancel button
 		if (ImGui::Button("Cancel", ImVec2(120, 0)))
 			ImGui::CloseCurrentPopup();
 

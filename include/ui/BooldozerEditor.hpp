@@ -10,7 +10,6 @@
 #include <filesystem>
 #include <memory>
 #include <nlohmann/json.hpp>
-#include "Options.hpp"
 
 enum class EEditorMode : uint32_t
 {
@@ -31,9 +30,6 @@ class LBooldozerEditor
 	// Param files for this root
 	LPrmIO mGhostConfigs;
 
-	bool mOpenOptions;
-	LOptionsMenu mOptionsMenu;
-
 /*=== Editor modes ===*/
 	// The mode that is currently executing.
 	LEditorModeBase* mCurrentMode;
@@ -44,6 +40,8 @@ class LBooldozerEditor
 
 	void OpenMap(std::string file_path);
 	void SaveMapToFiles(std::string folder_path);
+
+	void RenderNoRootPopup();
 
 public:
 	LBooldozerEditor();
@@ -59,9 +57,6 @@ public:
 
 	// Callback for when the user requests to save a map
 	void onSaveMapCB();
-
-	// Callback for when the user requests to open the options menu
-	void onOpenOptionsCB();
 
 	void onPlaytestCB();
 

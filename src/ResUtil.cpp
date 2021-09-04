@@ -1,5 +1,6 @@
 #include "ResUtil.hpp"
 #include "Options.hpp"
+#include "imgui.h"
 
 nlohmann::json LResUtility::DeserializeJSON(std::filesystem::path file_path)
 {
@@ -53,7 +54,7 @@ std::filesystem::path LResUtility::GetStaticMapDataPath(std::string mapName)
 	if (OPTIONS.mRootPath == "")
 		return "";
 
-	return std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / mapName / "static.dat";
+	return std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / mapName / "rooms.map";
 }
 
 void LResUtility::LoadUserSettings()

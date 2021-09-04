@@ -1,6 +1,7 @@
 #include "UIUtil.hpp"
 #include <glm/gtx/matrix_decompose.hpp>
 #include "GenUtil.hpp"
+#include "ImGuiFileDialog/ImGuiFileDialog.h"
 
 bool LUIUtility::RenderCheckBox(std::string name, bool* c)
 {
@@ -105,9 +106,15 @@ bool LUIUtility::RenderComboBox(std::string name, std::map<std::string, std::str
 	return changed;
 }
 
-bool LUIUtility::RenderTextInput(std::string name, std::string* value)
+bool LUIUtility::RenderTextInput(std::string name, std::string* value, const int width)
 {
-	return ImGui::InputText(name.c_str(), value->data(), value->size() + 1, ImGuiInputTextFlags_CallbackResize, LUIUtility::TextInputCallback, value);
+	ImGui::PushItemWidth(width);
+
+	bool result = ImGui::InputText(name.c_str(), value->data(), value->size() + 1, ImGuiInputTextFlags_CallbackResize, LUIUtility::TextInputCallback, value);
+
+	ImGui::PopItemWidth();
+
+	return result;
 }
 
 int LUIUtility::TextInputCallback(ImGuiInputTextCallbackData* data)
@@ -228,4 +235,25 @@ uint32_t LUIUtility::RenderGizmoToggle()
     ImGui::End();
 
 	return t;
+}
+
+bool LUIUtility::RenderFileDialog(const std::string& dialogKey, std::string& outPath)
+{
+	bool success = false;
+
+	// Render file dialog for opening map
+	if (ImGuiFileDialog::Instance()->IsOpened() && ImGuiFileDialog::Instance()->Display(dialogKey.c_str()))
+	{
+		// action if OK
+		if (ImGuiFileDialog::Instance()->IsOk())
+		{
+			outPath = ImGuiFileDialog::Instance()->GetFilePathName();
+			success = true;
+		}
+
+		// close
+		ImGuiFileDialog::Instance()->Close();
+	}
+
+	return success;
 }

@@ -134,7 +134,7 @@ void LActorMode::RenderDetailsWindow()
 
 void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene)
 {
-	LUIUtility::RenderGizmoToggle();
+	//LUIUtility::RenderGizmoToggle();
 	RenderSceneHierarchy(current_map);
 	RenderDetailsWindow();
 	

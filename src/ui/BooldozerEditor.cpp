@@ -7,72 +7,58 @@
 #include <vector>
 #include <memory>
 #include "imgui.h"
-#include "ImGuiFileDialog/ImGuiFileDialog.h"
 #include "ResUtil.hpp"
 #include "UIUtil.hpp"
 #include "DOL.hpp"
 #include "io/StaticMapDataIO.hpp"
+#include "Options.hpp"
+#include "ImGuiFileDialog/ImGuiFileDialog.h"
 
 LBooldozerEditor::LBooldozerEditor()
 {
 	CurrentMode = EEditorMode::Actor_Mode;
 	mCurrentMode = &mActorMode;
-	mOpenOptions = false;
 
 	LResUtility::LoadUserSettings();
 }
 
 void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 {
-	// Render file dialog for opening map
-	if (ImGuiFileDialog::Instance()->Display("OpenMapDlg"))
+	std::string path = "";
+
+	if (LUIUtility::RenderFileDialog("OpenMapDlg", path))
 	{
-		// action if OK
-		if (ImGuiFileDialog::Instance()->IsOk())
-		{
-			std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-			OpenMap(filePathName);
+		OpenMap(path);
 
-			OPTIONS.mLastOpenedMap = filePathName;
-		}
-
-		// close
-		ImGuiFileDialog::Instance()->Close();
+		OPTIONS.mLastOpenedMap = path;
+		LResUtility::SaveUserSettings();
 	}
 
-	// Render file dialog for saving map to files
-	if (ImGuiFileDialog::Instance()->Display("SaveMapFilesDlg"))
+	if (LUIUtility::RenderFileDialog("SaveMapFilesDlg", path))
 	{
-		// action if OK
-		if (ImGuiFileDialog::Instance()->IsOk())
-		{
-			std::string folderPathName = ImGuiFileDialog::Instance()->GetFilePathName();
-			SaveMapToFiles(folderPathName);
+		SaveMapToFiles(path);
 
-			OPTIONS.mLastSavedDirectory = folderPathName;
-		}
-
-		// close
-		ImGuiFileDialog::Instance()->Close();
+		OPTIONS.mLastSavedDirectory = path;
+		LResUtility::SaveUserSettings();
 	}
 
-	if (mOpenOptions)
-	{
-		mOptionsMenu.OpenMenu();
-		mOpenOptions = false;
-	}
-
-	mOptionsMenu.RenderOptionsPopup();
 	mGhostConfigs.RenderUI();
 
-	if (mLoadedMap == nullptr || mLoadedMap->Children.empty() || mCurrentMode == nullptr)
-		return;
+	if (mLoadedMap != nullptr && !mLoadedMap->Children.empty() && mCurrentMode != nullptr)
+		mCurrentMode->Render(mLoadedMap, renderer_scene);
 
-	mCurrentMode->Render(mLoadedMap, renderer_scene);
+	// Popups
+	RenderNoRootPopup();
 }
 
 void LBooldozerEditor::OpenMap(std::string file_path)
 {
+	if (OPTIONS.mRootPath == "")
+	{
+		ImGui::OpenPopup("Root Not Set");
+		return;
+	}
+
 	mLoadedMap = std::make_shared<LMapDOMNode>();
 	mLoadedMap->LoadMap(std::filesystem::path(file_path));
 	mGhostConfigs.LoadConfigs(mLoadedMap);
@@ -93,11 +79,6 @@ void LBooldozerEditor::onSaveMapCB()
 {
 	if (mLoadedMap != nullptr)
 		ImGuiFileDialog::Instance()->OpenDialog("SaveMapFilesDlg", "Choose a Folder", nullptr, OPTIONS.mLastSavedDirectory);
-}
-
-void LBooldozerEditor::onOpenOptionsCB()
-{
-	mOpenOptions = true;
 }
 
 void LBooldozerEditor::onPlaytestCB()
@@ -141,4 +122,16 @@ void LBooldozerEditor::ChangeMode()
 
 	if (mCurrentMode != nullptr)
 		mCurrentMode->OnBecomeActive();
+}
+
+void LBooldozerEditor::RenderNoRootPopup()
+{
+	if (ImGui::BeginPopupModal("Root Not Set", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("You currently do not have a valid Game Root set.\nYou must specify a copy of the game to work on before you can open maps.\n\nPlease open the Options menu (Edit -> Options) and provide a valid Game Root path.");
+		ImGui::Separator();
+
+		if (ImGui::Button("OK", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+		ImGui::EndPopup();
+	}
 }

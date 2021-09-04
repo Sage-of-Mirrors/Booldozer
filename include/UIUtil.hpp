@@ -21,7 +21,7 @@ namespace LUIUtility
 	bool RenderComboBox(std::string name, std::vector<std::shared_ptr<LEntityDOMNode>> options, std::shared_ptr<LEntityDOMNode> current_selection);
 	bool RenderComboBox(std::string name, std::map<std::string, std::string>& options, std::string& value);
 
-	bool RenderTextInput(std::string name, std::string* value);
+	bool RenderTextInput(std::string name, std::string* value, const int width = 100);
 	int TextInputCallback(ImGuiInputTextCallbackData* data);
 
 	void RenderTransformUI(glm::mat4* transform, glm::vec3& translation, glm::vec3& rotation, glm::vec3& scale);
@@ -29,6 +29,8 @@ namespace LUIUtility
 	void RenderTooltip(std::string tip);
 
 	uint32_t RenderGizmoToggle();
+
+	bool RenderFileDialog(const std::string& dialogName, std::string& outPath);
 
 	// Renders a combobox for the given enum.
 	template<typename T>

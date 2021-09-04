@@ -3,6 +3,7 @@
 #include <fstream>
 #include "GenUtil.hpp"
 #include "ResUtil.hpp"
+#include "Options.hpp"
 
 std::string const LEntityFileNames[LEntityType_Max] = {
 	"characterinfo",
@@ -58,6 +59,28 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		return false;
 	}
 
+	// We'll call ourselves whatever the root directory of the archive is
+	mName = std::string(mapArc.dirs[0].name);
+
+	std::filesystem::path roomsMap = LResUtility::GetStaticMapDataPath(mName);
+	if (!std::filesystem::exists(roomsMap))
+	{
+		DOL dol;
+		dol.LoadDOLFile(std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol");
+
+		if (!mStaticMapIO.RipStaticDataFromExecutable(dol, roomsMap, mName, "GLME01"))
+		{
+			std::cout << LGenUtility::Format("Failed to rip static map data to ", roomsMap) << std::endl;
+			return false;
+		}
+	}
+
+	if (!ReadStaticData(roomsMap))
+	{
+		std::cout << LGenUtility::Format("Failed to open static data from ", roomsMap) << std::endl;
+		return false;
+	}
+
 	// We're going to try to get the JMP file "roominfo." This will help us load the room archives from Iwamoto/<our map>.
 	// If we can't find a roominfo file, we're going to assume this archive isn't from the Map/ directory and error out
 	uint8_t* roominfoData = nullptr;
@@ -78,9 +101,6 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		printf("Archive \"%s\" is not a valid map archive.\nPlease open a map from the Map folder.\n", file_path.string().c_str());
 		return false;
 	}
-
-	// We'll call ourselves whatever the root directory of the archive is
-	mName = std::string(mapArc.dirs[0].name);
 
 	nlohmann::json roomNames = LResUtility::GetMapRoomNames(mName);
 
@@ -168,22 +188,23 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	return true;
 }
 
+bool LMapDOMNode::ReadStaticData(std::filesystem::path filePath)
+{
+	bStream::CFileStream mapFileReader = bStream::CFileStream(filePath.u8string(), bStream::Endianess::Big, bStream::OpenMode::In);
+	size_t mapFileSize = mapFileReader.getSize();
+
+	uint8_t* mapBuf = new uint8_t[mapFileSize];
+	mapFileReader.readBytesTo(mapBuf, mapFileSize);
+
+	bStream::CMemoryStream mapStream = bStream::CMemoryStream(mapBuf, mapFileSize, bStream::Endianess::Big, bStream::OpenMode::In);
+	bool result = mStaticMapIO.Load(&mapStream);
+
+	delete[] mapBuf;
+	return result;
+}
+
 bool LMapDOMNode::LoadStaticData(std::vector<std::shared_ptr<LRoomDOMNode>> rooms)
 {
-	std::filesystem::path dataPath = LResUtility::GetStaticMapDataPath(mName);
-	if (dataPath == "")
-		return false;
-
-	bStream::CFileStream fileStream = bStream::CFileStream(dataPath.u8string(), bStream::Endianess::Big, bStream::OpenMode::In);
-
-	uint8_t* buf = new uint8_t[fileStream.getSize()];
-	fileStream.readBytesTo(buf, fileStream.getSize());
-
-	bStream::CMemoryStream memStream = bStream::CMemoryStream(buf, fileStream.getSize(), bStream::Endianess::Big, bStream::OpenMode::In);
-
-	if (!mStaticMapIO.Load(&memStream))
-		return false;
-
 	for (size_t i = 0; i < mStaticMapIO.GetDoorCount(); i++)
 	{
 		LStaticDoorData d;
