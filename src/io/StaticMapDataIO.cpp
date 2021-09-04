@@ -49,7 +49,7 @@ bool LStaticMapDataIO::GetRoomData(const uint32_t& index, LStaticRoomData& data)
 		return false;
 
 	uint32_t offset = index * ROOM_DATA_SIZE;
-	void* rawPtr = mData + mRoomDataOffset + offset;
+	void* rawPtr = mData + mRoomDataOffset + offset - FILE_HEADER_SIZE;
 
 	data = *static_cast<LStaticRoomData*>(rawPtr);
 
@@ -61,13 +61,16 @@ bool LStaticMapDataIO::GetRoomData(const uint32_t& index, LStaticRoomData& data)
 
 bool LStaticMapDataIO::GetRoomResourcePath(const uint32_t& index, std::string& data)
 {
-	if (index < 0 || index >= mRoomCount)
+ 	if (index < 0 || index >= mRoomCount)
 		return false;
 
-	uint32_t offset = mRoomResourcePathOffset + (index * RES_STRING_SIZE);
+	uint32_t offset = mRoomResourcePathOffset + (index * RES_STRING_SIZE) - FILE_HEADER_SIZE;
+	void* rawOffsetPtr = mData + offset;
+
+	uint32_t offsetToString = LGenUtility::SwapEndian(*static_cast<uint32_t*>(rawOffsetPtr));
 
 	char strBuffer[RES_STRING_SIZE + 1];
-	memcpy(strBuffer, mData + offset, RES_STRING_SIZE);
+	memcpy(strBuffer, mData + mRoomResourcePathOffset + offsetToString - FILE_HEADER_SIZE, RES_STRING_SIZE);
 	strBuffer[RES_STRING_SIZE] = 0;
 
 	data = std::string(strBuffer);
@@ -81,7 +84,7 @@ bool LStaticMapDataIO::GetDoorData(const uint32_t& index, LStaticDoorData& data)
 		return false;
 
 	uint32_t offset = index * DOOR_DATA_SIZE;
-	void* rawPtr = mData + mDoorDataOffset + offset;
+	void* rawPtr = mData + mDoorDataOffset + offset - FILE_HEADER_SIZE;
 
 	data = *static_cast<LStaticDoorData*>(rawPtr);
 	SwapStaticDoorDataEndianness(data);
@@ -95,7 +98,7 @@ bool LStaticMapDataIO::GetAltResourceData(const uint32_t& index, LStaticAltRoomR
 		return false;
 
 	uint32_t offset = index * ALT_RES_DATA_SIZE;
-	void* rawPtr = mData + mAltResourceDataOffset + offset;
+	void* rawPtr = mData + mAltResourceDataOffset + offset - FILE_HEADER_SIZE;
 
 	data = *static_cast<LStaticAltRoomResourceData*>(rawPtr);
 	SwapStaticAltResDataEndianness(data);
@@ -103,22 +106,23 @@ bool LStaticMapDataIO::GetAltResourceData(const uint32_t& index, LStaticAltRoomR
 	return true;
 }
 
-bool LStaticMapDataIO::GetDoorListData(const uint32_t& starting_index, size_t& count, uint16_t*& data)
+bool LStaticMapDataIO::GetDoorListData(const uint32_t& starting_offset, std::vector<uint16_t>& data)
 {
-	if (starting_index < 0 || starting_index + count > mDoorListCount)
-		return false;
+	data = std::vector<uint16_t>();
 
-	uint32_t offset = starting_index * 2;
-	data = new uint16_t[count];
+	size_t off = starting_offset;
 
-	for (uint32_t i = 0; i < count; i++)
+	while(true)
 	{
-		void* rawPtr = mData + mDoorListDataOffset + offset;
+		void* rawPtr = mData + mDoorListDataOffset + off - FILE_HEADER_SIZE;
 
 		uint16_t temp = *static_cast<uint16_t*>(rawPtr);
-		data[i] = LGenUtility::SwapEndian(temp);
+		if (temp == 0xFFFF)
+			break;
 
-		offset += 2;
+		data.push_back(LGenUtility::SwapEndian(temp));
+
+		off += 2;
 	}
 
 	return true;
@@ -195,7 +199,7 @@ bool LStaticMapDataIO::RipStaticDataFromExecutable(const DOL& dol, std::filesyst
 	std::vector<LStaticDoorData> doorData = GetDoorDataFromDOL(stream, dol.ConvertAddressToOffset(mapData->mDoorDataAddress));
 	std::vector<std::vector<uint16_t>> doorLists = GetRoomDoorListsFromDOL(stream, dol, roomData);
 
-	bStream::CDynamicMemoryStream memStream = bStream::CDynamicMemoryStream(bStream::Endianess::Big, bStream::OpenMode::Out);
+	bStream::CMemoryStream memStream = bStream::CMemoryStream(256, bStream::Endianess::Big, bStream::OpenMode::Out);
 
 	// Room data
 	WriteRoomAndDoorListData(memStream, roomData, doorLists);
@@ -212,7 +216,7 @@ bool LStaticMapDataIO::RipStaticDataFromExecutable(const DOL& dol, std::filesyst
 	// Adjacency data
 	WriteAdjacencyLists(memStream, roomAdjacencyData);
 
-	mFileSize = memStream.getSize() + FILE_HEADER_SIZE;
+	mFileSize = memStream.tell() + FILE_HEADER_SIZE;
 
 	if (mData)
 		delete[] mData;
@@ -414,7 +418,7 @@ std::vector<std::vector<uint16_t>> LStaticMapDataIO::GetRoomDoorListsFromDOL(bSt
 	return doorListData;
 }
 
-void LStaticMapDataIO::WriteResStrings(bStream::CDynamicMemoryStream& stream, const std::vector<std::string>& resStrings)
+void LStaticMapDataIO::WriteResStrings(bStream::CMemoryStream& stream, const std::vector<std::string>& resStrings)
 {
 	if (resStrings.size() == 0)
 	{
@@ -423,9 +427,9 @@ void LStaticMapDataIO::WriteResStrings(bStream::CDynamicMemoryStream& stream, co
 		return;
 	}
 
-	mRoomResourcePathOffset = stream.getSize() + FILE_HEADER_SIZE;
+	mRoomResourcePathOffset = stream.tell() + FILE_HEADER_SIZE;
 
-	size_t tableSize = resStrings.size() * 4;
+	size_t tableSize = LGenUtility::PadToBoundary(resStrings.size() * sizeof(uint32_t), 16);
 
 	// Write offset table
 	for (uint32_t i = 0; i < resStrings.size(); i++)
@@ -433,16 +437,22 @@ void LStaticMapDataIO::WriteResStrings(bStream::CDynamicMemoryStream& stream, co
 		stream.writeUInt32(tableSize + i * RES_STRING_SIZE);
 	}
 
+	size_t paddedSize = LGenUtility::PadToBoundary(stream.tell(), 16);
+	stream.Reserve(paddedSize);
+	stream.seek(paddedSize);
+
 	// Now write the strings
 	for (const std::string& str : resStrings)
 	{
 		stream.writeBytes((char*)str.c_str(), RES_STRING_SIZE);
 	}
 
-	stream.seek(LGenUtility::PadToBoundary(stream.getSize(), 16));
+	paddedSize = LGenUtility::PadToBoundary(stream.tell(), 16);
+	stream.Reserve(paddedSize);
+	stream.seek(paddedSize);
 }
 
-void LStaticMapDataIO::WriteAdjacencyLists(bStream::CDynamicMemoryStream& stream, const std::vector<std::vector<uint16_t>>& adjacencyLists)
+void LStaticMapDataIO::WriteAdjacencyLists(bStream::CMemoryStream& stream, const std::vector<std::vector<uint16_t>>& adjacencyLists)
 {
 	if (adjacencyLists.size() == 0)
 	{
@@ -453,10 +463,10 @@ void LStaticMapDataIO::WriteAdjacencyLists(bStream::CDynamicMemoryStream& stream
 	}
 
 	mRoomAdjacencyListCount = adjacencyLists.size();
-	mRoomAdjacencyListDataOffset = stream.getSize() + FILE_HEADER_SIZE;
+	mRoomAdjacencyListDataOffset = stream.tell() + FILE_HEADER_SIZE;
 
 	// Offset table that will point to these lists in the game
-	size_t tableSize = adjacencyLists.size() * sizeof(uint32_t);
+	size_t tableSize = LGenUtility::PadToBoundary(adjacencyLists.size() * sizeof(uint32_t), 16);
 	size_t runningOffset = tableSize;
 
 	// Write offset table
@@ -465,6 +475,10 @@ void LStaticMapDataIO::WriteAdjacencyLists(bStream::CDynamicMemoryStream& stream
 		stream.writeUInt32(runningOffset);
 		runningOffset += (adjacencyLists[i].size() + 1) * sizeof(uint16_t);
 	}
+
+	size_t paddedSize = LGenUtility::PadToBoundary(stream.tell(), 16);
+	stream.Reserve(paddedSize);
+	stream.seek(paddedSize);
 
 	// Now write the adjacency lists
 	for (auto t : adjacencyLists)
@@ -476,10 +490,12 @@ void LStaticMapDataIO::WriteAdjacencyLists(bStream::CDynamicMemoryStream& stream
 		stream.writeUInt16(0xFFFF);
 	}
 
-	stream.seek(LGenUtility::PadToBoundary(stream.getSize(), 16));
+	paddedSize = LGenUtility::PadToBoundary(stream.tell(), 16);
+	stream.Reserve(paddedSize);
+	stream.seek(paddedSize);
 }
 
-void LStaticMapDataIO::WriteAltResData(bStream::CDynamicMemoryStream& stream, std::vector<LStaticAltRoomResourceData>& altResData, const std::vector<std::string>& altResPaths)
+void LStaticMapDataIO::WriteAltResData(bStream::CMemoryStream& stream, std::vector<LStaticAltRoomResourceData>& altResData, const std::vector<std::string>& altResPaths)
 {
 	if (altResData.size() == 0 || altResPaths.size() == 0)
 	{
@@ -490,7 +506,7 @@ void LStaticMapDataIO::WriteAltResData(bStream::CDynamicMemoryStream& stream, st
 	}
 
 	mAltResourceCount = altResData.size();
-	mAltResourceDataOffset = stream.getSize() + FILE_HEADER_SIZE;
+	mAltResourceDataOffset = stream.tell() + FILE_HEADER_SIZE;
 
 	size_t stringTableOffset = altResData.size() * sizeof(LStaticAltRoomResourceData);
 
@@ -507,10 +523,12 @@ void LStaticMapDataIO::WriteAltResData(bStream::CDynamicMemoryStream& stream, st
 	for (std::string str : altResPaths)
 		stream.writeBytes(str.data(), RES_STRING_SIZE);
 
-	stream.seek(LGenUtility::PadToBoundary(stream.getSize(), 16));
+	size_t paddedSize = LGenUtility::PadToBoundary(stream.tell(), 16);
+	stream.Reserve(paddedSize);
+	stream.seek(paddedSize);
 }
 
-void LStaticMapDataIO::WriteDoorData(bStream::CDynamicMemoryStream& stream, const std::vector<LStaticDoorData>& doors)
+void LStaticMapDataIO::WriteDoorData(bStream::CMemoryStream& stream, const std::vector<LStaticDoorData>& doors)
 {
 	if (doors.size() == 0)
 	{
@@ -521,7 +539,7 @@ void LStaticMapDataIO::WriteDoorData(bStream::CDynamicMemoryStream& stream, cons
 	}
 
 	mDoorCount = doors.size();
-	mDoorDataOffset = stream.getSize() + FILE_HEADER_SIZE;
+	mDoorDataOffset = stream.tell() + FILE_HEADER_SIZE;
 
 	for (LStaticDoorData d : doors)
 	{
@@ -530,23 +548,26 @@ void LStaticMapDataIO::WriteDoorData(bStream::CDynamicMemoryStream& stream, cons
 	}
 
 	// There's an empty door entry to mark the end of the list
-	stream.seek(sizeof(LStaticDoorData), true);
+	for (uint32_t i = 0; i < sizeof(LStaticDoorData); i++)
+		stream.writeInt8(0);
 
-	stream.seek(LGenUtility::PadToBoundary(stream.getSize(), 16));
+	size_t paddedSize = LGenUtility::PadToBoundary(stream.tell(), 16);
+	stream.Reserve(paddedSize);
+	stream.seek(paddedSize);
 }
 
-void LStaticMapDataIO::WriteRoomAndDoorListData(bStream::CDynamicMemoryStream& stream, std::vector<LStaticRoomData>& rooms, const std::vector<std::vector<uint16_t>>& doorLists)
+void LStaticMapDataIO::WriteRoomAndDoorListData(bStream::CMemoryStream& stream, std::vector<LStaticRoomData>& rooms, const std::vector<std::vector<uint16_t>>& doorLists)
 {
 	if (rooms.size() == 0 || doorLists.size() == 0)
 		return;
 
 	mRoomCount = rooms.size();
-	mRoomDataOffset = stream.getSize() + FILE_HEADER_SIZE;
+	mRoomDataOffset = stream.tell() + FILE_HEADER_SIZE;
 
-	bStream::CDynamicMemoryStream doorListStream = bStream::CDynamicMemoryStream(bStream::Endianess::Big, bStream::OpenMode::Out);
+	bStream::CMemoryStream doorListStream = bStream::CMemoryStream(256, bStream::Endianess::Big, bStream::OpenMode::Out);
 
 	size_t doorListStartingOffset = rooms.size() * sizeof(LStaticRoomData);
-	size_t runningOffset = doorListStartingOffset;
+	size_t runningOffset = 0;
 
 	// Write room data
 	for (uint32_t i = 0; i < rooms.size(); i++)
@@ -559,8 +580,11 @@ void LStaticMapDataIO::WriteRoomAndDoorListData(bStream::CDynamicMemoryStream& s
 		stream.writeBytes((char*)&rooms[i], sizeof(LStaticRoomData));
 	}
 
-	stream.seek(LGenUtility::PadToBoundary(stream.getSize(), 16));
-	mDoorListDataOffset = stream.getSize() + FILE_HEADER_SIZE;
+	size_t paddedSize = LGenUtility::PadToBoundary(stream.tell(), 16);
+	stream.Reserve(paddedSize);
+	stream.seek(paddedSize);
+
+	mDoorListDataOffset = stream.tell() + FILE_HEADER_SIZE;
 
 	// Write door list data
 	for (const std::vector<uint16_t>& d : doorLists)
@@ -572,7 +596,9 @@ void LStaticMapDataIO::WriteRoomAndDoorListData(bStream::CDynamicMemoryStream& s
 		stream.writeUInt16(0xFFFF);
 	}
 
-	stream.seek(LGenUtility::PadToBoundary(stream.getSize(), 16));
+	paddedSize = LGenUtility::PadToBoundary(stream.tell(), 16);
+	stream.Reserve(paddedSize);
+	stream.seek(paddedSize);
 }
 
 bool LStaticMapDataIO::Save(bStream::CFileStream& stream)

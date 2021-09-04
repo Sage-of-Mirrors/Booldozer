@@ -48,7 +48,7 @@ void LPrmIO::SaveConfigs()
     
     for (const auto& file : mLoadedConfigs)
     {
-        bStream::CFileStream test(std::filesystem::path("ctp").append(file+".prm"), bStream::Endianess::Big, bStream::OpenMode::Out);
+        bStream::CFileStream test(std::filesystem::path("ctp").append(file+".prm").u8string(), bStream::Endianess::Big, bStream::OpenMode::Out);
         Save(file, &test);
     }
     mConfigsLoaded = true;

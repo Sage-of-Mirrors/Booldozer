@@ -3,6 +3,7 @@
 #include "DOMNodeBase.hpp"
 #include "EntityDOMNode.hpp"
 #include "io/JmpIO.hpp"
+#include "io/StaticMapDataIO.hpp"
 #include "../lib/libgctools/include/archive.h"
 
 #include <filesystem>
@@ -16,9 +17,11 @@ class LMapDOMNode : public LDOMNodeBase
 {
 	GCcontext mArcLoaderContext;
 	LJmpIO JmpIOManagers[LEntityType_Max];
+	LStaticMapDataIO mStaticMapIO;
 
 	bool LoadArchive(const char* path, GCarchive* archive);
 	bool LoadEntityNodes(LJmpIO* jmp_io, LEntityType type);
+	bool LoadStaticData(std::vector<std::shared_ptr<LRoomDOMNode>> rooms);
 
 public:
 	typedef LDOMNodeBase Super;

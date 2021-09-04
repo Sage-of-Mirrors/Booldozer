@@ -49,40 +49,6 @@ struct LStaticRoomData
 	glm::vec<4, char> mDarkColor;
 };
 
-/*
-enum class EDoorOrientation : uint32_t
-{
-	Invisible,
-	Front_Facing,
-	Side_Facing
-};
-
-enum class EDoorType : uint32_t
-{
-	Door,
-	Viewport,
-	Window
-};
-
-enum class EDoorModel : uint32_t
-{
-	Square_Mansion_Door = 1,
-	Round_Topped_Mansion_Door,
-	Parlor_Double_Door,
-	Anteroom_Double_Door,
-	Lab_Door,
-	Gallery_Door,
-	Nursery_Door,
-	Twins_Door,
-	Wooden_Door,
-	Basement_Hallway_Door,
-	Hearts_Double_Door,
-	Clubs_Door,
-	Diamonds_Door,
-	Spades_Door
-};
-*/
-
 struct LStaticDoorData
 {
 	uint8_t mOrientation;
@@ -155,14 +121,16 @@ class LStaticMapDataIO
 	std::vector<std::string> GetAltResPathsFromDOL(bStream::CFileStream* stream, const DOL& dol, const std::vector<LStaticAltRoomResourceData>& altRes);
 	std::vector<std::vector<uint16_t>> GetRoomDoorListsFromDOL(bStream::CFileStream* stream, const DOL& dol, const std::vector<LStaticRoomData>& rooms);
 
-	void WriteResStrings(bStream::CDynamicMemoryStream& stream, const std::vector<std::string>& resStrings);
-	void WriteAdjacencyLists(bStream::CDynamicMemoryStream& stream, const std::vector<std::vector<uint16_t>>& adjacencyLists);
-	void WriteAltResData(bStream::CDynamicMemoryStream& stream, std::vector<LStaticAltRoomResourceData>& altResData, const std::vector<std::string>& altResPaths);
-	void WriteDoorData(bStream::CDynamicMemoryStream& stream, const std::vector<LStaticDoorData>& doors);
-	void WriteRoomAndDoorListData(bStream::CDynamicMemoryStream& stream, std::vector<LStaticRoomData>& rooms, const std::vector<std::vector<uint16_t>>& doorLists);
+	void WriteResStrings(bStream::CMemoryStream& stream, const std::vector<std::string>& resStrings);
+	void WriteAdjacencyLists(bStream::CMemoryStream& stream, const std::vector<std::vector<uint16_t>>& adjacencyLists);
+	void WriteAltResData(bStream::CMemoryStream& stream, std::vector<LStaticAltRoomResourceData>& altResData, const std::vector<std::string>& altResPaths);
+	void WriteDoorData(bStream::CMemoryStream& stream, const std::vector<LStaticDoorData>& doors);
+	void WriteRoomAndDoorListData(bStream::CMemoryStream& stream, std::vector<LStaticRoomData>& rooms, const std::vector<std::vector<uint16_t>>& doorLists);
 
 public:
 	LStaticMapDataIO();
+
+	size_t GetDoorCount() { return mDoorCount; }
 
 	bool Load(bStream::CMemoryStream* stream);
 
@@ -170,7 +138,7 @@ public:
 	bool GetRoomResourcePath(const uint32_t& index, std::string& data);
 	bool GetDoorData(const uint32_t& index, LStaticDoorData& data);
 	bool GetAltResourceData(const uint32_t& index, LStaticAltRoomResourceData& data);
-	bool GetDoorListData(const uint32_t& starting_index, size_t& count, uint16_t*& data);
+	bool GetDoorListData(const uint32_t& starting_offset, std::vector<uint16_t>& data);
 
 	bool Save(bStream::CFileStream& stream);
 

@@ -48,6 +48,14 @@ uint32_t LResUtility::GetStaticMapDataOffset(std::string mapName, std::string re
 	return deserializedJson[mapName][region];
 }
 
+std::filesystem::path LResUtility::GetStaticMapDataPath(std::string mapName)
+{
+	if (OPTIONS.mRootPath == "")
+		return "";
+
+	return std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / mapName / "static.dat";
+}
+
 void LResUtility::LoadUserSettings()
 {
 	std::filesystem::path fullPath = std::filesystem::current_path() / "user_settings.json";

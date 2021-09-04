@@ -21,3 +21,4 @@
 #include "DOM/KeyDOMNode.hpp"
 #include "DOM/SpeedySpiritDropDOMNode.hpp"
 #include "DOM/BooDOMNode.hpp"
+#include "DOM/DoorDOMNode.hpp"

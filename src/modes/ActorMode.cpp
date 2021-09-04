@@ -102,6 +102,21 @@ void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 		ImGui::TreePop();
 	}
 
+	auto doors = current_map->GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door);
+	if (ImGui::TreeNode("Doors"))
+	{
+		for (uint32_t i = 0; i < doors.size(); i++)
+		{
+			uint32_t selectionType = 0;
+
+			ImGui::PushID(i);
+			doors[i]->RenderHierarchyUI(doors[i], &mSelectionManager);
+			ImGui::PopID();
+		}
+
+		ImGui::TreePop();
+	}
+
 	ImGui::End();
 }
 
