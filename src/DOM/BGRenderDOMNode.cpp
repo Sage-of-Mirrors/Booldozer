@@ -7,12 +7,12 @@ LBGRenderDOMNode::LBGRenderDOMNode(std::string name) : LUIRenderDOMNode(name)
 	mType = EDOMNodeType::BGRender;
 }
 
-void LBGRenderDOMNode::RenderBG(float dt, LEditorScene* scene)
+void LBGRenderDOMNode::RenderBG(float dt)
 {
 	if(!GetIsInitialized()){
 		glm::mat4 m = glm::identity<glm::mat4>();
 		m = glm::translate(m, mPosition);
-		mTransform = scene->InstanceModel(mName, m);
+		mTransform = std::make_shared<glm::mat4>(m);
 		SetIsInitialized(true);
 	}
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "UIRenderDOMNode.hpp"
-#include "scene/EditorScene.hpp"
 #include "glm/glm.hpp"
 #include "glm/gtx/quaternion.hpp"
 
@@ -24,7 +23,7 @@ public:
 	LBGRenderDOMNode(std::string name);
 
 	// Renders this node to the main window's background.
-	virtual void RenderBG(float dt, LEditorScene* scene);
+	virtual void RenderBG(float dt);
 
 	// Returns this node's position.
 	glm::vec3 GetPosition() { return mPosition; }

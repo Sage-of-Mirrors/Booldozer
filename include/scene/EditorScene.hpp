@@ -5,42 +5,29 @@
 #include <memory>
 #include <vector>
 #include "../../lib/bigg/include/bigg.hpp"
+#include "DOM/RoomDOMNode.hpp"
+#include "DOM/RoomDataDOMNode.hpp"
+#include "DOM/FurnitureDOMNode.hpp"
 #include <bx/math.h>
 #include <bgfx/bgfx.h>
+#include "io/BinIO.hpp"
+#include "ResUtil.hpp"
 
 #include "scene/Camera.hpp"
 
-class LModelManager {
+class LCubeManager {
 private:
-    const static uint32_t mInstanceStride = 64;
 
-protected:
-    //std::map<size_t, glm::mat4> mInstanceData;
-    std::vector<std::shared_ptr<glm::mat4>> mInstanceData;
-    bgfx::InstanceDataBuffer mModelInstances;
-    void generateInstanceBuffer();
-
-public:
-
-    std::shared_ptr<glm::mat4> addInstance(glm::mat4 transform);
-    virtual void render();
-
-    LModelManager();
-    ~LModelManager();
-};
-
-class LCubeManager : public LModelManager {
-private:
-    bgfx::ProgramHandle mCubeShader;
     bgfx::VertexBufferHandle mCubeVbh;
     bgfx::IndexBufferHandle mCubeIbh;
     bgfx::TextureHandle mCubeTexture;
-    bgfx::UniformHandle mCubeTexUniform;
-
 
 public:
+
+    bgfx::ProgramHandle mCubeShader;
+    bgfx::UniformHandle mCubeTexUniform;
     void init();
-    void render() override;
+    void render(glm::mat4* transform);
 
     LCubeManager();
     ~LCubeManager();
@@ -48,18 +35,25 @@ public:
 };
 
 
-struct LEditorScene {
-    LSceneCamera Camera;
+class LEditorScene {
     bool Initialized;
     glm::mat4 gridMatrix;
 
     LCubeManager mCubeManager;
-    std::map<std::string, LModelManager> mSceneModels;
+    std::weak_ptr<LRoomDOMNode> mCurrentRoom;
     
+    std::vector<std::shared_ptr<BGFXBin>> mRoomModels;
+    std::map<std::string, std::shared_ptr<BGFXBin>> mRoomFurniture;
+    
+    bgfx::ProgramHandle mShader;
+    bgfx::UniformHandle mTexUniform;
+
+public:
+    LSceneCamera Camera;
     glm::mat4 getCameraView();
     glm::mat4 getCameraProj();
 
-    std::shared_ptr<glm::mat4> InstanceModel(std::string name, glm::mat4 transform);
+    void SetRoom(std::shared_ptr<LRoomDOMNode> room);
     void RenderSubmit(uint32_t m_width, uint32_t m_height);
     
     void init();

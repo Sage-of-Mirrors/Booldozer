@@ -2,12 +2,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <fstream>
 #include <iostream>
+#include <filesystem>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include "cube_shader_f.h"
 #include "cube_shader_v.h"
 #include "cube_tex.h"
 #include "ImGuizmo.h"
+#include "Options.hpp"
 
 struct Vertex
 {
@@ -74,38 +76,7 @@ static const uint16_t s_cubeTriList[] = {
 	21, 23, 22,
 };
 
-
-LModelManager::LModelManager(){}
-LModelManager::~LModelManager(){}
-
-std::shared_ptr<glm::mat4> LModelManager::addInstance(glm::mat4 transform){
-	std::shared_ptr<glm::mat4> modelInstance = std::make_shared<glm::mat4>(transform);
-	
-	mInstanceData.push_back(modelInstance);
-	return modelInstance;
-}
-
-void LModelManager::generateInstanceBuffer(){
-	if(mInstanceData.size() == 0) return;
-	uint32_t drawableInstances = bgfx::getAvailInstanceDataBuffer(mInstanceData.size(), mInstanceStride);
-	bgfx::allocInstanceDataBuffer(&mModelInstances, drawableInstances, mInstanceStride);
-
-	uint8_t* instanceData = mModelInstances.data;
-
-	for (auto& instance : mInstanceData) {
-		memcpy(instanceData, &(instance.get())[0][0], mInstanceStride);
-		instanceData += mInstanceStride;
-	}
-}
-
-
-void LModelManager::render(){
-	// this can't be implemented until after bin loading.
-}
-
-void LCubeManager::render(){
-	if(mInstanceData.size() == 0 || mModelInstances.data == nullptr) return;
-
+void LCubeManager::render(glm::mat4* transform){
 	bgfx::setVertexBuffer(0, mCubeVbh);
 	bgfx::setIndexBuffer(mCubeIbh);
 
@@ -114,12 +85,8 @@ void LCubeManager::render(){
 	uint64_t  _state = 0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_MSAA;
 	bgfx::setState( _state );
 
-	for(auto instance : mInstanceData){
-
-		bgfx::setTransform(&(instance.get())[0][0]);
-		bgfx::submit(0, mCubeShader, 0, BGFX_DISCARD_NONE);
-	}
-
+	bgfx::setTransform(transform);
+	bgfx::submit(0, mCubeShader, 0, BGFX_DISCARD_NONE);
 }
 
 LCubeManager::LCubeManager(){}
@@ -157,7 +124,11 @@ LEditorScene::~LEditorScene(){}
 void LEditorScene::init(){
 	Initialized = true;
 	mCubeManager.init();
-
+	
+	bgfx::ShaderHandle vs = bgfx::createShader(bgfx::makeRef(cube_shader_v, cube_shader_v_len));
+	bgfx::ShaderHandle fs = bgfx::createShader(bgfx::makeRef(cube_shader_f, cube_shader_f_len));
+	mShader = bgfx::createProgram(vs, fs, true);
+	mTexUniform = bgfx::createUniform("s_texColor",  bgfx::UniformType::Sampler);
 }
 
 glm::mat4 LEditorScene::getCameraView(){
@@ -166,14 +137,6 @@ glm::mat4 LEditorScene::getCameraView(){
 
 glm::mat4 LEditorScene::getCameraProj(){
 	return Camera.GetProjectionMatrix();
-}
-
-std::shared_ptr<glm::mat4> LEditorScene::InstanceModel(std::string name, glm::mat4 transform){
-	if (mSceneModels.count(name) == 0){
-		return mCubeManager.addInstance(transform);
-	} else {
-		return mSceneModels[name].addInstance(transform);
-	}
 }
 
 void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
@@ -188,8 +151,73 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 	bgfx::setViewTransform(0, &view[0][0], &proj[0][0]);
     bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height));
     bgfx::touch(0);
+
+	if(mCurrentRoom.lock() != nullptr && Initialized)
+	{
+		auto furnitureNodes = mCurrentRoom.lock()->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
+		for (auto furniture : furnitureNodes)
+		{
+			if(furniture->GetIsRendered())
+			{
+				if(mRoomFurniture.count(furniture->GetName()) != 0)
+				{
+					std::cout << "Drawing model " << furniture->GetName() << std::endl;
+					mRoomFurniture[furniture->GetName()]->Draw(furniture->GetMat(), mShader, mTexUniform);
+				} else {
+					mCubeManager.render(furniture->GetMat());
+				}
+			}
+
+		}
+
+		std::cout << "Drawing room models" << std::endl;
+		glm::mat4 identity = glm::identity<glm::mat4>();
+		for (auto room : mRoomModels)
+		{
+			room->Draw(&identity, mShader, mTexUniform);
+		}
+		
+	}
     
-	mCubeManager.render();
+	//mCubeManager.render();
+}
+
+void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
+{
+	mCurrentRoom = room;
+	auto roomData = room->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData);
+
+	if(roomData.size() != 0)
+	{
+		std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(roomData.front()->GetResourcePath()).relative_path();
+		
+		if(resPath.extension() == ".arc")
+		{
+			GCarchive roomArc;
+			if(!GCResourceManager.LoadArchive(resPath.string().data(), &roomArc)){
+				std::cout << "Unable to load room archive " << resPath << std::endl;
+			}
+
+			for(int file = 0; file < roomArc.filenum; file++)
+			{
+				std::filesystem::path curPath = std::filesystem::path(roomArc.files[file].name);
+				if(curPath.extension() == ".bin")
+				{
+					bStream::CMemoryStream bin((uint8_t*)roomArc.files[file].data, roomArc.files[file].size, bStream::Endianess::Big, bStream::OpenMode::In);
+					if (curPath.filename().stem() != "room")
+					{
+						mRoomFurniture[curPath.filename().stem().string()] = std::make_shared<BGFXBin>(&bin);
+						std::cout << "completed loading " << curPath.filename() << std::endl;
+					} else {
+						mRoomModels.push_back(std::make_shared<BGFXBin>(&bin));
+						std::cout << "completed loading room model" << std::endl;
+					}
+					
+				}
+			}
+			std::cout << "all models locked and loaded" << std::endl;
+		}
+	}
 }
 
 void LEditorScene::update(GLFWwindow* window, float dt)

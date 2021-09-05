@@ -2,8 +2,8 @@
 
 #include "bigg.hpp"
 #include "ui/EditorWindowMain.hpp"
-#include "ui/BooldozerEditor.hpp"
 #include "scene/EditorScene.hpp"
+#include "ui/BooldozerEditor.hpp"
 #include "Options.hpp"
 
 // Main window's UI.

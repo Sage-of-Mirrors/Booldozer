@@ -156,7 +156,7 @@ BinMesh::BinMesh(bStream::CStream* stream, uint32_t offset, std::vector<glm::vec
     uint32_t ret = stream->tell();
 
     stream->seek(offset + primitiveOffset);
-    std::cout << "Reading Primitives at " << std::hex << stream->tell() << std::endl;
+    //std::cout << "Reading Primitives at " << std::hex << stream->tell() << std::endl;
     
     std::vector<BinVertex> buffer = ReadGXPrimitives(stream, vertexData, texcoordData, attributes);
     vbo = bgfx::createVertexBuffer(bgfx::copy(buffer.data(), buffer.size() * sizeof(BinVertex)), BinVertex::attributes);
@@ -204,7 +204,7 @@ void BinMaterial::bind(bgfx::UniformHandle& texUniform){
 }
 
 BinMaterial::BinMaterial(bStream::CStream* stream, uint32_t textureOffset){
-    std::cout << "Reading Material at " << std::hex << stream->tell() << std::endl;
+    //std::cout << "Reading Material at " << std::hex << stream->tell() << std::endl;
     int16_t textureID = stream->readInt16();
     stream->skip(2);
     mWrapU = stream->readUInt8();
@@ -218,7 +218,7 @@ BinMaterial::BinMaterial(bStream::CStream* stream, uint32_t textureOffset){
     stream->skip(3);
     uint32_t dataOffset = stream->readUInt32() + textureOffset;
     stream->seek(dataOffset);
-    std::cout << "Reading Texture Data at " << stream->tell() << std::endl;
+    //std::cout << "Reading Texture Data at " << stream->tell() << std::endl;
 
     const bgfx::Memory* textureData = bgfx::alloc(w*h*4);
 
@@ -252,34 +252,44 @@ void BinScenegraphNode::AddMesh(int16_t material, int16_t mesh){
     meshes.push_back(std::pair(material, mesh));
 }
 
-void BinScenegraphNode::Draw(glm::mat4 localTransform, std::vector<std::shared_ptr<glm::mat4>>& instances, BGFXBin* bin, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform){
-    for(auto& instance : instances)
-    {
-        for (auto& mesh : meshes)
-        {
-            bin->BindMesh(mesh.first);
-            bin->BindMaterial(mesh.second, texUniform);
+void BinScenegraphNode::Draw(glm::mat4 localTransform, glm::mat4* instance, BGFXBin* bin, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform){
 
-            bgfx::setTransform(&(*instance.get() * localTransform * transform)[0][0]);
-            bgfx::submit(0, program);
-        }
+    for (auto& mesh : meshes)
+    {
+        if(!bin->BindMesh(mesh.first)) continue;
+        if(!bin->BindMaterial(mesh.second, texUniform)) continue;
+
+	    bgfx::setState(BGFX_STATE_DEFAULT);
+
+        bgfx::setTransform(&(*instance * localTransform * transform)[0][0]);
+        bgfx::submit(0, program, 0, BGFX_DISCARD_NONE);
     }
     
     if(child != nullptr){
-        child->Draw(localTransform * transform, instances, bin, program, texUniform);
+        child->Draw(localTransform * transform, instance, bin, program, texUniform);
     }
 
     if(next != nullptr){
-        next->Draw(localTransform, instances, bin, program, texUniform);
+        next->Draw(localTransform, instance, bin, program, texUniform);
     }
 }
 
-void BGFXBin::BindMesh(uint16_t id){
-    mMeshes[id].bind();
+bool BGFXBin::BindMesh(uint16_t id){
+    if(mMeshes.count(id) != 0){
+        mMeshes[id].bind();
+        return true;
+    } else {
+        return false;
+    }
 }
 
-void BGFXBin::BindMaterial(uint16_t id, bgfx::UniformHandle& texUniform){
-    mMaterials[mSamplers[id].mTextureID].bind(texUniform);
+bool BGFXBin::BindMaterial(uint16_t id, bgfx::UniformHandle& texUniform){
+    if(mMaterials.size() > mSamplers[id].mTextureID){
+        mMaterials[mSamplers[id].mTextureID].bind(texUniform);
+        return true;
+    } else {
+        return false;
+    }
 }
 
 BGFXBin::BGFXBin(bStream::CStream* stream){
@@ -318,8 +328,9 @@ BGFXBin::BGFXBin(bStream::CStream* stream){
     }
     
     mRoot = ParseSceneraph(stream, chunkOffsets, 0, vertices, texcoords);
-    std::cout << mRoot.get();
-    std::cout << '\n';
+    
+    //std::cout << mRoot.get();
+    //std::cout << '\n';
 }
 
 std::shared_ptr<BinScenegraphNode> BGFXBin::ParseSceneraph(bStream::CStream* stream, uint32_t* offsets, uint16_t index, std::vector<glm::vec3>& vertexData, std::vector<glm::vec2>& texcoordData, std::shared_ptr<BinScenegraphNode> parent, std::shared_ptr<BinScenegraphNode> previous){
@@ -385,8 +396,8 @@ std::shared_ptr<BinScenegraphNode> BGFXBin::ParseSceneraph(bStream::CStream* str
     
 }
 
-void BGFXBin::Draw(std::vector<std::shared_ptr<glm::mat4>>& transforms, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform){
-    mRoot->Draw(glm::identity<glm::mat4>(), transforms, this, program, texUniform);
+void BGFXBin::Draw(glm::mat4* transform, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform){
+    mRoot->Draw(glm::identity<glm::mat4>(), transform, this, program, texUniform);
 }
 
 void BGFXBin::InitBinVertex(){

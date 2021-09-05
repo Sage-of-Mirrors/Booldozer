@@ -43,7 +43,7 @@ void LEnemyMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 		if (!node->IsNodeType(EDOMNodeType::Enemy) && !node->IsNodeType(EDOMNodeType::Observer))
 			continue;
 
-		node->RenderBG(0, renderer_scene);
+		node->RenderBG(0);
 	}
 
 	if (mSelectionManager.GetPrimarySelection() != nullptr) {

@@ -2,11 +2,14 @@
 
 #include "DOM.hpp"
 #include "EditorSelection.hpp"
+#include "scene/EditorScene.hpp"
 #include "history/EditorHistory.hpp"
 
 class LEditorModeBase
 {
 protected:
+	std::shared_ptr<LDOMNodeBase> mPreviousSelection;
+
 	// The object that manages this mode's node selection.
 	LEditorSelection mSelectionManager;
 	// The object that manages this mode's undo/redo history.

@@ -139,10 +139,17 @@ void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 	RenderDetailsWindow();
 	
 	for(auto& node : current_map.get()->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)){
-		node->RenderBG(0, renderer_scene);
+		node->RenderBG(0);
 	}
 
 	if(mSelectionManager.GetPrimarySelection() != nullptr){
+		
+		if(mPreviousSelection == nullptr || mPreviousSelection != mSelectionManager.GetPrimarySelection()){
+			mPreviousSelection = mSelectionManager.GetPrimarySelection();
+			
+			renderer_scene->SetRoom(mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock());
+		}
+
 		glm::mat4* m = ((LBGRenderDOMNode*)(mSelectionManager.GetPrimarySelection().get()))->GetMat();
 		glm::mat4 view = renderer_scene->getCameraView();
 		glm::mat4 proj = renderer_scene->getCameraProj();
