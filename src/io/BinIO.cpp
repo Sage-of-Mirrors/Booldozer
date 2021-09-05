@@ -262,7 +262,7 @@ void BinScenegraphNode::Draw(glm::mat4 localTransform, glm::mat4* instance, BGFX
 	    bgfx::setState(BGFX_STATE_DEFAULT);
 
         bgfx::setTransform(&(*instance * localTransform * transform)[0][0]);
-        bgfx::submit(0, program, 0, BGFX_DISCARD_NONE);
+        bgfx::submit(0, program, 0);
     }
     
     if(child != nullptr){
@@ -328,7 +328,7 @@ BGFXBin::BGFXBin(bStream::CStream* stream){
     }
     
     mRoot = ParseSceneraph(stream, chunkOffsets, 0, vertices, texcoords);
-    
+    mRoot->transform = glm::rotate(mRoot->transform, glm::radians(-90.0f), glm::vec3(0,1,0));
     //std::cout << mRoot.get();
     //std::cout << '\n';
 }
@@ -353,7 +353,9 @@ std::shared_ptr<BinScenegraphNode> BGFXBin::ParseSceneraph(bStream::CStream* str
     stream->skip(4);
     current->transform = glm::identity<glm::mat4>();
     current->transform = glm::scale(current->transform, glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat())); 
-    glm::quat r = glm::quat(glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat()));
+    current->transform = glm::rotate(current->transform, glm::radians(stream->readFloat()), glm::vec3(1,0,0));
+    current->transform = glm::rotate(current->transform, glm::radians(stream->readFloat()), glm::vec3(0,1,0));
+    current->transform = glm::rotate(current->transform, glm::radians(stream->readFloat()), glm::vec3(0,0,1));
     current->transform = glm::translate(current->transform, glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat()));
 
     stream->skip(4*7);

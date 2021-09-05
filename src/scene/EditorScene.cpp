@@ -129,6 +129,9 @@ void LEditorScene::init(){
 	bgfx::ShaderHandle fs = bgfx::createShader(bgfx::makeRef(cube_shader_f, cube_shader_f_len));
 	mShader = bgfx::createProgram(vs, fs, true);
 	mTexUniform = bgfx::createUniform("s_texColor",  bgfx::UniformType::Sampler);
+	
+	BGFXBin::InitBinVertex();
+
 }
 
 glm::mat4 LEditorScene::getCameraView(){
@@ -161,7 +164,6 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 			{
 				if(mRoomFurniture.count(furniture->GetName()) != 0)
 				{
-					std::cout << "Drawing model " << furniture->GetName() << std::endl;
 					mRoomFurniture[furniture->GetName()]->Draw(furniture->GetMat(), mShader, mTexUniform);
 				} else {
 					mCubeManager.render(furniture->GetMat());
@@ -170,7 +172,6 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 
 		}
 
-		std::cout << "Drawing room models" << std::endl;
 		glm::mat4 identity = glm::identity<glm::mat4>();
 		for (auto room : mRoomModels)
 		{
