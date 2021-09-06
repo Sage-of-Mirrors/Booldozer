@@ -4,7 +4,7 @@
 #include "io/BinIO.hpp"
 #include "../lib/bigg/deps/bgfx.cmake/bimg/3rdparty/libsquish/colourblock.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-//#include "stb_image_write.h"
+#include "stb_image_write.h"
 /*
 *
 * The bin loader needs *serious* cleanup. As it is now, it exists just to make bin loading possible.
@@ -156,7 +156,7 @@ BinMesh::BinMesh(bStream::CStream* stream, uint32_t offset, std::vector<glm::vec
     uint32_t ret = stream->tell();
 
     stream->seek(offset + primitiveOffset);
-    //std::cout << "Reading Primitives at " << std::hex << stream->tell() << std::endl;
+    std::cout << "Reading Primitives at " << std::hex << stream->tell() << std::endl;
     
     std::vector<BinVertex> buffer = ReadGXPrimitives(stream, vertexData, texcoordData, attributes);
     vbo = bgfx::createVertexBuffer(bgfx::copy(buffer.data(), buffer.size() * sizeof(BinVertex)), BinVertex::attributes);
@@ -185,18 +185,17 @@ void BinMaterial::LoadCMPRTex(bStream::CStream* stream, uint16_t w, uint16_t h, 
                 for (size_t bx = 0; bx < 8; bx += 4){
                     uint8_t block[8];
                     stream->readBytesTo(block, 8);
-                    squish::Decompress((uint8_t*)rgba, block, 0);
+                    squish::Decompress((uint8_t*)rgba, block, 1);
                     
                     for(size_t y = 0; y < 4; y++){
                         for(size_t x = 0; x < 4; x++){
-	                    	out[(ty + by + y) * w + (tx + bx + (3-x))] = rgba[(y * 4 + x)];
+                            out[(ty + by + y) * w + (tx + bx + (3-x))] = rgba[(y * 4) + x];
                         }       
                     }
                 }
             }
         }        
     }
-
 }
 
 void BinMaterial::bind(bgfx::UniformHandle& texUniform){
@@ -204,7 +203,7 @@ void BinMaterial::bind(bgfx::UniformHandle& texUniform){
 }
 
 BinMaterial::BinMaterial(bStream::CStream* stream, uint32_t textureOffset){
-    //std::cout << "Reading Material at " << std::hex << stream->tell() << std::endl;
+    std::cout << "Reading Material at " << std::hex << stream->tell() << std::endl;
     int16_t textureID = stream->readInt16();
     stream->skip(2);
     mWrapU = stream->readUInt8();
@@ -218,7 +217,7 @@ BinMaterial::BinMaterial(bStream::CStream* stream, uint32_t textureOffset){
     stream->skip(3);
     uint32_t dataOffset = stream->readUInt32() + textureOffset;
     stream->seek(dataOffset);
-    //std::cout << "Reading Texture Data at " << stream->tell() << std::endl;
+    std::cout << "Reading Texture Data at " << stream->tell() << std::endl;
 
     const bgfx::Memory* textureData = bgfx::alloc(w*h*4);
 
@@ -259,10 +258,9 @@ void BinScenegraphNode::Draw(glm::mat4 localTransform, glm::mat4* instance, BGFX
         if(!bin->BindMesh(mesh.first)) continue;
         if(!bin->BindMaterial(mesh.second, texUniform)) continue;
 
-	    bgfx::setState(BGFX_STATE_DEFAULT);
 
         bgfx::setTransform(&(*instance * localTransform * transform)[0][0]);
-        bgfx::submit(0, program, 0);
+        bgfx::submit(0, program);
     }
     
     if(child != nullptr){
@@ -328,9 +326,8 @@ BGFXBin::BGFXBin(bStream::CStream* stream){
     }
     
     mRoot = ParseSceneraph(stream, chunkOffsets, 0, vertices, texcoords);
-    mRoot->transform = glm::rotate(mRoot->transform, glm::radians(-90.0f), glm::vec3(0,1,0));
-    //std::cout << mRoot.get();
-    //std::cout << '\n';
+    std::cout << mRoot.get();
+    std::cout << '\n';
 }
 
 std::shared_ptr<BinScenegraphNode> BGFXBin::ParseSceneraph(bStream::CStream* stream, uint32_t* offsets, uint16_t index, std::vector<glm::vec3>& vertexData, std::vector<glm::vec2>& texcoordData, std::shared_ptr<BinScenegraphNode> parent, std::shared_ptr<BinScenegraphNode> previous){

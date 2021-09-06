@@ -38,6 +38,7 @@ public:
 	LRoomDataDOMNode(std::string name);
 
 	std::string GetResourcePath() { return mResourcePath; }
+	std::vector<std::weak_ptr<LRoomDOMNode>> GetAdjacencyList() { return mAdjacentRooms; }
 
 	virtual void RenderDetailsUI(float dt) override;
 

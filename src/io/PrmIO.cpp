@@ -3,6 +3,8 @@
 #include "imgui.h"
 
 #include <filesystem>
+#include "Options.hpp"
+#include "ImGuiFileDialog/ImGuiFileDialog.h"
 
 void SwapVec4(glm::vec4* s)
 {
@@ -14,25 +16,20 @@ void SwapVec4(glm::vec4* s)
     s->b = a;
 }
 
-void DrawEffectiveDegree(){
-    auto drawlist = ImGui::GetWindowDrawList();
-
-    drawlist->AddCircle(ImVec2(10,10), 525, 0x2222aaff, 32);
-}
-
 LPrmIO::LPrmIO() : mConfigsLoaded(false){}
 LPrmIO::~LPrmIO(){}
 
 void LPrmIO::LoadConfigs(std::shared_ptr<LMapDOMNode>& map)
 {
-    if(!std::filesystem::exists("ctp"))
+    if(!std::filesystem::exists(OPTIONS.mDolphinPath))
     {
-        std::cout << "params folder not found" << std::endl;
+        std::cout << "root not loadad" << std::endl;
         return;
     }
-    
+
     mMap = map;
 
+    
     for (const auto& entry : std::filesystem::directory_iterator("ctp"))
     {
         if (entry.is_regular_file()) {
@@ -41,23 +38,25 @@ void LPrmIO::LoadConfigs(std::shared_ptr<LMapDOMNode>& map)
             mLoadedConfigs.push_back(entry.path().filename().stem().string());
         }
     }
+    
     mConfigsLoaded = true;
 }
 
-void LPrmIO::SaveConfigs()
+void LPrmIO::SaveConfigsToFile()
 {
-    if(!std::filesystem::exists("new_ctp"))
-    {
-        std::cout << "params folder not found" << std::endl;
-        return;
-    }
+    std::string paramsPth;
+    ImGuiFileDialog::Instance()->OpenDialog("SaveParamFilesDlg", "Choose a Folder", nullptr, OPTIONS.mLastSavedDirectory);
+    if (LUIUtility::RenderFileDialog("SaveParamFilesDlg", paramsPth))
+	{
+        std::filesystem::path outFolder = paramsPth;
+
+        for (const auto& file : mLoadedConfigs)
+        {
+            bStream::CFileStream out((outFolder / file).string(), bStream::Endianess::Big, bStream::OpenMode::Out);
+            Save(file, &out);
+        }
+	}
     
-    for (const auto& file : mLoadedConfigs)
-    {
-        bStream::CFileStream test(std::filesystem::path("ctp").append(file+".prm").u8string(), bStream::Endianess::Big, bStream::OpenMode::Out);
-        Save(file, &test);
-    }
-    mConfigsLoaded = true;
 }
 
 // Because these properties are consistent, we can write all of them and the game wont really care, so long as the ones it is looking for are present.
@@ -105,7 +104,6 @@ void LPrmIO::Save(std::string name, bStream::CFileStream* stream)
     WritePropertyInt32(stream, 0x560a, "mNumAtkOrooro", prm->mNumAtkOrooro);
     WritePropertyFloat(stream, 0xcc48, "mHikiPower", prm->mHikiPower);
     WritePropertyFloat(stream, 0xc42e, "mEffectiveDegree", prm->mEffectiveDegree);
-    DrawEffectiveDegree();
     WritePropertyFloat(stream, 0x7a1c, "mTsuriHeight", prm->mTsuriHeight);
     WritePropertyInt32(stream, 0xe753, "mDissapearFrame", prm->mDissapearFrame);
     WritePropertyInt32(stream, 0x11db, "mActAfterSu", prm->mActAfterSu);
@@ -325,8 +323,8 @@ void LPrmIO::RenderUI()
     ImGui::InputInt("Num Ground", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mNumGround);
     ImGui::Checkbox("Check", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mCheckbox);
 
-    if(ImGui::Button("Save all configs")){
-        SaveConfigs();
+    if(ImGui::Button("Save All Configs to File")){
+        SaveConfigsToFile();
     }
 
     ImGui::End();

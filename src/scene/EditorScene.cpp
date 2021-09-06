@@ -8,6 +8,7 @@
 #include "cube_shader_f.h"
 #include "cube_shader_v.h"
 #include "cube_tex.h"
+#include "border.h"
 #include "ImGuizmo.h"
 #include "Options.hpp"
 
@@ -89,6 +90,19 @@ void LCubeManager::render(glm::mat4* transform){
 	bgfx::submit(0, mCubeShader, 0, BGFX_DISCARD_NONE);
 }
 
+void LCubeManager::renderAltTex(glm::mat4* transform, bgfx::TextureHandle& tex){
+	bgfx::setVertexBuffer(0, mCubeVbh);
+	bgfx::setIndexBuffer(mCubeIbh);
+
+	bgfx::setTexture(0, mCubeTexUniform, tex);
+
+	uint64_t  _state = 0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_MSAA;
+	bgfx::setState( _state );
+
+	bgfx::setTransform(transform);
+	bgfx::submit(0, mCubeShader, 0, BGFX_DISCARD_NONE);
+}
+
 LCubeManager::LCubeManager(){}
 
 void LCubeManager::init(){
@@ -130,6 +144,11 @@ void LEditorScene::init(){
 	mShader = bgfx::createProgram(vs, fs, true);
 	mTexUniform = bgfx::createUniform("s_texColor",  bgfx::UniformType::Sampler);
 	
+	int x, y, n;
+	uint8_t* data = stbi_load_from_memory(&outline_png[0], outline_png_size, &x, &y, &n, 4);
+	mBorderTex = bgfx::createTexture2D((uint16_t)x, (uint16_t)y, false, 1, bgfx::TextureFormat::RGBA8, 0, bgfx::copy(data, x*y*4));
+	stbi_image_free(data);
+
 	BGFXBin::InitBinVertex();
 
 }
@@ -155,68 +174,92 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
     bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height));
     bgfx::touch(0);
 
-	if(mCurrentRoom.lock() != nullptr && Initialized)
-	{
-		auto furnitureNodes = mCurrentRoom.lock()->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
-		for (auto furniture : furnitureNodes)
+	for(auto room : mCurrentRooms){
+		if(room.lock() != nullptr && Initialized)
 		{
-			if(furniture->GetIsRendered())
+			auto furnitureNodes = room.lock()->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
+			for (auto furniture : furnitureNodes)
 			{
-				if(mRoomFurniture.count(furniture->GetName()) != 0)
+				if(furniture->GetIsRendered())
 				{
-					mRoomFurniture[furniture->GetName()]->Draw(furniture->GetMat(), mShader, mTexUniform);
-				} else {
-					mCubeManager.render(furniture->GetMat());
+					if(mRoomFurniture.count(furniture->GetName()) != 0)
+					{
+						mRoomFurniture[furniture->GetName()]->Draw(furniture->GetMat(), mShader, mTexUniform);
+					} else {
+						mCubeManager.render(furniture->GetMat());
+					}
 				}
+
 			}
 
+			
+			//TODO: do this on room load
+			//auto bounds = mCurrentRoom.lock()->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+			//identity = glm::scale(identity, bounds->GetScale() / glm::vec3(50,50,50));
+			//identity = glm::translate(identity, bounds->GetPosition());
+			//mCubeManager.renderAltTex(&identity, mBorderTex);
 		}
-
 		glm::mat4 identity = glm::identity<glm::mat4>();
 		for (auto room : mRoomModels)
 		{
 			room->Draw(&identity, mShader, mTexUniform);
 		}
-		
 	}
-    
 	//mCubeManager.render();
+}
+
+bool LEditorScene::HasRoomLoaded(int32_t roomNumber){
+	for (auto& room : mCurrentRooms)
+	{
+		if(room.lock()->GetRoomNumber() == roomNumber) return true;
+	}
+	return false;
 }
 
 void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 {
-	mCurrentRoom = room;
+	// Get the select room's data so we can get the preload list
 	auto roomData = room->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData);
 
+	mRoomModels.clear();
+	mRoomFurniture.clear();
+
+	//This is ensured to exist, but check it anyway
 	if(roomData.size() != 0)
 	{
-		std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(roomData.front()->GetResourcePath()).relative_path();
-		
-		if(resPath.extension() == ".arc")
+		mCurrentRooms = roomData.front()->GetAdjacencyList();
+		for (auto& aroom :  roomData.front()->GetAdjacencyList())
 		{
-			GCarchive roomArc;
-			if(!GCResourceManager.LoadArchive(resPath.string().data(), &roomArc)){
-				std::cout << "Unable to load room archive " << resPath << std::endl;
-			}
-
-			for(int file = 0; file < roomArc.filenum; file++)
+			auto curRoomData = aroom.lock()->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+		
+			std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(curRoomData->GetResourcePath()).relative_path();
+			
+			if(resPath.extension() == ".arc")
 			{
-				std::filesystem::path curPath = std::filesystem::path(roomArc.files[file].name);
-				if(curPath.extension() == ".bin")
-				{
-					bStream::CMemoryStream bin((uint8_t*)roomArc.files[file].data, roomArc.files[file].size, bStream::Endianess::Big, bStream::OpenMode::In);
-					if (curPath.filename().stem() != "room")
-					{
-						mRoomFurniture[curPath.filename().stem().string()] = std::make_shared<BGFXBin>(&bin);
-						std::cout << "completed loading " << curPath.filename() << std::endl;
-					} else {
-						mRoomModels.push_back(std::make_shared<BGFXBin>(&bin));
-						std::cout << "completed loading room model" << std::endl;
-					}
-					
+				GCarchive roomArc;
+				if(!GCResourceManager.LoadArchive(resPath.string().data(), &roomArc)){
+					std::cout << "Unable to load room archive " << resPath << std::endl;
 				}
+
+				for(int file = 0; file < roomArc.filenum; file++)
+				{
+					std::filesystem::path curPath = std::filesystem::path(roomArc.files[file].name);
+					if(curPath.extension() == ".bin")
+					{
+						bStream::CMemoryStream bin((uint8_t*)roomArc.files[file].data, roomArc.files[file].size, bStream::Endianess::Big, bStream::OpenMode::In);
+						if (curPath.filename().stem() != "room")
+						{
+							mRoomFurniture[curPath.filename().stem().string()] = std::make_shared<BGFXBin>(&bin);
+							std::cout << "completed loading " << curPath.filename() << std::endl;
+						} else {
+							mRoomModels.push_back(std::make_shared<BGFXBin>(&bin));
+							std::cout << "completed loading room model" << std::endl;
+						}
+						
+					}
+				}
+				std::cout << "all models locked and loaded" << std::endl;
 			}
-			std::cout << "all models locked and loaded" << std::endl;
 		}
 	}
 }

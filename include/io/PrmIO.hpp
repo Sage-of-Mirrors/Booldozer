@@ -88,7 +88,7 @@ class LPrmIO {
 
 public:
     void LoadConfigs(std::shared_ptr<LMapDOMNode>& map);
-    void SaveConfigs();
+    void SaveConfigsToFile();
     void Load(std::string name, bStream::CFileStream* stream);
     void Save(std::string name, bStream::CFileStream* stream);
     void RenderUI();
