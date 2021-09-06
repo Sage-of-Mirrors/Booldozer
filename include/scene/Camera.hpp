@@ -45,7 +45,7 @@ public:
 	void Update(GLFWwindow* window, float dt);
 
 	// Calculates and returns the view matrix for this camera's position and look-at direction.
-	glm::mat4 GetViewMatrix() { return glm::lookAt(mEye, mCenter, mUp); }
+	glm::mat4 GetViewMatrix() { return glm::lookAtLH(mEye, mCenter, mUp); }
 	// Calculates and returns the projection matrix from this camera's settings.
-	glm::mat4 GetProjectionMatrix() { return glm::perspective<float>(Fovy, AspectRatio, NearPlane, FarPlane); }
+	glm::mat4 GetProjectionMatrix() { return glm::perspectiveLH<float>(Fovy, AspectRatio, NearPlane, FarPlane); }
 };
