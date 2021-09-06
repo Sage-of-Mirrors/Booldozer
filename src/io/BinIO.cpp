@@ -286,7 +286,7 @@ void BinScenegraphNode::Draw(glm::mat4 localTransform, glm::mat4* instance, BGFX
         if(!bin->BindMesh(mesh.first)) continue;
         if(!bin->BindMaterial(mesh.second, texUniform)) continue;
 
-        bgfx::setState(BGFX_STATE_DEFAULT | BGFX_STATE_CULL_CCW);
+        bgfx::setState(BGFX_STATE_DEFAULT | BGFX_STATE_CULL_CCW | BGFX_STATE_BLEND_ALPHA);
         bgfx::setTransform(&(*instance * localTransform * transform)[0][0]);
         bgfx::submit(0, program);
     }
