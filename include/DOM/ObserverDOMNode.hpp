@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include "EntityDOMNode.hpp"
 
 extern std::map<std::string, std::string> ObserverNames;
