@@ -2,6 +2,8 @@
 
 #include "EntityDOMNode.hpp"
 
+extern std::map<std::string, std::string> ObserverNames;
+
 enum class EConditionType : uint32_t
 {
 	Always_True,
@@ -70,6 +72,9 @@ public:
 	typedef LEntityDOMNode Super;
 
 	LObserverDOMNode(std::string name);
+
+	virtual void RenderDetailsUI(float dt) override;
+	virtual std::string GetName() override { return ObserverNames[mName]; }
 
 	// Writes the data this JMP node into the given LJmpIO instance at the specified entry.
 	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const override;

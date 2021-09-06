@@ -1,4 +1,13 @@
 #include "DOM/ObserverDOMNode.hpp"
+#include "UIUtil.hpp"
+
+std::map<std::string, std::string> ObserverNames = {
+	{ "observer", "Logic" },
+	{ "kinopio", "Toad" },
+	{ "soundobj", "Sound Effect Player" },
+	{ "otobira", "Clockwork Room Elevators" },
+	{ "iphone", "Telephone" }
+};
 
 LObserverDOMNode::LObserverDOMNode(std::string name) : Super(name),
 	mCodeName("(null)"), mCondStringArg0("(null)"), mStringArg0("(null)"),
@@ -6,6 +15,63 @@ LObserverDOMNode::LObserverDOMNode(std::string name) : Super(name),
 	mCondType(EConditionType::Always_True), mDoType(EDoType::Nothing), mIsVisible(false), mUnkBool1(false)
 {
 	mType = EDOMNodeType::Observer;
+}
+
+void LObserverDOMNode::RenderDetailsUI(float dt)
+{
+	LUIUtility::RenderTransformUI(mTransform.get(), mPosition, mRotation, mScale);
+
+	LUIUtility::RenderComboBox("Observer Type", ObserverNames, mName);
+	LUIUtility::RenderTooltip("What kind of observer this actor is.");
+
+	// Strings
+	LUIUtility::RenderTextInput("Script Name", &mCodeName);
+	LUIUtility::RenderTooltip("The name that can be used to reference this observer in an event.");
+
+	LUIUtility::RenderTextInput("Spawn Group Name", &mCondStringArg0);
+	LUIUtility::RenderTooltip("The name of the Spawn Group that this observer is associated with. When all entities in this spawn group are dead, the observer's Action will be executed.");
+
+	LUIUtility::RenderTextInput("Argument String", &mStringArg0);
+	LUIUtility::RenderTooltip("A general-purpose argument whose meaning depends on the observer type.");
+
+	// Integers
+	ImGui::InputInt("Flag ID", &mCondArg0);
+	LUIUtility::RenderTooltip("The ID of the flag for this observer to check, if its Condition is Flag Set or Flag Unset.");
+
+	ImGui::InputInt("Argument 0", &mArg0);
+	LUIUtility::RenderTooltip("");
+	ImGui::InputInt("Argument 1", &mArg1);
+	LUIUtility::RenderTooltip("");
+	ImGui::InputInt("Argument 2", &mArg2);
+	LUIUtility::RenderTooltip("");
+	ImGui::InputInt("Argument 3", &mArg3);
+	LUIUtility::RenderTooltip("");
+	ImGui::InputInt("Argument 4", &mArg4);
+	LUIUtility::RenderTooltip("");
+	
+	// Useless?
+	//ImGui::InputInt("Argument 0", &mArg0);
+	//LUIUtility::RenderTooltip("");
+
+	ImGui::InputInt("Spawn Flag", &mSpawnFlag);
+	LUIUtility::RenderTooltip("The flag that must be set before this piece of furniture will begin spawning.");
+
+	ImGui::InputInt("Despawn Flag", &mDespawnFlag);
+	LUIUtility::RenderTooltip("If this flag is set, this piece of furniture will no longer spawn.");
+
+	// Comboboxes
+	LUIUtility::RenderComboEnum<EConditionType>("Condition", mCondType);
+	LUIUtility::RenderTooltip("The condition that this observer is waiting to be fulfilled. When the condition is met, the observer's Action will be executed.");
+
+	LUIUtility::RenderComboEnum<EDoType>("Action", mDoType);
+	LUIUtility::RenderTooltip("The action that the observer will execute once its Condition has been met.");
+
+	// Bools
+	LUIUtility::RenderCheckBox("Visible?", &mIsVisible);
+	LUIUtility::RenderTooltip("");
+
+	LUIUtility::RenderCheckBox("Unknown Boolean 1", &mUnkBool1);
+	LUIUtility::RenderTooltip("???");
 }
 
 void LObserverDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
