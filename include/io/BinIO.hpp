@@ -43,12 +43,12 @@ enum GXPrimitiveType {
 	TriangleStrip = 0x98,
 	TriangleFan = 0xA0,
 	Quads = 0x80,
-	None = 0x00
+	PrimitiveNone = 0x00
 };
 
 class BinMaterial {
 	bgfx::TextureHandle mTexture;
-    uint8_t mWrapU, mWrapV;
+    uint8_t mWrap;
 	void LoadCMPRTex(bStream::CStream* stream, uint16_t w, uint16_t h, uint32_t* out);
 
 public:
@@ -93,7 +93,7 @@ public:
     glm::mat4 transform;
 
     void AddMesh(int16_t material, int16_t mesh);
-    void Draw(glm::mat4 localTransform, std::vector<std::shared_ptr<glm::mat4>>& instances, BGFXBin* bin, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform);
+    void Draw(glm::mat4 localTransform, glm::mat4* instance, BGFXBin* bin, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform);
     BinScenegraphNode();
     ~BinScenegraphNode();
 
@@ -109,9 +109,9 @@ class BGFXBin {
 
 public:
     static void InitBinVertex();
-	void BindMesh(uint16_t id);
-	void BindMaterial(uint16_t id, bgfx::UniformHandle& texUniform);
-    void Draw(std::vector<std::shared_ptr<glm::mat4>>& transforms, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform);
+	bool BindMesh(uint16_t id);
+	bool BindMaterial(uint16_t id, bgfx::UniformHandle& texUniform);
+    void Draw(glm::mat4* transform, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform);
     BGFXBin(bStream::CStream* stream);
     ~BGFXBin();
 };

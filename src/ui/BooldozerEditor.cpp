@@ -93,6 +93,11 @@ void LBooldozerEditor::SaveMapToFiles(std::string folder_path)
 		mLoadedMap->SaveMapToFiles(folder_path);
 }
 
+void LBooldozerEditor::SetGizmo(ImGuizmo::OPERATION mode)
+{
+	mCurrentMode->mGizmoMode = mode;
+}
+
 void LBooldozerEditor::ChangeMode()
 {
 	if (mCurrentMode != nullptr)

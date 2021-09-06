@@ -6,6 +6,7 @@
 #include "modes/EnemyMode.hpp"
 #include "modes/ItemMode.hpp"
 #include "io/PrmIO.hpp"
+#include "ImGuizmo.h"
 
 #include <filesystem>
 #include <memory>
@@ -59,6 +60,8 @@ public:
 	void onSaveMapCB();
 
 	void onPlaytestCB();
+
+	void SetGizmo(ImGuizmo::OPERATION mode);
 
 	// Switches the current mode to the given new one.
 	void ChangeMode();

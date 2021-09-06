@@ -1,8 +1,10 @@
 #include "io/PrmIO.hpp"
 #include "UIUtil.hpp"
 #include "imgui.h"
-
 #include <filesystem>
+#include "Options.hpp"
+#include "ImGuiFileDialog/ImGuiFileDialog.h"
+#include "stb_image.h"
 
 void SwapVec4(glm::vec4* s)
 {
@@ -14,25 +16,52 @@ void SwapVec4(glm::vec4* s)
     s->b = a;
 }
 
-void DrawEffectiveDegree(){
-    auto drawlist = ImGui::GetWindowDrawList();
+bool AngleVisualizer(const char* label, float* angle, bgfx::TextureHandle& sGhostImg)
+{
+	ImGuiIO& io = ImGui::GetIO();
+	ImGuiStyle& style = ImGui::GetStyle();
 
-    drawlist->AddCircle(ImVec2(10,10), 525, 0x2222aaff, 32);
+	ImVec2 pos = ImGui::GetCursorScreenPos();
+	ImDrawList* draw_list = ImGui::GetWindowDrawList();
+	ImVec2 center = ImVec2(pos.x + 32, pos.y + 32);
+
+	float angle_cos = cosf((*angle) * (M_PI / 180)), angle_sin = sinf((*angle) * (M_PI / 180));
+	float radius_inner = 16.0f;
+	draw_list->AddLine(ImVec2(center.x - angle_sin*radius_inner, center.y + angle_cos*radius_inner), ImVec2(center.x - angle_sin*(30), center.y + angle_cos*(30)), ImGui::GetColorU32(ImGuiCol_SliderGrabActive), 2.0f);
+	draw_list->AddLine(ImVec2(center.x, center.y + radius_inner), ImVec2(center.x, center.y + 30), ImGui::GetColorU32(ImGuiCol_SliderGrabActive), 2.0f);
+
+    //TODO: figure out why this breaks the combo box
+    //draw_list->PathArcTo(ImVec2(center.x, center.y), 30.0f, 0.0f, -((*angle) * (M_PI / 180)), 10);
+
+	draw_list->AddImage((void*)(intptr_t)sGhostImg.idx, ImVec2(center.x - 8, center.y - 8), ImVec2(center.x + 8, center.y + 8));
+
+
+    pos.y += 80;
+    ImGui::SetCursorScreenPos(pos);
+
+	return true;
 }
 
-LPrmIO::LPrmIO() : mConfigsLoaded(false){}
+LPrmIO::LPrmIO() : mConfigsLoaded(false){
+}
 LPrmIO::~LPrmIO(){}
 
 void LPrmIO::LoadConfigs(std::shared_ptr<LMapDOMNode>& map)
 {
-    if(!std::filesystem::exists("ctp"))
+    int x, y, n;
+	uint8_t* data = stbi_load_from_memory(&ghostImgData[0], ghostImgData_size, &x, &y, &n, 4);
+	mGhostImg = bgfx::createTexture2D((uint16_t)x, (uint16_t)y, false, 1, bgfx::TextureFormat::RGBA8, 0, bgfx::copy(data, x*y*4));
+	stbi_image_free(data);
+
+    if(!std::filesystem::exists(OPTIONS.mDolphinPath))
     {
-        std::cout << "params folder not found" << std::endl;
+        std::cout << "root not loadad" << std::endl;
         return;
     }
-    
+
     mMap = map;
 
+    
     for (const auto& entry : std::filesystem::directory_iterator("ctp"))
     {
         if (entry.is_regular_file()) {
@@ -41,23 +70,25 @@ void LPrmIO::LoadConfigs(std::shared_ptr<LMapDOMNode>& map)
             mLoadedConfigs.push_back(entry.path().filename().stem().string());
         }
     }
+    
     mConfigsLoaded = true;
 }
 
-void LPrmIO::SaveConfigs()
+void LPrmIO::SaveConfigsToFile()
 {
-    if(!std::filesystem::exists("new_ctp"))
-    {
-        std::cout << "params folder not found" << std::endl;
-        return;
-    }
+    std::string paramsPth;
+    ImGuiFileDialog::Instance()->OpenDialog("SaveParamFilesDlg", "Choose a Folder", nullptr, OPTIONS.mLastSavedDirectory);
+    if (LUIUtility::RenderFileDialog("SaveParamFilesDlg", paramsPth))
+	{
+        std::filesystem::path outFolder = paramsPth;
+
+        for (const auto& file : mLoadedConfigs)
+        {
+            bStream::CFileStream out((outFolder / file).string(), bStream::Endianess::Big, bStream::OpenMode::Out);
+            Save(file, &out);
+        }
+	}
     
-    for (const auto& file : mLoadedConfigs)
-    {
-        bStream::CFileStream test(std::filesystem::path("ctp").append(file+".prm").u8string(), bStream::Endianess::Big, bStream::OpenMode::Out);
-        Save(file, &test);
-    }
-    mConfigsLoaded = true;
 }
 
 // Because these properties are consistent, we can write all of them and the game wont really care, so long as the ones it is looking for are present.
@@ -105,7 +136,6 @@ void LPrmIO::Save(std::string name, bStream::CFileStream* stream)
     WritePropertyInt32(stream, 0x560a, "mNumAtkOrooro", prm->mNumAtkOrooro);
     WritePropertyFloat(stream, 0xcc48, "mHikiPower", prm->mHikiPower);
     WritePropertyFloat(stream, 0xc42e, "mEffectiveDegree", prm->mEffectiveDegree);
-    DrawEffectiveDegree();
     WritePropertyFloat(stream, 0x7a1c, "mTsuriHeight", prm->mTsuriHeight);
     WritePropertyInt32(stream, 0xe753, "mDissapearFrame", prm->mDissapearFrame);
     WritePropertyInt32(stream, 0x11db, "mActAfterSu", prm->mActAfterSu);
@@ -293,6 +323,8 @@ void LPrmIO::RenderUI()
 
     ImGui::SliderFloat("Effective Pull Range", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mEffectiveDegree, 0.0f, 180.0f);
     LUIUtility::RenderTooltip("Sets a minimum for the difference in angle between the direction a ghost is moving and the direction luigi is pulling (the control stick direction).");
+    AngleVisualizer("effectivedegree", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mEffectiveDegree, mGhostImg);
+
 
     ImGui::InputFloat("Flee Height", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mTsuriHeight);
     LUIUtility::RenderTooltip("The height a ghost will float at when fleeing the vacuum.");
@@ -325,8 +357,8 @@ void LPrmIO::RenderUI()
     ImGui::InputInt("Num Ground", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mNumGround);
     ImGui::Checkbox("Check", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mCheckbox);
 
-    if(ImGui::Button("Save all configs")){
-        SaveConfigs();
+    if(ImGui::Button("Save All Configs to File")){
+        SaveConfigsToFile();
     }
 
     ImGui::End();

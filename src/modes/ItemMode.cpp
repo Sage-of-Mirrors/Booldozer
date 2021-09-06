@@ -109,7 +109,7 @@ void LItemMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* r
 	RenderDetailsWindow();
 
 	for (auto& node : current_map.get()->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)) {
-		node->RenderBG(0, renderer_scene);
+		node->RenderBG(0);
 	}
 }
 

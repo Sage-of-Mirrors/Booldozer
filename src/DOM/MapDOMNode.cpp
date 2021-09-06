@@ -36,11 +36,6 @@ std::string const LEntityFileNames[LEntityType_Max] = {
 LMapDOMNode::LMapDOMNode() : Super("map")
 {
 	mType = EDOMNodeType::Map;
-
-	GCerror err;
-	if ((err = gcInitContext(&mArcLoaderContext)) != GC_ERROR_SUCCESS) {
-		printf("Error initing arc loader context: %s\n", gcGetErrorMessage(err));
-	}
 }
 
 bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
@@ -54,7 +49,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 	// Attempt to load archive
 	GCarchive mapArc;
-	if (!LoadArchive(file_path.string().c_str(), &mapArc))
+	if (!GCResourceManager.LoadArchive(file_path.string().c_str(), &mapArc))
 	{
 		return false;
 	}
@@ -331,62 +326,6 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 	return true;
 }
 
-bool LMapDOMNode::LoadArchive(const char* path, GCarchive* archive)
-{
-	GCerror err;
-
-	FILE* f = fopen(path, "rb");
-	if (f == nullptr)
-	{
-		printf("Error opening file \"%s\"\n", path);
-		return false;
-	}
-
-	fseek(f, 0L, SEEK_END);
-	GCsize size = (GCsize)ftell(f);
-	rewind(f);
-
-	void* file = malloc(size);
-	if (file == nullptr)
-	{
-		printf("Error allocating buffer for file \"%s\"\n", path);
-		return false;
-	}
-
-	fread(file, 1, size, f);
-	fclose(f);
-
-	// If the file starts with 'Yay0', it's Yay0 compressed.
-	if (*((uint32_t*)file) == 0x30796159)
-	{
-		GCsize compressedSize = gcDecompressedSize(&mArcLoaderContext, (GCuint8*)file, 0);
-
-		void* decompBuffer = malloc(compressedSize);
-		gcYay0Decompress(&mArcLoaderContext, (GCuint8*)file, (GCuint8*)decompBuffer, compressedSize, 0);
-
-		free(file);
-		file = decompBuffer;
-	}
-	// Likewise, if the file starts with 'Yaz0' it's Yaz0 compressed.
-	else if (*((uint32_t*)file) == 0x307A6159)
-	{
-		GCsize compressedSize = gcDecompressedSize(&mArcLoaderContext, (GCuint8*)file, 0);
-
-		void* decompBuffer = malloc(compressedSize);
-		gcYaz0Decompress(&mArcLoaderContext, (GCuint8*)file, (GCuint8*)decompBuffer, compressedSize, 0);
-
-		free(file);
-		file = decompBuffer;
-	}
-
-	gcInitArchive(archive, &mArcLoaderContext);
-	if ((err = gcLoadArchive(archive, file, size)) != GC_ERROR_SUCCESS) {
-		printf("Error Loading Archive: %s\n", gcGetErrorMessage(err));
-		return false;
-	}
-
-	return true;
-}
 
 std::shared_ptr<LRoomDOMNode> LMapDOMNode::GetRoomByNumber(int32_t number)
 {

@@ -5,6 +5,7 @@
 #include "io/JmpIO.hpp"
 #include "io/StaticMapDataIO.hpp"
 #include "../lib/libgctools/include/archive.h"
+#include "ResUtil.hpp"
 
 #include <filesystem>
 
@@ -15,11 +16,9 @@ class LRoomDOMNode;
 // DOM node representing an entire map, including rooms and objects.
 class LMapDOMNode : public LDOMNodeBase
 {
-	GCcontext mArcLoaderContext;
 	LJmpIO JmpIOManagers[LEntityType_Max];
 	LStaticMapDataIO mStaticMapIO;
 
-	bool LoadArchive(const char* path, GCarchive* archive);
 	bool LoadEntityNodes(LJmpIO* jmp_io, LEntityType type);
 
 	bool ReadStaticData(std::filesystem::path filePath);

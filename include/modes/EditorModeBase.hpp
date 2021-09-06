@@ -2,17 +2,25 @@
 
 #include "DOM.hpp"
 #include "EditorSelection.hpp"
+#include "scene/EditorScene.hpp"
 #include "history/EditorHistory.hpp"
+#include "ImGuizmo.h"
 
 class LEditorModeBase
 {
 protected:
+	std::shared_ptr<LDOMNodeBase> mPreviousSelection;
+
 	// The object that manages this mode's node selection.
 	LEditorSelection mSelectionManager;
 	// The object that manages this mode's undo/redo history.
 	LEditorHistory mHistoryManager;
 
 public:
+
+	// The Gizmo's current operation mode (translate, rotate, scale)
+	ImGuizmo::OPERATION mGizmoMode;
+	
 	virtual void Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene) = 0;
 
 	// Called when this mode becomes the active (currently interactable) mode.
