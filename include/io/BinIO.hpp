@@ -48,7 +48,7 @@ enum GXPrimitiveType {
 
 class BinMaterial {
 	bgfx::TextureHandle mTexture;
-    uint8_t mWrapU, mWrapV;
+    uint8_t mWrap;
 	void LoadCMPRTex(bStream::CStream* stream, uint16_t w, uint16_t h, uint32_t* out);
 
 public:
