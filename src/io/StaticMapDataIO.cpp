@@ -48,13 +48,22 @@ bool LStaticMapDataIO::GetRoomData(const uint32_t& index, LStaticRoomData& data)
 	if (index < 0 || index >= mRoomCount)
 		return false;
 
-	uint32_t offset = index * ROOM_DATA_SIZE;
-	void* rawPtr = mData + mRoomDataOffset + offset - FILE_HEADER_SIZE;
+	for (size_t i = 0; i < mRoomCount; i++)
+	{
+		uint32_t offset = i * ROOM_DATA_SIZE;
+		void* rawPtr = mData + mRoomDataOffset + offset - FILE_HEADER_SIZE;
 
-	data = *static_cast<LStaticRoomData*>(rawPtr);
+		LStaticRoomData d = *static_cast<LStaticRoomData*>(rawPtr);
 
-	// Swap endianness of fields larger than a byte
-	SwapStaticRoomDataEndianness(data);
+		// Swap endianness of fields larger than a byte
+		SwapStaticRoomDataEndianness(d);
+
+		if (d.mRoomID == index)
+		{
+			data = d;
+			break;
+		}
+	}
 
 	return true;
 }

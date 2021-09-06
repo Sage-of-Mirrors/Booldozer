@@ -57,19 +57,20 @@ bool LRoomDataDOMNode::Save(LStaticMapDataIO& dest)
 
 void LRoomDataDOMNode::DeconstructBoundingBox(const glm::vec3& min, const glm::vec3& max)
 {
-	mScale = max - min;
-	float temp = mScale.x;
+	mScale = (max - min) * 0.5f;
+	float t = mScale.x;
 	mScale.x = mScale.z;
-	mScale.z = temp;
+	mScale.z = t;
 
-	mPosition.z = (max.x + min.x) / 2.0f;
-	mPosition.y = (max.y + min.y) / 2.0f;
-	mPosition.x = (max.z + min.z) / 2.0f;
+	mPosition = min + (max - min) * 0.5f;// + (mScale);
+	float temp = mPosition.x;
+	mPosition.x = mPosition.z;
+	mPosition.z = temp;
 }
 
 void LRoomDataDOMNode::ConstructBoundingBox(glm::vec3& min, glm::vec3& max)
 {
-	glm::vec3 halfExtents = mScale / 2.f;
+	glm::vec3 halfExtents = mScale * 2.f;
 
 	min = mPosition - halfExtents;
 	max = mPosition + halfExtents;
@@ -80,7 +81,7 @@ bool LRoomDataDOMNode::CheckPointInBounds(const glm::vec3& point)
 	glm::vec3 min, max;
 	ConstructBoundingBox(min, max);
 
-	return (point.x >= min.x && point.x <= max.x) &&
+	return (point.z >= min.x && point.z <= max.x) &&
 		   (point.y >= min.y && point.y <= max.y) &&
-		   (point.z >= min.z && point.z <= max.z);
+		   (point.x >= min.z && point.x <= max.z);
 }

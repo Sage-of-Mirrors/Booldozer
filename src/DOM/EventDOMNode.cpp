@@ -1,4 +1,6 @@
 #include "DOM/EventDOMNode.hpp"
+#include "DOM/RoomDOMNode.hpp"
+#include "DOM/RoomDataDOMNode.hpp"
 #include "UIUtil.hpp"
 #include "imgui.h"
 
@@ -8,7 +10,7 @@ LEventDOMNode::LEventDOMNode(std::string name) : Super(name),
 	mDespawnFlag(0), mParameter(0), mEventIf(EEventIfType::Repeatedly_from_Anywhere), mCanBeInterrupted(false), mFreezePlayer(false)
 {
 	mType = EDOMNodeType::Event;
-	mRoomNumber = 2;
+	mRoomNumber = -1;
 }
 
 void LEventDOMNode::RenderDetailsUI(float dt)
@@ -153,7 +155,29 @@ void LEventDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 
 void LEventDOMNode::PostProcess()
 {
+	auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+	if (auto mapNodeLocked = mapNode.lock())
+	{
+		auto rooms = mapNodeLocked->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
+		std::shared_ptr<LRoomDOMNode> containingRoom = nullptr;
 
+		for (auto r : rooms)
+		{
+			auto roomData = r->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
+
+			if (roomData->CheckPointInBounds(mPosition))
+			{
+				containingRoom = r;
+				break;
+			}
+		}
+
+		if (containingRoom != nullptr)
+		{
+			std::cout << LGenUtility::Format("Event ", mEventNo, " going to ", containingRoom->GetName(), mEventIf == EEventIfType::Repeatedly_from_Anywhere ? " (Anywhere)" : " (In range)") << std::endl;
+			containingRoom->AddChild(GetSharedPtr<LEventDOMNode>(EDOMNodeType::Event));
+		}
+	}
 }
 
 void LEventDOMNode::PreProcess()

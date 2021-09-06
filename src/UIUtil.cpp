@@ -147,7 +147,7 @@ void LUIUtility::RenderTransformUI(glm::mat4* transform, glm::vec3& translation,
 		ImGui::Indent();
 		ImGui::LabelText("", "Position");
 		ImGui::Indent();
-		if (ImGui::InputFloat("X", &translation.x) || ImGui::InputFloat("Y", &translation.y) || ImGui::InputFloat("Z", &translation.z))
+		if (ImGui::InputFloat("X", &translation.z) || ImGui::InputFloat("Y", &translation.y) || ImGui::InputFloat("Z", &translation.x))
 			transChanged = true;
 
 		ImGui::Unindent();
@@ -169,9 +169,9 @@ void LUIUtility::RenderTransformUI(glm::mat4* transform, glm::vec3& translation,
 		ImGui::Indent();
 		ImGui::LabelText("", "Scale");
 		ImGui::Indent();
-		ImGui::InputFloat("X", &scale.x);
+		ImGui::InputFloat("X", &scale.z);
 		ImGui::InputFloat("Y", &scale.y);
-		ImGui::InputFloat("Z", &scale.z);
+		ImGui::InputFloat("Z", &scale.x);
 		ImGui::Unindent();
 		ImGui::Unindent();
 		ImGui::PopID();

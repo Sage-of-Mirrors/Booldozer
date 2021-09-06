@@ -147,6 +147,20 @@ public:
 	void AddChild(std::shared_ptr<LDOMNodeBase> new_child)
 	{
 		Children.push_back(new_child);
+
+		if (!new_child->Parent.expired())
+		{
+			auto parentLocked = new_child->Parent.lock();
+			for (auto it = parentLocked->Children.begin(); it != parentLocked->Children.end(); ++it)
+			{
+				if (*it == new_child)
+				{
+					parentLocked->Children.erase(it);
+					break;
+				}
+			}
+		}
+
 		new_child->Parent = shared_from_this();
 	}
 
