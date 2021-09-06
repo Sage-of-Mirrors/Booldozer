@@ -47,7 +47,7 @@ public:
 
 	virtual void RenderDetailsUI(float dt) override;
 
-	int32_t GetTriggerRadius() { mActivationRadius; }
+	int32_t GetTriggerRadius() { return mActivationRadius; }
 
 	// Writes the data this JMP node into the given LJmpIO instance at the specified entry.
 	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const override;
