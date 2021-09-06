@@ -217,6 +217,8 @@ void BinMaterial::bind(bgfx::UniformHandle& texUniform){
 BinMaterial::BinMaterial(bStream::CStream* stream, uint32_t textureOffset){
     //std::cout << "Reading Material at " << std::hex << stream->tell() << std::endl;
     int16_t textureID = stream->readInt16();
+    if(textureID == -1) return;
+
     stream->skip(2);
     uint8_t wu = stream->readUInt8();
     uint8_t wv = stream->readUInt8();
@@ -242,7 +244,8 @@ BinMaterial::BinMaterial(bStream::CStream* stream, uint32_t textureOffset){
     stream->skip(3);
     uint32_t dataOffset = stream->readUInt32() + textureOffset;
     stream->seek(dataOffset);
-    //std::cout << "Reading Texture Data at " << stream->tell() << std::endl;
+    std::cout << "Reading Texture " << textureID << " Data at " << std::hex << stream->tell() << "allocating " << w*h*4  << "bytes" << std::endl;
+
 
     const bgfx::Memory* textureData = bgfx::alloc(w*h*4);
 
@@ -283,7 +286,7 @@ void BinScenegraphNode::Draw(glm::mat4 localTransform, glm::mat4* instance, BGFX
         if(!bin->BindMesh(mesh.first)) continue;
         if(!bin->BindMaterial(mesh.second, texUniform)) continue;
 
-
+        bgfx::setState(BGFX_STATE_DEFAULT | BGFX_STATE_CULL_CCW);
         bgfx::setTransform(&(*instance * localTransform * transform)[0][0]);
         bgfx::submit(0, program);
     }
@@ -337,6 +340,8 @@ BGFXBin::BGFXBin(bStream::CStream* stream){
     uint32_t texcoordCount = (uint32_t)((chunkOffsets[10] - chunkOffsets[6]) / 8);
     uint32_t material_count = (uint32_t)((chunkOffsets[2] - chunkOffsets[1]) / 0x14);
     
+    if(chunkOffsets[1] == 0) material_count = 0;
+
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec2> texcoords;
     
