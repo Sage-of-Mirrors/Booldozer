@@ -27,9 +27,9 @@ void LSceneCamera::Update(GLFWwindow* window, float dt)
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 		moveDir -= mForward;
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		moveDir += mRight;
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 		moveDir -= mRight;
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		moveDir += mRight;
 
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 	{
@@ -44,7 +44,7 @@ void LSceneCamera::Update(GLFWwindow* window, float dt)
 			mClickedThisFrame = false;
 		}
 
-		Rotate(dt, x - mPrevMouseX, mPrevMouseY - y);
+		Rotate(dt, mPrevMouseX - x, mPrevMouseY - y);
 
 		mPrevMouseX = (float)x;
 		mPrevMouseY = (float)y;
