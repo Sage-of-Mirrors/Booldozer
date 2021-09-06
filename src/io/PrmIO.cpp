@@ -6,6 +6,8 @@
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
 #include "stb_image.h"
 
+constexpr float M_PI = 3.14159f;
+
 void SwapVec4(glm::vec4* s)
 {
     float a = s->r;

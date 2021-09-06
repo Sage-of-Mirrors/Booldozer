@@ -1,21 +1,82 @@
 #include "DOM/EventDOMNode.hpp"
+#include "UIUtil.hpp"
 #include "imgui.h"
-#include "imgui_internal.h"
 
 LEventDOMNode::LEventDOMNode(std::string name) : Super(name),
 	mCharacterName("(null)"), mEventNo(0), mActivationRadius(0), mEventFlag(0),
 	mMinHour(0), mMinMinute(0), mMaxHour(0), mMaxMinute(0), mMaxTriggerCount(0),
-	mDespawnFlag(0), mParameter(0), mEventIf(0), mCanBeInterrupted(false), mFreezePlayer(false)
+	mDespawnFlag(0), mParameter(0), mEventIf(EEventIfType::Repeatedly_from_Anywhere), mCanBeInterrupted(false), mFreezePlayer(false)
 {
 	mType = EDOMNodeType::Event;
-	mRoomNumber = -1;
+	mRoomNumber = 2;
 }
 
-//void LEventDOMNode::RenderHierarchyUI(float dt)
-//{
-//	char evtNo[16];
-//	snprintf(evtNo, 16, "Event %02d", mEventNo);
-//}
+void LEventDOMNode::RenderDetailsUI(float dt)
+{
+	LUIUtility::RenderTransformUI(mTransform.get(), mPosition, mRotation, mScale);
+
+	// Strings
+	LUIUtility::RenderTextInput("Character Name", &mCharacterName);
+	LUIUtility::RenderTooltip("The name of an actor. If that actor is alive and its Associated Event Index matches this event, the event will be allowed to trigger. Otherwise, it will not be triggered.");
+
+	// Integers
+	ImGui::InputInt("Trigger Radius", &mActivationRadius);
+	LUIUtility::RenderTooltip("Determines the radius of an infinitely tall cylinder or a sphere, depending on the Event Trigger Type, which will be used to determine if Luigi can trigger the event.");
+
+	ImGui::InputInt("Event Archive Number", &mEventNo);
+	LUIUtility::RenderTooltip("The archive from the Event directory to load for this event. The archive is named event[number].szp.");
+
+	ImGui::InputInt("Spawn Flag", &mEventFlag);
+	LUIUtility::RenderTooltip("The flag that must be set before this event will be allowed to trigger.");
+	ImGui::InputInt("Despawn Flag", &mDespawnFlag);
+	LUIUtility::RenderTooltip("If this flag is set, this event will no longer be allowed to trigger.");
+
+	ImGui::InputInt("Maximum Trigger Count", &mMaxTriggerCount);
+	LUIUtility::RenderTooltip("How many times this event will be allowed to trigger, before being disabled permanently. If set to 0, the event will never be disabled.");
+
+	ImGui::InputInt("Gallery Portrait ID", &mParameter);
+	LUIUtility::RenderTooltip("Which portrait to display when the <GALLERY> event tag is used.");
+
+	// Ranges
+	if (ImGui::DragIntRange2("Hour Range", &mMinHour, &mMaxHour, 1, 0, HOUR_MAX, "Min Hour: %d", "Max Hour: %d"))
+	{
+		if (mMinHour < 0)
+			mMinHour = 0;
+		if (mMinHour > HOUR_MAX)
+			mMinHour = HOUR_MAX;
+
+		if (mMaxHour < 0)
+			mMaxHour = 0;
+		if (mMaxHour > HOUR_MAX)
+			mMaxHour = HOUR_MAX;
+	}
+	LUIUtility::RenderTooltip("UNUSED: This event will only be allowed to trigger between these hours on the GameBoy Horror clock.");
+
+	if (ImGui::DragIntRange2("Minute Range", &mMinMinute, &mMaxMinute, 1, 0, MINUTE_MAX, "Min Minute: %d", "Max Minute: %d"))
+	{
+		if (mMinMinute < 0)
+			mMinMinute = 0;
+		if (mMinMinute > MINUTE_MAX)
+			mMinMinute = MINUTE_MAX;
+
+		if (mMaxMinute < 0)
+			mMaxMinute = 0;
+		if (mMaxMinute > MINUTE_MAX)
+			mMaxMinute = MINUTE_MAX;
+	}
+	LUIUtility::RenderTooltip("UNUSED: This event will only be allowed to trigger between these minutes in the above hour range on the GameBoy Horror clock.");
+
+	// Comboboxes
+	LUIUtility::RenderComboEnum<EEventIfType>("Event Trigger Type", mEventIf);
+	LUIUtility::RenderTooltip("How Luigi must interact with the event to trigger it.");
+
+	// Bools
+	LUIUtility::RenderCheckBox("Disable Interruption?", &mCanBeInterrupted);
+	LUIUtility::RenderTooltip("If checked, this event cannot be interrupted by another event triggering while this event is playing.");
+
+	LUIUtility::RenderCheckBox("Freeze Luigi?", &mFreezePlayer);
+	LUIUtility::RenderTooltip("Whether this event should freeze Luigi while it is loading.");
+}
 
 void LEventDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 {
@@ -47,7 +108,7 @@ void LEventDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetSignedInt(entry_index, "disappear_flag", mDespawnFlag);
 	JmpIO->SetSignedInt(entry_index, "event_parameter", mParameter);
 
-	JmpIO->SetUnsignedInt(entry_index, "EventIf", mEventIf);
+	JmpIO->SetUnsignedInt(entry_index, "EventIf", (uint32_t)mEventIf);
 
 	JmpIO->SetBoolean(entry_index, "EventLock", mCanBeInterrupted);
 	JmpIO->SetBoolean(entry_index, "PlayerStop", mFreezePlayer);
@@ -84,7 +145,7 @@ void LEventDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 	mDespawnFlag = JmpIO->GetSignedInt(entry_index, "disappear_flag");
 	mParameter = JmpIO->GetSignedInt(entry_index, "event_parameter");
 
-	mEventIf = JmpIO->GetUnsignedInt(entry_index, "EventIf");
+	mEventIf = (EEventIfType)JmpIO->GetUnsignedInt(entry_index, "EventIf");
 
 	mCanBeInterrupted = JmpIO->GetBoolean(entry_index, "EventLock");
 	mFreezePlayer = JmpIO->GetBoolean(entry_index, "PlayerStop");
