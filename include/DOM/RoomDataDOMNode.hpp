@@ -45,6 +45,8 @@ public:
 	bool Load(const uint32_t& index, const LStaticMapDataIO& source, const std::vector<std::shared_ptr<LRoomDOMNode>>& mapRooms, const std::vector<std::shared_ptr<LDoorDOMNode>>& mapDoors);
 	bool Save(LStaticMapDataIO& dest);
 
+	bool CheckPointInBounds(const glm::vec3& point);
+
 /*=== Type operations ===*/
 	// Returns whether this node is of the given type, or derives from a node of that type.
 	virtual bool IsNodeType(EDOMNodeType type) const override
