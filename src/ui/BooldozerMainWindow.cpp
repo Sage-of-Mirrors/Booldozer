@@ -4,7 +4,6 @@
 #include "ui/BooldozerMainWindow.hpp"
 #include "ImGuizmo.h"
 #include "UIUtil.hpp"
-#include "GhostImg.h"
 #include "stb_image.h"
 
 LBooldozerMainWindow::LBooldozerMainWindow() : bigg::Application("Booldozer")
@@ -27,38 +26,12 @@ void LBooldozerMainWindow::update(float dt)
 	render(dt);
 }
 
-static bgfx::TextureHandle sGhostImg;
-
 void LBooldozerMainWindow::initialize(int _argc, char** _argv)
 {
 	mEditorScene.init();
     GCResourceManager.Init();
 
 	//mEditorScene.InstanceModel("literallly any string, it will load cubes for models it cant load or dont exist", glm::identity<glm::mat4>());
-	int x, y, n;
-	uint8_t* data = stbi_load_from_memory(&ghostImgData[0], ghostImgData_size, &x, &y, &n, 4);
-	sGhostImg = bgfx::createTexture2D((uint16_t)x, (uint16_t)y, false, 1, bgfx::TextureFormat::RGBA8, 0, bgfx::copy(data, x*y*4));
-	stbi_image_free(data);
-}
-
-
-static bool AngleVisualizer(const char* label, float* angle)
-{
-	ImGuiIO& io = ImGui::GetIO();
-	ImGuiStyle& style = ImGui::GetStyle();
-
-	ImVec2 pos = ImGui::GetCursorScreenPos();
-	ImDrawList* draw_list = ImGui::GetWindowDrawList();
-	ImVec2 center = ImVec2(pos.x + 32, pos.y + 32);
-
-	float angle_cos = cosf((*angle) * (M_PI / 180)), angle_sin = sinf((*angle) * (M_PI / 180));
-	float radius_inner = 16.0f;
-	draw_list->AddLine(ImVec2(center.x - angle_sin*radius_inner, center.y + angle_cos*radius_inner), ImVec2(center.x - angle_sin*(30), center.y + angle_cos*(30)), ImGui::GetColorU32(ImGuiCol_SliderGrabActive), 2.0f);
-	draw_list->AddLine(ImVec2(center.x, center.y + radius_inner), ImVec2(center.x, center.y + 30), ImGui::GetColorU32(ImGuiCol_SliderGrabActive), 2.0f);
-	draw_list->AddImage((void*)(intptr_t)sGhostImg.idx, ImVec2(center.x - 8, center.y - 8), ImVec2(center.x + 8, center.y + 8));
-	//draw_list->AddCircleFilled(center, 10.0f, ImGui::GetColorU32(ImGuiCol_FrameBgActive), 16);
-
-	return true;
 }
 
 void LBooldozerMainWindow::render(float dt)
@@ -90,6 +63,24 @@ void LBooldozerMainWindow::render(float dt)
     ImGui::SliderFloat("##renderdistance", &mEditorScene.Camera.FarPlane, 1.0f, 20000.0f);
 
     LUIUtility::RenderTooltip("Render distance. Determines how far away objects must be before they are no longer visible.");
+    ImGui::End();
+
+    // Gizmo mode selection 
+    ImGui::SetNextWindowPos(ImVec2(360, 25));
+    ImGui::SetNextWindowSize(ImVec2(80, 35));
+
+    ImGui::Begin("gizmo mode window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
+    ImGui::SetNextItemWidth(105);
+
+    if (ImGui::Button("T"))
+    {
+        mEditorContext.SetGizmo(ImGuizmo::TRANSLATE);
+    } else if (ImGui::SameLine(); ImGui::Button("R")) {
+        mEditorContext.SetGizmo(ImGuizmo::ROTATE);
+    } else if (ImGui::SameLine();ImGui::Button("S")) {
+        mEditorContext.SetGizmo(ImGuizmo::SCALE);
+    }
+
     ImGui::End();
 
     bool openOptionsMenu = false;

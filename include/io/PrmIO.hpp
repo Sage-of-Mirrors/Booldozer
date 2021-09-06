@@ -5,6 +5,8 @@
 #include "DOM/MapDOMNode.hpp"
 #include "DOM/ItemAppearDOMNode.hpp"
 #include "DOM/ItemFishingDOMNode.hpp"
+#include "GhostImg.h"
+#include "bgfx/bgfx.h"
 #include <memory>
 #include <glm/glm.hpp>
 #include <map>
@@ -82,10 +84,10 @@ struct LCTPrm {
 class LPrmIO {
     bool mConfigsLoaded;
     int mSelectedConfig;
+    bgfx::TextureHandle mGhostImg;
     std::weak_ptr<LMapDOMNode> mMap;
     std::vector<std::string> mLoadedConfigs;
     std::map<std::string, std::shared_ptr<LCTPrm>> mCtpParams;
-
 public:
     void LoadConfigs(std::shared_ptr<LMapDOMNode>& map);
     void SaveConfigsToFile();
