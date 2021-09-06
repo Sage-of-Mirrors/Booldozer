@@ -2,6 +2,8 @@
 
 #include "EntityDOMNode.hpp"
 
+class LItemAppearDOMNode;
+
 enum class EMoneyType : uint32_t
 {
 	None,
@@ -187,7 +189,6 @@ class LFurnitureDOMNode : public LEntityDOMNode
 	float mVerticalItemSpawnOffset;
 
 	// Index of an entry into the itemappeartable that determines what item comes out of this piece of furniture when interacted with.
-	// TODO: Make this a pointer when the itemappeartable type is implemented.
 	int32_t mItemTableIndex;
 	// Determines the amount of money spawned when mItemTableIndex specifies the 'money' type.
 	int32_t mGenerateNumber;
@@ -229,6 +230,8 @@ class LFurnitureDOMNode : public LEntityDOMNode
 	// Unused.
 	bool mBooAppear;
 
+	std::weak_ptr<LItemAppearDOMNode> mItemTableRef;
+
 public:
 	typedef LEntityDOMNode Super;
 
@@ -246,8 +249,8 @@ public:
 	// Reads the data from the specified entry in the given LJmpIO instance into this JMP node.
 	virtual void Deserialize(LJmpIO* JmpIO, uint32_t entry_index) override;
 
-	virtual void PostProcess() override { };
-	virtual void PreProcess() override { };
+	virtual void PostProcess() override;
+	virtual void PreProcess() override;
 
 /*=== Type operations ===*/
 	// Returns whether this node is of the given type, or derives from a node of that type.

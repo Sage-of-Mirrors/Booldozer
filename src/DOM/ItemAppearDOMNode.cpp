@@ -3,6 +3,7 @@
 #include "UIUtil.hpp"
 #include "GenUtil.hpp"
 #include <algorithm>
+#include <map>
 
 LItemAppearDOMNode::LItemAppearDOMNode(std::string name) : Super(name)
 {
@@ -13,12 +14,40 @@ LItemAppearDOMNode::LItemAppearDOMNode(std::string name) : Super(name)
     mRoomNumber = -1;
 }
 
+std::string LItemAppearDOMNode::GetName()
+{
+    std::map<std::string, uint32_t> stats;
+
+    for (auto reference : mItemInfoRefs)
+    {
+        if (reference.expired())
+            continue;
+
+        auto refLocked = reference.lock();
+
+        stats.try_emplace(refLocked->GetName(), 0);
+        stats[refLocked->GetName()] += 1;
+    }
+
+    std::string result = "";
+
+    for (auto [name, count] : stats)
+    {
+        if (result != "")
+            result += ", ";
+
+        result = LGenUtility::Format(result, name, " (x", count, ")");
+    }
+
+    return result;
+}
+
 void LItemAppearDOMNode::RenderDetailsUI(float dt)
 {
     for (uint32_t i = 0; i < 20; i++)
     {
         ImGui::PushID(i);
-        LUIUtility::RenderNodeReferenceCombo<LItemInfoDOMNode>(LGenUtility::Format("Item Slot ", i), EDOMNodeType::Furniture, Parent, mItemInfoRefs[i]);
+        LUIUtility::RenderNodeReferenceCombo<LItemInfoDOMNode>(LGenUtility::Format("Item Slot ", i), EDOMNodeType::ItemInfo, Parent, mItemInfoRefs[i]);
         ImGui::PopID();
     }
 }

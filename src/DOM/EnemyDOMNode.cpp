@@ -3,6 +3,7 @@
 #include "GenUtil.hpp"
 #include "DOM/ObserverDOMNode.hpp"
 #include "DOM/FurnitureDOMNode.hpp"
+#include "DOM/ItemAppearDOMNode.hpp"
 #include <sstream>
 
 std::map<std::string, std::string> EnemyNames = {
@@ -83,7 +84,7 @@ std::map<std::string, std::string> EnemyNames = {
 
 LEnemyDOMNode::LEnemyDOMNode(std::string name) : Super(name),
     mCreateName("----"), mPathName("(null)"), mAccessName("(null)"), mCodeName("(null)"),
-    mFloatingHeight(0), mAppearChance(64), mSpawnFlag(0), mDespawnFlag(0), mEventNumber(0), mItemTable(0),
+    mFloatingHeight(0), mAppearChance(64), mSpawnFlag(0), mDespawnFlag(0), mEventNumber(0), mItemTableIndex(0),
     mCondType(EConditionType::Always_True), mMoveType(0), mSearchType(0), mAppearType(EAppearType::Normal), mPlaceType(EPlaceType::Always_Spawn_at_Initial_Position), mIsVisible(true), mStay(false),
     mFurnitureNodeRef(std::weak_ptr<LFurnitureDOMNode>()), mIsBlackoutEnemy(false)
 {
@@ -128,6 +129,10 @@ void LEnemyDOMNode::RenderDetailsUI(float dt)
     // Comboboxes
     LUIUtility::RenderNodeReferenceCombo<LFurnitureDOMNode>("Furniture Access", EDOMNodeType::Furniture, Parent, mFurnitureNodeRef);
     LUIUtility::RenderTooltip("Allows the enemy to be hidden within a piece of furniture. That furniture must be interacted with to spawn the enemy.");
+
+    auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+    LUIUtility::RenderNodeReferenceCombo<LItemAppearDOMNode>("Defeated Item Table", EDOMNodeType::ItemAppear, mapNode, mItemTableRef);
+    LUIUtility::RenderTooltip("The Item Appear entry to use to spawn items when this enemy is defeated.");
 
     LUIUtility::RenderComboEnum<EConditionType>("Spawn Condition", mCondType);
     LUIUtility::RenderTooltip("The condition governing whether the enemy is allowed to spawn.");
@@ -175,7 +180,7 @@ void LEnemyDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
     JmpIO->SetSignedInt(entry_index, "disappear_flag", mDespawnFlag);
 
     JmpIO->SetSignedInt(entry_index, "event_set_no", mEventNumber);
-    JmpIO->SetSignedInt(entry_index, "item_table", mItemTable);
+    JmpIO->SetSignedInt(entry_index, "item_table", mItemTableIndex);
 
     JmpIO->SetUnsignedInt(entry_index, "cond_type", (uint32_t)mCondType);
     JmpIO->SetUnsignedInt(entry_index, "move_type", mMoveType);
@@ -216,7 +221,7 @@ void LEnemyDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
     mDespawnFlag = JmpIO->GetSignedInt(entry_index, "disappear_flag");
 
     mEventNumber = JmpIO->GetSignedInt(entry_index, "event_set_no");
-    mItemTable = JmpIO->GetSignedInt(entry_index, "item_table");
+    mItemTableIndex = JmpIO->GetSignedInt(entry_index, "item_table");
 
     mCondType = (EConditionType)JmpIO->GetUnsignedInt(entry_index, "cond_type");
     mMoveType = JmpIO->GetUnsignedInt(entry_index, "move_type");
@@ -249,6 +254,16 @@ void LEnemyDOMNode::PostProcess()
                 break;
             }
         }
+    }
+
+    // Grab item info data from the map
+    auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+    if (auto mapNodeLocked = mapNode.lock())
+    {
+        auto itemAppearNodes = mapNodeLocked->GetChildrenOfType<LItemAppearDOMNode>(EDOMNodeType::ItemAppear);
+
+        if (mItemTableIndex < itemAppearNodes.size())
+            mItemTableRef = itemAppearNodes[mItemTableIndex];
     }
 }
 
@@ -289,4 +304,25 @@ void LEnemyDOMNode::PreProcess()
     // Otherwise, if the furniture reference is invalid, reset the enemy's access name to null.
     else
         mAccessName = "(null)";
+
+    if (mItemTableRef.expired())
+    {
+        mItemTableIndex = 0;
+        return;
+    }
+
+    // Grab item info data from the map
+    auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+    if (auto mapNodeLocked = mapNode.lock())
+    {
+        auto itemAppearNodes = mapNodeLocked->GetChildrenOfType<LItemAppearDOMNode>(EDOMNodeType::ItemAppear);
+
+        auto lockedItemRef = mItemTableRef.lock();
+        ptrdiff_t index = LGenUtility::VectorIndexOf(itemAppearNodes, lockedItemRef);
+
+        if (index == -1)
+            mItemTableIndex = 0;
+        else
+            mItemTableIndex = index;
+    }
 }

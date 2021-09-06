@@ -1,4 +1,5 @@
 #include "DOM/FurnitureDOMNode.hpp"
+#include "DOM/ItemAppearDOMNode.hpp"
 #include "UIUtil.hpp"
 
 LFurnitureDOMNode::LFurnitureDOMNode(std::string name) : LEntityDOMNode(name),
@@ -26,6 +27,10 @@ void LFurnitureDOMNode::RenderDetailsUI(float dt)
 
 	LUIUtility::RenderComboEnum<EMoneyType>("Money Type", mMoneyType);
 	LUIUtility::RenderTooltip("If this piece of furniture is supposed to spawn money, this is what kind of currency it spawns.");
+
+	auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+	LUIUtility::RenderNodeReferenceCombo<LItemAppearDOMNode>("Opened Item Table", EDOMNodeType::ItemAppear, mapNode, mItemTableRef);
+	LUIUtility::RenderTooltip("The Item Appear entry to use to spawn items when this piece of furniture is opened.");
 
 	ImGui::InputInt("Amount of Money Spawned", &mGenerateNumber);
 	LUIUtility::RenderTooltip("If this piece of furniture is supposed to spawn money, this value is how much if it is spawned.");
@@ -188,4 +193,55 @@ void LFurnitureDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 	mCanSheetBeVaccuumed = !JmpIO->GetBoolean(entry_index, "sheet_gum");
 
 	mBooAppear = JmpIO->GetBoolean(entry_index, "telesa_appear");
+}
+
+void LFurnitureDOMNode::PostProcess()
+{
+	// On the off chance that the parent is invalid, don't try to do anything.
+	if (Parent.expired())
+		return;
+
+	// Grab a temporary shared_ptr for the parent.
+	auto parentShared = Parent.lock();
+
+	// Grab item info data from the map
+	auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+	if (auto mapNodeLocked = mapNode.lock())
+	{
+		auto itemAppearNodes = mapNodeLocked->GetChildrenOfType<LItemAppearDOMNode>(EDOMNodeType::ItemAppear);
+
+		if (mItemTableIndex < itemAppearNodes.size())
+			mItemTableRef = itemAppearNodes[mItemTableIndex];
+	}
+}
+
+void LFurnitureDOMNode::PreProcess()
+{
+	// On the off chance that the parent is invalid, don't try to do anything.
+	if (Parent.expired())
+		return;
+
+	// Grab a temporary shared_ptr for the parent.
+	auto parentShared = Parent.lock();
+
+	if (mItemTableRef.expired())
+	{
+		mItemTableIndex = 0;
+		return;
+	}
+
+	// Grab item info data from the map
+	auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+	if (auto mapNodeLocked = mapNode.lock())
+	{
+		auto itemAppearNodes = mapNodeLocked->GetChildrenOfType<LItemAppearDOMNode>(EDOMNodeType::ItemAppear);
+
+		auto lockedItemRef = mItemTableRef.lock();
+		ptrdiff_t index = LGenUtility::VectorIndexOf(itemAppearNodes, lockedItemRef);
+
+		if (index == -1)
+			mItemTableIndex = 0;
+		else
+			mItemTableIndex = index;
+	}
 }

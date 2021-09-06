@@ -8,6 +8,7 @@ constexpr size_t ENEMY_TYPE_COUNT = 51;
 extern std::map<std::string, std::string> EnemyNames;
 enum class EConditionType : uint32_t;
 class LFurnitureDOMNode;
+class LItemAppearDOMNode;
 
 enum class EAppearType : uint32_t
 {
@@ -42,7 +43,7 @@ class LEnemyDOMNode : public LEntityDOMNode
 	int32_t mDespawnFlag;
 
 	int32_t mEventNumber;
-	int32_t mItemTable;
+	int32_t mItemTableIndex;
 
 	EConditionType mCondType;
 	uint32_t mMoveType;
@@ -54,6 +55,7 @@ class LEnemyDOMNode : public LEntityDOMNode
 	bool mStay;
 
 	std::weak_ptr<LFurnitureDOMNode> mFurnitureNodeRef;
+	std::weak_ptr<LItemAppearDOMNode> mItemTableRef;
 
 	bool mIsBlackoutEnemy;
 
