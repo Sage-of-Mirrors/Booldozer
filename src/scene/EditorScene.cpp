@@ -34,30 +34,30 @@ bgfx::VertexLayout Vertex::ms_layout;
 
 static Vertex s_cubeVertices[] =
 {
-	{-25.0f,  25.0f,  25.0f,      0,      0 },
-	{ 25.0f,  25.0f,  25.0f, 0x7fff,      0 },
-	{-25.0f, -25.0f,  25.0f,      0, 0x7fff },
-	{ 25.0f, -25.0f,  25.0f, 0x7fff, 0x7fff },
-	{-25.0f,  25.0f, -25.0f,      0,      0 },
-	{ 25.0f,  25.0f, -25.0f, 0x7fff,      0 },
-	{-25.0f, -25.0f, -25.0f,      0, 0x7fff },
-	{ 25.0f, -25.0f, -25.0f, 0x7fff, 0x7fff },
-	{-25.0f,  25.0f,  25.0f,      0,      0 },
-	{ 25.0f,  25.0f,  25.0f, 0x7fff,      0 },
-	{-25.0f,  25.0f, -25.0f,      0, 0x7fff },
-	{ 25.0f,  25.0f, -25.0f, 0x7fff, 0x7fff },
-	{-25.0f, -25.0f,  25.0f,      0,      0 },
-	{ 25.0f, -25.0f,  25.0f, 0x7fff,      0 },
-	{-25.0f, -25.0f, -25.0f,      0, 0x7fff },
-	{ 25.0f, -25.0f, -25.0f, 0x7fff, 0x7fff },
-	{ 25.0f, -25.0f,  25.0f,      0,      0 },
-	{ 25.0f,  25.0f,  25.0f, 0x7fff,      0 },
-	{ 25.0f, -25.0f, -25.0f,      0, 0x7fff },
-	{ 25.0f,  25.0f, -25.0f, 0x7fff, 0x7fff },
-	{-25.0f, -25.0f,  25.0f,      0,      0 },
-	{-25.0f,  25.0f,  25.0f, 0x7fff,      0 },
-	{-25.0f, -25.0f, -25.0f,      0, 0x7fff },
-	{-25.0f,  25.0f, -25.0f, 0x7fff, 0x7fff },
+	{-1.0f,  1.0f,  1.0f,      0,      0 },
+	{ 1.0f,  1.0f,  1.0f, 0x7fff,      0 },
+	{-1.0f, -1.0f,  1.0f,      0, 0x7fff },
+	{ 1.0f, -1.0f,  1.0f, 0x7fff, 0x7fff },
+	{-1.0f,  1.0f, -1.0f,      0,      0 },
+	{ 1.0f,  1.0f, -1.0f, 0x7fff,      0 },
+	{-1.0f, -1.0f, -1.0f,      0, 0x7fff },
+	{ 1.0f, -1.0f, -1.0f, 0x7fff, 0x7fff },
+	{-1.0f,  1.0f,  1.0f,      0,      0 },
+	{ 1.0f,  1.0f,  1.0f, 0x7fff,      0 },
+	{-1.0f,  1.0f, -1.0f,      0, 0x7fff },
+	{ 1.0f,  1.0f, -1.0f, 0x7fff, 0x7fff },
+	{-1.0f, -1.0f,  1.0f,      0,      0 },
+	{ 1.0f, -1.0f,  1.0f, 0x7fff,      0 },
+	{-1.0f, -1.0f, -1.0f,      0, 0x7fff },
+	{ 1.0f, -1.0f, -1.0f, 0x7fff, 0x7fff },
+	{ 1.0f, -1.0f,  1.0f,      0,      0 },
+	{ 1.0f,  1.0f,  1.0f, 0x7fff,      0 },
+	{ 1.0f, -1.0f, -1.0f,      0, 0x7fff },
+	{ 1.0f,  1.0f, -1.0f, 0x7fff, 0x7fff },
+	{-1.0f, -1.0f,  1.0f,      0,      0 },
+	{-1.0f,  1.0f,  1.0f, 0x7fff,      0 },
+	{-1.0f, -1.0f, -1.0f,      0, 0x7fff },
+	{-1.0f,  1.0f, -1.0f, 0x7fff, 0x7fff },
 };
 
 static const uint16_t s_cubeTriList[] = { 
@@ -86,8 +86,9 @@ void LCubeManager::render(glm::mat4* transform){
 	uint64_t  _state = 0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_MSAA;
 	bgfx::setState( _state );
 
-	bgfx::setTransform(transform);
-	bgfx::submit(0, mCubeShader, 0, BGFX_DISCARD_NONE);
+	glm::mat4 t = glm::scale(*transform, glm::vec3(25,25,25));
+	bgfx::setTransform(&t);
+	bgfx::submit(0, mCubeShader, 0);
 }
 
 void LCubeManager::renderAltTex(glm::mat4* transform, bgfx::TextureHandle& tex){
@@ -96,11 +97,11 @@ void LCubeManager::renderAltTex(glm::mat4* transform, bgfx::TextureHandle& tex){
 
 	bgfx::setTexture(0, mCubeTexUniform, tex);
 
-	uint64_t  _state = 0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_MSAA;
+	uint64_t  _state = 0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_MSAA | BGFX_STATE_BLEND_ALPHA;
 	bgfx::setState( _state );
 
 	bgfx::setTransform(transform);
-	bgfx::submit(0, mCubeShader, 0, BGFX_DISCARD_NONE);
+	bgfx::submit(0, mCubeShader, 0);
 }
 
 LCubeManager::LCubeManager(){}
@@ -175,6 +176,12 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
     bgfx::touch(0);
 
 	for(auto room : mCurrentRooms){
+		glm::mat4 identity = glm::identity<glm::mat4>();
+		for (auto room : mRoomModels)
+		{
+			room->Draw(&identity, mShader, mTexUniform);
+		}
+		
 		if(room.lock() != nullptr && Initialized)
 		{
 			auto furnitureNodes = room.lock()->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
@@ -194,15 +201,14 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 
 			
 			//TODO: do this on room load
-			//auto bounds = mCurrentRoom.lock()->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
-			//identity = glm::scale(identity, bounds->GetScale() / glm::vec3(50,50,50));
-			//identity = glm::translate(identity, bounds->GetPosition());
-			//mCubeManager.renderAltTex(&identity, mBorderTex);
-		}
-		glm::mat4 identity = glm::identity<glm::mat4>();
-		for (auto room : mRoomModels)
-		{
-			room->Draw(&identity, mShader, mTexUniform);
+			glm::mat4 identity = glm::identity<glm::mat4>();
+			auto bounds = room.lock()->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+			glm::vec3 sc = bounds->GetScale();
+			glm::vec3 pos = bounds->GetPosition();
+			
+			identity = glm::translate(identity, pos);
+			identity = glm::scale(identity, sc);
+			mCubeManager.renderAltTex(&identity, mBorderTex);
 		}
 	}
 	//mCubeManager.render();
@@ -247,6 +253,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 					if(curPath.extension() == ".bin")
 					{
 						bStream::CMemoryStream bin((uint8_t*)roomArc.files[file].data, roomArc.files[file].size, bStream::Endianess::Big, bStream::OpenMode::In);
+						std::cout << "loading " << curPath.filename() << std::endl;
 						if (curPath.filename().stem() != "room")
 						{
 							mRoomFurniture[curPath.filename().stem().string()] = std::make_shared<BGFXBin>(&bin);
