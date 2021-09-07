@@ -182,27 +182,23 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 			room->Draw(&identity, mShader, mTexUniform);
 		}
 		
-		if(room.lock() != nullptr && Initialized)
+		if(!room.expired() && Initialized)
 		{
-			auto furnitureNodes = room.lock()->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
-			for (auto furniture : furnitureNodes)
-			{
-				if(furniture->GetIsRendered())
-				{
-					if(mRoomFurniture.count(furniture->GetName()) != 0)
-					{
-						mRoomFurniture[furniture->GetName()]->Draw(furniture->GetMat(), mShader, mTexUniform);
-					} else {
-						mCubeManager.render(furniture->GetMat());
-					}
-				}
+			auto curRoom = room.lock();
 
-			}
+			curRoom->ForEachChildOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture, [&](std::shared_ptr<LFurnitureDOMNode> node){
+					if(mRoomFurniture.count(node->GetName()) != 0)
+					{
+						mRoomFurniture[node->GetName()]->Draw(node->GetMat(), mShader, mTexUniform);
+					} else {
+						mCubeManager.render(node->GetMat());
+					}
+			});
 
 			
 			//TODO: do this on room load
 			glm::mat4 identity = glm::identity<glm::mat4>();
-			auto bounds = room.lock()->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+			auto bounds = curRoom->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
 			glm::vec3 sc = bounds->GetScale();
 			glm::vec3 pos = bounds->GetPosition();
 			

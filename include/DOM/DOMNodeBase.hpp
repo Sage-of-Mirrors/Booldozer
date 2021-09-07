@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <functional>
 
 enum EDOMNodeState
 {
@@ -191,6 +192,13 @@ public:
 		GatherChildrenOfType(matchingNodes, type);
 
 		return matchingNodes;
+	}
+
+	template<typename T>
+	void ForEachChildOfType(EDOMNodeType type, std::function<void(std::shared_ptr<T>)> func){
+		for(auto& node : Children){
+			if(node->IsNodeType(type)) func(std::static_pointer_cast<T>(node));
+		}
 	}
 
 	/*template<typename T, typename U>
