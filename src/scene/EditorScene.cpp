@@ -9,6 +9,7 @@
 #include "cube_shader_v.h"
 #include "cube_tex.h"
 #include "border.h"
+#include "ObserverIcon.hpp"
 #include "ImGuizmo.h"
 #include "Options.hpp"
 
@@ -150,6 +151,10 @@ void LEditorScene::init(){
 	mBorderTex = bgfx::createTexture2D((uint16_t)x, (uint16_t)y, false, 1, bgfx::TextureFormat::RGBA8, 0, bgfx::copy(data, x*y*4));
 	stbi_image_free(data);
 
+	data = stbi_load_from_memory(&Icon_Observer_png[0], Icon_Observer_png_size, &x, &y, &n, 4);
+	mObserverTex = bgfx::createTexture2D((uint16_t)x, (uint16_t)y, false, 1, bgfx::TextureFormat::RGBA8, 0, bgfx::copy(data, x*y*4));
+	stbi_image_free(data);
+
 	BGFXBin::InitBinVertex();
 
 }
@@ -175,6 +180,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
     bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height));
     bgfx::touch(0);
 
+	std::vector<glm::mat4> roomBounds;
 	for(auto room : mCurrentRooms){
 		glm::mat4 identity = glm::identity<glm::mat4>();
 		for (auto room : mRoomModels)
@@ -186,28 +192,41 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 		{
 			auto curRoom = room.lock();
 
-			curRoom->ForEachChildOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture, [&](std::shared_ptr<LFurnitureDOMNode> node){
-					if(mRoomFurniture.count(node->GetName()) != 0)
+			curRoom->ForEachChildOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender, [&](auto node){
+					glm::mat4 transform = glm::identity<glm::mat4>();
+					switch (node->GetNodeType())
 					{
-						mRoomFurniture[node->GetName()]->Draw(node->GetMat(), mShader, mTexUniform);
-					} else {
+					case EDOMNodeType::Furniture:
+						if(mRoomFurniture.count(node->GetName()) == 0)
+						{
+							mCubeManager.render(node->GetMat());
+						} else {
+							mRoomFurniture[node->GetName()]->Draw(node->GetMat(), mShader, mTexUniform);
+						}
+						break;
+					
+					case EDOMNodeType::Observer:
+						mCubeManager.renderAltTex(node->GetMat(), mObserverTex);
+						break;
+
+					case EDOMNodeType::RoomData:
+						roomBounds.push_back(glm::scale(glm::translate(transform, node->GetPosition()), node->GetScale()));
+						break;
+
+					case EDOMNodeType::Character:
+					case EDOMNodeType::Generator:
+					case EDOMNodeType::Object:
+					case EDOMNodeType::Enemy:
 						mCubeManager.render(node->GetMat());
-					}
+						break;
+				}
 			});
 
-			
-			//TODO: do this on room load
-			glm::mat4 identity = glm::identity<glm::mat4>();
-			auto bounds = curRoom->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
-			glm::vec3 sc = bounds->GetScale();
-			glm::vec3 pos = bounds->GetPosition();
-			
-			identity = glm::translate(identity, pos);
-			identity = glm::scale(identity, sc);
-			mCubeManager.renderAltTex(&identity, mBorderTex);
 		}
 	}
-	//mCubeManager.render();
+	for(auto& bb : roomBounds){
+		mCubeManager.renderAltTex(&bb, mBorderTex);
+	}
 }
 
 bool LEditorScene::HasRoomLoaded(int32_t roomNumber){
@@ -262,6 +281,10 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 					}
 				}
 				std::cout << "all models locked and loaded" << std::endl;
+			} else {
+				//If this is happening the map only has room models, no furniture.
+				bStream::CFileStream bin(resPath, bStream::Endianess::Big, bStream::OpenMode::In);
+				mRoomModels.push_back(std::make_shared<BGFXBin>(&bin));
 			}
 		}
 	}

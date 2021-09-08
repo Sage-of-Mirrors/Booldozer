@@ -8,6 +8,8 @@
 #include "DOM/RoomDOMNode.hpp"
 #include "DOM/RoomDataDOMNode.hpp"
 #include "DOM/FurnitureDOMNode.hpp"
+#include "DOM/ObjectDOMNode.hpp"
+#include "DOM/ObserverDOMNode.hpp"
 #include <bx/math.h>
 #include <bgfx/bgfx.h>
 #include "io/BinIO.hpp"
@@ -43,12 +45,15 @@ class LEditorScene {
     LCubeManager mCubeManager;
     std::vector<std::weak_ptr<LRoomDOMNode>> mCurrentRooms;
     
+    //TODO: Fill door models and figure out how to handle drawing them
+    std::vector<std::shared_ptr<BGFXBin>> mDoorModels;
     std::vector<std::shared_ptr<BGFXBin>> mRoomModels;
     std::map<std::string, std::shared_ptr<BGFXBin>> mRoomFurniture;
     
     bgfx::ProgramHandle mShader;
     bgfx::UniformHandle mTexUniform;
     bgfx::TextureHandle mBorderTex;
+    bgfx::TextureHandle mObserverTex;
 
 public:
     LSceneCamera Camera;
