@@ -2,7 +2,8 @@
 #include "bigg.hpp"
 #include <glm/gtx/matrix_decompose.hpp>
 
-LBGRenderDOMNode::LBGRenderDOMNode(std::string name) : LUIRenderDOMNode(name)
+LBGRenderDOMNode::LBGRenderDOMNode(std::string name) : LUIRenderDOMNode(name),
+	mPosition(glm::vec3(0, 0, 0)), mScale(glm::vec3(1, 1, 1)), mRotation(glm::vec3(0, 0, 0))
 {
 	mType = EDOMNodeType::BGRender;
 }
