@@ -234,13 +234,17 @@ void LPrmIO::Load(std::string name, bStream::CStream* stream)
         case 0x55a0:
             {
                 size_t fid = stream->readUInt32();
-                mCtpParams[name]->mTsuriItemTblId = itemFishingNodes.at(fid <= itemFishingNodes.size() ? fid : itemFishingNodes.size() - 1);
+                if(fid < itemFishingNodes.size() && itemFishingNodes.size() > 0){
+                    mCtpParams[name]->mTsuriItemTblId = itemFishingNodes.at(fid < itemFishingNodes.size() ? fid : itemFishingNodes.size() - 1);
+                }
             }
             break;
         case 0x7d81:
             {
                 size_t nid = stream->readUInt32();
-                mCtpParams[name]->mNormalItemTblId = itemAppearNodes.at(nid <= itemAppearNodes.size() ? nid : itemAppearNodes.size() - 1);
+                if(nid < itemAppearNodes.size() && itemAppearNodes.size() > 0){
+                    mCtpParams[name]->mNormalItemTblId = itemAppearNodes.at(nid < itemAppearNodes.size() ? nid : itemAppearNodes.size() - 1);
+                }
             }
             break;
         case 0x9b49:
