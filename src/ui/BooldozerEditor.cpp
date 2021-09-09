@@ -61,7 +61,7 @@ void LBooldozerEditor::OpenMap(std::string file_path)
 
 	mLoadedMap = std::make_shared<LMapDOMNode>();
 	mLoadedMap->LoadMap(std::filesystem::path(file_path));
-	//mGhostConfigs.LoadConfigs(mLoadedMap);
+	mGhostConfigs.LoadConfigs(mLoadedMap);
 	//mLoadedMap->LoadMap(std::filesystem::path("/home/spacey/Projects/LuigisMansion/Mods/LMArcade/files/Map/map2.szp")); /* Space */
 }
 

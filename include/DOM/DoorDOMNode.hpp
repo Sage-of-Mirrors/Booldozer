@@ -58,6 +58,10 @@ public:
 	bool Load(const LStaticDoorData& source);
 	bool Save(LStaticDoorData& dest);
 
+	EDoorModel GetModel() { return mModel; }
+
+	EDoorOrientation GetOrientation() { return mOrientation; }
+
 /*=== Type operations ===*/
 	// Returns whether this node is of the given type, or derives from a node of that type.
 	virtual bool IsNodeType(EDOMNodeType type) const override

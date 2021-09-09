@@ -6,7 +6,7 @@
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
 #include "stb_image.h"
 
-constexpr float M_PI = 3.14159f;
+constexpr float pi = 3.14159f;
 
 void SwapVec4(glm::vec4* s)
 {
@@ -27,13 +27,13 @@ bool AngleVisualizer(const char* label, float* angle, bgfx::TextureHandle& sGhos
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();
 	ImVec2 center = ImVec2(pos.x + 32, pos.y + 32);
 
-	float angle_cos = cosf((*angle) * (M_PI / 180)), angle_sin = sinf((*angle) * (M_PI / 180));
+	float angle_cos = cosf((*angle) * (pi / 180)), angle_sin = sinf((*angle) * (pi / 180));
 	float radius_inner = 16.0f;
 	draw_list->AddLine(ImVec2(center.x - angle_sin*radius_inner, center.y + angle_cos*radius_inner), ImVec2(center.x - angle_sin*(30), center.y + angle_cos*(30)), ImGui::GetColorU32(ImGuiCol_SliderGrabActive), 2.0f);
 	draw_list->AddLine(ImVec2(center.x, center.y + radius_inner), ImVec2(center.x, center.y + 30), ImGui::GetColorU32(ImGuiCol_SliderGrabActive), 2.0f);
 
     //TODO: figure out why this breaks the combo box
-    //draw_list->PathArcTo(ImVec2(center.x, center.y), 30.0f, 0.0f, -((*angle) * (M_PI / 180)), 10);
+    //draw_list->PathArcTo(ImVec2(center.x, center.y), 30.0f, 0.0f, -((*angle) * (pi / 180)), 10);
 
 	draw_list->AddImage((void*)(intptr_t)sGhostImg.idx, ImVec2(center.x - 8, center.y - 8), ImVec2(center.x + 8, center.y + 8));
 
@@ -55,23 +55,24 @@ void LPrmIO::LoadConfigs(std::shared_ptr<LMapDOMNode>& map)
 	mGhostImg = bgfx::createTexture2D((uint16_t)x, (uint16_t)y, false, 1, bgfx::TextureFormat::RGBA8, 0, bgfx::copy(data, x*y*4));
 	stbi_image_free(data);
 
-    if(!std::filesystem::exists(OPTIONS.mDolphinPath))
-    {
-        std::cout << "root not loadad" << std::endl;
-        return;
-    }
 
     mMap = map;
 
     
-    for (const auto& entry : std::filesystem::directory_iterator("ctp"))
-    {
-        if (entry.is_regular_file()) {
-            bStream::CFileStream test(entry.path().string(), bStream::Endianess::Big, bStream::OpenMode::In);
-            Load(entry.path().filename().stem().string(), &test);
-            mLoadedConfigs.push_back(entry.path().filename().stem().string());
-        }
-    }
+	for (size_t f = 0; f < GCResourceManager.mGameArchive.dirnum; f++)
+	{
+		if(std::string(GCResourceManager.mGameArchive.dirs[f].name) == "ctp"){
+			for (size_t i = GCResourceManager.mGameArchive.dirs[f].fileoff; i < GCResourceManager.mGameArchive.dirs[f].fileoff + GCResourceManager.mGameArchive.dirs[f].filenum; i++)
+			{
+                auto name = std::filesystem::path(GCResourceManager.mGameArchive.files[i].name).filename().stem();
+                if(name == "." || name == "..") continue;
+                bStream::CMemoryStream prm((uint8_t*)GCResourceManager.mGameArchive.files[i].data, GCResourceManager.mGameArchive.files[i].size, bStream::Endianess::Big, bStream::OpenMode::In);
+                Load(name, &prm);
+                mLoadedConfigs.push_back(name);
+			}
+			
+		}
+	}
     
     mConfigsLoaded = true;
 }
@@ -157,7 +158,7 @@ void LPrmIO::Save(std::string name, bStream::CFileStream* stream)
     WritePropertyInt16(stream, 0x31d1, "mCheckbox", prm->mCheckbox);
 }
 
-void LPrmIO::Load(std::string name, bStream::CFileStream* stream)
+void LPrmIO::Load(std::string name, bStream::CStream* stream)
 {
     mCtpParams[name] = std::make_shared<LCTPrm>();
 

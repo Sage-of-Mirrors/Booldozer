@@ -11,7 +11,13 @@ void LResUtility::LGCResourceManager::Init()
 	{
 		printf("Error initing arc loader context: %s\n", gcGetErrorMessage(err));
 	}
+
 	mInitialized = true;
+
+	std::filesystem::path gameArcPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Game" / "game_usa.szp";
+	if(!GCResourceManager.LoadArchive(gameArcPath.string().data(), &mGameArchive)){
+		std::cout << "Unable to load game archive " << gameArcPath.string() << std::endl;
+	}
 }
 
 bool LResUtility::LGCResourceManager::LoadArchive(const char* path, GCarchive* archive)

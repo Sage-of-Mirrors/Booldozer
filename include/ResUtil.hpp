@@ -27,6 +27,7 @@ namespace LResUtility
 		bool mInitialized = false;
 		GCcontext mResManagerContext;
 		public:
+			GCarchive mGameArchive;
 			bool LoadArchive(const char* path, GCarchive* archive);
 			void Init();
 	};

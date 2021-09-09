@@ -157,6 +157,28 @@ void LEditorScene::init(){
 
 	BGFXBin::InitBinVertex();
 
+	mDoorModels.reserve(14);
+	for (size_t f = 0; f < GCResourceManager.mGameArchive.dirnum; f++)
+	{
+		if(std::string(GCResourceManager.mGameArchive.dirs[f].name) == "door"){
+			for (size_t i = GCResourceManager.mGameArchive.dirs[f].fileoff; i < GCResourceManager.mGameArchive.dirs[f].fileoff + GCResourceManager.mGameArchive.dirs[f].filenum; i++)
+			{
+				bStream::CMemoryStream bin((uint8_t*)GCResourceManager.mGameArchive.files[i].data, GCResourceManager.mGameArchive.files[i].size, bStream::Endianess::Big, bStream::OpenMode::In);
+				if(std::filesystem::path(GCResourceManager.mGameArchive.files[i].name).extension() == ".bin"){
+					auto doorModel = std::make_shared<BGFXBin>(&bin);
+					//Haha holy shit the door models are so fucking broken.
+					if(std::filesystem::path(GCResourceManager.mGameArchive.files[i].name).filename().stem() == "door_01"){
+						doorModel->TranslateRoot(glm::vec3(0,350,0));
+					} else {
+						doorModel->TranslateRoot(glm::vec3(0,-150,0));
+					}
+					mDoorModels.push_back(doorModel);
+				}
+			}
+			
+		}
+	}
+	
 }
 
 glm::mat4 LEditorScene::getCameraView(){
@@ -181,6 +203,18 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
     bgfx::touch(0);
 
 	std::vector<glm::mat4> roomBounds;
+
+	for(auto door : mRoomDoors){
+		if(!door.expired()){
+			glm::mat4 identity = glm::identity<glm::mat4>();
+			identity = glm::translate(identity, door.lock()->GetPosition());
+			if(door.lock()->GetOrientation() == EDoorOrientation::Side_Facing) identity = glm::rotate(identity, glm::radians(90.0f), glm::vec3(0,1,0));
+			if(door.lock()->GetModel() != EDoorModel::None){
+				mDoorModels[((uint8_t)door.lock()->GetModel()) - 1]->Draw(&identity, mShader, mTexUniform);
+			}
+		}
+	}
+
 	for(auto room : mCurrentRooms){
 		glm::mat4 identity = glm::identity<glm::mat4>();
 		for (auto room : mRoomModels)
@@ -249,10 +283,14 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 	if(roomData.size() != 0)
 	{
 		mCurrentRooms = roomData.front()->GetAdjacencyList();
+			
+		mRoomDoors = roomData.front()->GetDoorList();
+
 		for (auto& aroom :  roomData.front()->GetAdjacencyList())
 		{
+			
 			auto curRoomData = aroom.lock()->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
-		
+
 			std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(curRoomData->GetResourcePath()).relative_path();
 			
 			if(resPath.extension() == ".arc")

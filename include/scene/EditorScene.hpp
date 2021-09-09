@@ -10,6 +10,8 @@
 #include "DOM/FurnitureDOMNode.hpp"
 #include "DOM/ObjectDOMNode.hpp"
 #include "DOM/ObserverDOMNode.hpp"
+#include "DOM/MapDOMNode.hpp"
+#include "DOM/DoorDOMNode.hpp"
 #include <bx/math.h>
 #include <bgfx/bgfx.h>
 #include "io/BinIO.hpp"
@@ -43,6 +45,7 @@ class LEditorScene {
     glm::mat4 gridMatrix;
 
     LCubeManager mCubeManager;
+    std::vector<std::weak_ptr<LDoorDOMNode>> mRoomDoors;
     std::vector<std::weak_ptr<LRoomDOMNode>> mCurrentRooms;
     
     //TODO: Fill door models and figure out how to handle drawing them

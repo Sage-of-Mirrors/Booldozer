@@ -112,6 +112,7 @@ public:
 	bool BindMesh(uint16_t id);
 	bool BindMaterial(uint16_t id, bgfx::UniformHandle& texUniform);
     void Draw(glm::mat4* transform, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform);
+	void TranslateRoot(glm::vec3 translation);
     BGFXBin(bStream::CStream* stream);
     ~BGFXBin();
 };

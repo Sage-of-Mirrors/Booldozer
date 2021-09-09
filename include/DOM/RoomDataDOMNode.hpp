@@ -39,6 +39,7 @@ public:
 
 	std::string GetResourcePath() { return mResourcePath; }
 	std::vector<std::weak_ptr<LRoomDOMNode>> GetAdjacencyList() { return mAdjacentRooms; }
+	std::vector<std::weak_ptr<LDoorDOMNode>> GetDoorList() { return mDoorList; }
 
 	virtual void RenderDetailsUI(float dt) override;
 

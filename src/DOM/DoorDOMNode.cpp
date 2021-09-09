@@ -32,7 +32,7 @@ bool LDoorDOMNode::Load(const LStaticDoorData& source)
 	mModel = (EDoorModel)source.mModel;
 	mDoorEntryNumber = source.mEntryIndex;
 
-	mPosition = glm::vec3((float)source.mPosition.x, (float)source.mPosition.y, (float)source.mPosition.z);
+	mPosition = glm::vec3((float)source.mPosition.z, (float)source.mPosition.y, (float)source.mPosition.x);
 	mScale = glm::vec3((float)source.mViewportSize.x, (float)source.mViewportSize.y, (float)source.mViewportSize.z);
 
 	mNextEscape = source.mNextEscape;
