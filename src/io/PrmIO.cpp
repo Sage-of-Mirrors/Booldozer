@@ -44,7 +44,7 @@ bool AngleVisualizer(const char* label, float* angle, bgfx::TextureHandle& sGhos
 	return true;
 }
 
-LPrmIO::LPrmIO() : mConfigsLoaded(false){
+LPrmIO::LPrmIO() : mConfigsLoaded(false), mSelectedConfig(0) {
 }
 LPrmIO::~LPrmIO(){}
 
@@ -67,8 +67,8 @@ void LPrmIO::LoadConfigs(std::shared_ptr<LMapDOMNode>& map)
                 auto name = std::filesystem::path(GCResourceManager.mGameArchive.files[i].name).filename().stem();
                 if(name == "." || name == "..") continue;
                 bStream::CMemoryStream prm((uint8_t*)GCResourceManager.mGameArchive.files[i].data, GCResourceManager.mGameArchive.files[i].size, bStream::Endianess::Big, bStream::OpenMode::In);
-                Load(name, &prm);
-                mLoadedConfigs.push_back(name);
+                Load(name.u8string(), &prm);
+                mLoadedConfigs.push_back(name.u8string());
 			}
 			
 		}

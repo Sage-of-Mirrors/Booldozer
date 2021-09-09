@@ -193,7 +193,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 	if (m_height == 0)
 		m_height = 1;
 
-	Camera.AspectRatio = m_width / m_height;
+	Camera.AspectRatio = float(m_width) / float(m_height);
 
 	glm::mat4 view = Camera.GetViewMatrix();
 	glm::mat4 proj = Camera.GetProjectionMatrix();
@@ -321,7 +321,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 				std::cout << "all models locked and loaded" << std::endl;
 			} else {
 				//If this is happening the map only has room models, no furniture.
-				bStream::CFileStream bin(resPath, bStream::Endianess::Big, bStream::OpenMode::In);
+				bStream::CFileStream bin(resPath.u8string(), bStream::Endianess::Big, bStream::OpenMode::In);
 				mRoomModels.push_back(std::make_shared<BGFXBin>(&bin));
 			}
 		}
