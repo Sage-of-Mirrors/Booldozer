@@ -29,20 +29,20 @@ void LKeyDOMNode::RenderDetailsUI(float dt)
     LUIUtility::RenderTooltip("The door that this key unlocks.");
 
     ImGui::InputInt("Spawn Flag", &mSpawnFlag);
-    LUIUtility::RenderTooltip("The flag that must be set before this enemy will begin spawning.");
+    LUIUtility::RenderTooltip("The flag that must be set before this key will begin spawning.");
     ImGui::InputInt("Despawn Flag", &mDespawnFlag);
-    LUIUtility::RenderTooltip("If this flag is set, this enemy will no longer spawn.");
+    LUIUtility::RenderTooltip("If this flag is set, this key will no longer spawn.");
 
     // Comboboxes
     LUIUtility::RenderComboEnum<EConditionType>("Spawn Condition", mCondType);
-    LUIUtility::RenderTooltip("The condition governing whether the enemy is allowed to spawn.");
+    LUIUtility::RenderTooltip("The condition governing whether the key is allowed to spawn.");
 
     LUIUtility::RenderComboEnum<EKeyAppearType>("Spawn Type", mAppearType);
-    LUIUtility::RenderTooltip("The way in which the enemy will spawn. Using the second option WILL crash the game.");
+    LUIUtility::RenderTooltip("The way in which the key will spawn. Using the second option WILL crash the game.");
 
     // Bools
     LUIUtility::RenderCheckBox("Visible?", &mIsVisible);
-    LUIUtility::RenderTooltip("Whether this enemy should be visible.");
+    LUIUtility::RenderTooltip("Whether this key should be visible.");
 }
 
 void LKeyDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const

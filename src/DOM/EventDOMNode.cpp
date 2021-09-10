@@ -5,7 +5,7 @@
 #include "imgui.h"
 
 LEventDOMNode::LEventDOMNode(std::string name) : Super(name),
-	mCharacterName("(null)"), mEventNo(0), mActivationRadius(0), mEventFlag(0),
+	mCharacterName("(null)"), mEventNo(0), mActivationRadius(0), mSpawnFlag(0),
 	mMinHour(0), mMinMinute(0), mMaxHour(0), mMaxMinute(0), mMaxTriggerCount(0),
 	mDespawnFlag(0), mParameter(0), mEventIf(EEventIfType::Repeatedly_from_Anywhere), mCanBeInterrupted(false), mFreezePlayer(false)
 {
@@ -28,7 +28,7 @@ void LEventDOMNode::RenderDetailsUI(float dt)
 	ImGui::InputInt("Event Archive Number", &mEventNo);
 	LUIUtility::RenderTooltip("The archive from the Event directory to load for this event. The archive is named event[number].szp.");
 
-	ImGui::InputInt("Spawn Flag", &mEventFlag);
+	ImGui::InputInt("Spawn Flag", &mSpawnFlag);
 	LUIUtility::RenderTooltip("The flag that must be set before this event will be allowed to trigger.");
 	ImGui::InputInt("Despawn Flag", &mDespawnFlag);
 	LUIUtility::RenderTooltip("If this flag is set, this event will no longer be allowed to trigger.");
@@ -99,7 +99,7 @@ void LEventDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 
 	JmpIO->SetSignedInt(entry_index, "EventNo", mEventNo);
 	JmpIO->SetSignedInt(entry_index, "EventArea", mActivationRadius);
-	JmpIO->SetSignedInt(entry_index, "EventFlag", mEventFlag);
+	JmpIO->SetSignedInt(entry_index, "EventFlag", mSpawnFlag);
 
 	JmpIO->SetSignedInt(entry_index, "EventTime", mMinHour);
 	JmpIO->SetSignedInt(entry_index, "EventTime2", mMinMinute);
@@ -135,7 +135,7 @@ void LEventDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 
 	mEventNo = JmpIO->GetSignedInt(entry_index, "EventNo");
 	mActivationRadius = JmpIO->GetSignedInt(entry_index, "EventArea");
-	mEventFlag = JmpIO->GetSignedInt(entry_index, "EventFlag");
+	mSpawnFlag = JmpIO->GetSignedInt(entry_index, "EventFlag");
 
 	mMinHour = JmpIO->GetSignedInt(entry_index, "EventTime");
 	mMinMinute = JmpIO->GetSignedInt(entry_index, "EventTime2");

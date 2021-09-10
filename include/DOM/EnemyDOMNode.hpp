@@ -42,7 +42,7 @@ class LEnemyDOMNode : public LEntityDOMNode
 	int32_t mSpawnFlag;
 	int32_t mDespawnFlag;
 
-	int32_t mEventNumber;
+	int32_t mEventSetNumber;
 	int32_t mItemTableIndex;
 
 	EConditionType mCondType;

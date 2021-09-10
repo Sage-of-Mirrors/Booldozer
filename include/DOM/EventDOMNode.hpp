@@ -5,6 +5,8 @@
 constexpr int32_t HOUR_MAX = 23;
 constexpr int32_t MINUTE_MAX = 59;
 
+class LCharacterDOMNode;
+
 enum class EEventIfType : uint32_t
 {
 	Repeatedly_from_Anywhere,
@@ -23,7 +25,7 @@ class LEventDOMNode : public LEntityDOMNode
 
 	int32_t mEventNo;
 	int32_t mActivationRadius;
-	int32_t mEventFlag;
+	int32_t mSpawnFlag;
 
 	int32_t mMinHour;
 	int32_t mMinMinute;
@@ -40,10 +42,14 @@ class LEventDOMNode : public LEntityDOMNode
 	bool mCanBeInterrupted;
 	bool mFreezePlayer;
 
+	std::weak_ptr<LCharacterDOMNode> mCharacterRef;
+
 public:
 	typedef LEntityDOMNode Super;
 
 	LEventDOMNode(std::string name);
+
+	std::string GetName() override { return LGenUtility::Format("Event No: ", mEventNo, ", Character Name: ", mCharacterName); }
 
 	virtual void RenderDetailsUI(float dt) override;
 

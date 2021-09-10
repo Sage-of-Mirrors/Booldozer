@@ -5,7 +5,7 @@
 
 LCharacterDOMNode::LCharacterDOMNode(std::string name) : Super(name),
 	mCreateName("----"), mPathName("(null)"), mCodeName("(null)"),
-	mSpawnFlag(0), mDespawnFlag(0), mEventNumber(0), mItemTableIndex(0), mSpawnPointID(0), mGBHScanID(0),
+	mSpawnFlag(0), mDespawnFlag(0), mEventSetNumber(0), mItemTableIndex(0), mSpawnPointID(0), mGBHScanID(0),
 	mCondType(EConditionType::Always_True), mAttackType(EAttackType::None), mMoveType(0), mAppearType(EAppearType::Normal), mIsVisible(true), mStay(false),
 	mItemTableRef(std::weak_ptr<LItemAppearDOMNode>())
 {
@@ -35,8 +35,8 @@ void LCharacterDOMNode::RenderDetailsUI(float dt)
 	ImGui::InputInt("Despawn Flag", &mDespawnFlag);
 	LUIUtility::RenderTooltip("If this flag is set, this character will no longer spawn.");
 
-	ImGui::InputInt("Associated Event Index", &mEventNumber);
-	LUIUtility::RenderTooltip("The index of an event this character is associated with. The event becomes disabled if the character has despawned.");
+	ImGui::InputInt("event_set_no", &mEventSetNumber);
+	LUIUtility::RenderTooltip("Don't quite know what this does. It's called event_set_no by the game, but it seems useless?");
 
 	if (mName == "luige")
 	{
@@ -90,7 +90,7 @@ void LCharacterDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetSignedInt(entry_index, "appear_flag", mSpawnFlag);
 	JmpIO->SetSignedInt(entry_index, "disappear_flag", mDespawnFlag);
 
-	JmpIO->SetSignedInt(entry_index, "event_set_no", mEventNumber);
+	JmpIO->SetSignedInt(entry_index, "event_set_no", mEventSetNumber);
 	JmpIO->SetSignedInt(entry_index, "item_table", mItemTableIndex);
 	JmpIO->SetSignedInt(entry_index, "appear_point", mSpawnPointID);
 	JmpIO->SetSignedInt(entry_index, "msg_no", mGBHScanID);
@@ -124,7 +124,7 @@ void LCharacterDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 	mSpawnFlag = JmpIO->GetSignedInt(entry_index, "appear_flag");
 	mDespawnFlag = JmpIO->GetSignedInt(entry_index, "disappear_flag");
 
-	mEventNumber = JmpIO->GetSignedInt(entry_index, "event_set_no");
+	mEventSetNumber = JmpIO->GetSignedInt(entry_index, "event_set_no");
 	mItemTableIndex = JmpIO->GetSignedInt(entry_index, "item_table");
 	mSpawnPointID = JmpIO->GetSignedInt(entry_index, "appear_point");
 	mGBHScanID = JmpIO->GetSignedInt(entry_index, "msg_no");

@@ -84,7 +84,7 @@ std::map<std::string, std::string> EnemyNames = {
 
 LEnemyDOMNode::LEnemyDOMNode(std::string name) : Super(name),
     mCreateName("----"), mPathName("(null)"), mAccessName("(null)"), mCodeName("(null)"),
-    mFloatingHeight(0), mAppearChance(64), mSpawnFlag(0), mDespawnFlag(0), mEventNumber(0), mItemTableIndex(0),
+    mFloatingHeight(0), mAppearChance(64), mSpawnFlag(0), mDespawnFlag(0), mEventSetNumber(0), mItemTableIndex(0),
     mCondType(EConditionType::Always_True), mMoveType(0), mSearchType(0), mAppearType(EAppearType::Normal), mPlaceType(EPlaceType::Always_Spawn_at_Initial_Position), mIsVisible(true), mStay(false),
     mFurnitureNodeRef(std::weak_ptr<LFurnitureDOMNode>()), mIsBlackoutEnemy(false)
 {
@@ -123,8 +123,8 @@ void LEnemyDOMNode::RenderDetailsUI(float dt)
     ImGui::InputInt("Despawn Flag", &mDespawnFlag);
     LUIUtility::RenderTooltip("If this flag is set, this enemy will no longer spawn.");
 
-    ImGui::InputInt("Associated Event Index", &mEventNumber);
-    LUIUtility::RenderTooltip("The index of an event this enemy is associated with. The event becomes disabled if the enemy has despawned.");
+    ImGui::InputInt("event_set_no", &mEventSetNumber);
+    LUIUtility::RenderTooltip("Don't quite know what this does. It's called event_set_no by the game, but it seems useless?");
 
     // Comboboxes
     LUIUtility::RenderNodeReferenceCombo<LFurnitureDOMNode>("Furniture Access", EDOMNodeType::Furniture, Parent, mFurnitureNodeRef);
@@ -179,7 +179,7 @@ void LEnemyDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
     JmpIO->SetSignedInt(entry_index, "appear_flag", mSpawnFlag);
     JmpIO->SetSignedInt(entry_index, "disappear_flag", mDespawnFlag);
 
-    JmpIO->SetSignedInt(entry_index, "event_set_no", mEventNumber);
+    JmpIO->SetSignedInt(entry_index, "event_set_no", mEventSetNumber);
     JmpIO->SetSignedInt(entry_index, "item_table", mItemTableIndex);
 
     JmpIO->SetUnsignedInt(entry_index, "cond_type", (uint32_t)mCondType);
@@ -220,7 +220,7 @@ void LEnemyDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
     mSpawnFlag = JmpIO->GetSignedInt(entry_index, "appear_flag");
     mDespawnFlag = JmpIO->GetSignedInt(entry_index, "disappear_flag");
 
-    mEventNumber = JmpIO->GetSignedInt(entry_index, "event_set_no");
+    mEventSetNumber = JmpIO->GetSignedInt(entry_index, "event_set_no");
     mItemTableIndex = JmpIO->GetSignedInt(entry_index, "item_table");
 
     mCondType = (EConditionType)JmpIO->GetUnsignedInt(entry_index, "cond_type");

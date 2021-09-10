@@ -239,7 +239,7 @@ bool LMapDOMNode::SaveMapToFiles(std::filesystem::path folder_path)
 
 		std::ofstream fileStream;
 		fileStream.open(entityFilePath.c_str(), std::ios::binary | std::ios::out);
-		fileStream.write((const char*)memWriter.getBuffer(), memWriter.getSize());
+		fileStream.write((const char*)memWriter.getBuffer(), newFileSize);
 		fileStream.close();
 	}
 
@@ -298,9 +298,9 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 			case LEntityType_Boos:
 				newNode = std::make_shared<LBooDOMNode>("Boo");
 				break;
-			case LEntityType_BlackoutEnemies:
-				newNode = std::make_shared<LEnemyDOMNode>("Enemy", true);
-				break;
+			//case LEntityType_BlackoutEnemies:
+				//newNode = std::make_shared<LEnemyDOMNode>("Enemy", true);
+				//break;
 			default:
 				break;
 		}
