@@ -1,6 +1,6 @@
 #pragma once
 
-#include "EntityDOMNode.hpp"
+#include "BlackoutDOMNode.hpp"
 
 enum class EConditionType : uint32_t;
 enum class EAppearType : uint32_t;
@@ -12,7 +12,7 @@ enum class EAttackType : uint32_t
 	Idle = 3
 };
 
-class LCharacterDOMNode : public LEntityDOMNode
+class LCharacterDOMNode : public LBlackoutDOMNode
 {
 /*=== JMP properties ===*/
 	std::string mCreateName;
@@ -37,9 +37,10 @@ class LCharacterDOMNode : public LEntityDOMNode
 	std::weak_ptr<LItemAppearDOMNode> mItemTableRef;
 
 public:
-	typedef LEntityDOMNode Super;
+	typedef LBlackoutDOMNode Super;
 
 	LCharacterDOMNode(std::string name);
+	LCharacterDOMNode(std::string name, bool isBlackoutCharacter);
 
 	virtual std::string GetCreateName() const override { return mCreateName; }
 	virtual void SetCreateName(std::string newCreateName) override { mCreateName = newCreateName; }

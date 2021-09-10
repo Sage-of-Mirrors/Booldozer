@@ -223,6 +223,9 @@ bool LRoomDOMNode::CompleteLoad()
 
 	// Load models here
 
+	auto isNotBlackoutFilter = [](auto node) { return std::static_pointer_cast<LBlackoutDOMNode>(node)->IsActiveDuringBlackout() == false; };
+	auto isBlackoutFilter = [](auto node) { return std::static_pointer_cast<LBlackoutDOMNode>(node)->IsActiveDuringBlackout() == true; };
+
 	for (uint32_t i = 0; i < LRoomEntityType_Max; i++)
 	{
 		EDOMNodeType findType = EDOMNodeType::Base;
@@ -230,10 +233,16 @@ bool LRoomDOMNode::CompleteLoad()
 		switch (i)
 		{
 			case LRoomEntityType_Characters:
+			case LRoomEntityType_BlackoutCharacters:
 				findType = EDOMNodeType::Character;
 				break;
 			case LRoomEntityType_Enemies:
+			case LRoomEntityType_BlackoutEnemies:
 				findType = EDOMNodeType::Enemy;
+				break;
+			case LRoomEntityType_Observers:
+			case LRoomEntityType_BlackoutObservers:
+				findType = EDOMNodeType::Observer;
 				break;
 			case LRoomEntityType_Furniture:
 				findType = EDOMNodeType::Furniture;
@@ -244,26 +253,19 @@ bool LRoomDOMNode::CompleteLoad()
 			case LRoomEntityType_Objects:
 				findType = EDOMNodeType::Object;
 				break;
-			case LRoomEntityType_Observers:
-				findType = EDOMNodeType::Observer;
-				break;
 			case LRoomEntityType_Paths:
 				findType = EDOMNodeType::Path;
-				break;
-			case LRoomEntityType_BlackoutCharacters:
-				findType = EDOMNodeType::BlackoutCharacter;
-				break;
-			case LRoomEntityType_BlackoutEnemies:
-				findType = EDOMNodeType::BlackoutEnemy;
-				break;
-			case LRoomEntityType_BlackoutObservers:
-				findType = EDOMNodeType::BlackoutObserver;
 				break;
 			default:
 				break;
 		}
 
-		mRoomEntities[i] = GetChildrenOfType<LEntityDOMNode>(findType);
+		if (i == LRoomEntityType_Characters || i == LRoomEntityType_Enemies || i == LRoomEntityType_Observers)
+			mRoomEntities[i] = GetChildrenOfType<LEntityDOMNode>(findType, isNotBlackoutFilter);
+		else if (i == LRoomEntityType_BlackoutCharacters || i == LRoomEntityType_BlackoutEnemies || i == LRoomEntityType_BlackoutObservers)
+			mRoomEntities[i] = GetChildrenOfType<LEntityDOMNode>(findType, isBlackoutFilter);
+		else
+			mRoomEntities[i] = GetChildrenOfType<LEntityDOMNode>(findType);
 	}
 
 	LSpawnGroup defaultGroup;

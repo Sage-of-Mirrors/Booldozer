@@ -3,7 +3,12 @@
 #include "DOM/ItemAppearDOMNode.hpp"
 #include "UIUtil.hpp"
 
-LCharacterDOMNode::LCharacterDOMNode(std::string name) : Super(name),
+LCharacterDOMNode::LCharacterDOMNode(std::string name) : LCharacterDOMNode(name, false)
+{
+
+}
+
+LCharacterDOMNode::LCharacterDOMNode(std::string name, bool isBlackoutCharacter) : Super(name, isBlackoutCharacter),
 	mCreateName("----"), mPathName("(null)"), mCodeName("(null)"),
 	mSpawnFlag(0), mDespawnFlag(0), mEventSetNumber(0), mItemTableIndex(0), mSpawnPointID(0), mGBHScanID(0),
 	mCondType(EConditionType::Always_True), mAttackType(EAttackType::None), mMoveType(0), mAppearType(EAppearType::Normal), mIsVisible(true), mStay(false),

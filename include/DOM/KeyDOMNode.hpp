@@ -1,6 +1,6 @@
 #pragma once
 
-#include "EntityDOMNode.hpp"
+#include "BlackoutDOMNode.hpp"
 
 enum class EConditionType : uint32_t;
 
@@ -13,7 +13,7 @@ enum class EKeyAppearType : uint32_t
 	Drop_Down
 };
 
-class LKeyDOMNode : public LEntityDOMNode
+class LKeyDOMNode : public LBlackoutDOMNode
 {
 /*=== JMP properties ===*/
 	std::string mCreateName;
@@ -29,9 +29,10 @@ class LKeyDOMNode : public LEntityDOMNode
 	bool mIsVisible;
 
 public:
-	typedef LEntityDOMNode Super;
+	typedef LBlackoutDOMNode Super;
 
 	LKeyDOMNode(std::string name);
+	LKeyDOMNode(std::string name, bool isBlackoutKey);
 
 	virtual void RenderDetailsUI(float dt) override;
 

@@ -82,11 +82,12 @@ std::map<std::string, std::string> EnemyNames = {
     { "oufo2", "Bowl" },
 };
 
-LEnemyDOMNode::LEnemyDOMNode(std::string name) : Super(name),
-    mCreateName("----"), mPathName("(null)"), mAccessName("(null)"), mCodeName("(null)"),
-    mFloatingHeight(0), mAppearChance(64), mSpawnFlag(0), mDespawnFlag(0), mEventSetNumber(0), mItemTableIndex(0),
-    mCondType(EConditionType::Always_True), mMoveType(0), mSearchType(0), mAppearType(EAppearType::Normal), mPlaceType(EPlaceType::Always_Spawn_at_Initial_Position), mIsVisible(true), mStay(false),
-    mFurnitureNodeRef(std::weak_ptr<LFurnitureDOMNode>()), mIsBlackoutEnemy(false)
+LEnemyDOMNode::LEnemyDOMNode(std::string name) : LEnemyDOMNode(name, false)
+{
+
+}
+
+LEnemyDOMNode::LEnemyDOMNode(std::string name, bool isBlackoutEnemy) : Super(name, isBlackoutEnemy)
 {
     mType = EDOMNodeType::Enemy;
 }

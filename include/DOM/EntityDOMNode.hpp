@@ -73,24 +73,20 @@ public:
 		switch (t)
 		{
 		case LEntityType_Characters:
-			return EDOMNodeType::Character;
 		case LEntityType_BlackoutCharacters:
-			return EDOMNodeType::BlackoutCharacter;
+			return EDOMNodeType::Character;
 
 		case LEntityType_Enemies:
-			return EDOMNodeType::Enemy;
 		case LEntityType_BlackoutEnemies:
-			return EDOMNodeType::BlackoutEnemy;
+			return EDOMNodeType::Enemy;
 
 		case LEntityType_Keys:
-			return EDOMNodeType::Key;
 		case LEntityType_BlackoutKeys:
-			return EDOMNodeType::BlackoutKey;
+			return EDOMNodeType::Key;
 
 		case LEntityType_Observers:
-			return EDOMNodeType::Observer;
 		case LEntityType_BlackoutObservers:
-			return EDOMNodeType::BlackoutObserver;
+			return EDOMNodeType::Observer;
 
 		case LEntityType_Events:
 			return EDOMNodeType::Event;

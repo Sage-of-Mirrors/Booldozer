@@ -2,7 +2,12 @@
 #include "DOM/ObserverDOMNode.hpp"
 #include "UIUtil.hpp"
 
-LKeyDOMNode::LKeyDOMNode(std::string name) : Super(name),
+LKeyDOMNode::LKeyDOMNode(std::string name) : LKeyDOMNode(name, false)
+{
+
+}
+
+LKeyDOMNode::LKeyDOMNode(std::string name, bool isBlackoutKey) : Super(name, isBlackoutKey),
     mCreateName("----"), mCodeName("(null)"), mOpenDoorNumber(0), mSpawnFlag(0), mDespawnFlag(0),
     mCondType(EConditionType::Always_True), mAppearType(EKeyAppearType::Normal), mIsVisible(true)
 {

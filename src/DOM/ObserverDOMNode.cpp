@@ -9,7 +9,12 @@ std::map<std::string, std::string> ObserverNames = {
 	{ "iphone", "Telephone" }
 };
 
-LObserverDOMNode::LObserverDOMNode(std::string name) : Super(name),
+LObserverDOMNode::LObserverDOMNode(std::string name) : LObserverDOMNode(name, false)
+{
+
+}
+
+LObserverDOMNode::LObserverDOMNode(std::string name, bool isBlackoutObserver) : Super(name, isBlackoutObserver),
 	mCodeName("(null)"), mCondStringArg0("(null)"), mStringArg0("(null)"),
 	mCondArg0(0), mArg0(0), mArg1(0), mArg2(0), mArg3(0), mArg4(0), mArg5(0), mSpawnFlag(0), mDespawnFlag(0),
 	mCondType(EConditionType::Always_True), mDoType(EDoType::Nothing), mIsVisible(false), mUnkBool1(false)
