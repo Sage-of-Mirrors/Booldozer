@@ -81,7 +81,7 @@ bool LRoomDataDOMNode::CheckPointInBounds(const glm::vec3& point)
 	glm::vec3 min, max;
 	ConstructBoundingBox(min, max);
 
-	return (point.z >= min.x && point.z <= max.x) &&
+	return (point.x >= min.x && point.x <= max.x) &&
 		   (point.y >= min.y && point.y <= max.y) &&
-		   (point.x >= min.z && point.x <= max.z);
+		   (point.z >= min.z && point.z <= max.z);
 }

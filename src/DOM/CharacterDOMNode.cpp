@@ -82,13 +82,13 @@ void LCharacterDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetString(entry_index, "path_name", mPathName);
 	JmpIO->SetString(entry_index, "CodeName", mCodeName);
 
-	JmpIO->SetFloat(entry_index, "pos_x", mPosition.x);
+	JmpIO->SetFloat(entry_index, "pos_x", mPosition.z);
 	JmpIO->SetFloat(entry_index, "pos_y", mPosition.y);
-	JmpIO->SetFloat(entry_index, "pos_z", mPosition.z);
+	JmpIO->SetFloat(entry_index, "pos_z", mPosition.x);
 
-	JmpIO->SetFloat(entry_index, "dir_x", mRotation.x);
+	JmpIO->SetFloat(entry_index, "dir_x", mRotation.z);
 	JmpIO->SetFloat(entry_index, "dir_y", mRotation.y);
-	JmpIO->SetFloat(entry_index, "dir_z", mRotation.z);
+	JmpIO->SetFloat(entry_index, "dir_z", mRotation.x);
 
 	JmpIO->SetSignedInt(entry_index, "room_no", mRoomNumber);
 
@@ -116,13 +116,13 @@ void LCharacterDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 	mPathName = JmpIO->GetString(entry_index, "path_name");
 	mCodeName = JmpIO->GetString(entry_index, "CodeName");
 
-	mPosition.x = JmpIO->GetFloat(entry_index, "pos_x");
+	mPosition.z = JmpIO->GetFloat(entry_index, "pos_x");
 	mPosition.y = JmpIO->GetFloat(entry_index, "pos_y");
-	mPosition.z = JmpIO->GetFloat(entry_index, "pos_z");
+	mPosition.x = JmpIO->GetFloat(entry_index, "pos_z");
 
-	mRotation.x = JmpIO->GetFloat(entry_index, "dir_x");
+	mRotation.z = JmpIO->GetFloat(entry_index, "dir_x");
 	mRotation.y = JmpIO->GetFloat(entry_index, "dir_y");
-	mRotation.z = JmpIO->GetFloat(entry_index, "dir_z");
+	mRotation.x = JmpIO->GetFloat(entry_index, "dir_z");
 
 	mRoomNumber = JmpIO->GetSignedInt(entry_index, "room_no");
 
