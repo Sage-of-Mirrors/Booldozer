@@ -35,7 +35,7 @@ void LItemInfoDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetString(entry_index, "character_name", mCharacterName);
 
 	JmpIO->SetSignedInt(entry_index, "OpenDoorNo", mOpenDoorNumber);
-	//JmpIO->SetSignedInt(entry_index, "str_hp", mHPAmount);
+	JmpIO->SetSignedInt(entry_index, "str_hp", mHPAmount);
 
 	JmpIO->SetBoolean(entry_index, "IsEscape", mAllowMovement);
 }
@@ -46,7 +46,7 @@ void LItemInfoDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 	mCharacterName = JmpIO->GetString(entry_index, "character_name");
 
 	mOpenDoorNumber = JmpIO->GetSignedInt(entry_index, "OpenDoorNo");
-	//mHPAmount = JmpIO->GetSignedInt(entry_index, "str_hp");
+	mHPAmount = JmpIO->GetSignedInt(entry_index, "str_hp");
 
 	mAllowMovement = JmpIO->GetBoolean(entry_index, "IsEscape");
 }

@@ -220,13 +220,25 @@ bool LMapDOMNode::LoadStaticData(std::vector<std::shared_ptr<LRoomDOMNode>> room
 
 bool LMapDOMNode::SaveMapToFiles(std::filesystem::path folder_path)
 {
+	auto isNotBlackoutFilter = [](auto node) { return std::static_pointer_cast<LBlackoutDOMNode>(node)->IsActiveDuringBlackout() == false; };
+	auto isBlackoutFilter = [](auto node) { return std::static_pointer_cast<LBlackoutDOMNode>(node)->IsActiveDuringBlackout() == true; };
+
 	for (int32_t entityType = 0; entityType < LEntityType_Max; entityType++)
 	{
 		std::filesystem::path entityFilePath = folder_path / LEntityFileNames[entityType];
-		auto entitiesOfType = GetChildrenOfType<LEntityDOMNode>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType));
+		std::vector<std::shared_ptr<LEntityDOMNode>> entitiesOfType;
+		
+		if (entityType == LEntityType_Characters || entityType == LEntityType_Enemies || entityType == LEntityType_Observers || entityType == LEntityType_Keys)
+			entitiesOfType = GetChildrenOfType<LEntityDOMNode>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType), isNotBlackoutFilter);
+		else if (entityType == LEntityType_BlackoutCharacters || entityType == LEntityType_BlackoutEnemies || entityType == LEntityType_BlackoutObservers || entityType == LEntityType_BlackoutKeys)
+			entitiesOfType = GetChildrenOfType<LEntityDOMNode>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType), isBlackoutFilter);
+		else
+		{
+			entitiesOfType = GetChildrenOfType<LEntityDOMNode>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType));
 
-		if (entitiesOfType.size() == 0)
-			continue;
+			if (entitiesOfType.size() == 0)
+				continue;
+		}
 
 		for (auto ent : entitiesOfType)
 			ent->PreProcess();
@@ -239,7 +251,7 @@ bool LMapDOMNode::SaveMapToFiles(std::filesystem::path folder_path)
 
 		std::ofstream fileStream;
 		fileStream.open(entityFilePath.c_str(), std::ios::binary | std::ios::out);
-		fileStream.write((const char*)memWriter.getBuffer(), memWriter.getSize());
+		fileStream.write((const char*)memWriter.getBuffer(), newFileSize);
 		fileStream.close();
 	}
 
@@ -300,6 +312,15 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 				break;
 			case LEntityType_BlackoutEnemies:
 				newNode = std::make_shared<LEnemyDOMNode>("Enemy", true);
+				break;
+			case LEntityType_BlackoutCharacters:
+				newNode = std::make_shared<LCharacterDOMNode>("Character", true);
+				break;
+			case LEntityType_BlackoutObservers:
+				newNode = std::make_shared<LObserverDOMNode>("Observer", true);
+				break;
+			case LEntityType_BlackoutKeys:
+				newNode = std::make_shared<LKeyDOMNode>("key01", true);
 				break;
 			default:
 				break;

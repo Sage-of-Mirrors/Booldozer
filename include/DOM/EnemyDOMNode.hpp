@@ -1,12 +1,14 @@
 #pragma once
 
-#include "EntityDOMNode.hpp"
+#include "BlackoutDOMNode.hpp"
 #include <map>
 
 constexpr size_t ENEMY_TYPE_COUNT = 51;
 
 extern std::map<std::string, std::string> EnemyNames;
+
 enum class EConditionType : uint32_t;
+
 class LFurnitureDOMNode;
 class LItemAppearDOMNode;
 
@@ -28,51 +30,49 @@ enum class EPlaceType : uint32_t
 	Spawn_along_Path
 };
 
-class LEnemyDOMNode : public LEntityDOMNode
+class LEnemyDOMNode : public LBlackoutDOMNode
 {
 /*=== JMP properties ===*/
-	std::string mCreateName;
-	std::string mPathName;
-	std::string mAccessName;
-	std::string mCodeName;
+	std::string mCreateName { "----" };
+	std::string mPathName { "(null)" };
+	std::string mAccessName { "(null)" };
+	std::string mCodeName { "(null)" };
 
-	int32_t mFloatingHeight;
-	int32_t mAppearChance;
+	int32_t mFloatingHeight { 0 };
+	int32_t mAppearChance { 0 };
 
-	int32_t mSpawnFlag;
-	int32_t mDespawnFlag;
+	int32_t mSpawnFlag { 0 };
+	int32_t mDespawnFlag { 0 };
 
-	int32_t mEventNumber;
-	int32_t mItemTableIndex;
+	int32_t mEventSetNumber { 0 };
+	int32_t mItemTableIndex { 0 };
 
-	EConditionType mCondType;
-	uint32_t mMoveType;
-	uint32_t mSearchType;
-	EAppearType mAppearType;
-	EPlaceType mPlaceType;
+	EConditionType mCondType { 0 };
+	uint32_t mMoveType { 0 };
+	uint32_t mSearchType { 0 };
+	EAppearType mAppearType { EAppearType::Normal };
+	EPlaceType mPlaceType { EPlaceType::Always_Spawn_at_Initial_Position };
 	
-	bool mIsVisible;
-	bool mStay;
+	bool mIsVisible { false };
+	bool mStay { false };
 
+/*=== Node references (converted to/from required reference data on Post-/PreProcess() ===*/
+	// Reference to a furniture node, for hiding the enemy inside it.
 	std::weak_ptr<LFurnitureDOMNode> mFurnitureNodeRef;
+	// Reference to an item appear table, for spawning items when the furniture is interacted with.
 	std::weak_ptr<LItemAppearDOMNode> mItemTableRef;
 
-	bool mIsBlackoutEnemy;
-
 public:
-	typedef LEntityDOMNode Super;
+	typedef LBlackoutDOMNode Super;
 
 	LEnemyDOMNode(std::string name);
-	LEnemyDOMNode(std::string name, bool isBlackoutEnemy) : LEnemyDOMNode(name) { mIsBlackoutEnemy = isBlackoutEnemy; }
+	LEnemyDOMNode(std::string name, bool isBlackoutEnemy);
 
 	virtual std::string GetCreateName() const override { return mCreateName; }
 	virtual void SetCreateName(std::string newCreateName) override { mCreateName = newCreateName; }
 
 	virtual std::string GetName() override { return EnemyNames[mName]; }
 	virtual void RenderDetailsUI(float dt) override;
-
-	bool GetIsBlackoutEnemy() { return mIsBlackoutEnemy; }
-	void SetIsBlackoutEnemy(bool isBlackoutEnemy) { mIsBlackoutEnemy = isBlackoutEnemy; }
 
 	// Writes the data this JMP node into the given LJmpIO instance at the specified entry.
 	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const override;

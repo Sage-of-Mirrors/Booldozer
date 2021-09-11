@@ -33,7 +33,7 @@ bool LDoorDOMNode::Load(const LStaticDoorData& source)
 	mDoorEntryNumber = source.mEntryIndex;
 
 	mPosition = glm::vec3((float)source.mPosition.z, (float)source.mPosition.y, (float)source.mPosition.x);
-	mScale = glm::vec3((float)source.mViewportSize.x, (float)source.mViewportSize.y, (float)source.mViewportSize.z);
+	mScale = glm::vec3((float)source.mViewportSize.z, (float)source.mViewportSize.y, (float)source.mViewportSize.x);
 
 	mNextEscape = source.mNextEscape;
 	mCurrentEscape = source.mCurrentEscape;
@@ -49,13 +49,13 @@ bool LDoorDOMNode::Save(LStaticDoorData& dest)
 	dest.mModel = (uint8_t)mModel;
 	dest.mEntryIndex = mDoorEntryNumber;
 
-	dest.mPosition.x = (uint32_t)mPosition.x;
+	dest.mPosition.x = (uint32_t)mPosition.z;
 	dest.mPosition.y = (uint32_t)mPosition.y;
-	dest.mPosition.z = (uint32_t)mPosition.z;
+	dest.mPosition.z = (uint32_t)mPosition.x;
 
-	dest.mViewportSize.x = (uint16_t)mScale.x;
+	dest.mViewportSize.x = (uint16_t)mScale.z;
 	dest.mViewportSize.y = (uint16_t)mScale.y;
-	dest.mViewportSize.z = (uint16_t)mScale.z;
+	dest.mViewportSize.z = (uint16_t)mScale.x;
 
 	dest.mNextEscape = mNextEscape;
 	dest.mCurrentEscape = mCurrentEscape;

@@ -82,11 +82,12 @@ std::map<std::string, std::string> EnemyNames = {
     { "oufo2", "Bowl" },
 };
 
-LEnemyDOMNode::LEnemyDOMNode(std::string name) : Super(name),
-    mCreateName("----"), mPathName("(null)"), mAccessName("(null)"), mCodeName("(null)"),
-    mFloatingHeight(0), mAppearChance(64), mSpawnFlag(0), mDespawnFlag(0), mEventNumber(0), mItemTableIndex(0),
-    mCondType(EConditionType::Always_True), mMoveType(0), mSearchType(0), mAppearType(EAppearType::Normal), mPlaceType(EPlaceType::Always_Spawn_at_Initial_Position), mIsVisible(true), mStay(false),
-    mFurnitureNodeRef(std::weak_ptr<LFurnitureDOMNode>()), mIsBlackoutEnemy(false)
+LEnemyDOMNode::LEnemyDOMNode(std::string name) : LEnemyDOMNode(name, false)
+{
+
+}
+
+LEnemyDOMNode::LEnemyDOMNode(std::string name, bool isBlackoutEnemy) : Super(name, isBlackoutEnemy)
 {
     mType = EDOMNodeType::Enemy;
 }
@@ -123,8 +124,8 @@ void LEnemyDOMNode::RenderDetailsUI(float dt)
     ImGui::InputInt("Despawn Flag", &mDespawnFlag);
     LUIUtility::RenderTooltip("If this flag is set, this enemy will no longer spawn.");
 
-    ImGui::InputInt("Associated Event Index", &mEventNumber);
-    LUIUtility::RenderTooltip("The index of an event this enemy is associated with. The event becomes disabled if the enemy has despawned.");
+    ImGui::InputInt("event_set_no", &mEventSetNumber);
+    LUIUtility::RenderTooltip("Don't quite know what this does. It's called event_set_no by the game, but it seems useless?");
 
     // Comboboxes
     LUIUtility::RenderNodeReferenceCombo<LFurnitureDOMNode>("Furniture Access", EDOMNodeType::Furniture, Parent, mFurnitureNodeRef);
@@ -159,17 +160,17 @@ void LEnemyDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
     JmpIO->SetString(entry_index, "access_name", mAccessName);
     JmpIO->SetString(entry_index, "CodeName", mCodeName);
 
-    JmpIO->SetFloat(entry_index, "pos_x", mPosition.x);
+    JmpIO->SetFloat(entry_index, "pos_x", mPosition.z);
     JmpIO->SetFloat(entry_index, "pos_y", mPosition.y);
-    JmpIO->SetFloat(entry_index, "pos_z", mPosition.z);
+    JmpIO->SetFloat(entry_index, "pos_z", mPosition.x);
 
-    JmpIO->SetFloat(entry_index, "dir_x", mRotation.x);
+    JmpIO->SetFloat(entry_index, "dir_x", mRotation.z);
     JmpIO->SetFloat(entry_index, "dir_y", mRotation.y);
-    JmpIO->SetFloat(entry_index, "dir_z", mRotation.z);
+    JmpIO->SetFloat(entry_index, "dir_z", mRotation.x);
 
-    JmpIO->SetFloat(entry_index, "scale_x", mScale.x);
+    JmpIO->SetFloat(entry_index, "scale_x", mScale.z);
     JmpIO->SetFloat(entry_index, "scale_y", mScale.y);
-    JmpIO->SetFloat(entry_index, "scale_z", mScale.z);
+    JmpIO->SetFloat(entry_index, "scale_z", mScale.x);
 
     JmpIO->SetSignedInt(entry_index, "room_no", mRoomNumber);
 
@@ -179,7 +180,7 @@ void LEnemyDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
     JmpIO->SetSignedInt(entry_index, "appear_flag", mSpawnFlag);
     JmpIO->SetSignedInt(entry_index, "disappear_flag", mDespawnFlag);
 
-    JmpIO->SetSignedInt(entry_index, "event_set_no", mEventNumber);
+    JmpIO->SetSignedInt(entry_index, "event_set_no", mEventSetNumber);
     JmpIO->SetSignedInt(entry_index, "item_table", mItemTableIndex);
 
     JmpIO->SetUnsignedInt(entry_index, "cond_type", (uint32_t)mCondType);
@@ -200,17 +201,17 @@ void LEnemyDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
     mAccessName = JmpIO->GetString(entry_index, "access_name");
     mCodeName = JmpIO->GetString(entry_index, "CodeName");
 
-    mPosition.x = JmpIO->GetFloat(entry_index, "pos_x");
+    mPosition.z = JmpIO->GetFloat(entry_index, "pos_x");
     mPosition.y = JmpIO->GetFloat(entry_index, "pos_y");
-    mPosition.z = JmpIO->GetFloat(entry_index, "pos_z");
+    mPosition.x = JmpIO->GetFloat(entry_index, "pos_z");
 
-    mRotation.x = JmpIO->GetFloat(entry_index, "dir_x");
+    mRotation.z = JmpIO->GetFloat(entry_index, "dir_x");
     mRotation.y = JmpIO->GetFloat(entry_index, "dir_y");
-    mRotation.z = JmpIO->GetFloat(entry_index, "dir_z");
+    mRotation.x = JmpIO->GetFloat(entry_index, "dir_z");
 
-    mScale.x = JmpIO->GetFloat(entry_index, "scale_x");
+    mScale.z = JmpIO->GetFloat(entry_index, "scale_x");
     mScale.y = JmpIO->GetFloat(entry_index, "scale_y");
-    mScale.z = JmpIO->GetFloat(entry_index, "scale_z");
+    mScale.x = JmpIO->GetFloat(entry_index, "scale_z");
 
     mRoomNumber = JmpIO->GetSignedInt(entry_index, "room_no");
 
@@ -220,7 +221,7 @@ void LEnemyDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
     mSpawnFlag = JmpIO->GetSignedInt(entry_index, "appear_flag");
     mDespawnFlag = JmpIO->GetSignedInt(entry_index, "disappear_flag");
 
-    mEventNumber = JmpIO->GetSignedInt(entry_index, "event_set_no");
+    mEventSetNumber = JmpIO->GetSignedInt(entry_index, "event_set_no");
     mItemTableIndex = JmpIO->GetSignedInt(entry_index, "item_table");
 
     mCondType = (EConditionType)JmpIO->GetUnsignedInt(entry_index, "cond_type");

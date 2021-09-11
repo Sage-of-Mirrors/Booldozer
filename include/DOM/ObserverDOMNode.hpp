@@ -1,7 +1,7 @@
 #pragma once
 
 #include <map>
-#include "EntityDOMNode.hpp"
+#include "BlackoutDOMNode.hpp"
 
 extern std::map<std::string, std::string> ObserverNames;
 
@@ -46,7 +46,7 @@ enum class EDoType : uint32_t
 	Unlock_All_Doors
 };
 
-class LObserverDOMNode : public LEntityDOMNode
+class LObserverDOMNode : public LBlackoutDOMNode
 {
 /*=== JMP properties ===*/
 	std::string mCodeName;
@@ -70,9 +70,10 @@ class LObserverDOMNode : public LEntityDOMNode
 	bool mUnkBool1;
 
 public:
-	typedef LEntityDOMNode Super;
+	typedef LBlackoutDOMNode Super;
 
 	LObserverDOMNode(std::string name);
+	LObserverDOMNode(std::string name, bool isBlackoutObserver);
 
 	virtual void RenderDetailsUI(float dt) override;
 	virtual std::string GetName() override { return ObserverNames[mName]; }

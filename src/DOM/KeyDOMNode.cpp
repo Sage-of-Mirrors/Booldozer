@@ -2,7 +2,12 @@
 #include "DOM/ObserverDOMNode.hpp"
 #include "UIUtil.hpp"
 
-LKeyDOMNode::LKeyDOMNode(std::string name) : Super(name),
+LKeyDOMNode::LKeyDOMNode(std::string name) : LKeyDOMNode(name, false)
+{
+
+}
+
+LKeyDOMNode::LKeyDOMNode(std::string name, bool isBlackoutKey) : Super(name, isBlackoutKey),
     mCreateName("----"), mCodeName("(null)"), mOpenDoorNumber(0), mSpawnFlag(0), mDespawnFlag(0),
     mCondType(EConditionType::Always_True), mAppearType(EKeyAppearType::Normal), mIsVisible(true)
 {
@@ -29,20 +34,20 @@ void LKeyDOMNode::RenderDetailsUI(float dt)
     LUIUtility::RenderTooltip("The door that this key unlocks.");
 
     ImGui::InputInt("Spawn Flag", &mSpawnFlag);
-    LUIUtility::RenderTooltip("The flag that must be set before this enemy will begin spawning.");
+    LUIUtility::RenderTooltip("The flag that must be set before this key will begin spawning.");
     ImGui::InputInt("Despawn Flag", &mDespawnFlag);
-    LUIUtility::RenderTooltip("If this flag is set, this enemy will no longer spawn.");
+    LUIUtility::RenderTooltip("If this flag is set, this key will no longer spawn.");
 
     // Comboboxes
     LUIUtility::RenderComboEnum<EConditionType>("Spawn Condition", mCondType);
-    LUIUtility::RenderTooltip("The condition governing whether the enemy is allowed to spawn.");
+    LUIUtility::RenderTooltip("The condition governing whether the key is allowed to spawn.");
 
     LUIUtility::RenderComboEnum<EKeyAppearType>("Spawn Type", mAppearType);
-    LUIUtility::RenderTooltip("The way in which the enemy will spawn. Using the second option WILL crash the game.");
+    LUIUtility::RenderTooltip("The way in which the key will spawn. Using the second option WILL crash the game.");
 
     // Bools
     LUIUtility::RenderCheckBox("Visible?", &mIsVisible);
-    LUIUtility::RenderTooltip("Whether this enemy should be visible.");
+    LUIUtility::RenderTooltip("Whether this key should be visible.");
 }
 
 void LKeyDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
@@ -51,17 +56,17 @@ void LKeyDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
     JmpIO->SetString(entry_index, "create_name", mCreateName);
     JmpIO->SetString(entry_index, "CodeName", mCodeName);
 
-    JmpIO->SetFloat(entry_index, "pos_x", mPosition.x);
+    JmpIO->SetFloat(entry_index, "pos_x", mPosition.z);
     JmpIO->SetFloat(entry_index, "pos_y", mPosition.y);
-    JmpIO->SetFloat(entry_index, "pos_z", mPosition.z);
+    JmpIO->SetFloat(entry_index, "pos_z", mPosition.x);
 
-    JmpIO->SetFloat(entry_index, "dir_x", mRotation.x);
+    JmpIO->SetFloat(entry_index, "dir_x", mRotation.z);
     JmpIO->SetFloat(entry_index, "dir_y", mRotation.y);
-    JmpIO->SetFloat(entry_index, "dir_z", mRotation.z);
+    JmpIO->SetFloat(entry_index, "dir_z", mRotation.x);
 
-    JmpIO->SetFloat(entry_index, "scale_x", mScale.x);
+    JmpIO->SetFloat(entry_index, "scale_x", mScale.z);
     JmpIO->SetFloat(entry_index, "scale_y", mScale.y);
-    JmpIO->SetFloat(entry_index, "scale_z", mScale.z);
+    JmpIO->SetFloat(entry_index, "scale_z", mScale.x);
 
     JmpIO->SetSignedInt(entry_index, "OpenDoorNo", mOpenDoorNumber);
 
@@ -80,17 +85,17 @@ void LKeyDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
     mCreateName = JmpIO->GetString(entry_index, "create_name");
     mCodeName = JmpIO->GetString(entry_index, "CodeName");
 
-    mPosition.x = JmpIO->GetFloat(entry_index, "pos_x");
+    mPosition.z = JmpIO->GetFloat(entry_index, "pos_x");
     mPosition.y = JmpIO->GetFloat(entry_index, "pos_y");
-    mPosition.z = JmpIO->GetFloat(entry_index, "pos_z");
+    mPosition.x = JmpIO->GetFloat(entry_index, "pos_z");
 
-    mRotation.x = JmpIO->GetFloat(entry_index, "dir_x");
+    mRotation.z = JmpIO->GetFloat(entry_index, "dir_x");
     mRotation.y = JmpIO->GetFloat(entry_index, "dir_y");
-    mRotation.z = JmpIO->GetFloat(entry_index, "dir_z");
+    mRotation.x = JmpIO->GetFloat(entry_index, "dir_z");
 
-    mScale.x = JmpIO->GetFloat(entry_index, "scale_x");
+    mScale.z = JmpIO->GetFloat(entry_index, "scale_x");
     mScale.y = JmpIO->GetFloat(entry_index, "scale_y");
-    mScale.z = JmpIO->GetFloat(entry_index, "scale_z");
+    mScale.x = JmpIO->GetFloat(entry_index, "scale_z");
 
     mOpenDoorNumber = JmpIO->GetSignedInt(entry_index, "OpenDoorNo");
 

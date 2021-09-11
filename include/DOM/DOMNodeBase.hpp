@@ -30,10 +30,7 @@ enum class EDOMNodeType
 	Generator,
 	Object,
 	Path,
-	BlackoutCharacter,
-	BlackoutEnemy,
-	BlackoutObserver,
-	BlackoutKey,
+	Blackout,
 	Key,
 	ItemInfo,
 	ItemAppear,
@@ -66,7 +63,7 @@ protected:
 		}
 	}
 
-	/*template<typename T, typename U>
+	template<typename T, typename U>
 	void GatherChildrenOfType(std::vector<std::shared_ptr<T>>& list, EDOMNodeType type, U predicate)
 	{
 		for (std::shared_ptr<LDOMNodeBase> child : Children)
@@ -75,13 +72,13 @@ protected:
 			{
 				auto typed = std::static_pointer_cast<T>(child);
 
-				if (predicate && predicate(typed))
+				if (predicate(typed))
 					list.push_back(typed);
 			}
 
 			child->GatherChildrenOfType(list, type, predicate);
 		}
-	}*/
+	}
 
 public:
 	LDOMNodeBase(std::string name) { mName = name; SetIsSelected(false); SetIsRendered(true); SetIsInitialized(false); }
@@ -201,7 +198,7 @@ public:
 		}
 	}
 
-	/*template<typename T, typename U>
+	template<typename T, typename U>
 	std::vector<std::shared_ptr<T>> GetChildrenOfType(EDOMNodeType type, U predicate)
 	{
 		std::vector<std::shared_ptr<T>> matchingNodes;
@@ -209,5 +206,5 @@ public:
 		GatherChildrenOfType(matchingNodes, type, predicate);
 
 		return matchingNodes;
-	}*/
+	}
 };
