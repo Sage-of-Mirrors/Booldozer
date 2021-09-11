@@ -341,8 +341,8 @@ void LEditorScene::update(GLFWwindow* window, float dt)
 	glfwGetWindowPos(window, &vx, &vy);
 
 
-	x -= w;
-	y -= h;
+	//x -= w;
+	//y -= h;
 
 	if(Camera.GetClicked()){
 		auto ray = Camera.Raycast(x, y, glm::vec4(0,0,w,h));
@@ -359,10 +359,11 @@ void LEditorScene::update(GLFWwindow* window, float dt)
 						if(mRoomFurniture.count(node->GetName()) != 0){
 							
 							//
-							auto check = ray.first + (ray.second * glm::distance(node->GetPosition(), ray.first));
+							auto t = glm::vec3(node->GetPosition().z, node->GetPosition().y, node->GetPosition().x);
+							auto check = ray.first + (ray.second * glm::distance(t, ray.first));
 
-							std::cout << node->GetName() << "  " << node->GetPosition().x << " "  << node->GetPosition().y << " "  << node->GetPosition().z << "   "  << check.x << " "  << check.y << " "  << check.z << std::endl;
-							if(glm::distance(node->GetPosition(), check) < 180.0f){
+							std::cout << node->GetName() << "  " << t.x << " "  << t.y << " "  << t.z << "   "  << check.x << " "  << check.y << " "  << check.z << " " << glm::distance(t, check) << std::endl;
+							if(glm::distance(t, check) < 180.0f){
 								std::cout << "clicked on " << node->GetName() << std::endl;
 							}
 						}

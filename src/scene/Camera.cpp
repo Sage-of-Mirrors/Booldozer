@@ -4,6 +4,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <bx/bx.h>
+#include <bx/math.h>
 
 LSceneCamera::LSceneCamera() :
 	NearPlane(0.1f), FarPlane(10000.0f), Fovy(glm::radians(60.0f)), mCenter(ZERO), mEye(ZERO),
@@ -84,8 +86,8 @@ void LSceneCamera::Rotate(float dt, float x, float y)
 }
 
 std::pair<glm::vec3, glm::vec3> LSceneCamera::Raycast(double mouseX, double mouseY, glm::vec4 viewport){
-	auto near = glm::unProject(glm::vec3(mouseX, mouseY, 0.0f), GetViewMatrix(), GetProjectionMatrix(), viewport);
-	auto far = glm::unProject(glm::vec3(mouseX, mouseY, -1.0f), GetViewMatrix(), GetProjectionMatrix(), viewport);
+	auto near = glm::unProject(glm::vec3(mouseX, viewport.w - mouseY, 0.0f), GetViewMatrix(), GetProjectionMatrix(), viewport);
+	auto far = glm::unProject(glm::vec3(mouseX, viewport.w - mouseY, 1.0f), GetViewMatrix(), GetProjectionMatrix(), viewport);
 
 	auto dir = far - near;
 	dir = glm::normalize(dir);
