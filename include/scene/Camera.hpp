@@ -25,6 +25,7 @@ class LSceneCamera
 /*=== Movement ===*/
 	bool mAllowUpdates;
 	bool mClickedThisFrame;
+	bool mLeftClickedThisFrame;
 	float mMoveSpeed;
 	float mMouseSensitivity;
 
@@ -48,4 +49,13 @@ public:
 	glm::mat4 GetViewMatrix() { return glm::lookAtLH(mEye, mCenter, mUp); }
 	// Calculates and returns the projection matrix from this camera's settings.
 	glm::mat4 GetProjectionMatrix() { return glm::perspectiveLH<float>(Fovy, AspectRatio, NearPlane, FarPlane); }
+
+	glm::vec3 GetEye() { return mEye; }
+	
+	glm::vec3 GetUp() { return mUp; }
+
+	std::pair<glm::vec3, glm::vec3> Raycast(double mouseX, double mouseY, glm::vec4 viewport);
+
+	bool GetClicked() { return mLeftClickedThisFrame; }
+
 };

@@ -6,6 +6,9 @@ class LActorMode : public LEditorModeBase
 {
 	void RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map);
 	void RenderDetailsWindow();
+	std::weak_ptr<LRoomDOMNode> mManualRoomSelect;
+	bool mRoomChanged;
+
 public:
 	LActorMode();
 

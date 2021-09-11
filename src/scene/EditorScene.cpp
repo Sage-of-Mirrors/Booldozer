@@ -209,7 +209,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 			glm::mat4 identity = glm::identity<glm::mat4>();
 			identity = glm::translate(identity, door.lock()->GetPosition());
 			if(door.lock()->GetOrientation() == EDoorOrientation::Side_Facing) identity = glm::rotate(identity, glm::radians(90.0f), glm::vec3(0,1,0));
-			if(door.lock()->GetModel() != EDoorModel::None){
+			if(door.lock()->GetModel() != EDoorModel::None && ((uint8_t)door.lock()->GetModel()) - 1 < mDoorModels.size()){
 				mDoorModels[((uint8_t)door.lock()->GetModel()) - 1]->Draw(&identity, mShader, mTexUniform);
 			}
 		}
@@ -331,4 +331,46 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 void LEditorScene::update(GLFWwindow* window, float dt)
 {
 	Camera.Update(window, dt);
+
+	int w, h;
+	int vx, vy;
+	double x, y;
+	glfwGetCursorPos(window, &x, &y);
+
+	glfwGetWindowSize(window, &w, &h);
+	glfwGetWindowPos(window, &vx, &vy);
+
+
+	x -= w;
+	y -= h;
+
+	if(Camera.GetClicked()){
+		auto ray = Camera.Raycast(x, y, glm::vec4(0,0,w,h));
+		for(auto room : mCurrentRooms){			
+			if(!room.expired() && Initialized)
+			{
+				auto curRoom = room.lock();
+
+				curRoom->ForEachChildOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender, [&](auto node){
+
+					switch (node->GetNodeType())
+					{
+					case EDOMNodeType::Furniture:
+						if(mRoomFurniture.count(node->GetName()) != 0){
+							
+							//
+							auto check = ray.first + (ray.second * glm::distance(node->GetPosition(), ray.first));
+
+							std::cout << node->GetName() << "  " << node->GetPosition().x << " "  << node->GetPosition().y << " "  << node->GetPosition().z << "   "  << check.x << " "  << check.y << " "  << check.z << std::endl;
+							if(glm::distance(node->GetPosition(), check) < 180.0f){
+								std::cout << "clicked on " << node->GetName() << std::endl;
+							}
+						}
+						break;
+					}
+				});
+
+			}
+		}
+	}
 }

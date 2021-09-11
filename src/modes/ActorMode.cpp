@@ -5,12 +5,14 @@
 
 LActorMode::LActorMode()
 {
-
+	mRoomChanged = false;
 }
 
 void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 {
 	ImGui::Begin("Scene Hierarchy");
+
+	mRoomChanged = LUIUtility::RenderNodeReferenceCombo("Room to Render", EDOMNodeType::Room, current_map, mManualRoomSelect);
 
 	auto rooms = current_map->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
 	if (ImGui::TreeNode("Rooms"))
@@ -148,6 +150,7 @@ void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 			mPreviousSelection = mSelectionManager.GetPrimarySelection();
 			if(!mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).expired() && !renderer_scene->HasRoomLoaded(mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock()->GetRoomNumber())){
 				renderer_scene->SetRoom(mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock());				
+				mManualRoomSelect = mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room);
 			}
 		}
 
@@ -155,6 +158,10 @@ void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 		glm::mat4 view = renderer_scene->getCameraView();
 		glm::mat4 proj = renderer_scene->getCameraProj();
 		ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::LOCAL, &(*m)[0][0], NULL, NULL);
+	}
+
+	if(mRoomChanged){
+		renderer_scene->SetRoom(mManualRoomSelect.lock());
 	}
 
 }
