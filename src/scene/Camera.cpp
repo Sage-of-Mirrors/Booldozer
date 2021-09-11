@@ -4,11 +4,13 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <bx/bx.h>
+#include <bx/math.h>
 
 LSceneCamera::LSceneCamera() :
 	NearPlane(0.1f), FarPlane(10000.0f), Fovy(glm::radians(60.0f)), mCenter(ZERO), mEye(ZERO),
 	mPitch(0.0f), mYaw(0.0f), mUp(UNIT_Y), mRight(UNIT_X), mForward(UNIT_Z),
-	AspectRatio(16.0f / 9.0f), mAllowUpdates(true), mMoveSpeed(1000.0f), mMouseSensitivity(5.0f),
+	AspectRatio(16.0f / 9.0f), mAllowUpdates(true), mMoveSpeed(1000.0f), mMouseSensitivity(1.0f),
 	mPrevMouseX(0.0f), mPrevMouseY(0.0f), mClickedThisFrame(true)
 {
 	mCenter = mEye + mForward;
@@ -16,6 +18,7 @@ LSceneCamera::LSceneCamera() :
 
 void LSceneCamera::Update(GLFWwindow* window, float dt)
 {
+	mLeftClickedThisFrame = false;
 	if (!mAllowUpdates || ImGui::GetIO().WantCaptureKeyboard || ImGui::GetIO().WantCaptureMouse)
 		return;
 
@@ -48,6 +51,8 @@ void LSceneCamera::Update(GLFWwindow* window, float dt)
 
 		mPrevMouseX = (float)x;
 		mPrevMouseY = (float)y;
+	} else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+		mLeftClickedThisFrame = true;
 	}
 	else
 	{
@@ -78,4 +83,14 @@ void LSceneCamera::Rotate(float dt, float x, float y)
 
 	mRight = glm::normalize(glm::cross(mForward, UNIT_Y));
 	mUp = glm::normalize(glm::cross(mRight, mForward));
+}
+
+std::pair<glm::vec3, glm::vec3> LSceneCamera::Raycast(double mouseX, double mouseY, glm::vec4 viewport){
+	auto near = glm::unProject(glm::vec3(mouseX, viewport.w - mouseY, 0.0f), GetViewMatrix(), GetProjectionMatrix(), viewport);
+	auto far = glm::unProject(glm::vec3(mouseX, viewport.w - mouseY, 1.0f), GetViewMatrix(), GetProjectionMatrix(), viewport);
+
+	auto dir = far - near;
+	dir = glm::normalize(dir);
+
+	return std::pair(near, dir);
 }

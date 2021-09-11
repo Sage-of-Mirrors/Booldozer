@@ -91,6 +91,7 @@ public:
     std::shared_ptr<BinScenegraphNode> next;
     std::shared_ptr<BinScenegraphNode> prev;
     glm::mat4 transform;
+	float mBoundingSphereRadius;
 
     void AddMesh(int16_t material, int16_t mesh);
     void Draw(glm::mat4 localTransform, glm::mat4* instance, BGFXBin* bin, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform);
@@ -113,6 +114,7 @@ public:
 	bool BindMaterial(uint16_t id, bgfx::UniformHandle& texUniform);
     void Draw(glm::mat4* transform, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform);
 	void TranslateRoot(glm::vec3 translation);
+	float GetRootBoundingSphere() { return mRoot->mBoundingSphereRadius; }
     BGFXBin(bStream::CStream* stream);
     ~BGFXBin();
 };

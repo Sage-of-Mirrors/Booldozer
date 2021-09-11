@@ -12,6 +12,7 @@
 #include "ObserverIcon.hpp"
 #include "ImGuizmo.h"
 #include "Options.hpp"
+#include "modes/EditorSelection.hpp"
 
 struct Vertex
 {
@@ -209,7 +210,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 			glm::mat4 identity = glm::identity<glm::mat4>();
 			identity = glm::translate(identity, door.lock()->GetPosition());
 			if(door.lock()->GetOrientation() == EDoorOrientation::Side_Facing) identity = glm::rotate(identity, glm::radians(90.0f), glm::vec3(0,1,0));
-			if(door.lock()->GetModel() != EDoorModel::None){
+			if(door.lock()->GetModel() != EDoorModel::None && ((uint8_t)door.lock()->GetModel()) - 1 < mDoorModels.size()){
 				mDoorModels[((uint8_t)door.lock()->GetModel()) - 1]->Draw(&identity, mShader, mTexUniform);
 			}
 		}
@@ -239,16 +240,13 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 						}
 						break;
 					
-					case EDOMNodeType::Observer:
-						mCubeManager.renderAltTex(node->GetMat(), mObserverTex);
-						break;
-
 					case EDOMNodeType::RoomData:
 						roomBounds.push_back(glm::scale(glm::translate(transform, node->GetPosition()), node->GetScale()));
 						break;
 
 					case EDOMNodeType::Character:
 					case EDOMNodeType::Generator:
+					case EDOMNodeType::Observer:
 					case EDOMNodeType::Object:
 					case EDOMNodeType::Enemy:
 						mCubeManager.render(node->GetMat());
@@ -328,7 +326,39 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 	}
 }
 
-void LEditorScene::update(GLFWwindow* window, float dt)
+void LEditorScene::update(GLFWwindow* window, float dt, LEditorSelection* selection)
 {
 	Camera.Update(window, dt);
+
+	int w, h;
+	int vx, vy;
+	double x, y;
+	glfwGetCursorPos(window, &x, &y);
+
+	glfwGetWindowSize(window, &w, &h);
+	glfwGetWindowPos(window, &vx, &vy);
+
+	if(Camera.GetClicked()){
+		selection->ClearSelection();
+		auto ray = Camera.Raycast(x, y, glm::vec4(0,0,w,h));
+		for(auto room : mCurrentRooms){			
+			if(!room.expired() && Initialized)
+			{
+				auto curRoom = room.lock();
+
+				curRoom->ForEachChildOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender, [&](auto node){
+					auto check = ray.first + (ray.second * glm::distance(node->GetPosition(), ray.first));
+
+					
+					if(glm::distance(node->GetPosition(), check) < 150.0f){
+						std::cout << "clicked on " << node->GetName() << std::endl;
+						if(selection != nullptr){
+							selection->AddToSelection(node);
+						}
+					}
+				});
+
+			}
+		}
+	}
 }
