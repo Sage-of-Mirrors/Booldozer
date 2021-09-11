@@ -19,7 +19,7 @@ protected:
 public:
 
 	// The Gizmo's current operation mode (translate, rotate, scale)
-	ImGuizmo::OPERATION mGizmoMode;
+	ImGuizmo::OPERATION mGizmoMode { ImGuizmo::OPERATION::TRANSLATE };
 	
 	virtual void Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene) = 0;
 
@@ -27,6 +27,8 @@ public:
 	virtual void OnBecomeActive() = 0;
 	// Called when this mode becomes inactive.
 	virtual void OnBecomeInactive() = 0;
+
+	LEditorSelection* GetSelectionManager() { return &mSelectionManager; }
 
 	// Instructs the mode to attempt to perform an undo operation.
 	virtual void Undo() { mHistoryManager.PerformUndo(); }

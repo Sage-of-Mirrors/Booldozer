@@ -19,7 +19,7 @@ void LBooldozerMainWindow::onReset()
 void LBooldozerMainWindow::update(float dt)
 {
 	// Update state here
-	mEditorScene.update(mWindow, dt);
+	mEditorScene.update(mWindow, dt, mEditorContext.GetSelectionManager());
 	mMainEditorWindow.update(dt);
 
 	// Now render!

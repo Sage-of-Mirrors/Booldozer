@@ -61,6 +61,8 @@ public:
 
 	void onPlaytestCB();
 
+	LEditorSelection* GetSelectionManager() { return mCurrentMode->GetSelectionManager(); }
+
 	void SetGizmo(ImGuizmo::OPERATION mode);
 
 	// Switches the current mode to the given new one.

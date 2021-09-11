@@ -18,6 +18,7 @@ LSceneCamera::LSceneCamera() :
 
 void LSceneCamera::Update(GLFWwindow* window, float dt)
 {
+	mLeftClickedThisFrame = false;
 	if (!mAllowUpdates || ImGui::GetIO().WantCaptureKeyboard || ImGui::GetIO().WantCaptureMouse)
 		return;
 
@@ -56,7 +57,6 @@ void LSceneCamera::Update(GLFWwindow* window, float dt)
 	else
 	{
 		mClickedThisFrame = true;
-		mLeftClickedThisFrame = false;
 	}
 
 	if (glm::length(moveDir) != 0.0f)

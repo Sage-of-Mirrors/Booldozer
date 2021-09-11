@@ -68,7 +68,7 @@ public:
     void RenderSubmit(uint32_t m_width, uint32_t m_height);
 
     void init();
-    void update(GLFWwindow* window, float dt);
+    void update(GLFWwindow* window, float dt, LEditorSelection* selection);
 
     LEditorScene();
     ~LEditorScene();

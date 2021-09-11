@@ -12,6 +12,7 @@
 #include "ObserverIcon.hpp"
 #include "ImGuizmo.h"
 #include "Options.hpp"
+#include "modes/EditorSelection.hpp"
 
 struct Vertex
 {
@@ -328,7 +329,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 	}
 }
 
-void LEditorScene::update(GLFWwindow* window, float dt)
+void LEditorScene::update(GLFWwindow* window, float dt, LEditorSelection* selection)
 {
 	Camera.Update(window, dt);
 
@@ -340,10 +341,6 @@ void LEditorScene::update(GLFWwindow* window, float dt)
 	glfwGetWindowSize(window, &w, &h);
 	glfwGetWindowPos(window, &vx, &vy);
 
-
-	//x -= w;
-	//y -= h;
-
 	if(Camera.GetClicked()){
 		auto ray = Camera.Raycast(x, y, glm::vec4(0,0,w,h));
 		for(auto room : mCurrentRooms){			
@@ -352,22 +349,16 @@ void LEditorScene::update(GLFWwindow* window, float dt)
 				auto curRoom = room.lock();
 
 				curRoom->ForEachChildOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender, [&](auto node){
+					auto t = glm::vec3(node->GetPosition().z, node->GetPosition().y, node->GetPosition().x);
+					auto check = ray.first + (ray.second * glm::distance(t, ray.first));
 
-					switch (node->GetNodeType())
-					{
-					case EDOMNodeType::Furniture:
-						if(mRoomFurniture.count(node->GetName()) != 0){
-							
-							//
-							auto t = glm::vec3(node->GetPosition().z, node->GetPosition().y, node->GetPosition().x);
-							auto check = ray.first + (ray.second * glm::distance(t, ray.first));
-
-							std::cout << node->GetName() << "  " << t.x << " "  << t.y << " "  << t.z << "   "  << check.x << " "  << check.y << " "  << check.z << " " << glm::distance(t, check) << std::endl;
-							if(glm::distance(t, check) < 180.0f){
-								std::cout << "clicked on " << node->GetName() << std::endl;
-							}
+					
+					if(glm::distance(t, check) < 50.0f){
+						std::cout << "clicked on " << node->GetName() << std::endl;
+						if(selection != nullptr){
+							selection->ClearSelection();
+							selection->AddToSelection(node);
 						}
-						break;
 					}
 				});
 
