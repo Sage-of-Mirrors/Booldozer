@@ -240,16 +240,13 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 						}
 						break;
 					
-					case EDOMNodeType::Observer:
-						mCubeManager.renderAltTex(node->GetMat(), mObserverTex);
-						break;
-
 					case EDOMNodeType::RoomData:
 						roomBounds.push_back(glm::scale(glm::translate(transform, node->GetPosition()), node->GetScale()));
 						break;
 
 					case EDOMNodeType::Character:
 					case EDOMNodeType::Generator:
+					case EDOMNodeType::Observer:
 					case EDOMNodeType::Object:
 					case EDOMNodeType::Enemy:
 						mCubeManager.render(node->GetMat());
@@ -342,6 +339,7 @@ void LEditorScene::update(GLFWwindow* window, float dt, LEditorSelection* select
 	glfwGetWindowPos(window, &vx, &vy);
 
 	if(Camera.GetClicked()){
+		selection->ClearSelection();
 		auto ray = Camera.Raycast(x, y, glm::vec4(0,0,w,h));
 		for(auto room : mCurrentRooms){			
 			if(!room.expired() && Initialized)
@@ -349,14 +347,12 @@ void LEditorScene::update(GLFWwindow* window, float dt, LEditorSelection* select
 				auto curRoom = room.lock();
 
 				curRoom->ForEachChildOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender, [&](auto node){
-					auto t = glm::vec3(node->GetPosition().z, node->GetPosition().y, node->GetPosition().x);
-					auto check = ray.first + (ray.second * glm::distance(t, ray.first));
+					auto check = ray.first + (ray.second * glm::distance(node->GetPosition(), ray.first));
 
 					
-					if(glm::distance(t, check) < 50.0f){
+					if(glm::distance(node->GetPosition(), check) < 150.0f){
 						std::cout << "clicked on " << node->GetName() << std::endl;
 						if(selection != nullptr){
-							selection->ClearSelection();
 							selection->AddToSelection(node);
 						}
 					}
