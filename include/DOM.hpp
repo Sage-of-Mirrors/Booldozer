@@ -24,3 +24,4 @@
 #include "DOM/DoorDOMNode.hpp"
 #include "DOM/RoomDataDOMNode.hpp"
 #include "DOM/BlackoutDOMNode.hpp"
+#include "DOM/PathDOMNode.hpp"

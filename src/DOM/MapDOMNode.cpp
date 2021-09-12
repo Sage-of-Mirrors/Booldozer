@@ -168,9 +168,11 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	}
 
 	// Shore up things like entity references now that all of the entity data has been loaded
-	std::vector<std::shared_ptr<LEntityDOMNode>> loadedNodes = GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Entity);
-	for (auto loadedNode : loadedNodes)
+	for (auto loadedNode : GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Entity))
 		loadedNode->PostProcess();
+
+	for (auto pathNodes : GetChildrenOfType<LPathDOMNode>(EDOMNodeType::Path))
+		pathNodes->PostProcess(mapArc);
 
 	// To finish loading the map we're going to delegate grabbing room data to the rooms themselves,
 	// where they'll also set up things like models for furniture
@@ -321,6 +323,9 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 				break;
 			case LEntityType_BlackoutKeys:
 				newNode = std::make_shared<LKeyDOMNode>("key01", true);
+				break;
+			case LEntityType_Paths:
+				newNode = std::make_shared<LPathDOMNode>("path");
 				break;
 			default:
 				break;

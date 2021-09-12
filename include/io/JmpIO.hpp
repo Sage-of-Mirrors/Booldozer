@@ -60,6 +60,9 @@ class LJmpIO
 	// Returns a pointer to the field info corresponding to the given name if it exists within this JMP file,
 	// or nullptr if it does not exist.
 	const LJmpFieldInfo* FetchJmpFieldInfo(std::string name);
+	// Returns a pointer to the field info corresponding to the given hash if it exists within this JMP file,
+	// or nullptr if it does not exist.
+	const LJmpFieldInfo* FetchJmpFieldInfo(uint32_t hash);
 	// Retrieves the unsigned integer at the given offset from this JMP file's entry data.
 	uint32_t PeekU32(uint32_t offset);
 	// Retrieves the signed integer at the given offset from this JMP file's entry data.
@@ -98,6 +101,10 @@ public:
 	// Attempts to return the value of the given field from the given JMP entry
 	// as an signed int; returns 0 if the field is invalid.
 	int32_t GetSignedInt(uint32_t entry_index, std::string field_name);
+
+	// Attempts to return the value of the given field, using the hash to look up the field.
+	// Returns 0 if invalid.
+	int32_t GetSignedInt(uint32_t entry_index, uint32_t field_hash);
 
 	// Attempts to return the value of the given field from the given JMP entry
 	// as float; returns 0.0f if the field is invalid.

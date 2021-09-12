@@ -70,6 +70,22 @@ const LJmpFieldInfo* LJmpIO::FetchJmpFieldInfo(std::string name)
 	return field;
 }
 
+const LJmpFieldInfo* LJmpIO::FetchJmpFieldInfo(uint32_t hash)
+{
+	const LJmpFieldInfo* field = nullptr;
+
+	for (const LJmpFieldInfo& f : mFields)
+	{
+		if (hash == f.Hash)
+		{
+			field = &f;
+			break;
+		}
+	}
+
+	return field;
+}
+
 uint32_t LJmpIO::PeekU32(uint32_t offset)
 {
 	if (offset >= mEntryCount * mEntrySize)
@@ -145,6 +161,19 @@ uint32_t LJmpIO::GetUnsignedInt(uint32_t entry_index, std::string field_name)
 int32_t LJmpIO::GetSignedInt(uint32_t entry_index, std::string field_name)
 {
 	const LJmpFieldInfo* field = FetchJmpFieldInfo(field_name);
+
+	// If field is still nullptr, we failed to find a field matching the given name.
+	if (field == nullptr)
+		return 0;
+
+	uint32_t fieldOffset = entry_index * mEntrySize + field->Start;
+
+	return PeekS32(fieldOffset);
+}
+
+int32_t LJmpIO::GetSignedInt(uint32_t entry_index, uint32_t field_hash)
+{
+	const LJmpFieldInfo* field = FetchJmpFieldInfo(field_hash);
 
 	// If field is still nullptr, we failed to find a field matching the given name.
 	if (field == nullptr)
