@@ -57,7 +57,7 @@ protected:
 		for (std::shared_ptr<LDOMNodeBase> child : Children)
 		{
 			if (child->IsNodeType(type))
-				list.push_back(std::static_pointer_cast<T>(child));
+				list.push_back(std::dynamic_pointer_cast<T>(child));
 
 			child->GatherChildrenOfType(list, type);
 		}
@@ -70,7 +70,7 @@ protected:
 		{
 			if (child->IsNodeType(type))
 			{
-				auto typed = std::static_pointer_cast<T>(child);
+				auto typed = std::dynamic_pointer_cast<T>(child);
 
 				if (predicate(typed))
 					list.push_back(typed);

@@ -5,11 +5,30 @@
 #include <memory>
 #include <vector>
 
+#include <nlohmann/json.hpp>
+
 constexpr size_t JMP_HEADER_SIZE = 16;
 constexpr size_t JMP_FIELD_DEF_SIZE = 12;
 constexpr uint32_t JMP_HASH_PRIME = 33554393;
 
 class LEntityDOMNode;
+class LJmpIO;
+
+class ISerializable
+{
+public:
+	virtual ~ISerializable() = default;
+
+	// Performs necessary post-deserialize steps, like setting up object references.
+	virtual void PostProcess() = 0;
+	// Performs necessary pre-serialize steps, like converting object references to indices.
+	virtual void PreProcess() = 0;
+
+	// Save this object to the given JmpIO instance at the given index.
+	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const = 0;
+	// Read the data from the given JmpIO instance at the given index into this object.
+	virtual void Deserialize(LJmpIO* JmpIO, uint32_t entry_index) = 0;
+};
 
 enum class EJmpFieldType : uint8_t
 {
@@ -94,6 +113,9 @@ public:
 	// true if the load succeeded, false if not.
 	bool Load(bStream::CMemoryStream* stream);
 
+	// Loads the JMP fields from the given JSON object and allocates enough space
+	bool Load(nlohmann::json jsonTemplate, size_t count);
+
 	// Attempts to return the value of the given field from the given JMP entry
 	// as an unsigned int; returns 0 if the field is invalid.
 	uint32_t GetUnsignedInt(uint32_t entry_index, std::string field_name);
@@ -120,14 +142,17 @@ public:
 
 /*== Output ==*/
 	// Saves the current JMP data to the given stream.
-	bool Save(std::vector<std::shared_ptr<LEntityDOMNode>> entities, bStream::CMemoryStream& stream);
+	bool Save(std::vector<std::shared_ptr<ISerializable>> entities, bStream::CMemoryStream& stream);
 
 	// Writes an unsigned int to the given field in the specified JMP entry,
 	// packing into a bitfield if required.
 	bool SetUnsignedInt(uint32_t entry_index, std::string field_name, uint32_t value);
 
-	// Writes a signed int to the given field in the specified JMP entry.
+	// Writes a signed int to the given field in the specified JMP entry, searching by name.
 	bool SetSignedInt(uint32_t entry_index, std::string field_name, int32_t value);
+
+	// Writes a signed int to the given field in the specified JMP entry, searching by hash.
+	bool SetSignedInt(uint32_t entry_index, uint32_t field_hash, int32_t value);
 
 	// Writes a float to the given field in the specified JMP entry.
 	bool SetFloat(uint32_t entry_index, std::string field_name, float value);

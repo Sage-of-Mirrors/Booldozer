@@ -34,7 +34,7 @@ enum LEntityType
 	LEntityType_Max,
 };
 
-class LEntityDOMNode : public LBGRenderDOMNode
+class LEntityDOMNode : public LBGRenderDOMNode, public ISerializable
 {
 protected:
 	int32_t mRoomNumber;
@@ -47,16 +47,6 @@ public:
 	int32_t GetRoomNumber() { return mRoomNumber; }
 	virtual std::string GetCreateName() const { return "(null)"; }
 	virtual void SetCreateName(std::string newCreateName) { };
-
-	// Writes the data this JMP node into the given LJmpIO instance at the specified entry.
-	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const = 0;
-	// Reads the data from the specified entry in the given LJmpIO instance into this JMP node.
-	virtual void Deserialize(LJmpIO* JmpIO, uint32_t entry_index) = 0;
-
-	// Fixes up things that need to be done post-load, like generating node reference members from indices or names.
-	virtual void PostProcess() = 0;
-	// Ensures that things that need to be done prior to saving are done, like converting from reference member to indices or names.
-	virtual void PreProcess() = 0;
 
 /*=== Type operations ===*/
 	// Returns whether this node is of the given type, or derives from a node of that type.

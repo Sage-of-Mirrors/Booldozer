@@ -3,6 +3,48 @@
 #include "GenUtil.hpp"
 #include "../lib/libgctools/include/archive.h"
 
+#include <memory>
+
+void LPathPoint::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
+{
+	JmpIO->SetFloat(entry_index, "pnt0_x", X.Value);
+	JmpIO->SetFloat(entry_index, "pnt1_x", X.InTangent);
+	JmpIO->SetFloat(entry_index, "pnt2_x", X.OutTangent);
+
+	JmpIO->SetFloat(entry_index, "pnt0_y", Y.Value);
+	JmpIO->SetFloat(entry_index, "pnt1_y", Y.InTangent);
+	JmpIO->SetFloat(entry_index, "pnt2_y", Y.OutTangent);
+
+	JmpIO->SetFloat(entry_index, "pnt0_z", Z.Value);
+	JmpIO->SetFloat(entry_index, "pnt1_z", Z.InTangent);
+	JmpIO->SetFloat(entry_index, "pnt2_z", Z.OutTangent);
+
+	JmpIO->SetSignedInt(entry_index, "next_room", NextRoomNumber);
+	JmpIO->SetSignedInt(entry_index, 0x809B31, UnkInt1);
+	JmpIO->SetSignedInt(entry_index, 0x61DCB2, UnkInt2);
+	JmpIO->SetSignedInt(entry_index, 0xD9B7C6, UnkInt3);
+}
+
+void LPathPoint::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
+{
+	X.Value = JmpIO->GetFloat(entry_index, "pnt0_x");
+	X.InTangent = JmpIO->GetFloat(entry_index, "pnt1_x");
+	X.OutTangent = JmpIO->GetFloat(entry_index, "pnt2_x");
+
+	Y.Value = JmpIO->GetFloat(entry_index, "pnt0_y");
+	Y.InTangent = JmpIO->GetFloat(entry_index, "pnt1_y");
+	Y.OutTangent = JmpIO->GetFloat(entry_index, "pnt2_y");
+
+	Z.Value = JmpIO->GetFloat(entry_index, "pnt0_z");
+	Z.InTangent = JmpIO->GetFloat(entry_index, "pnt1_z");
+	Z.OutTangent = JmpIO->GetFloat(entry_index, "pnt2_z");
+
+	NextRoomNumber = JmpIO->GetSignedInt(entry_index, "next_room");
+	UnkInt1 = JmpIO->GetSignedInt(entry_index, 0x809B31);
+	UnkInt2 = JmpIO->GetSignedInt(entry_index, 0x61DCB2);
+	UnkInt3 = JmpIO->GetSignedInt(entry_index, 0xD9B7C6);
+}
+
 LPathDOMNode::LPathDOMNode(std::string name) : Super(name)
 {
 	mType = EDOMNodeType::Path;
@@ -146,25 +188,18 @@ void LPathDOMNode::PostProcess(const GCarchive& mapArchive)
 
 	for (size_t i = 0; i < mNumPoints; i++)
 	{
-		PathPoint newPoint;
-
-		newPoint.X.Value = pathLoader.GetFloat(i, "pnt0_x");
-		newPoint.X.InTangent = pathLoader.GetFloat(i, "pnt1_x");
-		newPoint.X.OutTangent = pathLoader.GetFloat(i, "pnt2_x");
-
-		newPoint.Y.Value = pathLoader.GetFloat(i, "pnt0_y");
-		newPoint.Y.InTangent = pathLoader.GetFloat(i, "pnt1_y");
-		newPoint.Y.OutTangent = pathLoader.GetFloat(i, "pnt2_y");
-
-		newPoint.Z.Value = pathLoader.GetFloat(i, "pnt0_z");
-		newPoint.Z.InTangent = pathLoader.GetFloat(i, "pnt1_z");
-		newPoint.Z.OutTangent = pathLoader.GetFloat(i, "pnt2_z");
-
-		newPoint.NextRoomNumber = pathLoader.GetSignedInt(i, "next_room");
-		newPoint.UnkInt1 = pathLoader.GetSignedInt(i, 0x809B31);
-		newPoint.UnkInt2 = pathLoader.GetSignedInt(i, 0x61DCB2);
-		newPoint.UnkInt3 = pathLoader.GetSignedInt(i, 0xD9B7C6);
+		std::shared_ptr<LPathPoint> newPoint = std::make_shared<LPathPoint>();
+		newPoint->Deserialize(&pathLoader, i);
 
 		mPoints.push_back(newPoint);
 	}
+}
+
+void LPathDOMNode::PreProcess(LJmpIO& pathJmp, bStream::CMemoryStream& pathStream)
+{
+	std::vector<std::shared_ptr<ISerializable>> serialPoints;
+	for (auto p : mPoints)
+		serialPoints.push_back(std::dynamic_pointer_cast<ISerializable>(p));
+
+	pathJmp.Save(serialPoints, pathStream);
 }

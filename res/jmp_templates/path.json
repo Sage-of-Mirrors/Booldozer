@@ -1,0 +1,102 @@
+{  
+  "fields": [
+    {
+      "hash": 12634602,
+      "mask": 0,
+      "shift": 0,
+      "start": 0,
+      "type": 2
+    },
+    {
+      "hash": 12634603,
+      "mask": 0,
+      "shift": 0,
+      "start": 4,
+      "type": 2
+    },
+    {
+      "hash": 12634604,
+      "mask": 0,
+      "shift": 0,
+      "start": 8,
+      "type": 2
+    },
+    {
+      "hash": 12700138,
+      "mask": 0,
+      "shift": 0,
+      "start": 12,
+      "type": 2
+    },
+    {
+      "hash": 12700139,
+      "mask": 0,
+      "shift": 0,
+      "start": 16,
+      "type": 2
+    },
+    {
+      "hash": 12700140,
+      "mask": 0,
+      "shift": 0,
+      "start": 20,
+      "type": 2
+    },
+    {
+      "hash": 12765674,
+      "mask": 0,
+      "shift": 0,
+      "start": 24,
+      "type": 2
+    },
+    {
+      "hash": 12765675,
+      "mask": 0,
+      "shift": 0,
+      "start": 28,
+      "type": 2
+    },
+    {
+      "hash": 12765676,
+      "mask": 0,
+      "shift": 0,
+      "start": 32,
+      "type": 2
+    },
+    {
+      "hash": 26980,
+      "mask": 4294967295,
+      "shift": 0,
+      "start": 36,
+      "type": 0
+    },
+    {
+      "hash": 6413490,
+      "mask": 4294967295,
+      "shift": 0,
+      "start": 40,
+      "type": 2
+    },
+    {
+      "hash": 20048244,
+      "mask": 4294967295,
+      "shift": 0,
+      "start": 44,
+      "type": 0
+    },
+    {
+      "hash": 8428337,
+      "mask": 4294967295,
+      "shift": 0,
+      "start": 48,
+      "type": 0
+    },
+    {
+      "hash": 14268358,
+      "mask": 3,
+      "shift": 0,
+      "start": 52,
+      "type": 2
+    }
+  ]
+}

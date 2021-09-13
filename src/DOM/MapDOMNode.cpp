@@ -225,18 +225,22 @@ bool LMapDOMNode::SaveMapToFiles(std::filesystem::path folder_path)
 	auto isNotBlackoutFilter = [](auto node) { return std::static_pointer_cast<LBlackoutDOMNode>(node)->IsActiveDuringBlackout() == false; };
 	auto isBlackoutFilter = [](auto node) { return std::static_pointer_cast<LBlackoutDOMNode>(node)->IsActiveDuringBlackout() == true; };
 
+	std::filesystem::path jmpPath = folder_path / mName / "jmp";
+	if (!std::filesystem::exists(jmpPath))
+		std::filesystem::create_directories(jmpPath);
+
 	for (int32_t entityType = 0; entityType < LEntityType_Max; entityType++)
 	{
-		std::filesystem::path entityFilePath = folder_path / LEntityFileNames[entityType];
-		std::vector<std::shared_ptr<LEntityDOMNode>> entitiesOfType;
+		std::filesystem::path entityFilePath = jmpPath / LEntityFileNames[entityType];
+		std::vector<std::shared_ptr<ISerializable>> entitiesOfType;
 		
 		if (entityType == LEntityType_Characters || entityType == LEntityType_Enemies || entityType == LEntityType_Observers || entityType == LEntityType_Keys)
-			entitiesOfType = GetChildrenOfType<LEntityDOMNode>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType), isNotBlackoutFilter);
+			entitiesOfType = GetChildrenOfType<ISerializable>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType), isNotBlackoutFilter);
 		else if (entityType == LEntityType_BlackoutCharacters || entityType == LEntityType_BlackoutEnemies || entityType == LEntityType_BlackoutObservers || entityType == LEntityType_BlackoutKeys)
-			entitiesOfType = GetChildrenOfType<LEntityDOMNode>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType), isBlackoutFilter);
+			entitiesOfType = GetChildrenOfType<ISerializable>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType), isBlackoutFilter);
 		else
 		{
-			entitiesOfType = GetChildrenOfType<LEntityDOMNode>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType));
+			entitiesOfType = GetChildrenOfType<ISerializable>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType));
 
 			if (entitiesOfType.size() == 0)
 				continue;
@@ -247,13 +251,42 @@ bool LMapDOMNode::SaveMapToFiles(std::filesystem::path folder_path)
 
 		// Calculate the size of the required buffer. Header size + number of fields * field size + number of entities * entity size
 		size_t newFileSize = JmpIOManagers[entityType].CalculateNewFileSize(entitiesOfType.size());
-		bStream::CMemoryStream memWriter = bStream::CMemoryStream(newFileSize, bStream::Endianess::Big, bStream::OpenMode::Out);;
+		bStream::CMemoryStream memWriter = bStream::CMemoryStream(newFileSize, bStream::Endianess::Big, bStream::OpenMode::Out);
 
 		JmpIOManagers[entityType].Save(entitiesOfType, memWriter);
 
 		std::ofstream fileStream;
 		fileStream.open(entityFilePath.c_str(), std::ios::binary | std::ios::out);
 		fileStream.write((const char*)memWriter.getBuffer(), newFileSize);
+		fileStream.close();
+	}
+
+	std::filesystem::path pathFolder = folder_path / mName / "path";
+	if (!std::filesystem::exists(pathFolder))
+		std::filesystem::create_directories(pathFolder);
+
+	for (auto pathNode : GetChildrenOfType<LPathDOMNode>(EDOMNodeType::Path))
+	{
+		nlohmann::json jmpTemplate = LResUtility::DeserializeJSON(RES_BASE_PATH / "jmp_templates" / "path.json");
+
+		if (jmpTemplate.find("fields") == jmpTemplate.end())
+		{
+			std::cout << LGenUtility::Format("Failed to read JSON at ", RES_BASE_PATH / "jmp_templates" / "path.json");
+			return false;
+		}
+
+		LJmpIO pathJmp;
+		pathJmp.Load(jmpTemplate, pathNode->GetNumPoints());
+
+		size_t pathSize = pathJmp.CalculateNewFileSize(pathNode->GetNumPoints());
+
+		bStream::CMemoryStream pathFile = bStream::CMemoryStream(pathSize, bStream::Endianess::Big, bStream::OpenMode::Out);
+		pathNode->PreProcess(pathJmp, pathFile);
+
+		std::filesystem::path pathPath = pathFolder / pathNode->GetName();
+		std::ofstream fileStream;
+		fileStream.open(pathPath.c_str(), std::ios::binary | std::ios::out);
+		fileStream.write((const char*)pathFile.getBuffer(), pathSize);
 		fileStream.close();
 	}
 

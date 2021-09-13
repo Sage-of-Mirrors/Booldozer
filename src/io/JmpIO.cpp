@@ -41,6 +41,40 @@ bool LJmpIO::Load(bStream::CMemoryStream* stream)
 	return true;
 }
 
+bool LJmpIO::Load(nlohmann::json jsonTemplate, size_t count)
+{
+	nlohmann::json fieldsArray = jsonTemplate["fields"];
+
+	mFields.clear();
+	mFields.reserve(fieldsArray.size());
+
+	for (auto field : fieldsArray)
+	{
+		LJmpFieldInfo newField;
+		newField.Hash = field["hash"];
+		newField.Bitmask = field["mask"];
+		newField.Start = field["start"];
+		newField.Shift = field["shift"];
+		newField.Type = (EJmpFieldType)field["type"];
+
+		mFields.push_back(newField);
+
+		mFieldCount++;
+	}
+
+	mEntryCount = count;
+	mFieldCount = static_cast<int32_t>(mFields.size());
+	mEntryStartOffset = JMP_HEADER_SIZE + (mFieldCount * JMP_FIELD_DEF_SIZE);
+	mEntrySize = CalculateNewEntrySize();
+
+	if (mEntrySize == 0)
+		return false;
+
+	mData = nullptr;
+
+	return true;
+}
+
 uint32_t LJmpIO::HashFieldName(std::string name) const
 {
 	uint32_t hash = 0;
@@ -238,7 +272,7 @@ uint32_t LJmpIO::CalculateNewEntrySize()
 	return newSize;
 }
 
-bool LJmpIO::Save(std::vector<std::shared_ptr<LEntityDOMNode>> entities, bStream::CMemoryStream& stream)
+bool LJmpIO::Save(std::vector<std::shared_ptr<ISerializable>> entities, bStream::CMemoryStream& stream)
 {
 	stream.writeInt32((int32_t)entities.size());
 	stream.writeInt32(mFieldCount);
@@ -258,7 +292,8 @@ bool LJmpIO::Save(std::vector<std::shared_ptr<LEntityDOMNode>> entities, bStream
 	}
 
 	// Discard old entry data
-	delete[] mData;
+	if (mData != nullptr)
+		delete[] mData;
 
 	uint32_t newDataSize = (entities.size() * newEntrySize + 31) & ~31;
 
@@ -296,6 +331,19 @@ bool LJmpIO::SetUnsignedInt(uint32_t entry_index, std::string field_name, uint32
 bool LJmpIO::SetSignedInt(uint32_t entry_index, std::string field_name, int32_t value)
 {
 	const LJmpFieldInfo* field = FetchJmpFieldInfo(field_name);
+
+	// If field is still nullptr, we failed to find a field matching the given name.
+	if (field == nullptr)
+		return false;
+
+	uint32_t fieldOffset = entry_index * mEntrySize + field->Start;
+
+	return PokeS32(fieldOffset, value);
+}
+
+bool LJmpIO::SetSignedInt(uint32_t entry_index, uint32_t field_hash, int32_t value)
+{
+	const LJmpFieldInfo* field = FetchJmpFieldInfo(field_hash);
 
 	// If field is still nullptr, we failed to find a field matching the given name.
 	if (field == nullptr)
