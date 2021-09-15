@@ -164,50 +164,50 @@ void LRoomDOMNode::RenderWaveHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEd
 	}
 }
 
-void LRoomDOMNode::LoadJmpInfo(uint32_t index, LJmpIO* jmp_io)
+void LRoomDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 {
-	mInternalName = jmp_io->GetString(index, "name");
+	mInternalName = JmpIO->GetString(entry_index, "name");
 
-	mRoomNumber = jmp_io->GetSignedInt(index, "RoomNo");
-	mThunder = jmp_io->GetSignedInt(index, "Thunder");
+	mRoomNumber = JmpIO->GetSignedInt(entry_index, "RoomNo");
+	mThunder = JmpIO->GetSignedInt(entry_index, "Thunder");
 
-	mShouldRenderSkybox = jmp_io->GetBoolean(index, "VRbox");
+	mShouldRenderSkybox = JmpIO->GetBoolean(entry_index, "VRbox");
 
-	mDustLevel = jmp_io->GetSignedInt(index, "DustLv");
+	mDustLevel = JmpIO->GetSignedInt(entry_index, "DustLv");
 
-	mLightColor.r = jmp_io->GetSignedInt(index, "LightColorR");
-	mLightColor.g = jmp_io->GetSignedInt(index, "LightColorG");
-	mLightColor.b = jmp_io->GetSignedInt(index, "LightColorB");
+	mLightColor.r = JmpIO->GetSignedInt(entry_index, "LightColorR");
+	mLightColor.g = JmpIO->GetSignedInt(entry_index, "LightColorG");
+	mLightColor.b = JmpIO->GetSignedInt(entry_index, "LightColorB");
 
-	mDistance = jmp_io->GetSignedInt(index, "Distance");
-	mLv = jmp_io->GetSignedInt(index, "Lv");
-	mSoundEchoParameter = jmp_io->GetSignedInt(index, "sound_echo_parameter");
-	mSoundRoomCode = jmp_io->GetSignedInt(index, "sound_room_code");
+	mDistance = JmpIO->GetSignedInt(entry_index, "Distance");
+	mLv = JmpIO->GetSignedInt(entry_index, "Lv");
+	mSoundEchoParameter = JmpIO->GetSignedInt(entry_index, "sound_echo_parameter");
+	mSoundRoomCode = JmpIO->GetSignedInt(entry_index, "sound_room_code");
 
-	mSoundRoomSize = jmp_io->GetUnsignedInt(index, "sound_room_size");
+	mSoundRoomSize = JmpIO->GetUnsignedInt(entry_index, "sound_room_size");
 }
 
-void LRoomDOMNode::SaveJmpInfo(uint32_t index, LJmpIO* jmp_io)
+void LRoomDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 {
-	jmp_io->SetString(index, "name", mInternalName);
+	JmpIO->SetString(entry_index, "name", mInternalName);
 
-	jmp_io->SetSignedInt(index, "RoomNo", mRoomNumber);
-	jmp_io->SetSignedInt(index, "Thunder", mThunder);
+	JmpIO->SetSignedInt(entry_index, "RoomNo", mRoomNumber);
+	JmpIO->SetSignedInt(entry_index, "Thunder", mThunder);
 
-	jmp_io->SetBoolean(index, "VRbox", mShouldRenderSkybox);
+	JmpIO->SetBoolean(entry_index, "VRbox", mShouldRenderSkybox);
 
-	jmp_io->SetSignedInt(index, "DustLv", mDustLevel);
+	JmpIO->SetSignedInt(entry_index, "DustLv", mDustLevel);
 
-	jmp_io->SetSignedInt(index, "LightColorR", mLightColor.r);
-	jmp_io->SetSignedInt(index, "LightColorG", mLightColor.g);
-	jmp_io->SetSignedInt(index, "LightColorB", mLightColor.b);
+	JmpIO->SetSignedInt(entry_index, "LightColorR", mLightColor.r);
+	JmpIO->SetSignedInt(entry_index, "LightColorG", mLightColor.g);
+	JmpIO->SetSignedInt(entry_index, "LightColorB", mLightColor.b);
 
-	jmp_io->SetSignedInt(index, "Distance", mDistance);
-	jmp_io->SetSignedInt(index, "Lv", mLv);
-	jmp_io->SetSignedInt(index, "sound_echo_parameter", mSoundEchoParameter);
-	jmp_io->SetSignedInt(index, "sound_room_code", mSoundRoomCode);
+	JmpIO->SetSignedInt(entry_index, "Distance", mDistance);
+	JmpIO->SetSignedInt(entry_index, "Lv", mLv);
+	JmpIO->SetSignedInt(entry_index, "sound_echo_parameter", mSoundEchoParameter);
+	JmpIO->SetSignedInt(entry_index, "sound_room_code", mSoundRoomCode);
 
-	jmp_io->SetUnsignedInt(index, "sound_room_size", mSoundRoomSize);
+	JmpIO->SetUnsignedInt(entry_index, "sound_room_size", mSoundRoomSize);
 }
 
 bool LRoomDOMNode::CompleteLoad()

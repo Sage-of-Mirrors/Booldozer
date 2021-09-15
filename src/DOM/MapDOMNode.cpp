@@ -110,7 +110,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 		// roominfo might not have this room defined in it, so only try to read if the index is within the bounds.
 		if (i < JmpIOManagers[LEntityType_Rooms].GetEntryCount())
-			newRoom->LoadJmpInfo(i, &JmpIOManagers[LEntityType_Rooms]);
+			newRoom->Deserialize(&JmpIOManagers[LEntityType_Rooms], i);
 		else
 			newRoom->SetRoomNumber(i);
 

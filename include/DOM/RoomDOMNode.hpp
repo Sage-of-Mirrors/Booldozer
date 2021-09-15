@@ -80,7 +80,7 @@ struct LSpawnGroup
 };
 
 // DOM node representing a single room, including its model and all of the objects within it.
-class LRoomDOMNode : public LBGRenderDOMNode
+class LRoomDOMNode : public LBGRenderDOMNode, public ISerializable
 {
 	std::vector<std::shared_ptr<LEntityDOMNode>> mRoomEntities[LRoomEntityType_Max];
 	bool mRoomEntityVisibility[LRoomEntityType_Max] = {
@@ -150,9 +150,13 @@ public:
 	void RenderWaveHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection);
 
 	// Reads the data from the specified entry in the given LJmpIO instance into this room's JMP properties.
-	void LoadJmpInfo(uint32_t index, LJmpIO* jmp_io);
+	virtual void Deserialize(LJmpIO* JmpIO, uint32_t entry_index) override;
 	// Writes the JMP data from this room into the given LJmpIO instance at the specified entry.
-	void SaveJmpInfo(uint32_t index, LJmpIO* jmp_io);
+	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const override;
+
+	virtual void PostProcess() override { };
+	virtual void PreProcess() override { };
+
 	// Loads the BIN models from the given archive, distributes them to entities that need them, and does various other room-specific loading stuff.
 	bool CompleteLoad();
 

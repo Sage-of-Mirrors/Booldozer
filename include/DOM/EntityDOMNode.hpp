@@ -101,7 +101,8 @@ public:
 			return EDOMNodeType::SpeedySpiritDrop;
 		case LEntityType_Boos:
 			return EDOMNodeType::Boo;
-
+		case LEntityType_Rooms:
+			return EDOMNodeType::Room;
 		default:
 			return EDOMNodeType::Map;
 		}
