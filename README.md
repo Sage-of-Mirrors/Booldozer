@@ -3,7 +3,7 @@
 <img src=https://user-images.githubusercontent.com/6289769/133509757-76ed124d-62b3-4467-b44e-b6b82e40e705.png width="40%" height="40%" ></img>
 </p>
 
-Booldozer is a work-in-progress editor for the original Luigi's Mansion on GameCube, written by SpaceCats ([@kittensandals](https://twitter.com/kittensandals)) and Gamma ([@SageOfMirrors](https://twitter.com/SageOfMirrors)). It aims to cover as many aspects of modding the game as possible.
+Booldozer is a work-in-progress editor for the original [Luigi's Mansion on GameCube](https://en.wikipedia.org/wiki/Luigi%27s_Mansion), written by SpaceCats ([@kittensandals](https://twitter.com/kittensandals)) and Gamma ([@SageOfMirrors](https://twitter.com/SageOfMirrors)). It aims to cover as many aspects of modding the game as possible.
 
 ### Features
 #### Map Editing
