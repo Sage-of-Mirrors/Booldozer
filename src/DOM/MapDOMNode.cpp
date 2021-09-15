@@ -76,8 +76,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		return false;
 	}
 
-	// We're going to try to get the JMP file "roominfo." This will help us load the room room data.
-	// If we can't find a roominfo file, we're going to assume this archive isn't from the Map/ directory and error out
+	// Attempt to load roominfo data. Doesn't necessarily exist!
 	uint8_t* roominfoData = nullptr;
 	size_t roomInfoSize = 0;
 	for (uint32_t i = 0; i < mapArc.filenum; i++)
@@ -90,22 +89,17 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		}
 	}
 
-	// No roominfo, no map load
-	if (roominfoData == nullptr)
+	if (roominfoData != nullptr)
 	{
-		printf("Archive \"%s\" is not a valid map archive.\nPlease open a map from the Map folder.\n", file_path.string().c_str());
-		return false;
+		// Prep the roominfo data to be read from
+		bStream::CMemoryStream roomMemStream(roominfoData, roomInfoSize, bStream::Endianess::Big, bStream::OpenMode::In);
+		JmpIOManagers[LEntityType_Rooms].Load(&roomMemStream);
 	}
 
 	// Grab the friendly room names for this map
 	nlohmann::json roomNames = LResUtility::GetMapRoomNames(mName);
 
-	// Prep the roominfo data to be read from
-	bStream::CMemoryStream roomMemStream(roominfoData, roomInfoSize, bStream::Endianess::Big, bStream::OpenMode::In);
-	JmpIOManagers[LEntityType_Rooms].Load(&roomMemStream);
-
-	// As it turns out, roominfo might not list all of the rooms in the map.
-	// Therefore, we're going to use the static data (extracted into rooms.map) as ground truth for room count.
+	// Use the static room data to know how many rooms to load
 	for (size_t i = 0; i < mStaticMapIO.GetRoomCount(); i++)
 	{
 		std::string roomName = LGenUtility::Format("room_", std::setfill('0'), std::setw(2), i);
@@ -117,6 +111,8 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		// roominfo might not have this room defined in it, so only try to read if the index is within the bounds.
 		if (i < JmpIOManagers[LEntityType_Rooms].GetEntryCount())
 			newRoom->LoadJmpInfo(i, &JmpIOManagers[LEntityType_Rooms]);
+		else
+			newRoom->SetRoomNumber(i);
 
 		AddChild(newRoom);
 	}
@@ -171,8 +167,9 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	for (auto loadedNode : GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Entity))
 		loadedNode->PostProcess();
 
-	for (auto pathNodes : GetChildrenOfType<LPathDOMNode>(EDOMNodeType::Path))
-		pathNodes->PostProcess(mapArc);
+	// Load the path files into the path nodes
+	for (auto pathNode : GetChildrenOfType<LPathDOMNode>(EDOMNodeType::Path))
+		pathNode->PostProcess(mapArc);
 
 	// To finish loading the map we're going to delegate grabbing room data to the rooms themselves,
 	// where they'll also set up things like models for furniture

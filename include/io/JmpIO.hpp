@@ -56,22 +56,22 @@ struct LJmpFieldInfo
 class LJmpIO
 {
 	// Number of individual entries in this JMP file.
-	int32_t mEntryCount;
+	int32_t mEntryCount { 0 };
 	// Number of fields defined in this JMP file.
-	int32_t mFieldCount;
+	int32_t mFieldCount { 0 };
 	// Offset of the first entry in this JMP file.
-	uint32_t mEntryStartOffset;
+	uint32_t mEntryStartOffset { 0 };
 	// Size of an entry in this JMP file.
-	uint32_t mEntrySize;
+	uint32_t mEntrySize { 0 };
 
 	// Size of a string. Can vary between 16 and 32.
-	size_t mStringSize;
+	size_t mStringSize { 32 };
 
 	// A vector of the fields that define the data within the JMP entries.
 	std::vector<LJmpFieldInfo> mFields;
 
 	// Pointer to the data blob containing the entries in this JMP file.
-	uint8_t* mData;
+	uint8_t* mData { nullptr };
 
 	// Hashes the given field name so that the field can be found from the list of loaded instances.
 	uint32_t HashFieldName(std::string name) const;

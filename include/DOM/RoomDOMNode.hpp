@@ -100,27 +100,27 @@ class LRoomDOMNode : public LBGRenderDOMNode
 
 /*=== Roominfo properties ===*/
 	// Room's name in the JMP file. Usually just the string "room".
-	std::string mInternalName;
+	std::string mInternalName { "room" };
 	// This room's ID.
-	int32_t mRoomNumber;
+	int32_t mRoomNumber { 0 };
 	// ??
-	int32_t mThunder;
+	int32_t mThunder { 0 };
 	// Whether the map's skybox should be rendered while the player is in this room.
-	bool mShouldRenderSkybox;
+	bool mShouldRenderSkybox { false };
 	// ??
-	int32_t mDustLevel;
+	int32_t mDustLevel { 0 };
 	// The color of the lights in the room?
 	glm::ivec3 mLightColor;
 	// ??
-	int32_t mDistance;
+	int32_t mDistance { 0 };
 	// ??
-	int32_t mLv;
+	int32_t mLv { 0 };
 	// ??
-	int32_t mSoundEchoParameter;
+	int32_t mSoundEchoParameter { 0 };
 	// ??
-	int32_t mSoundRoomCode;
+	int32_t mSoundRoomCode { 0 };
 	// ??
-	uint32_t mSoundRoomSize;
+	uint32_t mSoundRoomSize { 0 };
 
 /*=== map.dat properties ===*/
 	// Name of the resource file, either a raw BIN or an archive.
@@ -143,7 +143,8 @@ public:
 
 	LRoomDOMNode(std::string name);
 
-	int32_t GetRoomNumber() { return mRoomNumber; }
+	int32_t GetRoomNumber() const { return mRoomNumber; }
+	void SetRoomNumber(int32_t roomNumber) { mRoomNumber = roomNumber; }
 
 	virtual void RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection) override;
 	void RenderWaveHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection);

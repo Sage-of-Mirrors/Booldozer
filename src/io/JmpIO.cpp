@@ -2,7 +2,6 @@
 #include "DOM/EntityDOMNode.hpp"
 
 LJmpIO::LJmpIO()
-	: mEntryCount(-1), mFieldCount(-1), mEntryStartOffset(0), mEntrySize(0), mStringSize(32), mData(nullptr)
 {
 
 }
