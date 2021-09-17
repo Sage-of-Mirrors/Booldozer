@@ -19,9 +19,9 @@ void LUIUtility::RenderCheckBox(LDOMNodeBase* node)
         node->SetIsRendered(c);
 }
 
-bool LUIUtility::RenderNodeSelectable(LDOMNodeBase* node)
+bool LUIUtility::RenderNodeSelectable(LDOMNodeBase* node, const bool& highlight)
 {
-    bool s = node->GetIsSelected();
+    bool s = highlight;
 
     ImGui::Selectable(node->GetName().c_str(), &s);
 
@@ -31,7 +31,6 @@ bool LUIUtility::RenderNodeSelectable(LDOMNodeBase* node)
     }
     else if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
     {
-        ImGui::OpenPopup("###node_context_menu");
         return true;
     }
 
@@ -48,6 +47,20 @@ void LUIUtility::RenderNodeSelectableDragSource(LDOMNodeBase* node)
 		ImGui::Text("%s", node->GetName().c_str());
 		ImGui::EndDragDropSource();
 	}
+}
+
+bool LUIUtility::RenderNodeSelectableTreeNode(const std::string& name, const bool& highlight, bool& selected)
+{
+	ImGuiTreeNodeFlags base_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
+
+	if (highlight)
+		base_flags |= ImGuiTreeNodeFlags_Selected;
+
+	bool node_open = ImGui::TreeNodeEx(name.c_str(), base_flags);
+	if (ImGui::IsItemClicked())
+		selected = true;
+
+	return node_open;
 }
 
 bool LUIUtility::RenderComboBox(std::string name, std::vector<std::shared_ptr<LEntityDOMNode>> options, std::shared_ptr<LEntityDOMNode> current_selection)

@@ -1,4 +1,5 @@
 #pragma once
+#include "GenUtil.hpp"
 
 #include <vector>
 #include <memory>
@@ -39,13 +40,14 @@ enum class EDOMNodeType
 	SpeedySpiritDrop,
 	Boo,
 	RoomData,
-	Door
+	Door,
+	PathPoint
 };
 
 // Base class for all DOM (Document Object Model) nodes.
 class LDOMNodeBase : public std::enable_shared_from_this<LDOMNodeBase>
 {
-	uint32_t mNodeState;
+	uint32_t mNodeState { 0 };
 
 protected:
 	EDOMNodeType mType;
@@ -57,7 +59,7 @@ protected:
 		for (std::shared_ptr<LDOMNodeBase> child : Children)
 		{
 			if (child->IsNodeType(type))
-				list.push_back(std::dynamic_pointer_cast<T>(child));
+				list.push_back(std::static_pointer_cast<T>(child));
 
 			child->GatherChildrenOfType(list, type);
 		}
@@ -70,7 +72,7 @@ protected:
 		{
 			if (child->IsNodeType(type))
 			{
-				auto typed = std::dynamic_pointer_cast<T>(child);
+				auto typed = std::static_pointer_cast<T>(child);
 
 				if (predicate(typed))
 					list.push_back(typed);
@@ -160,6 +162,42 @@ public:
 		}
 
 		new_child->Parent = shared_from_this();
+	}
+
+	void AddChildAtIndex(std::shared_ptr<LDOMNodeBase> new_child, uint32_t index)
+	{
+		if (index == -1)
+		{
+			AddChild(new_child);
+			return;
+		}
+
+		Children.insert(Children.begin() + index, new_child);
+
+		if (!new_child->Parent.expired())
+		{
+			auto parentLocked = new_child->Parent.lock();
+			for (auto it = parentLocked->Children.begin(); it != parentLocked->Children.end(); ++it)
+			{
+				if (*it == new_child)
+				{
+					parentLocked->Children.erase(it);
+					break;
+				}
+			}
+		}
+
+		new_child->Parent = shared_from_this();
+	}
+
+	void RemoveChild(std::shared_ptr<LDOMNodeBase> child)
+	{
+		ptrdiff_t index = LGenUtility::VectorIndexOf(Children, child);
+		if (index == -1)
+			return;
+
+		child->Children.clear();
+		Children.erase(Children.begin() + index);
 	}
 
 	// Returns the ancestor of this node of the given type, recursing up the hierarchy;

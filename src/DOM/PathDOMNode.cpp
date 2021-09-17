@@ -5,7 +5,12 @@
 
 #include <memory>
 
-void LPathPoint::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
+LPathPointDOMNode::LPathPointDOMNode(std::string name) : Super(name)
+{
+	mType = EDOMNodeType::PathPoint;
+}
+
+void LPathPointDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 {
 	JmpIO->SetFloat(entry_index, "pnt0_x", X.Value);
 	JmpIO->SetFloat(entry_index, "pnt1_x", X.InTangent);
@@ -25,7 +30,7 @@ void LPathPoint::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetSignedInt(entry_index, 0xD9B7C6, UnkInt3);
 }
 
-void LPathPoint::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
+void LPathPointDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 {
 	X.Value = JmpIO->GetFloat(entry_index, "pnt0_x");
 	X.InTangent = JmpIO->GetFloat(entry_index, "pnt1_x");
@@ -188,18 +193,14 @@ void LPathDOMNode::PostProcess(const GCarchive& mapArchive)
 
 	for (size_t i = 0; i < mNumPoints; i++)
 	{
-		std::shared_ptr<LPathPoint> newPoint = std::make_shared<LPathPoint>();
+		std::shared_ptr<LPathPointDOMNode> newPoint = std::make_shared<LPathPointDOMNode>("Path Point");
 		newPoint->Deserialize(&pathLoader, i);
 
-		mPoints.push_back(newPoint);
+		AddChild(newPoint);
 	}
 }
 
 void LPathDOMNode::PreProcess(LJmpIO& pathJmp, bStream::CMemoryStream& pathStream)
 {
-	std::vector<std::shared_ptr<ISerializable>> serialPoints;
-	for (auto p : mPoints)
-		serialPoints.push_back(std::dynamic_pointer_cast<ISerializable>(p));
-
-	pathJmp.Save(serialPoints, pathStream);
+	pathJmp.Save(GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::PathPoint), pathStream);
 }

@@ -12,7 +12,7 @@ struct LPathCoordinate
 	float OutTangent { 0.f };
 };
 
-struct LPathPoint : public ISerializable
+class LPathPointDOMNode : public LEntityDOMNode
 {
 	LPathCoordinate X;
 	LPathCoordinate Y;
@@ -27,6 +27,14 @@ struct LPathPoint : public ISerializable
 	// Hash 0x00D9B7C6
 	uint32_t UnkInt3{ 0 };
 
+public:
+	typedef LEntityDOMNode Super;
+
+	LPathPointDOMNode(std::string name);
+	~LPathPointDOMNode() { std::cout << "Path point destroyed!" << std::endl; }
+
+	virtual void RenderDetailsUI(float dt) override { };
+
 	virtual void PostProcess() override { };
 	virtual void PreProcess() override { };
 
@@ -34,6 +42,16 @@ struct LPathPoint : public ISerializable
 	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const override;
 	// Reads the data from the given Jmp IO object at the given index into this path entry;
 	virtual void Deserialize(LJmpIO* JmpIO, uint32_t entry_index) override;
+
+/*=== Type operations ===*/
+	// Returns whether this node is of the given type, or derives from a node of that type.
+	virtual bool IsNodeType(EDOMNodeType type) const override
+	{
+		if (type == EDOMNodeType::PathPoint)
+			return true;
+
+		return Super::IsNodeType(type);
+	}
 };
 
 class LPathDOMNode : public LEntityDOMNode
@@ -50,14 +68,13 @@ class LPathDOMNode : public LEntityDOMNode
 	bool mIsClosed { false };
 	bool mUse { false };
 
-	std::vector<std::shared_ptr<LPathPoint>> mPoints;
-
 public:
 	typedef LEntityDOMNode Super;
 
 	LPathDOMNode(std::string name);
+	~LPathDOMNode() { std::cout << "Path destroyed!" << std::endl; }
 
-	size_t GetNumPoints() { return mPoints.size(); }
+	size_t GetNumPoints() { return Children.size(); }
 
 	virtual void RenderDetailsUI(float dt) override;
 
@@ -73,7 +90,6 @@ public:
 	void PreProcess(LJmpIO& pathJmp, bStream::CMemoryStream& pathStream);
 
 /*=== Type operations ===*/
-
 	// Returns whether this node is of the given type, or derives from a node of that type.
 	virtual bool IsNodeType(EDOMNodeType type) const override
 	{

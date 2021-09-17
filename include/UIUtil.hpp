@@ -15,8 +15,10 @@ namespace LUIUtility
 	void RenderCheckBox(LDOMNodeBase* node);
 
 	// Renders an ImGui Selectable control and returns whether it was left-clicked.
-	bool RenderNodeSelectable(LDOMNodeBase* node);
+	bool RenderNodeSelectable(LDOMNodeBase* node, const bool& highlight);
 	void RenderNodeSelectableDragSource(LDOMNodeBase* node);
+
+	bool RenderNodeSelectableTreeNode(const std::string& name, const bool& higlight, bool& selected);
 
 	bool RenderComboBox(std::string name, std::vector<std::shared_ptr<LEntityDOMNode>> options, std::shared_ptr<LEntityDOMNode> current_selection);
 	bool RenderComboBox(std::string name, std::map<std::string, std::string>& options, std::string& value);

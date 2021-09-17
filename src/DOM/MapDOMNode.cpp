@@ -229,15 +229,15 @@ bool LMapDOMNode::SaveMapToFiles(std::filesystem::path folder_path)
 	for (int32_t entityType = 0; entityType < LEntityType_Max; entityType++)
 	{
 		std::filesystem::path entityFilePath = jmpPath / LEntityFileNames[entityType];
-		std::vector<std::shared_ptr<ISerializable>> entitiesOfType;
+		std::vector<std::shared_ptr<LEntityDOMNode>> entitiesOfType;
 		
 		if (entityType == LEntityType_Characters || entityType == LEntityType_Enemies || entityType == LEntityType_Observers || entityType == LEntityType_Keys)
-			entitiesOfType = GetChildrenOfType<ISerializable>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType), isNotBlackoutFilter);
+			entitiesOfType = GetChildrenOfType<LEntityDOMNode>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType), isNotBlackoutFilter);
 		else if (entityType == LEntityType_BlackoutCharacters || entityType == LEntityType_BlackoutEnemies || entityType == LEntityType_BlackoutObservers || entityType == LEntityType_BlackoutKeys)
-			entitiesOfType = GetChildrenOfType<ISerializable>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType), isBlackoutFilter);
+			entitiesOfType = GetChildrenOfType<LEntityDOMNode>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType), isBlackoutFilter);
 		else
 		{
-			entitiesOfType = GetChildrenOfType<ISerializable>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType));
+			entitiesOfType = GetChildrenOfType<LEntityDOMNode>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType));
 
 			if (entitiesOfType.size() == 0)
 				continue;
