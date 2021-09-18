@@ -1,9 +1,16 @@
 #include "DOM/PathDOMNode.hpp"
+#include "DOM/RoomDOMNode.hpp"
 #include "UIUtil.hpp"
 #include "GenUtil.hpp"
 #include "../lib/libgctools/include/archive.h"
 
 #include <memory>
+
+extern std::map<std::string, std::string> InterpolationTypes = {
+	{ "(null)", "None" },
+	{ "Linear", "Linear" },
+	{ "Bezier", "Bezier" },
+};
 
 LPathPointDOMNode::LPathPointDOMNode(std::string name) : Super(name)
 {
@@ -12,42 +19,82 @@ LPathPointDOMNode::LPathPointDOMNode(std::string name) : Super(name)
 
 void LPathPointDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 {
-	JmpIO->SetFloat(entry_index, "pnt0_x", X.Value);
-	JmpIO->SetFloat(entry_index, "pnt1_x", X.InTangent);
-	JmpIO->SetFloat(entry_index, "pnt2_x", X.OutTangent);
+	JmpIO->SetFloat(entry_index, "pnt0_x", Z.Value);
+	JmpIO->SetFloat(entry_index, "pnt1_x", Z.InTangent);
+	JmpIO->SetFloat(entry_index, "pnt2_x", Z.OutTangent);
 
 	JmpIO->SetFloat(entry_index, "pnt0_y", Y.Value);
 	JmpIO->SetFloat(entry_index, "pnt1_y", Y.InTangent);
 	JmpIO->SetFloat(entry_index, "pnt2_y", Y.OutTangent);
 
-	JmpIO->SetFloat(entry_index, "pnt0_z", Z.Value);
-	JmpIO->SetFloat(entry_index, "pnt1_z", Z.InTangent);
-	JmpIO->SetFloat(entry_index, "pnt2_z", Z.OutTangent);
+	JmpIO->SetFloat(entry_index, "pnt0_z", X.Value);
+	JmpIO->SetFloat(entry_index, "pnt1_z", X.InTangent);
+	JmpIO->SetFloat(entry_index, "pnt2_z", X.OutTangent);
 
-	JmpIO->SetSignedInt(entry_index, "next_room", NextRoomNumber);
-	JmpIO->SetSignedInt(entry_index, 0x809B31, UnkInt1);
-	JmpIO->SetSignedInt(entry_index, 0x61DCB2, UnkInt2);
-	JmpIO->SetSignedInt(entry_index, 0xD9B7C6, UnkInt3);
+	JmpIO->SetSignedInt(entry_index, "next_room", mNextRoomNumber);
+	JmpIO->SetSignedInt(entry_index, 0x809B31, mUnkInt1);
+	JmpIO->SetSignedInt(entry_index, 0x61DCB2, mUnkInt2);
+	JmpIO->SetSignedInt(entry_index, 0xD9B7C6, mUnkInt3);
 }
 
 void LPathPointDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 {
-	X.Value = JmpIO->GetFloat(entry_index, "pnt0_x");
-	X.InTangent = JmpIO->GetFloat(entry_index, "pnt1_x");
-	X.OutTangent = JmpIO->GetFloat(entry_index, "pnt2_x");
+	Z.Value = JmpIO->GetFloat(entry_index, "pnt0_x");
+	Z.InTangent = JmpIO->GetFloat(entry_index, "pnt1_x");
+	Z.OutTangent = JmpIO->GetFloat(entry_index, "pnt2_x");
 
 	Y.Value = JmpIO->GetFloat(entry_index, "pnt0_y");
 	Y.InTangent = JmpIO->GetFloat(entry_index, "pnt1_y");
 	Y.OutTangent = JmpIO->GetFloat(entry_index, "pnt2_y");
 
-	Z.Value = JmpIO->GetFloat(entry_index, "pnt0_z");
-	Z.InTangent = JmpIO->GetFloat(entry_index, "pnt1_z");
-	Z.OutTangent = JmpIO->GetFloat(entry_index, "pnt2_z");
+	X.Value = JmpIO->GetFloat(entry_index, "pnt0_z");
+	X.InTangent = JmpIO->GetFloat(entry_index, "pnt1_z");
+	X.OutTangent = JmpIO->GetFloat(entry_index, "pnt2_z");
 
-	NextRoomNumber = JmpIO->GetSignedInt(entry_index, "next_room");
-	UnkInt1 = JmpIO->GetSignedInt(entry_index, 0x809B31);
-	UnkInt2 = JmpIO->GetSignedInt(entry_index, 0x61DCB2);
-	UnkInt3 = JmpIO->GetSignedInt(entry_index, 0xD9B7C6);
+	mNextRoomNumber = JmpIO->GetSignedInt(entry_index, "next_room");
+	mUnkInt1 = JmpIO->GetSignedInt(entry_index, 0x809B31);
+	mUnkInt2 = JmpIO->GetSignedInt(entry_index, 0x61DCB2);
+	mUnkInt3 = JmpIO->GetSignedInt(entry_index, 0xD9B7C6);
+}
+
+void LPathPointDOMNode::PostProcess()
+{
+	mPosition.x = X.Value;
+	mPosition.y = Y.Value;
+	mPosition.z = Z.Value;
+
+	auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+	if (auto mapNodeLocked = mapNode.lock())
+		mRoomRef = mapNodeLocked->GetRoomByNumber(mNextRoomNumber);
+}
+
+void LPathPointDOMNode::PreProcess()
+{
+	X.Value = mPosition.x;
+	Y.Value = mPosition.y;
+	Z.Value = mPosition.z;
+
+	if (mRoomRef.expired())
+	{
+		mRoomNumber = 0;
+		return;
+	}
+
+	mNextRoomNumber = mRoomRef.lock()->GetRoomNumber();
+}
+
+void LPathPointDOMNode::RenderDetailsUI(float dt)
+{
+	auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+	LUIUtility::RenderNodeReferenceCombo<LRoomDOMNode>("Next Room", EDOMNodeType::Room, mapNode, mRoomRef);
+	LUIUtility::RenderTooltip("What room a Boo using this path to escape from Luigi should end up in.");
+
+	ImGui::InputInt("Unknown 1", &mUnkInt1);
+	LUIUtility::RenderTooltip("???");
+	ImGui::InputInt("Unknown 2", &mUnkInt2);
+	LUIUtility::RenderTooltip("???");
+	ImGui::InputInt("Unknown 3", &mUnkInt3);
+	LUIUtility::RenderTooltip("???");
 }
 
 LPathDOMNode::LPathDOMNode(std::string name) : Super(name)
@@ -57,60 +104,29 @@ LPathDOMNode::LPathDOMNode(std::string name) : Super(name)
 
 void LPathDOMNode::RenderDetailsUI(float dt)
 {
-	/*LUIUtility::RenderTransformUI(mTransform.get(), mPosition, mRotation, mScale);
-
-	// Strings
-	LUIUtility::RenderTextInput("Character Name", &mName);
-	LUIUtility::RenderTooltip("What character this entity is.");
-
-	LUIUtility::RenderTextInput("Spawn Group", &mCreateName);
-	LUIUtility::RenderTooltip("What Spawn Group this character is in. Set this to ---- to spawn when Luigi enters the room. This is also known as create_name.");
-
-	LUIUtility::RenderTextInput("Path Name", &mPathName);
-	LUIUtility::RenderTooltip("The name of a path file that this character will use. Set this to (null) for no path.");
-
-	LUIUtility::RenderTextInput("Script Name", &mCodeName);
-	LUIUtility::RenderTooltip("The name that can be used to reference this character in an event.");
-
 	// Integers
-	ImGui::InputInt("Spawn Flag", &mSpawnFlag);
-	LUIUtility::RenderTooltip("The flag that must be set before this character will begin spawning.");
-	ImGui::InputInt("Despawn Flag", &mDespawnFlag);
-	LUIUtility::RenderTooltip("If this flag is set, this character will no longer spawn.");
-
-	ImGui::InputInt("event_set_no", &mEventSetNumber);
-	LUIUtility::RenderTooltip("Don't quite know what this does. It's called event_set_no by the game, but it seems useless?");
-
-	if (mName == "luige")
-	{
-		ImGui::InputInt("Luigi Spawn ID", &mSpawnPointID);
-		LUIUtility::RenderTooltip("The ID of this Luigi spawn point. Luigi will spawn into a map by default at ID 0; any other IDs must be accessed via events.");
-	}
-
-	ImGui::InputInt("GameBoy Horror Scan ID", &mGBHScanID);
-	LUIUtility::RenderTooltip("The ID that determines what message is displayed by a Portrait Ghost when its heart is scanned by the GameBoy Horror.");
+	ImGui::InputInt("ID", &mOrganizationNumber);
+	LUIUtility::RenderTooltip("An ID to organize paths by floor. Seems to be unused by the game?");
+	ImGui::InputInt("Arg 0", &mArg0);
+	LUIUtility::RenderTooltip("Mostly sets the speed at which an actor traverses the path. May mean other things to other actors.");
 
 	// Comboboxes
 	auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
-	LUIUtility::RenderNodeReferenceCombo<LItemAppearDOMNode>("Defeated Item Table", EDOMNodeType::ItemAppear, mapNode, mItemTableRef);
-	LUIUtility::RenderTooltip("The Item Appear entry to use to spawn items when this character is defeated.");
+	LUIUtility::RenderNodeReferenceCombo<LPathDOMNode>("Next Path", EDOMNodeType::Path, mapNode, mNextPathRef);
+	LUIUtility::RenderTooltip("The next path in a sequence.");
 
-	LUIUtility::RenderComboEnum<EConditionType>("Spawn Condition", mCondType);
-	LUIUtility::RenderTooltip("The condition governing whether the character is allowed to spawn.");
+	LUIUtility::RenderComboBox("Interpolation Type", InterpolationTypes, mInterpolationType);
+	LUIUtility::RenderTooltip("What kind of interpolation this path uses. Ladders use Linear. Not sure what the other types do.");
 
-	// This may be unused/useless?
-	//LUIUtility::RenderComboEnum<EAppearType>("Spawn Type", mAppearType);
-	//LUIUtility::RenderTooltip("The way in which the character will spawn. Using the second option WILL crash the game.");
-
-	LUIUtility::RenderComboEnum<EAttackType>("Behavior Type", mAttackType);
-	LUIUtility::RenderTooltip("How this character will behave.");
+	LUIUtility::RenderComboEnum<EPathDoType>("Do Type", mDoType);
+	LUIUtility::RenderTooltip("This value allows the actor following this path to do something when getting to the end of it.");
 
 	// Bools
-	LUIUtility::RenderCheckBox("Visible?", &mIsVisible);
-	LUIUtility::RenderTooltip("Whether this character should be visible.");
+	LUIUtility::RenderCheckBox("Is Path Closed?", &mIsClosed);
+	LUIUtility::RenderTooltip("Doesn't seem to be used; it probably would have marked this path as being a closed loop (last point -> first point).");
 
-	LUIUtility::RenderCheckBox("Stay on path between rooms?", &mStay);
-	LUIUtility::RenderTooltip("Whether this character should remain on a path when Luigi moves between rooms.");*/
+	LUIUtility::RenderCheckBox("Is Ladder?", &mUse);
+	LUIUtility::RenderTooltip("Whether this path can be used as a ladder when Luigi presses A next to it.");
 }
 
 void LPathDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
@@ -124,7 +140,7 @@ void LPathDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetSignedInt(entry_index, "room_no", mRoomNumber);
 	JmpIO->SetSignedInt(entry_index, "arg0", mArg0);
 
-	JmpIO->SetUnsignedInt(entry_index, "do_type", mDoType);
+	JmpIO->SetUnsignedInt(entry_index, "do_type", (uint32_t)mDoType);
 
 	JmpIO->SetBoolean(entry_index, "closed", mIsClosed);
 	JmpIO->SetBoolean(entry_index, "use", mUse);
@@ -141,7 +157,7 @@ void LPathDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 	mRoomNumber = JmpIO->GetSignedInt(entry_index, "room_no");
 	mArg0 = JmpIO->GetSignedInt(entry_index, "arg0");
 
-	mDoType = JmpIO->GetUnsignedInt(entry_index, "do_type");
+	mDoType = (EPathDoType)JmpIO->GetUnsignedInt(entry_index, "do_type");
 
 	mIsClosed = JmpIO->GetBoolean(entry_index, "closed");
 	mUse = JmpIO->GetBoolean(entry_index, "use");
@@ -149,22 +165,26 @@ void LPathDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 
 void LPathDOMNode::PostProcess()
 {
-	// On the off chance that the parent is invalid, don't try to do anything.
-	if (Parent.expired())
-		return;
-
-	// Grab a temporary shared_ptr for the parent.
-	//auto parentShared = Parent.lock();
+	auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+	if (auto mapNodeLocked = mapNode.lock())
+	{
+		for (auto p : mapNodeLocked->GetChildrenOfType<LPathDOMNode>(EDOMNodeType::Path))
+		{
+			if (p->GetName() == mNextPathName)
+			{
+				mNextPathRef = p;
+				break;
+			}
+		}
+	}
 }
 
 void LPathDOMNode::PreProcess()
 {
-	// On the off chance that the parent is invalid, don't try to do anything.
-	if (Parent.expired())
-		return;
-
-	// Grab a temporary shared_ptr for the parent.
-	//auto parentShared = Parent.lock();
+	if (auto nextPathLocked = mNextPathRef.lock())
+		mNextPathName = nextPathLocked->GetName();
+	else
+		mNextPathName = "(null)";
 }
 
 void LPathDOMNode::PostProcess(const GCarchive& mapArchive)
@@ -195,12 +215,17 @@ void LPathDOMNode::PostProcess(const GCarchive& mapArchive)
 	{
 		std::shared_ptr<LPathPointDOMNode> newPoint = std::make_shared<LPathPointDOMNode>("Path Point");
 		newPoint->Deserialize(&pathLoader, i);
-
 		AddChild(newPoint);
+
+		newPoint->PostProcess();
 	}
 }
 
 void LPathDOMNode::PreProcess(LJmpIO& pathJmp, bStream::CMemoryStream& pathStream)
 {
-	pathJmp.Save(GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::PathPoint), pathStream);
+	auto points = GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::PathPoint);
+	for (auto p : points)
+		p->PreProcess();
+
+	pathJmp.Save(points, pathStream);
 }

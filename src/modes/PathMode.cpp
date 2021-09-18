@@ -7,7 +7,7 @@
 
 LPathMode::LPathMode()
 {
-
+	mGizmoMode = ImGuizmo::OPERATION::TRANSLATE;
 }
 
 void LPathMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
@@ -116,6 +116,25 @@ void LPathMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* r
 {
 	RenderSceneHierarchy(current_map);
 	RenderDetailsWindow();
+
+	for (auto& node : current_map.get()->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)) {
+		node->RenderBG(0);
+	}
+
+	if (mPointSelection.GetPrimarySelection() != nullptr)
+	{
+		if (mPreviousSelection == nullptr || mPreviousSelection != mPointSelection.GetPrimarySelection()) {
+			mPreviousSelection = mPointSelection.GetPrimarySelection();
+			if (!mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).expired() && !renderer_scene->HasRoomLoaded(mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock()->GetRoomNumber())) {
+				renderer_scene->SetRoom(mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock());
+			}
+		}
+
+		glm::mat4* m = ((LBGRenderDOMNode*)(mPointSelection.GetPrimarySelection().get()))->GetMat();
+		glm::mat4 view = renderer_scene->getCameraView();
+		glm::mat4 proj = renderer_scene->getCameraProj();
+		ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::WORLD, &(*m)[0][0], NULL, NULL);
+	}
 }
 
 bool LPathMode::RenderPointContextMenu(std::shared_ptr<LPathDOMNode> path, std::shared_ptr<LPathPointDOMNode> point)

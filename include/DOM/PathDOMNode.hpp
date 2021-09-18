@@ -4,6 +4,17 @@
 #include "io/JmpIO.hpp"
 
 struct GCarchive;
+class LRoomDOMNode;
+
+extern std::map<std::string, std::string> InterpolationTypes;
+
+enum class EPathDoType
+{
+	None,
+	Path_Loop_Start = 4,
+	Path_Loop_Middle = 5,
+	Path_Loop_End = 6
+};
 
 struct LPathCoordinate
 {
@@ -18,14 +29,16 @@ class LPathPointDOMNode : public LEntityDOMNode
 	LPathCoordinate Y;
 	LPathCoordinate Z;
 
-	uint32_t NextRoomNumber{ 0 };
+	uint32_t mNextRoomNumber{ 0 };
 
 	// Hash 0x00809B31
-	uint32_t UnkInt1{ 0 };
+	int32_t mUnkInt1{ 0 };
 	// Hash 0x0061DCB2
-	uint32_t UnkInt2{ 0 };
+	int32_t mUnkInt2{ 0 };
 	// Hash 0x00D9B7C6
-	uint32_t UnkInt3{ 0 };
+	int32_t mUnkInt3{ 0 };
+
+	std::weak_ptr<LRoomDOMNode> mRoomRef;
 
 public:
 	typedef LEntityDOMNode Super;
@@ -33,10 +46,10 @@ public:
 	LPathPointDOMNode(std::string name);
 	~LPathPointDOMNode() { std::cout << "Path point destroyed!" << std::endl; }
 
-	virtual void RenderDetailsUI(float dt) override { };
+	virtual void RenderDetailsUI(float dt) override;
 
-	virtual void PostProcess() override { };
-	virtual void PreProcess() override { };
+	virtual void PostProcess() override;
+	virtual void PreProcess() override;
 
 	// Writes this path entry to the given Jmp IO object at the given index.
 	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const override;
@@ -63,10 +76,12 @@ class LPathDOMNode : public LEntityDOMNode
 	int32_t mOrganizationNumber { 0 };
 	int32_t mNumPoints { 0 };
 	int32_t mArg0 { 0 };
-	int32_t mDoType { 0 };
+	EPathDoType mDoType { EPathDoType::None };
 
 	bool mIsClosed { false };
 	bool mUse { false };
+
+	std::weak_ptr<LPathDOMNode> mNextPathRef;
 
 public:
 	typedef LEntityDOMNode Super;
