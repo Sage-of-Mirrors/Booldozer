@@ -22,6 +22,17 @@ void LPathMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 		{
 			RenderRoomContextMenu(r);
 		}
+		if (ImGui::BeginDragDropTarget())
+		{
+			auto pathNode = GetPathDragDropNode();
+
+			if (pathNode != nullptr)
+			{
+				auto sharedPathNode = pathNode->GetSharedPtr<LPathDOMNode>(EDOMNodeType::Path);
+				r->AddChild(sharedPathNode);
+				sharedPathNode->SetRoomNumber(r->GetRoomNumber());
+			}
+		}
 
 		if (roomTreeOpened)
 		{
@@ -43,6 +54,13 @@ void LPathMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 						i--;
 						continue;
 					}
+				}
+				if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+				{
+					LPathDOMNode* pathPtr = path.get();
+					ImGui::SetDragDropPayload("DOM_NODE_PATH", &pathPtr, sizeof(LDOMNodeBase*));
+					ImGui::Text("%s", path->GetName().c_str());
+					ImGui::EndDragDropSource();
 				}
 
 				if (treeSelected)
@@ -217,4 +235,23 @@ void LPathMode::OnBecomeActive()
 void LPathMode::OnBecomeInactive()
 {
 	std::cout << "Path mode switching out!" << std::endl;
+}
+
+LPathDOMNode* LPathMode::GetPathDragDropNode()
+{
+	const ImGuiPayload* payload = ImGui::GetDragDropPayload();
+
+	if (payload != nullptr && payload->Data != nullptr)
+	{
+		if (payload->IsDataType("DOM_NODE_PATH"))
+		{
+			if (ImGui::AcceptDragDropPayload(payload->DataType) == nullptr)
+				return nullptr;
+
+			IM_ASSERT(payload->DataSize == sizeof(LDOMNodeBase*));
+			return *static_cast<LPathDOMNode**>(payload->Data);
+		}
+	}
+
+	return nullptr;
 }

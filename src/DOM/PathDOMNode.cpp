@@ -100,6 +100,7 @@ void LPathPointDOMNode::RenderDetailsUI(float dt)
 LPathDOMNode::LPathDOMNode(std::string name) : Super(name)
 {
 	mType = EDOMNodeType::Path;
+	mRoomNumber = -1;
 }
 
 void LPathDOMNode::RenderDetailsUI(float dt)
@@ -218,6 +219,26 @@ void LPathDOMNode::PostProcess(const GCarchive& mapArchive)
 		AddChild(newPoint);
 
 		newPoint->PostProcess();
+	}
+
+	// Boo escape paths are defined outside of the rooms they're for; skip sorting them.
+	if (mName.find("escape") != std::string::npos)
+		return;
+
+	auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+	if (auto mapNodeLocked = mapNode.lock())
+	{
+		auto rooms = mapNodeLocked->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
+		for (auto r : rooms)
+		{
+			auto roomData = r->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
+
+			if (roomData->CheckPointInBounds(std::static_pointer_cast<LPathPointDOMNode>(Children[0])->GetPosition()))
+			{
+				r->AddChild(GetSharedPtr<LPathDOMNode>(EDOMNodeType::Path));
+				break;
+			}
+		}
 	}
 }
 

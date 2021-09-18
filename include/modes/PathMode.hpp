@@ -15,6 +15,8 @@ class LPathMode : public LEditorModeBase
 	bool RenderPathContextMenu(std::shared_ptr<LPathDOMNode> path);
 	void RenderRoomContextMenu(std::shared_ptr<LRoomDOMNode> room);
 
+	LPathDOMNode* GetPathDragDropNode();
+
 public:
 	LPathMode();
 

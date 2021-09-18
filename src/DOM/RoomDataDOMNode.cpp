@@ -70,7 +70,7 @@ void LRoomDataDOMNode::DeconstructBoundingBox(const glm::vec3& min, const glm::v
 
 void LRoomDataDOMNode::ConstructBoundingBox(glm::vec3& min, glm::vec3& max)
 {
-	glm::vec3 halfExtents = mScale * 2.f;
+	glm::vec3 halfExtents = mScale; //* 2.f;
 
 	min = mPosition - halfExtents;
 	max = mPosition + halfExtents;
@@ -81,7 +81,9 @@ bool LRoomDataDOMNode::CheckPointInBounds(const glm::vec3& point)
 	glm::vec3 min, max;
 	ConstructBoundingBox(min, max);
 
-	return (point.x >= min.x && point.x <= max.x) &&
-		   (point.y >= min.y && point.y <= max.y) &&
-		   (point.z >= min.z && point.z <= max.z);
+	bool xBounds = (point.x >= min.x) && (point.x < max.x);
+	bool yBounds = (point.y >= min.y) && (point.y < max.y);
+	bool zBounds = (point.z >= min.z) && (point.z < max.z);
+
+	return xBounds && yBounds && zBounds;
 }

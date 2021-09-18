@@ -45,6 +45,8 @@ public:
 	LEntityDOMNode(std::string name) : LBGRenderDOMNode(name) { mType = EDOMNodeType::Entity; mRoomNumber = -1; }
 
 	int32_t GetRoomNumber() { return mRoomNumber; }
+	void SetRoomNumber(int32_t newRoomNumber) { mRoomNumber = newRoomNumber; }
+
 	virtual std::string GetCreateName() const { return "(null)"; }
 	virtual void SetCreateName(std::string newCreateName) { };
 
