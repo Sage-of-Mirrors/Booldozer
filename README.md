@@ -26,3 +26,7 @@ Make objects act the way you want with Booldozer's Ghost Config Editor! Change t
     - Collision
     - Event
   - Complete this list
+
+<p align="center">
+<img src=https://github.com/Sage-of-Mirrors/Booldozer/blob/main/res/img/about.png width="60%" height="60%"></img>
+</p>
