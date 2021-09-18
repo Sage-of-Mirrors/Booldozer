@@ -7,7 +7,7 @@ Booldozer is a work-in-progress editor for the original [Luigi's Mansion on Game
 
 ### Features
 #### Map Editing
-![Screenshot_2021-09-01_15-51-39](https://user-images.githubusercontent.com/10427486/131735813-863cd5ce-a774-4a35-998f-b17d3d3f3705.png)
+![E-k8w2SWUAgQz2b](https://user-images.githubusercontent.com/10427486/133895701-32d46944-6717-4805-9828-ab7f1a69fd14.jpeg)
 
 Create custom maps with Booldozer's various editing modes! Set the scene with Actor Mode, configure loot drops with Item Mode, and customize collision with Collision Mode.
 
@@ -22,7 +22,6 @@ Keeping track of create names manually is a thing of the past! Use Booldozer's S
 Make objects act the way you want with Booldozer's Ghost Config Editor! Change their attacks, their HP, and even what color they glow.
 
 ### Roadmap/TODOs
-  - Implement per-room rendering
   - Modes
     - Collision
     - Event
