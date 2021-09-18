@@ -11,12 +11,15 @@
 #include <fstream>
 #include <filesystem>
 #include <string>
+#include <map>
 
 namespace LResUtility
 {
+	extern std::map<std::string, nlohmann::json> NameMaps;
+
 	nlohmann::json DeserializeJSON(std::filesystem::path file_path);
 
-	nlohmann::json GetMapRoomNames(std::string mapName);
+	nlohmann::json GetNameMap(std::string name);
 
 	uint32_t GetStaticMapDataOffset(std::string mapName, std::string region);
 

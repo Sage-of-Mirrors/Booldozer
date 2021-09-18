@@ -97,7 +97,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	}
 
 	// Grab the friendly room names for this map
-	nlohmann::json roomNames = LResUtility::GetMapRoomNames(mName);
+	nlohmann::json roomNames = LResUtility::GetNameMap(LGenUtility::Format(mName, "_rooms"));
 
 	// Use the static room data to know how many rooms to load
 	for (size_t i = 0; i < mStaticMapIO.GetRoomCount(); i++)

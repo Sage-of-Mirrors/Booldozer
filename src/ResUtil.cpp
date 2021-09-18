@@ -3,6 +3,7 @@
 #include "imgui.h"
 
 LResUtility::LGCResourceManager GCResourceManager;
+std::map<std::string, nlohmann::json> LResUtility::NameMaps = {};
 
 void LResUtility::LGCResourceManager::Init()
 {
@@ -98,12 +99,18 @@ nlohmann::json LResUtility::DeserializeJSON(std::filesystem::path file_path)
 	return j;
 }
 
-nlohmann::json LResUtility::GetMapRoomNames(std::string mapName)
+nlohmann::json LResUtility::GetNameMap(std::string name)
 {
-	std::string fileName = LGenUtility::Format(mapName, "_rooms.json");
-	std::filesystem::path fullPath = std::filesystem::current_path() / NAMES_BASE_PATH / fileName;
+	if (NameMaps.count(name) != 0)
+		return NameMaps[name];
 
-	return DeserializeJSON(fullPath);
+	std::filesystem::path fullPath = std::filesystem::current_path() / NAMES_BASE_PATH / LGenUtility::Format(name, ".json");
+
+	auto json = DeserializeJSON(fullPath);
+	if (!json.empty())
+		NameMaps.emplace(name, json);
+
+	return json;
 }
 
 uint32_t LResUtility::GetStaticMapDataOffset(std::string mapName, std::string region)
