@@ -5,82 +5,7 @@
 #include "DOM/FurnitureDOMNode.hpp"
 #include "DOM/ItemAppearDOMNode.hpp"
 #include <sstream>
-
-std::map<std::string, std::string> EnemyNames = {
-    { "yapoo1", "Gold Ghost" },
-    { "yapoo2", "Temper Terror" },
-
-    { "mapoo1", "Purple Puncher" },
-    { "mapoo2", "Flash" },
-
-    { "mopoo1", "Blue Twirler" },
-    { "mopoo2", "Blue Blaze" },
-
-    { "banaoba", "Garbage Can Ghost" },
-
-    { "topoo1", "Red Grabbing Ghost" },
-    { "topoo2", "Mirror Ghost" },
-    { "topoo3", "Cinema Ghost" },
-    { "topoo4", "White Grabbing Ghost" },
-
-    { "putcher1", "Bowling Ghost" },
-
-    { "iyapoo1", "Speedy Spirit 1" },
-    { "iyapoo2", "Speedy Spirit 2" },
-    { "iyapoo3", "Speedy Spirit 3" },
-    { "iyapoo4", "Speedy Spirit 4" },
-    { "iyapoo5", "Speedy Spirit 5" },
-    { "iyapoo6", "Speedy Spirit 6" },
-    { "iyapoo7", "Speedy Spirit 7" },
-    { "iyapoo8", "Speedy Spirit 8" },
-    { "iyapoo9", "Speedy Spirit 9" },
-    { "iyapoo10", "Speedy Spirit 10" },
-    { "iyapoo11", "Speedy Spirit 11" },
-    { "iyapoo12", "Speedy Spirit 12" },
-    { "iyapoo13", "Speedy Spirit 13" },
-    { "iyapoo14", "Speedy Spirit 14" },
-    { "iyapoo15", "Speedy Spirit 15" },
-    { "iyapoo16", "Speedy Spirit 16" },
-    { "iyapoo17", "Speedy Spirit 17" },
-    { "iyapoo18", "Speedy Spirit 18" },
-    { "iyapoo19", "Speedy Spirit 19" },
-    { "iyapoo20", "Speedy Spirit 20" },
-
-    { "piero1", "Red Clown Doll" },
-    { "piero2", "Blue Clown Doll" },
-
-    { "heypo1", "Red Shy Guy Ghost" },
-    { "heypo2", "Green Shy Guy Ghost" },
-    { "heypo3", "White Shy Guy Ghost" },
-    { "heypo4", "Brown Shy Guy Ghost" },
-    { "heypo5", "Orange Shy Guy Ghost" },
-    { "heypo6", "Yellow Shy Guy Ghost" },
-    { "heypo7", "Pink Shy Guy Ghost" },
-    { "heypo8", "Purple Shy Guy Ghost" },
-
-    { "tenjyo", "Purple Bomber" },
-    { "tenjyo2", "Ceiling Surprise" },
-
-    { "fakedoor", "Fake Square Door" },
-    { "fkdoor2", "Fake Wooden Door" },
-    { "fkdoor3", "Fake Round Door" },
-
-    { "ifly", "Frying Pan" },
-    { "inabe", "Pot" },
-    { "ibookr", "Book" },
-    { "polter1", "Flying Object Manager" },
-
-    { "skul", "Skeleton Ghost" },
-
-    { "otub1", "Blue Vase" },
-    { "otub2", "Grey Vase" },
-    { "otub3", "Pink/White Vase" },
-    { "otub4", "Red/Blue/White Vase" },
-    { "otub5", "Blue/White Vase" },
-
-    { "oufo1", "Plate" },
-    { "oufo2", "Bowl" },
-};
+#include <nlohmann/json.hpp>
 
 LEnemyDOMNode::LEnemyDOMNode(std::string name) : LEnemyDOMNode(name, false)
 {
@@ -92,11 +17,26 @@ LEnemyDOMNode::LEnemyDOMNode(std::string name, bool isBlackoutEnemy) : Super(nam
     mType = EDOMNodeType::Enemy;
 }
 
+std::string LEnemyDOMNode::GetName()
+{
+    auto enemyNames = LResUtility::GetNameMap("enemies");
+    for (auto& section : enemyNames.items())
+    {
+        for (auto& entry : section.value().items())
+        {
+            if (entry.key() == mName)
+            {
+                return entry.value().get<std::string>();
+            }
+        }
+    }
+}
+
 void LEnemyDOMNode::RenderDetailsUI(float dt)
 {
     LUIUtility::RenderTransformUI(mTransform.get(), mPosition, mRotation, mScale);
 
-    LUIUtility::RenderComboBox("Enemy Type", EnemyNames, mName);
+    LUIUtility::RenderComboBox("Enemy Type", LResUtility::GetNameMap("enemies"), mName);
     LUIUtility::RenderTooltip("What kind of enemy this actor is.");
 
     // Strings

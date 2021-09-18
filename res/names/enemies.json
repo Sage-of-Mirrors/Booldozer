@@ -1,0 +1,85 @@
+{
+  "Generic Ghosts": {
+    "yapoo1": "Gold Ghost",
+    "yapoo2": "Temper Terror",
+    
+    "mapoo1": "Purple Puncher",
+    "mapoo2": "Flash",
+    
+    "mopoo1": "Blue Twirler",
+    "mopoo2": "Blue Blaze",
+    
+    "banaoba": "Garbage Can Ghost",
+    
+    "topoo1": "Red Grabbing Ghost",
+    "topoo2": "Mirror Ghost",
+    "topoo3": "Cinema Ghost",
+    "topoo4": "White Grabbing Ghost",
+    
+    "heypo1": "Red Ghost Guy (Solo)",
+    "heypo2": "Green Ghost Guy (Solo)",
+    "heypo3": "White Ghost Guy (Dancer)",
+    "heypo4": "Brown Ghost Guy (Dancer)",
+    "heypo5": "Orange Ghost Guy (Dancer)",
+    "heypo6": "Yellow Ghost Guy (Dancer)",
+    "heypo7": "Pink Ghost Guy (Dancer)",
+    "heypo8": "Purple Ghost Guy (Dancer)",
+    
+    "skul": "Mr. Bones",
+    
+    "tenjyo": "Purple Bomber",
+    "tenjyo2": "Ceiling Surprise",
+    
+    "putcher1": "Bowling Ghost",
+    
+    "waiter": "Waiter"
+  },
+  "Possessed Furniture": {
+    "polter1": "Possessed Furniture Manager",
+    
+    "oufo1": "White Plate",
+    "oufo2": "White Plate with Blue Border",
+    
+    "otub1": "Round Purple Jar",
+    "otub2": "Silver, Trophy-Shaped Jar",
+    "otub3": "White Jar with Pink Streaks",
+    "otub4": "FLoral-Patterned Jar",
+    "otub5": "China-Patterned Jar",
+    
+    "ifly": "Frying Pan",
+    "inabe": "Small Cooking Pot",
+    
+    "ibookb": "Blue Book",
+    "ibookr": "Red Book",
+    
+    "piero1": "Red Clown Doll",
+    "piero2": "Blue Clown Doll"
+  },
+  "Fake Doors": {
+    "fakedoor": "Standard Fake Door",
+    "fkdoor2": "Attic Fake Door",
+    "fkdoor3": "Laundry Room Fake Door"
+  },
+  "Speedy Spirits": {
+    "iyapoo1": "Speedy Spirit 1",
+    "iyapoo2": "Speedy Spirit 2",
+    "iyapoo3": "Speedy Spirit 3",
+    "iyapoo4": "Speedy Spirit 4",
+    "iyapoo5": "Speedy Spirit 5",
+    "iyapoo6": "Speedy Spirit 6",
+    "iyapoo7": "Speedy Spirit 7",
+    "iyapoo8": "Speedy Spirit 8",
+    "iyapoo9": "Speedy Spirit 9",
+    "iyapoo10": "Speedy Spirit 10",
+    "iyapoo11": "Speedy Spirit 11",
+    "iyapoo12": "Speedy Spirit 12",
+    "iyapoo13": "Speedy Spirit 13",
+    "iyapoo14": "Speedy Spirit 14",
+    "iyapoo15": "Speedy Spirit 15",
+    "iyapoo16": "Speedy Spirit 16",
+    "iyapoo17": "Speedy Spirit 17",
+    "iyapoo18": "Speedy Spirit 18",
+    "iyapoo19": "Speedy Spirit 19",
+    "iyapoo20": "Speedy Spirit 20"
+  }
+}

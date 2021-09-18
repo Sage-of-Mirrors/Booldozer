@@ -3,7 +3,7 @@
 #include "imgui.h"
 
 LResUtility::LGCResourceManager GCResourceManager;
-std::map<std::string, nlohmann::json> LResUtility::NameMaps = {};
+std::map<std::string, nlohmann::ordered_json> LResUtility::NameMaps = {};
 
 void LResUtility::LGCResourceManager::Init()
 {
@@ -80,9 +80,9 @@ bool LResUtility::LGCResourceManager::LoadArchive(const char* path, GCarchive* a
 	return true;
 }
 
-nlohmann::json LResUtility::DeserializeJSON(std::filesystem::path file_path)
+nlohmann::ordered_json LResUtility::DeserializeJSON(std::filesystem::path file_path)
 {
-	nlohmann::json j;
+	nlohmann::ordered_json j;
 
 	if (file_path.empty() || !std::filesystem::exists(file_path))
 	{
@@ -99,7 +99,7 @@ nlohmann::json LResUtility::DeserializeJSON(std::filesystem::path file_path)
 	return j;
 }
 
-nlohmann::json LResUtility::GetNameMap(std::string name)
+nlohmann::ordered_json LResUtility::GetNameMap(std::string name)
 {
 	if (NameMaps.count(name) != 0)
 		return NameMaps[name];

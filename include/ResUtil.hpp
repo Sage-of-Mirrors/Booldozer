@@ -15,11 +15,11 @@
 
 namespace LResUtility
 {
-	extern std::map<std::string, nlohmann::json> NameMaps;
+	extern std::map<std::string, nlohmann::ordered_json> NameMaps;
 
-	nlohmann::json DeserializeJSON(std::filesystem::path file_path);
+	nlohmann::ordered_json DeserializeJSON(std::filesystem::path file_path);
 
-	nlohmann::json GetNameMap(std::string name);
+	nlohmann::ordered_json GetNameMap(std::string name);
 
 	uint32_t GetStaticMapDataOffset(std::string mapName, std::string region);
 

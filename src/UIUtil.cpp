@@ -119,6 +119,54 @@ bool LUIUtility::RenderComboBox(std::string name, std::map<std::string, std::str
 	return changed;
 }
 
+bool LUIUtility::RenderComboBox(std::string name, nlohmann::ordered_json options, std::string& value)
+{
+	bool changed = false;
+
+	std::string previewName = "";
+	for (auto& section : options.items())
+	{
+		for (auto& entry : section.value().items())
+		{
+			if (entry.key() == value)
+			{
+				previewName = entry.value().get<std::string>();
+				break;
+			}
+		}
+	}
+
+	if (ImGui::BeginCombo(name.c_str(), previewName.c_str()))
+	{
+		for (nlohmann::ordered_json section : options)
+		{
+			for (auto entry : section.items())
+			{
+				std::string jKey = entry.key();
+				std::string jValue = entry.value().get<std::string>();
+
+				std::string selectableName = LGenUtility::Format(jValue, "##", jKey);
+				bool is_selected = (value == jKey);
+
+				if (ImGui::Selectable(selectableName.c_str(), is_selected))
+				{
+					value = jKey;
+					changed = true;
+				}
+
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+			}
+
+			ImGui::Separator();
+		}
+
+		ImGui::EndCombo();
+	}
+
+	return changed;
+}
+
 bool LUIUtility::RenderTextInput(std::string name, std::string* value, const int width)
 {
 	ImGui::PushItemWidth(width);

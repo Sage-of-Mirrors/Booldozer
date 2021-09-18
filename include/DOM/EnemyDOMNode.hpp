@@ -5,8 +5,6 @@
 
 constexpr size_t ENEMY_TYPE_COUNT = 51;
 
-extern std::map<std::string, std::string> EnemyNames;
-
 enum class EConditionType : uint32_t;
 
 class LFurnitureDOMNode;
@@ -71,7 +69,8 @@ public:
 	virtual std::string GetCreateName() const override { return mCreateName; }
 	virtual void SetCreateName(std::string newCreateName) override { mCreateName = newCreateName; }
 
-	virtual std::string GetName() override { return EnemyNames[mName]; }
+	virtual std::string GetName() override;
+
 	virtual void RenderDetailsUI(float dt) override;
 
 	// Writes the data this JMP node into the given LJmpIO instance at the specified entry.

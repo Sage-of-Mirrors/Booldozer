@@ -5,6 +5,7 @@
 #include "../lib/magic_enum/include/magic_enum.hpp"
 #include <type_traits>
 #include <algorithm>
+#include <nlohmann/json.hpp>
 
 namespace LUIUtility
 {
@@ -22,6 +23,7 @@ namespace LUIUtility
 
 	bool RenderComboBox(std::string name, std::vector<std::shared_ptr<LEntityDOMNode>> options, std::shared_ptr<LEntityDOMNode> current_selection);
 	bool RenderComboBox(std::string name, std::map<std::string, std::string>& options, std::string& value);
+	bool RenderComboBox(std::string name, nlohmann::ordered_json options, std::string& value);
 
 	bool RenderTextInput(std::string name, std::string* value, const int width = 100);
 	int TextInputCallback(ImGuiInputTextCallbackData* data);
