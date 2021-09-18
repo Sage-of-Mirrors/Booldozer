@@ -1,6 +1,6 @@
 ## Booldozer
 <p align="center">
-<img src=https://user-images.githubusercontent.com/6289769/133509757-76ed124d-62b3-4467-b44e-b6b82e40e705.png width="40%" height="40%" ></img>
+<img src=https://raw.githubusercontent.com/Sage-of-Mirrors/Booldozer/main/res/img/logo.png width="40%" height="40%" ></img>
 </p>
 
 Booldozer is a work-in-progress editor for the original [Luigi's Mansion on GameCube](https://en.wikipedia.org/wiki/Luigi%27s_Mansion), written by SpaceCats ([@kittensandals](https://twitter.com/kittensandals)) and Gamma ([@SageOfMirrors](https://twitter.com/SageOfMirrors)). It aims to cover as many aspects of modding the game as possible.
@@ -28,5 +28,5 @@ Make objects act the way you want with Booldozer's Ghost Config Editor! Change t
   - Complete this list
 
 <p align="center">
-<img src=https://github.com/Sage-of-Mirrors/Booldozer/blob/main/res/img/about.png width="60%" height="60%"></img>
+<img src=https://raw.githubusercontent.com/Sage-of-Mirrors/Booldozer/main/res/img/about.png width="60%" height="60%"></img>
 </p>
