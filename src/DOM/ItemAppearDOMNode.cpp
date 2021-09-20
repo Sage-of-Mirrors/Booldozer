@@ -21,7 +21,12 @@ std::string LItemAppearDOMNode::GetName()
     for (auto reference : mItemInfoRefs)
     {
         if (reference.expired())
+        {
+            stats.try_emplace("nothing", 0);
+            stats["nothing"] += 1;
+
             continue;
+        }
 
         auto refLocked = reference.lock();
 

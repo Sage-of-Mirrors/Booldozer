@@ -8,7 +8,7 @@ LUIRenderDOMNode::LUIRenderDOMNode(std::string name) : LDOMNodeBase(name)
 
 void LUIRenderDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection)
 {
-    if (LUIUtility::RenderNodeSelectable(this, false))
+    if (LUIUtility::RenderNodeSelectable(this, self->GetIsSelected()))
     {
         mode_selection->AddToSelection(self);
     }

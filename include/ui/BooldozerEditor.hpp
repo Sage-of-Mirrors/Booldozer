@@ -17,11 +17,11 @@ enum class EEditorMode : uint32_t
 {
 	Actor_Mode,
 	Enemy_Mode,
+	Path_Mode,
 	Door_Mode,
 	Item_Mode,
 	Event_Mode,
 	Collision_Mode,
-	Path_Mode
 };
 
 // Backend for the main window's UI.

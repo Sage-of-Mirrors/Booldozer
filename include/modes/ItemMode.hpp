@@ -2,10 +2,33 @@
 
 #include "EditorModeBase.hpp"
 
+#include <imgui.h>
+
+class LItemInfoDOMNode;
+class LItemAppearDOMNode;
+class LItemFishingDOMNode;
+
 class LItemMode : public LEditorModeBase
 {
 	void RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map);
 	void RenderDetailsWindow();
+
+	template<typename T>
+	void RenderLeafContextMenu(std::shared_ptr<T> infoNode)
+	{
+		if (ImGui::Selectable("Delete"))
+		{
+			auto mapNode = infoNode->GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+			if (auto mapNodeLocked = mapNode.lock())
+			{
+				mapNodeLocked->RemoveChild(infoNode);
+				if (mSelectionManager.GetPrimarySelection() == infoNode)
+					mSelectionManager.ClearSelection();
+			}
+		}
+
+		ImGui::EndPopup();
+	}
 
 public:
 	LItemMode();

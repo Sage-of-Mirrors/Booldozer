@@ -16,6 +16,7 @@ public:
 	typedef LEntityDOMNode Super;
 
 	LItemInfoDOMNode(std::string name);
+	~LItemInfoDOMNode() { std::cout << "Deleted item node!" << std::endl; }
 
 	virtual void RenderDetailsUI(float dt) override;
 

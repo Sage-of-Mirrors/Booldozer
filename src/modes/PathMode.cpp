@@ -51,7 +51,6 @@ void LPathMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 					// This path was removed, so skip everything else.
 					if (RenderPathContextMenu(std::static_pointer_cast<LPathDOMNode>(path)))
 					{
-						i--;
 						continue;
 					}
 				}
@@ -87,7 +86,6 @@ void LPathMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 							// This point was removed, so skip everything else.
 							if (RenderPointContextMenu(std::static_pointer_cast<LPathDOMNode>(path), std::static_pointer_cast<LPathPointDOMNode>(point)))
 							{
-								j--;
 								continue;
 							}
 						}

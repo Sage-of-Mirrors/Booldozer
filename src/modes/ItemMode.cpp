@@ -10,21 +10,39 @@ LItemMode::LItemMode()
 
 void LItemMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 {
-	ImGui::Begin("Scene Hierarchy");
+	ImGui::Begin("Item Data");
 
 	auto iteminfos = current_map->GetChildrenOfType<LItemInfoDOMNode>(EDOMNodeType::ItemInfo);
-	if (ImGui::TreeNode("Master Item Table"))
+	bool definitionTreeOpened = ImGui::TreeNode("Item Definitions");
+	if (ImGui::BeginPopupContextItem())
 	{
-		for (uint32_t i = 0; i < iteminfos.size(); i++)
+		if (ImGui::Selectable("Add Definition"))
+		{
+			auto newInfoNode = std::make_shared<LItemInfoDOMNode>("(null)");
+			current_map->AddChild(newInfoNode);
+
+			mSelectionManager.AddToSelection(newInfoNode);
+		}
+
+		ImGui::EndPopup();
+	}
+
+	if (definitionTreeOpened)
+	{
+		// We start at 1 because entry 0 is "nothing", which the game uses when there's no item to be spawned.
+		// Going to prevent the user from modifying it because doing so could break the game.
+		for (uint32_t i = 1; i < iteminfos.size(); i++)
 		{
 			uint32_t selectionType = 0;
 
 			ImGui::Indent();
-
 			ImGui::PushID(i);
-			iteminfos[i]->RenderHierarchyUI(iteminfos[i], &mSelectionManager);
-			ImGui::PopID();
 
+			iteminfos[i]->RenderHierarchyUI(iteminfos[i], &mSelectionManager);
+			if (ImGui::BeginPopupContextItem())
+				RenderLeafContextMenu(iteminfos[i]);
+
+			ImGui::PopID();
 			ImGui::Unindent();
 		}
 
@@ -32,18 +50,34 @@ void LItemMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 	}
 
 	auto itemappears = current_map->GetChildrenOfType<LItemAppearDOMNode>(EDOMNodeType::ItemAppear);
-	if (ImGui::TreeNode("Item Drop Groups"))
+	bool lootOpened = ImGui::TreeNode("Loot Tables");
+	if (ImGui::BeginPopupContextItem())
+	{
+		if (ImGui::Selectable("Add Loot Table"))
+		{
+			auto newLootNode = std::make_shared<LItemAppearDOMNode>("(null)");
+			current_map->AddChild(newLootNode);
+
+			mSelectionManager.AddToSelection(newLootNode);
+		}
+
+		ImGui::EndPopup();
+	}
+
+	if (lootOpened)
 	{
 		for (uint32_t i = 0; i < itemappears.size(); i++)
 		{
 			uint32_t selectionType = 0;
 
 			ImGui::Indent();
-
 			ImGui::PushID(i);
-			itemappears[i]->RenderHierarchyUI(itemappears[i], &mSelectionManager);
-			ImGui::PopID();
 
+			itemappears[i]->RenderHierarchyUI(itemappears[i], &mSelectionManager);
+			if (ImGui::BeginPopupContextItem())
+				RenderLeafContextMenu(itemappears[i]);
+
+			ImGui::PopID();
 			ImGui::Unindent();
 		}
 
@@ -51,37 +85,32 @@ void LItemMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 	}
 
 	auto itemfishings = current_map->GetChildrenOfType<LItemFishingDOMNode>(EDOMNodeType::ItemFishing);
-	if (ImGui::TreeNode("Capture Item Groups"))
+	bool fishingOpened = ImGui::TreeNode("Fishing Tables");
+	if (ImGui::BeginPopupContextItem())
+	{
+		if (ImGui::Selectable("Add Fishing Table"))
+		{
+			auto newFishingNode = std::make_shared<LItemFishingDOMNode>("(null)");
+			current_map->AddChild(newFishingNode);
+
+			mSelectionManager.AddToSelection(newFishingNode);
+		}
+
+		ImGui::EndPopup();
+	}
+
+	if (fishingOpened)
 	{
 		for (uint32_t i = 0; i < itemfishings.size(); i++)
 		{
-			uint32_t selectionType = 0;
-
 			ImGui::Indent();
-
 			ImGui::PushID(i);
+
 			itemfishings[i]->RenderHierarchyUI(itemfishings[i], &mSelectionManager);
+			if (ImGui::BeginPopupContextItem())
+				RenderLeafContextMenu(itemfishings[i]);
+
 			ImGui::PopID();
-
-			ImGui::Unindent();
-		}
-
-		ImGui::TreePop();
-	}
-
-	auto trasuretables = current_map->GetChildrenOfType<LTreasureTableDOMNode>(EDOMNodeType::TreasureTable);
-	if (ImGui::TreeNode("Treasure Tables"))
-	{
-		for (uint32_t i = 0; i < trasuretables.size(); i++)
-		{
-			uint32_t selectionType = 0;
-
-			ImGui::Indent();
-
-			ImGui::PushID(i);
-			trasuretables[i]->RenderHierarchyUI(trasuretables[i], &mSelectionManager);
-			ImGui::PopID();
-
 			ImGui::Unindent();
 		}
 
