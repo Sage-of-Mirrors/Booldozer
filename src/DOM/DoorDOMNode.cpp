@@ -1,6 +1,7 @@
 #include "DOM/DoorDOMNode.hpp"
 #include "io/StaticMapDataIO.hpp"
 #include "UIUtil.hpp"
+#include "GenUtil.hpp"
 #include "imgui.h"
 
 LDoorDOMNode::LDoorDOMNode(std::string name) : Super(name),
@@ -8,6 +9,48 @@ LDoorDOMNode::LDoorDOMNode(std::string name) : Super(name),
 	mModel(EDoorModel::Square_Mansion_Door), mDoorEntryNumber(0), mNextEscape(0), mCurrentEscape(0)
 {
 	mType = EDOMNodeType::Door;
+}
+
+std::string LDoorDOMNode::GetName()
+{
+	std::string name = "";
+
+	switch (mOrientation)
+	{
+	case EDoorOrientation::Front_Facing:
+		name = "[North/South";
+		break;
+	case EDoorOrientation::Side_Facing:
+		name = "[East/West";
+		break;
+	case EDoorOrientation::No_Fade:
+		name = "[No fade";
+		break;
+	}
+
+	switch (mDoorType)
+	{
+	case EDoorType::Door:
+		name = LGenUtility::Format(name, " Door]: ");
+		break;
+	case EDoorType::Viewport:
+		name = LGenUtility::Format(name, " Viewport]: ");
+		break;
+	case EDoorType::Window:
+		name = LGenUtility::Format(name, " Window]: ");
+		break;
+	}
+
+	auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+	if (auto mapNodeLocked = mapNode.lock())
+	{
+		auto rooms = mapNodeLocked->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
+
+		name = LGenUtility::Format(name, rooms[mNextEscape]->GetName());
+		name = LGenUtility::Format(name, "/", rooms[mCurrentEscape]->GetName());
+	}
+
+	return name;
 }
 
 void LDoorDOMNode::RenderDetailsUI(float dt)

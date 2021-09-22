@@ -6,6 +6,7 @@
 #include "modes/EnemyMode.hpp"
 #include "modes/ItemMode.hpp"
 #include "modes/PathMode.hpp"
+#include "modes/DoorMode.hpp"
 #include "io/PrmIO.hpp"
 #include "ImGuizmo.h"
 
@@ -17,8 +18,8 @@ enum class EEditorMode : uint32_t
 {
 	Actor_Mode,
 	Enemy_Mode,
-	Path_Mode,
 	Door_Mode,
+	Path_Mode,
 	Item_Mode,
 	Event_Mode,
 	Collision_Mode,
@@ -41,6 +42,7 @@ class LBooldozerEditor
 	LEnemyMode mEnemyMode;
 	LItemMode mItemMode;
 	LPathMode mPathMode;
+	LDoorMode mDoorMode;
 
 	void OpenMap(std::string file_path);
 	void SaveMapToFiles(std::string folder_path);

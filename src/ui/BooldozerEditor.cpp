@@ -111,6 +111,7 @@ void LBooldozerEditor::ChangeMode()
 		case EEditorMode::Collision_Mode:
 			break;
 		case EEditorMode::Door_Mode:
+			mCurrentMode = &mDoorMode;
 			break;
 		case EEditorMode::Enemy_Mode:
 			mCurrentMode = &mEnemyMode;

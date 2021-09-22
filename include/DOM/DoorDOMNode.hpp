@@ -53,6 +53,8 @@ public:
 
 	LDoorDOMNode(std::string name);
 
+	virtual std::string GetName() override;
+
 	virtual void RenderDetailsUI(float dt) override;
 
 	bool Load(const LStaticDoorData& source);
