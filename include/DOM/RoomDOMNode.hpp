@@ -110,7 +110,7 @@ class LRoomDOMNode : public LBGRenderDOMNode, public ISerializable
 	// ??
 	int32_t mDustLevel { 0 };
 	// The color of the lights in the room?
-	glm::ivec3 mLightColor;
+	float mLightColor[3];
 	// ??
 	int32_t mDistance { 0 };
 	// ??
@@ -120,7 +120,7 @@ class LRoomDOMNode : public LBGRenderDOMNode, public ISerializable
 	// ??
 	int32_t mSoundRoomCode { 0 };
 	// ??
-	uint32_t mSoundRoomSize { 0 };
+	int32_t mSoundRoomSize { 0 };
 
 /*=== map.dat properties ===*/
 	// Name of the resource file, either a raw BIN or an archive.
@@ -146,6 +146,7 @@ public:
 	int32_t GetRoomNumber() const { return mRoomNumber; }
 	void SetRoomNumber(int32_t roomNumber) { mRoomNumber = roomNumber; }
 
+	virtual void RenderDetailsUI(float dt) override;
 	virtual void RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection) override;
 	void RenderWaveHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection);
 

@@ -29,7 +29,9 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 	ImGui::SameLine();
 
 	// Room tree start
-	if (ImGui::TreeNode(mName.c_str()))
+	bool treeSelected = false;
+	bool treeOpened = LUIUtility::RenderNodeSelectableTreeNode(GetName(), GetIsSelected(), treeSelected);
+	if (treeOpened)
 	{
 		// Iterating all of the entity types
 		for (uint32_t i = 0; i < LRoomEntityType_Max; i++)
@@ -85,6 +87,11 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 
 		// End room tree
 		ImGui::TreePop();
+	}
+
+	if (treeSelected)
+	{
+		mode_selection->AddToSelection(GetSharedPtr<LUIRenderDOMNode>(EDOMNodeType::UIRender));
 	}
 }
 
@@ -164,6 +171,61 @@ void LRoomDOMNode::RenderWaveHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEd
 	}
 }
 
+void LRoomDOMNode::RenderDetailsUI(float dt)
+{
+	auto dataNode = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
+
+	// Integers
+	ImGui::InputInt("Lightning Frequency", &mThunder);
+	LUIUtility::RenderTooltip("How frequently thunder and lightning occurs while in this room.");
+
+	ImGui::InputInt("Dust Intensity", &mDustLevel);
+	LUIUtility::RenderTooltip("How dusty this room is.");
+
+	ImGui::InputInt("Light Falloff", &mDistance);
+	LUIUtility::RenderTooltip("How far light should reach inside this room.");
+	ImGui::InputInt("GBH Color", &mLv);
+	LUIUtility::RenderTooltip("The index of the color that this room should be on the GameBoy Horror map.");
+
+	ImGui::InputInt("Echo Intensity", &mSoundEchoParameter);
+	LUIUtility::RenderTooltip("How much sound echoes within this room.");
+	ImGui::InputInt("Sound Room Code", &mSoundRoomCode);
+	LUIUtility::RenderTooltip("???");
+	ImGui::InputInt("Sound Room Size", &mSoundRoomSize);
+	LUIUtility::RenderTooltip("???");
+
+	// Colors
+	ImGui::ColorEdit3("Darkened Color", dataNode->GetDarkColor());
+	ImGui::ColorEdit3("Lit Color", mLightColor);
+
+	// Bools
+	LUIUtility::RenderCheckBox("Skybox Visible?", &mShouldRenderSkybox);
+	LUIUtility::RenderTooltip("Whether the map's skybox should be visible outside this room.");
+
+	ImGui::NewLine();
+	ImGui::Separator();
+	ImGui::NewLine();
+
+	ImGui::InputInt("Camera Position Index", &mSoundEchoParameter);
+	LUIUtility::RenderTooltip("How much sound echoes within this room.");
+
+	LUIUtility::RenderNodeReferenceVector("Adjacent Rooms", EDOMNodeType::Room, Parent, dataNode->GetAdjacencyList());
+
+	ImGui::NewLine();
+	ImGui::Separator();
+	ImGui::NewLine();
+
+	auto chestData = GetChildrenOfType<LTreasureTableDOMNode>(EDOMNodeType::TreasureTable);
+	if (chestData.size() == 0)
+		return;
+
+	if (ImGui::TreeNode("Treasure Chest Settings"))
+	{
+		chestData[0]->RenderDetailsUI(dt);
+		ImGui::TreePop();
+	}
+}
+
 void LRoomDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 {
 	mInternalName = JmpIO->GetString(entry_index, "name");
@@ -175,9 +237,9 @@ void LRoomDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 
 	mDustLevel = JmpIO->GetSignedInt(entry_index, "DustLv");
 
-	mLightColor.r = JmpIO->GetSignedInt(entry_index, "LightColorR");
-	mLightColor.g = JmpIO->GetSignedInt(entry_index, "LightColorG");
-	mLightColor.b = JmpIO->GetSignedInt(entry_index, "LightColorB");
+	mLightColor[0] = JmpIO->GetSignedInt(entry_index, "LightColorR") / 255.f;
+	mLightColor[1] = JmpIO->GetSignedInt(entry_index, "LightColorG") / 255.f;
+	mLightColor[2] = JmpIO->GetSignedInt(entry_index, "LightColorB") / 255.f;
 
 	mDistance = JmpIO->GetSignedInt(entry_index, "Distance");
 	mLv = JmpIO->GetSignedInt(entry_index, "Lv");
@@ -198,9 +260,9 @@ void LRoomDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 
 	JmpIO->SetSignedInt(entry_index, "DustLv", mDustLevel);
 
-	JmpIO->SetSignedInt(entry_index, "LightColorR", mLightColor.r);
-	JmpIO->SetSignedInt(entry_index, "LightColorG", mLightColor.g);
-	JmpIO->SetSignedInt(entry_index, "LightColorB", mLightColor.b);
+	JmpIO->SetSignedInt(entry_index, "LightColorR", mLightColor[0] * 255.f);
+	JmpIO->SetSignedInt(entry_index, "LightColorG", mLightColor[1] * 255.f);
+	JmpIO->SetSignedInt(entry_index, "LightColorB", mLightColor[2] * 255.f);
 
 	JmpIO->SetSignedInt(entry_index, "Distance", mDistance);
 	JmpIO->SetSignedInt(entry_index, "Lv", mLv);
@@ -292,6 +354,10 @@ bool LRoomDOMNode::CompleteLoad()
 		GetEntitiesWithCreateName(castObs->GetStringArg(), LRoomEntityType_Characters, newGroup.EntityNodes);
 		Groups.push_back(newGroup);
 	}
+
+	auto chestData = GetChildrenOfType<LTreasureTableDOMNode>(EDOMNodeType::TreasureTable);
+	if (chestData.size() == 0)
+		AddChild(std::make_shared<LTreasureTableDOMNode>(""));
 
 	return true;
 }

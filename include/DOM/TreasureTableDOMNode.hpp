@@ -17,7 +17,6 @@ class LTreasureTableDOMNode : public LEntityDOMNode
 /*=== JMP properties ===*/
 	std::string mOther;
 
-	int32_t mTargetRoomNumber;
 	EChestSize mSize;
 
 	int32_t mCoins;
@@ -37,7 +36,6 @@ class LTreasureTableDOMNode : public LEntityDOMNode
 	bool mCamera;
 
 	std::weak_ptr<LItemInfoDOMNode> mOtherItemRef;
-	std::weak_ptr<LRoomDOMNode> mRoomNodeRef;
 
 public:
 	typedef LEntityDOMNode Super;

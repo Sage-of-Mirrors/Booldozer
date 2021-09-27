@@ -15,108 +15,11 @@ void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 	mRoomChanged = LUIUtility::RenderNodeReferenceCombo("Room to Render", EDOMNodeType::Room, current_map, mManualRoomSelect);
 
 	auto rooms = current_map->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
-	if (ImGui::TreeNode("Rooms"))
+	for (uint32_t i = 0; i < rooms.size(); i++)
 	{
-		for (uint32_t i = 0; i < rooms.size(); i++)
-		{
-			uint32_t selectionType = 0;
-
-			ImGui::PushID(i);
-			rooms[i]->RenderHierarchyUI(rooms[i], &mSelectionManager);
-			ImGui::PopID();
-		}
-
-		ImGui::TreePop();
-	}
-
-	auto events = current_map->GetChildrenOfType<LEventDOMNode>(EDOMNodeType::Event);
-	if (ImGui::TreeNode("Events"))
-	{
-		for (uint32_t i = 0; i < events.size(); i++)
-		{
-			uint32_t selectionType = 0;
-
-			ImGui::PushID(i);
-			events[i]->RenderHierarchyUI(events[i], &mSelectionManager);
-			ImGui::PopID();
-		}
-
-		ImGui::TreePop();
-	}
-
-	auto objects = current_map->GetChildrenOfType<LObjectDOMNode>(EDOMNodeType::Object);
-	if (ImGui::TreeNode("Objects"))
-	{
-		for (uint32_t i = 0; i < objects.size(); i++)
-		{
-			uint32_t selectionType = 0;
-
-			ImGui::PushID(i);
-			objects[i]->RenderHierarchyUI(objects[i], &mSelectionManager);
-			ImGui::PopID();
-		}
-
-		ImGui::TreePop();
-	}
-
-	auto keys = current_map->GetChildrenOfType<LKeyDOMNode>(EDOMNodeType::Key);
-	if (ImGui::TreeNode("Keys"))
-	{
-		for (uint32_t i = 0; i < keys.size(); i++)
-		{
-			uint32_t selectionType = 0;
-
-			ImGui::PushID(i);
-			keys[i]->RenderHierarchyUI(keys[i], &mSelectionManager);
-			ImGui::PopID();
-		}
-
-		ImGui::TreePop();
-	}
-
-	auto speedys = current_map->GetChildrenOfType<LSpeedySpiritDropDOMNode>(EDOMNodeType::SpeedySpiritDrop);
-	if (ImGui::TreeNode("Speedy Spirit Drops"))
-	{
-		for (uint32_t i = 0; i < speedys.size(); i++)
-		{
-			uint32_t selectionType = 0;
-
-			ImGui::PushID(i);
-			speedys[i]->RenderHierarchyUI(speedys[i], &mSelectionManager);
-			ImGui::PopID();
-		}
-
-		ImGui::TreePop();
-	}
-
-	auto boos = current_map->GetChildrenOfType<LBooDOMNode>(EDOMNodeType::Boo);
-	if (ImGui::TreeNode("Boos"))
-	{
-		for (uint32_t i = 0; i < boos.size(); i++)
-		{
-			uint32_t selectionType = 0;
-
-			ImGui::PushID(i);
-			boos[i]->RenderHierarchyUI(boos[i], &mSelectionManager);
-			ImGui::PopID();
-		}
-
-		ImGui::TreePop();
-	}
-
-	auto doors = current_map->GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door);
-	if (ImGui::TreeNode("Doors"))
-	{
-		for (uint32_t i = 0; i < doors.size(); i++)
-		{
-			uint32_t selectionType = 0;
-
-			ImGui::PushID(i);
-			doors[i]->RenderHierarchyUI(doors[i], &mSelectionManager);
-			ImGui::PopID();
-		}
-
-		ImGui::TreePop();
+		ImGui::PushID(i);
+		rooms[i]->RenderHierarchyUI(rooms[i], &mSelectionManager);
+		ImGui::PopID();
 	}
 
 	ImGui::End();

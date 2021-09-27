@@ -7,19 +7,15 @@
 LTreasureTableDOMNode::LTreasureTableDOMNode(std::string name) : Super(name),
     mCoins(0), mBills(0), mGoldBars(0), mSmallPearls(0), mMediumPearls(0), mLargePearls(0),
     mSapphires(0), mEmeralds(0), mRubies(0), mDiamonds(0), mRedDiamonds(0), mGoldDiamonds(0),
-    mSize(EChestSize::Small), mEffect(false), mCamera(false), mOther("nothing"), mTargetRoomNumber(-1),
-    mOtherItemRef(std::weak_ptr<LItemInfoDOMNode>()), mRoomNodeRef(std::weak_ptr<LRoomDOMNode>())
+    mSize(EChestSize::Small), mEffect(false), mCamera(false), mOther("nothing"),
+    mOtherItemRef(std::weak_ptr<LItemInfoDOMNode>())
 {
     mType = EDOMNodeType::TreasureTable;
-    mRoomNumber = -1;
 }
 
 std::string LTreasureTableDOMNode::GetName()
 {
-    if (auto room = mRoomNodeRef.lock())
-        return LGenUtility::Format("Treasure Table [", room->GetName(), "]");
-    else
-        return "Treasure Table [Invalid Room]";
+    return "Treasure Table";
 }
 
 void LTreasureTableDOMNode::RenderDetailsUI(float dt)
@@ -65,16 +61,8 @@ void LTreasureTableDOMNode::RenderDetailsUI(float dt)
     LUIUtility::RenderComboEnum<EChestSize>("Size", mSize);
     LUIUtility::RenderTooltip("How large the chest is.");
 
-    LUIUtility::RenderNodeReferenceCombo<LItemInfoDOMNode>("Other Item", EDOMNodeType::ItemInfo, Parent, mOtherItemRef);
+    LUIUtility::RenderNodeReferenceCombo<LItemInfoDOMNode>("Other Item", EDOMNodeType::ItemInfo, GetParentOfType<LMapDOMNode>(EDOMNodeType::Map), mOtherItemRef);
     LUIUtility::RenderTooltip("The item from the master item list to spawn from the chest.");
-
-    // Showing the room combo requires us to get the map node. It shouldn't ever be expired, but safety first I guess.
-    auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
-    if (!mapNode.expired())
-    {
-        LUIUtility::RenderNodeReferenceCombo<LRoomDOMNode>("Room", EDOMNodeType::Room, mapNode, mRoomNodeRef);
-        LUIUtility::RenderTooltip("The room that this chest data is for.");
-    }
 
     // Bools
     LUIUtility::RenderCheckBox("Chest has Sparkling Particles?", &mEffect);
@@ -87,7 +75,7 @@ void LTreasureTableDOMNode::RenderDetailsUI(float dt)
 void LTreasureTableDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 {
     JmpIO->SetString(entry_index, "other", mOther);
-    JmpIO->SetSignedInt(entry_index, "room", mTargetRoomNumber);
+    JmpIO->SetSignedInt(entry_index, "room", mRoomNumber);
 
     JmpIO->SetSignedInt(entry_index, "size", (int32_t)mSize);
 
@@ -111,7 +99,7 @@ void LTreasureTableDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 void LTreasureTableDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 {
     mOther = JmpIO->GetString(entry_index, "other");
-    mTargetRoomNumber = JmpIO->GetSignedInt(entry_index, "room");
+    mRoomNumber = JmpIO->GetSignedInt(entry_index, "room");
 
     mSize = (EChestSize)JmpIO->GetSignedInt(entry_index, "size");
 
@@ -134,13 +122,6 @@ void LTreasureTableDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 
 void LTreasureTableDOMNode::PostProcess()
 {
-    // On the off chance that the parent is invalid, don't try to do anything.
-    if (Parent.expired())
-        return;
-
-    // Grab a temporary shared_ptr for the parent.
-    auto parentShared = Parent.lock();
-
     // Grab item info data from the map
     auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
     if (auto mapNodeLocked = mapNode.lock())
@@ -155,16 +136,6 @@ void LTreasureTableDOMNode::PostProcess()
                 break;
             }
         }
-
-        // Set room reference
-        auto rooms = mapNodeLocked->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
-        if (mTargetRoomNumber >= rooms.size())
-        {
-            std::cout << LGenUtility::Format("Invalid target room number \"", mTargetRoomNumber, "\" on treasure table \"", mName, "\"!");
-            return;
-        }
-        else
-            mRoomNodeRef = rooms[mTargetRoomNumber];
     }
 }
 
@@ -175,15 +146,14 @@ void LTreasureTableDOMNode::PreProcess()
         return;
 
     // Grab a temporary shared_ptr for the parent.
-    auto parentShared = Parent.lock();
+    auto parentShared = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
 
     if (auto info = mOtherItemRef.lock())
         mOther = info->GetName();
     else
         mOther = "nothing";
 
-    if (auto room = mRoomNodeRef.lock())
-        mTargetRoomNumber = room->GetRoomNumber();
-    else
-        mTargetRoomNumber = -1;
+    auto roomParent = GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room);
+    if (auto parent = roomParent.lock())
+        mRoomNumber = parent->GetRoomNumber();
 }

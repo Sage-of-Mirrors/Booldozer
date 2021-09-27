@@ -30,7 +30,10 @@ bool LRoomDataDOMNode::Load(const uint32_t& index, const LStaticMapDataIO& sourc
 	mUnknown1 = roomData.mUnknown1;
 	mUnknown2 = roomData.mUnknown2;
 
-	mDarkColor = roomData.mDarkColor;
+	mDarkColor.r = roomData.mDarkColor.r / 255.f;
+	mDarkColor.g = roomData.mDarkColor.g / 255.f;
+	mDarkColor.b = roomData.mDarkColor.b / 255.f;
+	mDarkColor.a = roomData.mDarkColor.a / 255.f;
 
 	// Resource path
 	source.GetRoomResourcePath(index, mResourcePath);

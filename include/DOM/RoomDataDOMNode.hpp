@@ -38,8 +38,12 @@ public:
 	LRoomDataDOMNode(std::string name);
 
 	std::string GetResourcePath() { return mResourcePath; }
-	std::vector<std::weak_ptr<LRoomDOMNode>> GetAdjacencyList() { return mAdjacentRooms; }
+	std::vector<std::weak_ptr<LRoomDOMNode>>& GetAdjacencyList() { return mAdjacentRooms; }
 	std::vector<std::weak_ptr<LDoorDOMNode>> GetDoorList() { return mDoorList; }
+
+	float* GetDarkColor() { return &mDarkColor.r; }
+
+	int32_t GetRoomID() const { return mCameraPositionIndex; }
 
 	virtual void RenderDetailsUI(float dt) override;
 

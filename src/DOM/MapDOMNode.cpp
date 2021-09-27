@@ -399,3 +399,22 @@ std::shared_ptr<LRoomDOMNode> LMapDOMNode::GetRoomByNumber(int32_t number)
 
 	return room;
 }
+
+std::shared_ptr<LRoomDOMNode> LMapDOMNode::GetRoomByID(int32_t id)
+{
+	std::shared_ptr<LRoomDOMNode> room = nullptr;
+
+	auto roomVec = GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
+	for (std::shared_ptr<LRoomDOMNode> r : roomVec)
+	{
+		auto roomData = r->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
+
+		if (roomData->GetRoomID() == id)
+		{
+			room = r;
+			break;
+		}
+	}
+
+	return room;
+}

@@ -105,7 +105,7 @@ namespace LUIUtility
 			bool is_selected = (referenceLocked == nullptr);
 			if (ImGui::Selectable("[None]", is_selected))
 			{
-				currentReference = std::make_shared<T>(nullptr);
+				currentReference = std::weak_ptr<T>();
 				changed = true;
 			}
 
@@ -138,6 +138,39 @@ namespace LUIUtility
 			}
 
 			ImGui::EndCombo();
+		}
+
+		return changed;
+	}
+
+	template<typename T>
+	bool RenderNodeReferenceVector(std::string name, EDOMNodeType desiredType, std::weak_ptr<LDOMNodeBase> parent, std::vector<std::weak_ptr<T>>& vector)
+	{
+		bool changed = false;
+
+		ImGui::Text(name.c_str());
+		ImGui::SameLine();
+		if (ImGui::Button(" + "))
+		{
+			vector.push_back(std::weak_ptr<T>());
+		}
+		ImGui::SameLine();
+		if (ImGui::Button(" - ") && vector.size() > 0)
+		{
+			vector.erase(vector.end() - 1);
+		}
+
+		for (size_t i = 0; i < vector.size(); i++)
+		{
+			std::weak_ptr<T> element = vector[i];
+
+			ImGui::PushID(i);
+			if (RenderNodeReferenceCombo("", desiredType, parent, element))
+			{
+				vector[i] = element;
+				changed = true;
+			}
+			ImGui::PopID();
 		}
 
 		return changed;

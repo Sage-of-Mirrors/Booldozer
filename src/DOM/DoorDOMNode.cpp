@@ -1,4 +1,4 @@
-#include "DOM/DoorDOMNode.hpp"
+﻿#include "DOM/DoorDOMNode.hpp"
 #include "io/StaticMapDataIO.hpp"
 #include "UIUtil.hpp"
 #include "GenUtil.hpp"
@@ -18,36 +18,33 @@ std::string LDoorDOMNode::GetName()
 	switch (mOrientation)
 	{
 	case EDoorOrientation::Front_Facing:
-		name = "[North/South";
+		name = LGenUtility::Format(name, u8"↕ ");
 		break;
 	case EDoorOrientation::Side_Facing:
-		name = "[East/West";
+		name = LGenUtility::Format(name, u8"↔ ");
 		break;
 	case EDoorOrientation::No_Fade:
-		name = "[No fade";
+		name = LGenUtility::Format(name, "No Fade ");
+		break;
+	default:
 		break;
 	}
 
 	switch (mDoorType)
 	{
-	case EDoorType::Door:
-		name = LGenUtility::Format(name, " Door]: ");
-		break;
 	case EDoorType::Viewport:
-		name = LGenUtility::Format(name, " Viewport]: ");
+		name = LGenUtility::Format(name, "(VP) ");
 		break;
 	case EDoorType::Window:
-		name = LGenUtility::Format(name, " Window]: ");
+		name = LGenUtility::Format(name, "(W) ");
 		break;
 	}
 
 	auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
 	if (auto mapNodeLocked = mapNode.lock())
 	{
-		auto rooms = mapNodeLocked->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
-
-		name = LGenUtility::Format(name, rooms[mNextEscape]->GetName());
-		name = LGenUtility::Format(name, "/", rooms[mCurrentEscape]->GetName());
+		name = LGenUtility::Format(name, mapNodeLocked->GetRoomByID(mNextEscape)->GetName());
+		name = LGenUtility::Format(name, "/", mapNodeLocked->GetRoomByID(mCurrentEscape)->GetName());
 	}
 
 	return name;
