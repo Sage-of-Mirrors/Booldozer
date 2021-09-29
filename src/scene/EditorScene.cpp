@@ -206,12 +206,42 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 	std::vector<glm::mat4> roomBounds;
 
 	for(auto door : mRoomDoors){
-		if(!door.expired()){
-			glm::mat4 identity = glm::identity<glm::mat4>();
-			identity = glm::translate(identity, door.lock()->GetPosition());
-			if(door.lock()->GetOrientation() == EDoorOrientation::Side_Facing) identity = glm::rotate(identity, glm::radians(90.0f), glm::vec3(0,1,0));
-			if(door.lock()->GetModel() != EDoorModel::None && ((uint8_t)door.lock()->GetModel()) - 1 < mDoorModels.size()){
-				mDoorModels[((uint8_t)door.lock()->GetModel()) - 1]->Draw(&identity, mShader, mTexUniform);
+		if (auto doorLocked = door.lock())
+		{
+			auto doorType = doorLocked->GetModel();
+			if (doorType == EDoorModel::None)
+				continue;
+
+			// Construct transform matrix...
+			glm::mat4 doorMat = glm::identity<glm::mat4>();
+
+			// Position, based on... position.
+			doorMat = glm::translate(doorMat, doorLocked->GetPosition());
+			// Rotation is based on the door's orientation type.
+			if (doorLocked->GetOrientation() == EDoorOrientation::Side_Facing)
+				doorMat = glm::rotate(doorMat, glm::radians(90.0f), glm::vec3(0, 1, 0));
+
+			// Double doors need to be rendered twice, with the two halves moved accordingly.
+			if (doorType == EDoorModel::Parlor_Double_Door || doorType == EDoorModel::Hearts_Double_Door)
+			{
+				glm::vec3 doubleDoorOffset = glm::vec3(0, 0, 100);
+
+				// Offset the first door (right/forward) and render it.
+				doorMat = glm::translate(doorMat, doubleDoorOffset);
+				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, mShader, mTexUniform);
+
+				// Now offset the second door (left/backward) and rotate it 180 degrees.
+				doubleDoorOffset *= 2;
+				doorMat = glm::translate(doorMat, -doubleDoorOffset);
+				doorMat = glm::rotate(doorMat, glm::radians(180.f), glm::vec3(0, 1, 0));
+
+				// Render second door.
+				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, mShader, mTexUniform);
+			}
+			// Single door can just be rendered without hassle.
+			else
+			{
+				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, mShader, mTexUniform);
 			}
 		}
 	}

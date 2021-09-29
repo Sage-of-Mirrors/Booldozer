@@ -24,7 +24,7 @@ enum class EDoorModel : uint8_t
 	Square_Mansion_Door,
 	Round_Topped_Mansion_Door,
 	Parlor_Double_Door,
-	Anteroom_Double_Door,
+	Anteroom_Door,
 	Lab_Door,
 	Gallery_Door,
 	Nursery_Door,
