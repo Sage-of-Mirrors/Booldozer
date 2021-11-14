@@ -41,7 +41,7 @@ void UpdateMapFileOffsets()
   
   // Room doors
   for (uint32_t i = 0; i < FileBuffer->mRoomCount; i++)
-    FileBuffer->mRoomData[i]->mDoorListRef = offset_to_ptr(FileBuffer->mDoorListData, FileBuffer->mRoomData[i]->mDoorListRef);
+    FileBuffer->mRoomData[i]->mDoorListRef = offset_to_ptr(FileBuffer->mDoorListData, (uint32_t)FileBuffer->mRoomData[i]->mDoorListRef);
   
   // Room resources
   for (uint32_t i = 0; i < FileBuffer->mRoomCount; i++)
