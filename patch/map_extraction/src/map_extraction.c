@@ -76,7 +76,8 @@ void InitMap_External(uint16_t MapID)
     Map->mRoomAdjacencyLists = FileBuffer->mRoomAdjacencyList;
     Map->mDoorDefs = FileBuffer->mDoorData;
   }
-    
+  
+  /* Legacy
     // If the *.dat file for this map exists, load it and set the proper pointers.
     if (dvd__DVDConvertPathToEntrynum(formattedPath) != -1)
     {
@@ -100,20 +101,21 @@ void InitMap_External(uint16_t MapID)
       
       dvd__DVDClose(&fileInfo);
     }
+  */
     
-  // Continue with native map initializing
+  // Continue with native map initializing.
   InitMap(MapID);
 }
 
 void FreeMap_External()
 {
-  // Free the memory where the map file was stored, if it was loaded in the first place
+  // Free the memory where the map file was stored, if it was loaded in the first place.
   if (FileBuffer != NULL)
   {
      JKRHeap__free(FileBuffer, NULL);
      FileBuffer = NULL;     
   }
   
-  // Continue with native map destruction
+  // Continue with native map destruction.
   FreeMap();
 }
