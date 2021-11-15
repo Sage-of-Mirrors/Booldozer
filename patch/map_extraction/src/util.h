@@ -1,5 +1,4 @@
-#ifndef UTIL_H
-#define UTIL_H
+#pragma once
 
 #define OSRoundUp32B(n) ((unsigned int) (((unsigned int)(n) + 31) & ~31))
 
@@ -27,5 +26,3 @@ void* offset_to_ptr(void* base, uint32_t ofs) {
 
   return (uint8_t *)base + ofs;
 }
-
-#endif

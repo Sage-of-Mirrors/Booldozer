@@ -1,5 +1,4 @@
-#ifndef MAP_EXTRACTION_H
-#define MAP_EXTRACTION_H
+#pragma once
 
 #include <stdint.h>
 #include "map_file.h"
@@ -36,5 +35,3 @@ extern  struct LMapFile* FileBuffer;
 // The array of LMapData* that define what maps the game can load.
 // There are 14 slots, not all of which are used.
 extern struct LMapData* MapDataPtrs[14];
-
-#endif

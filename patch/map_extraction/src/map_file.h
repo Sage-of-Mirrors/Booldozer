@@ -1,5 +1,4 @@
-#ifndef MAP_FILE_H
-#define MAP_FILE_H
+#pragma once
 
 #include <stdint.h>
 
@@ -108,6 +107,3 @@ typedef struct LMapFile
   // The pointers are updated to point to the correct locations at runtime.
   uint32_t* mRoomAdjacencyList;
 } LMapFile;
-
-#endif
-
