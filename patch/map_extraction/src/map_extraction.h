@@ -5,7 +5,7 @@
 #include "map_file.h"
 
 // The data that defines a map and its rooms.
-struct LMapData
+typedef struct LMapData
 {
   /* 0x00 */ uint8_t mRoomCount;  // Total number of rooms in this map
   /* 0x01 */ uint8_t mRoomCount2; // Duplicate of room count; purpose unknown
@@ -18,7 +18,7 @@ struct LMapData
   
   /* 0x14 */ LRoomData* mRoomDefs; // Structs defining the map's rooms
   /* 0x18 */ LDoorData* mDoorDefs; // Structs defining the doors within the map
-};
+} LMapData;
 
 // Attempts to load the external data file; returns whether it succeeded.
 uint32_t TryLoadMapFile(uint16_t MapID);
@@ -32,9 +32,9 @@ void InitMap_External(uint16_t MapID);
 void FreeMap_External();
 
 // The address to which our extracted data is loaded at map init.
-extern LMapFile* FileBuffer;
+extern  struct LMapFile* FileBuffer;
 // The array of LMapData* that define what maps the game can load.
 // There are 14 slots, not all of which are used.
-extern LMapData* MapDataPtrs[14];
+extern struct LMapData* MapDataPtrs[14];
 
 #endif

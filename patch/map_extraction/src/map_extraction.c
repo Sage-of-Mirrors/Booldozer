@@ -1,30 +1,32 @@
 #include "map_extraction.h"
 #include "util.h"
 
+#include <stddef.h>
+
 LMapFile* FileBuffer = NULL;
 
 uint32_t TryLoadMapFile(uint16_t MapID)
 {
   // Generate the path to the map file.
   char FormattedPath[32];
-  MSL_C_PPCEABI_bare_H__snprintf(formattedPath, 32, "/Iwamoto/map%d/rooms.map", MapID);
+  snprintf(FormattedPath, 32, "/Iwamoto/map%d/rooms.map", MapID);
   
   // Query the DVD to check if the map file exists; if not, early out.
-  uint32_t DoesFileExist = dvd__DVDConvertPathToEntrynum(FormattedPath);
-  if (!DoesFileExist)
+  uint32_t DoesFileExist = DVDConvertPathToEntrynum(FormattedPath);
+  if (DoesFileExist == -1)
     return 0;
   
   // Grab the info about the map file from the DVD.
   DVDFileInfo FileInfo;
-  dvd__DVDOpen(FormattedPath, &FileInfo);
+  DVDOpen(FormattedPath, &FileInfo);
   
   // Allocate memory to hold the map file.
   uint32_t FileSize = OSRoundUp32B(FileInfo.mLength);
-  FileBuffer = (LMapFile*)JKRHeap__alloc(FileSize, 32, NULL);
+  FileBuffer = (LMapFile*)JKRHeap_alloc(FileSize, 32, NULL);
   
   // Read the map file from the DVD.
-  dvd__DVDReadPrio(&FileInfo, (char*)FileBuffer, FileSize, NULL, 2);
-  dvd__DVDClose(&FileInfo);
+  DVDReadPrio(&FileInfo, (char*)FileBuffer, FileSize, NULL, 2);
+  DVDClose(&FileInfo);
   
   return 1;
 }
@@ -41,15 +43,15 @@ void UpdateMapFileOffsets()
   
   // Room doors
   for (uint32_t i = 0; i < FileBuffer->mRoomCount; i++)
-    FileBuffer->mRoomData[i]->mDoorListRef = offset_to_ptr(FileBuffer->mDoorListData, (uint32_t)FileBuffer->mRoomData[i]->mDoorListRef);
+    FileBuffer->mRoomData[i].mDoorListRef = offset_to_ptr(FileBuffer->mDoorListData, (uint32_t)FileBuffer->mRoomData[i].mDoorListRef);
   
   // Room resources
   for (uint32_t i = 0; i < FileBuffer->mRoomCount; i++)
     FileBuffer->mRoomResourcePaths[i] = offset_to_ptr(FileBuffer->mRoomResourcePaths, (uint32_t)FileBuffer->mRoomResourcePaths[i]);
   
   // Alt room resources
-  for (uint32_t i = 0; i < FileBuffer->mAltResourceCount)
-    FileBuffer->mAltResourceData[i]->mPath = offset_to_ptr(FileBuffer->mAltResourceData, (uint32_t)FileBuffer->mAltResourceData[i]->mPath);
+  for (uint32_t i = 0; i < FileBuffer->mAltResourceCount; i++)
+    FileBuffer->mAltResourceData[i].mPath = offset_to_ptr(FileBuffer->mAltResourceData, (uint32_t)FileBuffer->mAltResourceData[i].mPath);
   
   // Room adjacency list
   for (uint32_t i = 0; i < FileBuffer->mRoomAdjacencyListCount; i++)
@@ -112,7 +114,7 @@ void FreeMap_External()
   // Free the memory where the map file was stored, if it was loaded in the first place.
   if (FileBuffer != NULL)
   {
-     JKRHeap__free(FileBuffer, NULL);
+     JKRHeap_free(FileBuffer, NULL);
      FileBuffer = NULL;     
   }
   

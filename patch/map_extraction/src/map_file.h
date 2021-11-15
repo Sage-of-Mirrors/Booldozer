@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 // The data that makes up each room in a map.
-struct LRoomData
+typedef struct LRoomData
 {
 	uint8_t mCameraPositionIndex;
 	uint8_t mFloor;
@@ -31,11 +31,11 @@ struct LRoomData
   uint8_t mDarkColor_G;
   uint8_t mDarkColor_B;
   uint8_t mDarkColor_A;
-};
+} LRoomData;
 
 // The data that defines alternate resources a room in a map can use;
 // Used to make Guest Room upside-down.
-struct LAltResourceData
+typedef struct LAltResourceData
 {
 	uint8_t mRoomNumber;
 	uint8_t mUnknown1;
@@ -43,10 +43,10 @@ struct LAltResourceData
 
   // This is updated to point to the correct location at runtime.
 	char* mPath;
-};
+} LAltResourceData;
 
 // The data that makes up each door within a map.
-struct LDoorData
+typedef struct LDoorData
 {
 	uint8_t mOrientation;
 	uint8_t mType;
@@ -67,17 +67,17 @@ struct LDoorData
 
 	uint8_t mNextEscape;
 	uint8_t mCurrentEscape;
-};
+} LDoorData;
 
 // Layout for the header of the *.map file containing the extracted map data.
-struct LMapFile
+typedef struct LMapFile
 {
 	// Total size of the file, used for bounds checking.
 	uint32_t mFileSize;
 
 	// Stuff for all the rooms in the map.
 	uint32_t mRoomCount;
-	LRoomData* mRoomData;
+	struct LRoomData* mRoomData;
   
   // This is a char* array of size mRoomCount.
   // The pointers are updated to point to the correct locations at runtime.
@@ -85,11 +85,11 @@ struct LMapFile
 
 	// Some rooms can have "alternate" resources. Method of activating them is currently unknown.
 	uint32_t mAltResourceCount;
-	LAltResourceData* mAltResourceData;
+	struct LAltResourceData* mAltResourceData;
 
 	// Stuff for all the doors in the map.
 	uint32_t mDoorCount;
-	LDoorData* mDoorData;
+	struct LDoorData* mDoorData;
 
 	// This list connects rooms to doors. Entries are shorts and lists are terminated with -1/0xFFFF.
 	uint32_t mDoorListCount;
@@ -101,7 +101,7 @@ struct LMapFile
   // This is a uint16_t* array of size mRoomCount.
   // The pointers are updated to point to the correct locations at runtime.
 	uint32_t* mRoomAdjacencyList;
-};
+} LMapFile;
 
 #endif
 
