@@ -23,7 +23,7 @@ typedef struct DVDFileInfo
 // Utility function for calculating pointers from a base + an offset.
 void* offset_to_ptr(void* base, uint32_t ofs) {
   if (ofs == 0)
-    return 0;
+    return base;
 
   return (uint8_t *)base + ofs;
 }
