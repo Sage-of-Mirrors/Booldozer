@@ -78,32 +78,6 @@ void InitMap_External(uint16_t MapID)
     Map->mRoomAdjacencyLists = FileBuffer->mRoomAdjacencyList;
     Map->mDoorDefs = FileBuffer->mDoorData;
   }
-  
-  /* Legacy
-    // If the *.dat file for this map exists, load it and set the proper pointers.
-    if (dvd__DVDConvertPathToEntrynum(formattedPath) != -1)
-    {
-      DVDFileInfo fileInfo;
-      dvd__DVDOpen(formattedPath, &fileInfo);
-      
-      unsigned int fileSize = OSRoundUp32B(fileInfo.mLength);
-      mDataFileBuffer = JKRHeap__alloc(fileSize, 32, 0);
-
-      dvd__DVDReadPrio(&fileInfo, mDataFileBuffer, fileSize, 0, 2);
-      
-      SExtRoomData* mCurRoomData = (SExtRoomData*)mDataFileBuffer;
-      mCurRoomData->mData = offset_to_ptr(mCurRoomData, mCurRoomData->mRoomDataOffset);
-      
-      SMapLoadData* curStaticMapData = MapDataPtrs[mapNo];
-      
-      curStaticMapData->mRoomDefs = mCurRoomData->mData;
-      curStaticMapData->mDoorDefs = offset_to_ptr(mCurRoomData, mCurRoomData->mDoorDataOffset);
-      curStaticMapData->mNumRooms = (char)mCurRoomData->mNumRooms;
-      curStaticMapData->mPaddingChar = (char)mCurRoomData->mNumRooms;
-      
-      dvd__DVDClose(&fileInfo);
-    }
-  */
     
   // Continue with native map initializing.
   InitMap(MapID);
