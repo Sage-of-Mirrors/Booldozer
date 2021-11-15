@@ -3,6 +3,17 @@
 
 #include <stdint.h>
 
+typedef struct LBoundingBox
+{
+  int32_t Min_X;
+  int32_t Min_Y;
+  int32_t Min_Z;
+  
+  int32_t Max_X;
+  int32_t Max_Y;
+  int32_t Max_Z;
+} LBoundingBox;
+
 // The data that makes up each room in a map.
 typedef struct LRoomData
 {
@@ -12,17 +23,12 @@ typedef struct LRoomData
 	uint8_t mRoomID;
 
 	uint32_t mCameraBehavior;
-
-  int32_t mBoundingBoxMin_X;
-  int32_t mBoundingBoxMin_Y;
-  int32_t mBoundingBoxMin_Z;
   
-  int32_t mBoundingBoxMax_X;
-  int32_t mBoundingBoxMax_Y;
-  int32_t mBoundingBoxMax_Z;
+  LBoundingBox mRoomBounds;
 
-	uint32_t mUnknown1;
-	uint32_t mUnknown2;
+  // The number of bounding boxes that override the room bounds for actor spawning.
+	uint32_t mRoomBoundOverrideCount;
+	LBoundingBox* mRoomBoundOverrides;
 
   // This is updated to point to the correct location at runtime.
 	uint16_t* mDoorListRef;
