@@ -52,7 +52,7 @@ std::string LDoorDOMNode::GetName()
 
 void LDoorDOMNode::RenderDetailsUI(float dt)
 {
-	LUIUtility::RenderTransformUI(mTransform.get(), mPosition, mRotation, mScale);
+	//LUIUtility::RenderTransformUI(mTransform.get(), mPosition, mRotation, mScale);
 
 	LUIUtility::RenderComboEnum<EDoorOrientation>("Orientation", mOrientation);
 	LUIUtility::RenderComboEnum<EDoorType>("Type", mDoorType);

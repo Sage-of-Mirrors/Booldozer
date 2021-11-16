@@ -5,45 +5,61 @@ LDoorMode::LDoorMode()
 
 }
 
+void LDoorMode::RenderLeafContextMenu(std::shared_ptr<LDoorDOMNode> node)
+{
+	if (ImGui::Selectable("Delete"))
+	{
+		auto mapNode = node->GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+		if (auto mapNodeLocked = mapNode.lock())
+		{
+			for (auto selected : mSelectionManager.GetSelection())
+			{
+				mapNodeLocked->RemoveChild(selected);
+			}
+
+			mSelectionManager.ClearSelection();
+		}
+	}
+
+	ImGui::EndPopup();
+}
+
 void LDoorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 {
-	ImGui::Begin("Door List");
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar;
+	ImGui::Begin("Door List", 0, window_flags);
+
+	std::shared_ptr<LDoorDOMNode> newNode = nullptr;
+	if (ImGui::Button("Add Door"))
+	{
+		newNode = std::make_shared<LDoorDOMNode>("new door");
+		current_map->AddChild(newNode);
+		mSelectionManager.AddToSelection(newNode);
+	}
+
+	ImGui::Separator();
+
+	window_flags = ImGuiWindowFlags_HorizontalScrollbar;
+	ImGui::BeginChild("ChildL", ImVec2(ImGui::GetWindowContentRegionWidth(), ImGui::GetWindowHeight() - 75.f), false, window_flags);
 
 	auto doors = current_map->GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door);
-	bool definitionTreeOpened = ImGui::TreeNode("Doors");
-	if (ImGui::BeginPopupContextItem())
+	for (uint32_t i = 0; i < doors.size(); i++)
 	{
-		if (ImGui::Selectable("Add Door"))
-		{
-			auto newInfoNode = std::make_shared<LDoorDOMNode>("(null)");
-			current_map->AddChild(newInfoNode);
+		uint32_t selectionType = 0;
 
-			mSelectionManager.AddToSelection(newInfoNode);
-		}
+		ImGui::PushID(i);
 
-		ImGui::EndPopup();
+		doors[i]->RenderHierarchyUI(doors[i], &mSelectionManager);
+		if (ImGui::BeginPopupContextItem())
+			RenderLeafContextMenu(doors[i]);
+
+		if (newNode != nullptr && newNode == doors[i])
+			ImGui::SetScrollHereY(1.0f);
+
+		ImGui::PopID();
 	}
 
-	if (definitionTreeOpened)
-	{
-		for (uint32_t i = 0; i < doors.size(); i++)
-		{
-			uint32_t selectionType = 0;
-
-			ImGui::Indent();
-			ImGui::PushID(i);
-
-			doors[i]->RenderHierarchyUI(doors[i], &mSelectionManager);
-			//if (ImGui::BeginPopupContextItem())
-				///RenderLeafContextMenu(iteminfos[i]);
-
-			ImGui::PopID();
-			ImGui::Unindent();
-		}
-
-		ImGui::TreePop();
-	}
-
+	ImGui::EndChild();
 	ImGui::End();
 }
 
