@@ -44,6 +44,7 @@ class LDoorDOMNode : public LBGRenderDOMNode
 	int32_t mJmpId;
 	EDoorModel mModel;
 	int32_t mDoorEntryNumber;
+	glm::vec3 mViewportSize;
 
 	int32_t mNextEscape;
 	int32_t mCurrentEscape;
@@ -53,8 +54,9 @@ public:
 
 	LDoorDOMNode(std::string name);
 
-	virtual std::string GetName() override;
+	glm::vec3 GetViewportSize() const { return mViewportSize; }
 
+	virtual std::string GetName() override;
 	virtual void RenderDetailsUI(float dt) override;
 
 	bool Load(const LStaticDoorData& source);

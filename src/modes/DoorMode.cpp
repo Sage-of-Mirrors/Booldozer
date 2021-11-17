@@ -78,18 +78,20 @@ void LDoorMode::RenderDetailsWindow()
 void LDoorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene)
 {
 	RenderSceneHierarchy(current_map);
-	RenderDetailsWindow();
 
+	// Render the nodes so that we're sure new nodes are initialized.
 	for (auto& node : current_map.get()->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)) {
 		node->RenderBG(0);
 	}
+
+	RenderDetailsWindow();
 
 	if (mSelectionManager.GetPrimarySelection() != nullptr)
 	{
 		glm::mat4* m = ((LBGRenderDOMNode*)(mSelectionManager.GetPrimarySelection().get()))->GetMat();
 		glm::mat4 view = renderer_scene->getCameraView();
 		glm::mat4 proj = renderer_scene->getCameraProj();
-		ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::LOCAL, &(*m)[0][0], NULL, NULL);
+		ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::WORLD, &(*m)[0][0], NULL, NULL);
 	}
 }
 

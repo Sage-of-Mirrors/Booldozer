@@ -279,7 +279,7 @@ void BinScenegraphNode::AddMesh(int16_t material, int16_t mesh){
     meshes.push_back(std::pair(material, mesh));
 }
 
-void BinScenegraphNode::Draw(glm::mat4 localTransform, glm::mat4* instance, BGFXBin* bin, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform){
+void BinScenegraphNode::Draw(glm::mat4 localTransform, glm::mat4* instance, BGFXBin* bin, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform, bool bIgnoreTransforms){
 
     for (auto& mesh : meshes)
     {
@@ -287,16 +287,19 @@ void BinScenegraphNode::Draw(glm::mat4 localTransform, glm::mat4* instance, BGFX
         if(!bin->BindMaterial(mesh.second, texUniform)) continue;
 
         bgfx::setState(BGFX_STATE_DEFAULT | BGFX_STATE_CULL_CCW | BGFX_STATE_BLEND_ALPHA);
-        bgfx::setTransform(&(*instance * localTransform * transform)[0][0]);
+        if (!bIgnoreTransforms)
+            bgfx::setTransform(&(*instance * localTransform * transform)[0][0]);
+        else
+            bgfx::setTransform(&(*instance)[0][0]);
         bgfx::submit(0, program);
     }
     
     if(child != nullptr){
-        child->Draw(localTransform * transform, instance, bin, program, texUniform);
+        child->Draw(localTransform * transform, instance, bin, program, texUniform, bIgnoreTransforms);
     }
 
     if(next != nullptr){
-        next->Draw(localTransform, instance, bin, program, texUniform);
+        next->Draw(localTransform, instance, bin, program, texUniform, bIgnoreTransforms);
     }
 }
 
@@ -437,8 +440,8 @@ void BGFXBin::TranslateRoot(glm::vec3 translation){
     mRoot->transform = glm::translate(mRoot->transform, translation);
 }
 
-void BGFXBin::Draw(glm::mat4* transform, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform){
-    mRoot->Draw(glm::identity<glm::mat4>(), transform, this, program, texUniform);
+void BGFXBin::Draw(glm::mat4* transform, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform, bool bIgnoreTransforms){
+    mRoot->Draw(glm::identity<glm::mat4>(), transform, this, program, texUniform, bIgnoreTransforms);
 }
 
 void BGFXBin::InitBinVertex(){

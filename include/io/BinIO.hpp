@@ -94,7 +94,7 @@ public:
 	float mBoundingSphereRadius;
 
     void AddMesh(int16_t material, int16_t mesh);
-    void Draw(glm::mat4 localTransform, glm::mat4* instance, BGFXBin* bin, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform);
+    void Draw(glm::mat4 localTransform, glm::mat4* instance, BGFXBin* bin, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform, bool bIgnoreTransforms = false);
     BinScenegraphNode();
     ~BinScenegraphNode();
 
@@ -112,7 +112,7 @@ public:
     static void InitBinVertex();
 	bool BindMesh(uint16_t id);
 	bool BindMaterial(uint16_t id, bgfx::UniformHandle& texUniform);
-    void Draw(glm::mat4* transform, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform);
+    void Draw(glm::mat4* transform, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform, bool bIgnoreTransforms = false);
 	void TranslateRoot(glm::vec3 translation);
 	float GetRootBoundingSphere() { return mRoot->mBoundingSphereRadius; }
     BGFXBin(bStream::CStream* stream);

@@ -169,9 +169,9 @@ void LEditorScene::init(){
 					auto doorModel = std::make_shared<BGFXBin>(&bin);
 					//Haha holy shit the door models are so fucking broken.
 					if(std::filesystem::path(GCResourceManager.mGameArchive.files[i].name).filename().stem() == "door_01"){
-						doorModel->TranslateRoot(glm::vec3(0,350,0));
+						//doorModel->TranslateRoot(glm::vec3(200,0,0));
 					} else {
-						doorModel->TranslateRoot(glm::vec3(0,-150,0));
+						//doorModel->TranslateRoot(glm::vec3(0,-150,0));
 					}
 					mDoorModels.push_back(doorModel);
 				}
@@ -213,13 +213,17 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 				continue;
 
 			// Construct transform matrix...
-			glm::mat4 doorMat = glm::identity<glm::mat4>();
+			glm::mat4 doorMat = *doorLocked->GetMat(); //glm::identity<glm::mat4>();
 
-			// Position, based on... position.
-			doorMat = glm::translate(doorMat, doorLocked->GetPosition());
+			doorMat[3][1] -= doorLocked->GetViewportSize().y / 2.f;
+
 			// Rotation is based on the door's orientation type.
 			if (doorLocked->GetOrientation() == EDoorOrientation::Side_Facing)
 				doorMat = glm::rotate(doorMat, glm::radians(90.0f), glm::vec3(0, 1, 0));
+
+			bool bIgnoreTransforms = doorType == EDoorModel::Square_Mansion_Door;
+			if (bIgnoreTransforms)
+				doorMat = glm::translate(doorMat, glm::vec3(0, 0, 100));
 
 			// Double doors need to be rendered twice, with the two halves moved accordingly.
 			if (doorType == EDoorModel::Parlor_Double_Door || doorType == EDoorModel::Hearts_Double_Door)
@@ -241,7 +245,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 			// Single door can just be rendered without hassle.
 			else
 			{
-				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, mShader, mTexUniform);
+				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, mShader, mTexUniform, bIgnoreTransforms);
 			}
 		}
 	}
