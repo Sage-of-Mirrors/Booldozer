@@ -3,6 +3,7 @@
 #include "BGRenderDOMNode.hpp"
 
 struct LStaticDoorData;
+class LRoomDOMNode;
 
 enum class EDoorOrientation : uint8_t
 {
@@ -49,12 +50,13 @@ class LDoorDOMNode : public LBGRenderDOMNode
 	int32_t mNextEscape;
 	int32_t mCurrentEscape;
 
+	std::weak_ptr<LRoomDOMNode> mWestSouthRoom;
+	std::weak_ptr<LRoomDOMNode> mEastNorthRoom;
+
 public:
 	typedef LBGRenderDOMNode Super;
 
 	LDoorDOMNode(std::string name);
-
-	glm::vec3 GetViewportSize() const { return mViewportSize; }
 
 	virtual std::string GetName() override;
 	virtual void RenderDetailsUI(float dt) override;
@@ -62,8 +64,14 @@ public:
 	bool Load(const LStaticDoorData& source);
 	bool Save(LStaticDoorData& dest);
 
-	EDoorModel GetModel() { return mModel; }
+	void PostProcess();
+	void PreProcess();
 
+	void AssignJmpIdAndIndex(std::vector<std::shared_ptr<LDoorDOMNode>> doors);
+
+	int32_t GetJmpId() const { return mJmpId; }
+	glm::vec3 GetViewportSize() const { return mViewportSize; }
+	EDoorModel GetModel() { return mModel; }
 	EDoorOrientation GetOrientation() { return mOrientation; }
 
 /*=== Type operations ===*/

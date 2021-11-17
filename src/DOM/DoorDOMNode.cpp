@@ -1,4 +1,5 @@
 ﻿#include "DOM/DoorDOMNode.hpp"
+#include "DOM/RoomDOMNode.hpp"
 #include "io/StaticMapDataIO.hpp"
 #include "UIUtil.hpp"
 #include "GenUtil.hpp"
@@ -6,7 +7,8 @@
 
 LDoorDOMNode::LDoorDOMNode(std::string name) : Super(name),
 	mOrientation(EDoorOrientation::Front_Facing), mDoorType(EDoorType::Door), mJmpId(0),
-	mModel(EDoorModel::Square_Mansion_Door), mDoorEntryNumber(0), mNextEscape(0), mCurrentEscape(0)
+	mModel(EDoorModel::Square_Mansion_Door), mDoorEntryNumber(0), mNextEscape(0), mCurrentEscape(0),
+	mWestSouthRoom(), mEastNorthRoom()
 {
 	mType = EDOMNodeType::Door;
 }
@@ -14,6 +16,8 @@ LDoorDOMNode::LDoorDOMNode(std::string name) : Super(name),
 std::string LDoorDOMNode::GetName()
 {
 	std::string name = "";
+
+	name = LGenUtility::Format(name, "[", mJmpId, "] ");
 
 	switch (mOrientation)
 	{
@@ -43,8 +47,14 @@ std::string LDoorDOMNode::GetName()
 	auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
 	if (auto mapNodeLocked = mapNode.lock())
 	{
-		name = LGenUtility::Format(name, mapNodeLocked->GetRoomByID(mNextEscape)->GetName());
-		name = LGenUtility::Format(name, "/", mapNodeLocked->GetRoomByID(mCurrentEscape)->GetName());
+		if (auto wsRoomLocked = mWestSouthRoom.lock())
+			name = LGenUtility::Format(name, wsRoomLocked->GetName());
+		else
+			name = LGenUtility::Format(name, "<Invalid Room>");
+		if (auto enRoomLocked = mEastNorthRoom.lock())
+			name = LGenUtility::Format(name, "/", enRoomLocked->GetName());
+		else
+			name = LGenUtility::Format(name, "/" "<Invalid Room>");
 	}
 
 	return name;
@@ -56,12 +66,11 @@ void LDoorDOMNode::RenderDetailsUI(float dt)
 
 	LUIUtility::RenderComboEnum<EDoorOrientation>("Orientation", mOrientation);
 	LUIUtility::RenderComboEnum<EDoorType>("Type", mDoorType);
-	ImGui::InputInt("JMP ID", &mJmpId);
 	LUIUtility::RenderComboEnum<EDoorModel>("Model", mModel);
-	ImGui::InputInt("Entry Number", &mDoorEntryNumber);
 
-	ImGui::InputInt("Next Escape", &mNextEscape);
-	ImGui::InputInt("Current Escape", &mCurrentEscape);
+	auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+	LUIUtility::RenderNodeReferenceCombo<LRoomDOMNode>("West/South Room", EDOMNodeType::Room, mapNode, mWestSouthRoom);
+	LUIUtility::RenderNodeReferenceCombo<LRoomDOMNode>("East/North Room", EDOMNodeType::Room, mapNode, mEastNorthRoom);
 }
 
 bool LDoorDOMNode::Load(const LStaticDoorData& source)
@@ -101,4 +110,70 @@ bool LDoorDOMNode::Save(LStaticDoorData& dest)
 	dest.mCurrentEscape = mCurrentEscape;
 
 	return true;
+}
+
+void LDoorDOMNode::PostProcess()
+{
+	auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+	if (auto mapNodeLocked = mapNode.lock())
+	{
+		mWestSouthRoom = mapNodeLocked->GetRoomByID(mNextEscape);
+		mEastNorthRoom = mapNodeLocked->GetRoomByID(mCurrentEscape);
+	}
+}
+
+void LDoorDOMNode::PreProcess()
+{
+	if (auto wsRoomLocked = mWestSouthRoom.lock())
+		mNextEscape = wsRoomLocked->GetRoomID();
+	if (auto enRoomLocked = mEastNorthRoom.lock())
+		mCurrentEscape = enRoomLocked->GetRoomID();
+}
+
+void LDoorDOMNode::AssignJmpIdAndIndex(std::vector<std::shared_ptr<LDoorDOMNode>> doors)
+{
+	mDoorEntryNumber = doors.size() + 1;
+	mJmpId = -1;
+
+	int32_t highestSeen = -1;
+
+	for (int i = 0; i < doors.size(); i++)
+	{
+		bool found = false;
+
+		for (auto d : doors)
+		{
+			if (d->GetJmpId() > highestSeen)
+				highestSeen = d->GetJmpId();
+
+			if (d->GetJmpId() == i)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			mJmpId = i;
+			break;
+		}
+	}
+
+	if (mJmpId == -1)
+		mJmpId = highestSeen++;
+
+	/*
+	// Find the highest JMP ID
+	for (auto d : doors)
+	{
+		int32_t id = d->GetJmpId();
+
+		if (id > mJmpId)
+			mJmpId = id;
+	}
+
+	// Increment the highest JMP ID. We now have the highest ID!
+	mJmpId++;
+	*/
 }

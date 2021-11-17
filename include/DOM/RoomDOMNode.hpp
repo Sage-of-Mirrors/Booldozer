@@ -146,6 +146,8 @@ public:
 	int32_t GetRoomNumber() const { return mRoomNumber; }
 	void SetRoomNumber(int32_t roomNumber) { mRoomNumber = roomNumber; }
 
+	int32_t GetRoomID() const { return mStaticDefinition.mRoomID; }
+
 	virtual void RenderDetailsUI(float dt) override;
 	virtual void RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection) override;
 	void RenderWaveHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection);

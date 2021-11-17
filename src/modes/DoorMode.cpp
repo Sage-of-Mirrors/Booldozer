@@ -29,10 +29,13 @@ void LDoorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar;
 	ImGui::Begin("Door List", 0, window_flags);
 
+	auto doors = current_map->GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door);
+
 	std::shared_ptr<LDoorDOMNode> newNode = nullptr;
 	if (ImGui::Button("Add Door"))
 	{
 		newNode = std::make_shared<LDoorDOMNode>("new door");
+		newNode->AssignJmpIdAndIndex(doors);
 		current_map->AddChild(newNode);
 		mSelectionManager.AddToSelection(newNode);
 	}
@@ -42,7 +45,6 @@ void LDoorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 	window_flags = ImGuiWindowFlags_HorizontalScrollbar;
 	ImGui::BeginChild("ChildL", ImVec2(ImGui::GetWindowContentRegionWidth(), ImGui::GetWindowHeight() - 75.f), false, window_flags);
 
-	auto doors = current_map->GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door);
 	for (uint32_t i = 0; i < doors.size(); i++)
 	{
 		uint32_t selectionType = 0;

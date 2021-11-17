@@ -171,6 +171,9 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	for (auto pathNode : GetChildrenOfType<LPathDOMNode>(EDOMNodeType::Path))
 		pathNode->PostProcess(mapArc);
 
+	for (auto doorNode : GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door))
+		doorNode->PostProcess();
+
 	// To finish loading the map we're going to delegate grabbing room data to the rooms themselves,
 	// where they'll also set up things like models for furniture
 	for (std::shared_ptr<LRoomDOMNode> r : rooms)
