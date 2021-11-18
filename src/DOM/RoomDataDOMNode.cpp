@@ -36,7 +36,7 @@ bool LRoomDataDOMNode::Load(const uint32_t& index, const LStaticMapDataIO& sourc
 	mDarkColor.a = roomData.mDarkColor.a / 255.f;
 
 	// Resource path
-	source.GetRoomResourcePath(index, mResourcePath);
+	source.GetRoomResourcePath(mCameraPositionIndex, mResourcePath);
 
 	// Doors
 	source.GetDoorListData(roomData.mDoorListIndex, mDoorListIndices);
@@ -45,7 +45,7 @@ bool LRoomDataDOMNode::Load(const uint32_t& index, const LStaticMapDataIO& sourc
 		mDoorList.push_back(mapDoors[dIndex]);
 
 	// Adjacent rooms
-	source.GetAdjacentRoomListData(index, mAdjacentRoomIndices);
+	source.GetAdjacentRoomListData(mCameraPositionIndex, mAdjacentRoomIndices);
 
 	for (uint16_t rIndex : mAdjacentRoomIndices)
 		mAdjacentRooms.push_back(mapRooms[rIndex]);
@@ -53,8 +53,34 @@ bool LRoomDataDOMNode::Load(const uint32_t& index, const LStaticMapDataIO& sourc
 	return true;
 }
 
-bool LRoomDataDOMNode::Save(LStaticMapDataIO& dest)
+bool LRoomDataDOMNode::Save(LStaticRoomData& dest)
 {
+	dest.mCameraPositionIndex = mCameraPositionIndex;
+	dest.mFloor = mFloor;
+	dest.mDoorZone = mDoorZone;
+	dest.mRoomID = mRoomID;
+
+	dest.mCameraBehavior = mCameraBehavior;
+
+	glm::vec3 bmin, bmax;
+	ConstructBoundingBox(bmin, bmax);
+
+	dest.mBoundingBoxMin.x = bmin.z;
+	dest.mBoundingBoxMin.y = bmin.y;
+	dest.mBoundingBoxMin.z = bmin.x;
+
+	dest.mBoundingBoxMax.x = bmax.z;
+	dest.mBoundingBoxMax.y = bmax.y;
+	dest.mBoundingBoxMax.z = bmax.x;
+
+	dest.mUnknown1 = mUnknown1;
+	dest.mUnknown2 = mUnknown2;
+
+	dest.mDarkColor.r = mDarkColor.r * 255;
+	dest.mDarkColor.g = mDarkColor.g * 255;
+	dest.mDarkColor.b = mDarkColor.b * 255;
+	dest.mDarkColor.a = mDarkColor.a * 255;
+
 	return true;
 }
 

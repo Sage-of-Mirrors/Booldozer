@@ -4,6 +4,7 @@
 #include "glm/glm.hpp"
 
 class LStaticMapDataIO;
+struct LStaticRoomData;
 class LDoorDOMNode;
 class LRoomDOMNode;
 
@@ -28,6 +29,7 @@ class LRoomDataDOMNode : public LBGRenderDOMNode
 	std::vector<std::weak_ptr<LRoomDOMNode>> mAdjacentRooms;
 
 	std::string mResourcePath;
+	std::string mAltResourcePath;
 
 	void DeconstructBoundingBox(const glm::vec3& min, const glm::vec3& max);
 	void ConstructBoundingBox(glm::vec3& min, glm::vec3& max);
@@ -43,12 +45,13 @@ public:
 
 	float* GetDarkColor() { return &mDarkColor.r; }
 
-	int32_t GetRoomID() const { return mCameraPositionIndex; }
+	int32_t GetRoomIndex() const { return mCameraPositionIndex; }
+	int32_t GetRoomID() const { return mRoomID; }
 
 	virtual void RenderDetailsUI(float dt) override;
 
 	bool Load(const uint32_t& index, const LStaticMapDataIO& source, const std::vector<std::shared_ptr<LRoomDOMNode>>& mapRooms, const std::vector<std::shared_ptr<LDoorDOMNode>>& mapDoors);
-	bool Save(LStaticMapDataIO& dest);
+	bool Save(LStaticRoomData& dest);
 
 	bool CheckPointInBounds(const glm::vec3& point);
 

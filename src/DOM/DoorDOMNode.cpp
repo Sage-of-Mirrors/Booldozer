@@ -125,9 +125,13 @@ void LDoorDOMNode::PostProcess()
 void LDoorDOMNode::PreProcess()
 {
 	if (auto wsRoomLocked = mWestSouthRoom.lock())
-		mNextEscape = wsRoomLocked->GetRoomID();
+		mNextEscape = wsRoomLocked->GetRoomIndex();
+	else
+		mNextEscape = 0;
 	if (auto enRoomLocked = mEastNorthRoom.lock())
-		mCurrentEscape = enRoomLocked->GetRoomID();
+		mCurrentEscape = enRoomLocked->GetRoomIndex();
+	else
+		mCurrentEscape = 0;
 }
 
 void LDoorDOMNode::AssignJmpIdAndIndex(std::vector<std::shared_ptr<LDoorDOMNode>> doors)
@@ -137,43 +141,41 @@ void LDoorDOMNode::AssignJmpIdAndIndex(std::vector<std::shared_ptr<LDoorDOMNode>
 
 	int32_t highestSeen = -1;
 
+	// For every ID betwee 0 and the number of door nodes...
 	for (int i = 0; i < doors.size(); i++)
 	{
-		bool found = false;
-
+		// Iterate each door and see if it has i as an ID.
+		bool bIsIDUsed = false;
 		for (auto d : doors)
 		{
+			// We record the highest value we've seen
+			// so we can have a valid ID even if there are no holes in the used IDs.
 			if (d->GetJmpId() > highestSeen)
 				highestSeen = d->GetJmpId();
 
+			// We found a door node i as an ID, so stop iterating.
 			if (d->GetJmpId() == i)
 			{
-				found = true;
+				bIsIDUsed = true;
 				break;
 			}
 		}
 
-		if (!found)
+		// If this ID isn't used, we can use it!
+		if (!bIsIDUsed)
 		{
 			mJmpId = i;
 			break;
 		}
 	}
 
+	// There were no holes in the used IDs, so we'll just
+	// take the highest ID and add 1. That's our new unique ID!
 	if (mJmpId == -1)
 		mJmpId = highestSeen++;
+}
 
-	/*
-	// Find the highest JMP ID
-	for (auto d : doors)
-	{
-		int32_t id = d->GetJmpId();
-
-		if (id > mJmpId)
-			mJmpId = id;
-	}
-
-	// Increment the highest JMP ID. We now have the highest ID!
-	mJmpId++;
-	*/
+bool LDoorDOMNode::HasRoomReference(std::shared_ptr<LRoomDOMNode> room)
+{
+	return mWestSouthRoom.lock() == room || mEastNorthRoom.lock() == room;
 }

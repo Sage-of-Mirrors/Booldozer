@@ -2,6 +2,7 @@
 
 #include "BGRenderDOMNode.hpp"
 #include "EntityDOMNode.hpp"
+#include "RoomDataDOMNode.hpp"
 #include "io/JmpIO.hpp"
 #include "Model.hpp"
 #include "../lib/libgctools/include/archive.h"
@@ -146,7 +147,10 @@ public:
 	int32_t GetRoomNumber() const { return mRoomNumber; }
 	void SetRoomNumber(int32_t roomNumber) { mRoomNumber = roomNumber; }
 
-	int32_t GetRoomID() const { return mStaticDefinition.mRoomID; }
+	int32_t GetRoomIndex() { return GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0]->GetRoomIndex(); }
+	int32_t GetRoomID() { return GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0]->GetRoomID(); }
+
+	LAlternateResource GetAlternateResource() const { return mAlternateResource; }
 
 	virtual void RenderDetailsUI(float dt) override;
 	virtual void RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection) override;

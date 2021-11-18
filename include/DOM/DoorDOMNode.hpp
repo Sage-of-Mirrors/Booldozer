@@ -68,8 +68,10 @@ public:
 	void PreProcess();
 
 	void AssignJmpIdAndIndex(std::vector<std::shared_ptr<LDoorDOMNode>> doors);
+	bool HasRoomReference(std::shared_ptr<LRoomDOMNode> room);
 
 	int32_t GetJmpId() const { return mJmpId; }
+	int32_t GetIndex() const { return mDoorEntryNumber; }
 	glm::vec3 GetViewportSize() const { return mViewportSize; }
 	EDoorModel GetModel() { return mModel; }
 	EDoorOrientation GetOrientation() { return mOrientation; }

@@ -14,6 +14,8 @@ constexpr size_t RES_STRING_SIZE = 28;
 constexpr size_t DOOR_DATA_SIZE = 28;
 constexpr size_t ALT_RES_DATA_SIZE = 8;
 
+class LMapDOMNode;
+
 struct LStaticMapData
 {
 	uint8_t mRoomCount;
@@ -121,6 +123,11 @@ class LStaticMapDataIO
 	std::vector<std::string> GetAltResPathsFromDOL(bStream::CFileStream* stream, const DOL& dol, const std::vector<LStaticAltRoomResourceData>& altRes);
 	std::vector<std::vector<uint16_t>> GetRoomDoorListsFromDOL(bStream::CFileStream* stream, const DOL& dol, const std::vector<LStaticRoomData>& rooms);
 
+	std::vector<LStaticRoomData> GetRoomDataFromMap(std::shared_ptr<LMapDOMNode> map, std::vector<std::string>& pathData,
+		std::vector<std::vector<uint16_t>>& adjacentRoomData, std::vector<std::vector<uint16_t>>& doorListData, std::vector<LStaticAltRoomResourceData>& altResData,
+		std::vector<std::string>& altResPathData);
+	std::vector<LStaticDoorData> GetDoorDataFromMap(std::shared_ptr<LMapDOMNode> map);
+
 	void WriteResStrings(bStream::CMemoryStream& stream, const std::vector<std::string>& resStrings);
 	void WriteAdjacencyLists(bStream::CMemoryStream& stream, const std::vector<std::vector<uint16_t>>& adjacencyLists);
 	void WriteAltResData(bStream::CMemoryStream& stream, std::vector<LStaticAltRoomResourceData>& altResData, const std::vector<std::string>& altResPaths);
@@ -151,4 +158,5 @@ public:
 	bool SetDoorListData(const uint32_t& starting_index, const size_t& count, uint16_t* data);
 
 	bool RipStaticDataFromExecutable(const DOL& dol, std::filesystem::path dest_path, std::string map, std::string region);
+	bool SaveMapFile(std::filesystem::path dest_path, std::shared_ptr<LMapDOMNode> map);
 };

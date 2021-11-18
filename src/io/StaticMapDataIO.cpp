@@ -1,4 +1,8 @@
 #include "io/StaticMapDataIO.hpp"
+#include "DOM/MapDOMNode.hpp"
+#include "DOM/RoomDataDOMNode.hpp"
+#include "DOM/DoorDOMNode.hpp"
+#include "DOM/RoomDOMNode.hpp"
 #include "GenUtil.hpp"
 #include "ResUtil.hpp"
 
@@ -236,16 +240,52 @@ bool LStaticMapDataIO::RipStaticDataFromExecutable(const DOL& dol, std::filesyst
 
 	// Room data
 	WriteRoomAndDoorListData(memStream, roomData, doorLists);
-
 	// Res data
 	WriteResStrings(memStream, roomResData);
-
 	// Alt res data
 	WriteAltResData(memStream, altResData, altResPathData);
-
 	// Doors
 	WriteDoorData(memStream, doorData);
+	// Adjacency data
+	WriteAdjacencyLists(memStream, roomAdjacencyData);
 
+	mFileSize = memStream.tell() + FILE_HEADER_SIZE;
+
+	if (mData)
+		delete[] mData;
+
+	mData = memStream.getBuffer();
+
+	bStream::CFileStream f = bStream::CFileStream(dest_path.u8string(), bStream::Endianess::Big, bStream::OpenMode::Out);
+	Save(f);
+
+	return true;
+}
+
+bool LStaticMapDataIO::SaveMapFile(std::filesystem::path dest_path, std::shared_ptr<LMapDOMNode> map)
+{
+	if (dest_path.empty() || map == nullptr)
+		return false;
+
+	std::vector<std::string> roomResData;
+	std::vector<std::vector<uint16_t>> roomAdjacencyData;
+	std::vector<std::vector<uint16_t>> doorLists;
+	std::vector<LStaticAltRoomResourceData> altResData;
+	std::vector<std::string> altResPathData;
+	std::vector<LStaticRoomData> roomData = GetRoomDataFromMap(map, roomResData, roomAdjacencyData, doorLists, altResData, altResPathData);
+
+	std::vector<LStaticDoorData> doorData = GetDoorDataFromMap(map);
+
+	bStream::CMemoryStream memStream = bStream::CMemoryStream(256, bStream::Endianess::Big, bStream::OpenMode::Out);
+
+	// Room data
+	WriteRoomAndDoorListData(memStream, roomData, doorLists);
+	// Res data
+	WriteResStrings(memStream, roomResData);
+	// Alt res data
+	WriteAltResData(memStream, altResData, altResPathData);
+	// Doors
+	WriteDoorData(memStream, doorData);
 	// Adjacency data
 	WriteAdjacencyLists(memStream, roomAdjacencyData);
 
@@ -449,6 +489,85 @@ std::vector<std::vector<uint16_t>> LStaticMapDataIO::GetRoomDoorListsFromDOL(bSt
 	}
 
 	return doorListData;
+}
+
+std::vector<LStaticRoomData> LStaticMapDataIO::GetRoomDataFromMap(std::shared_ptr<LMapDOMNode> map, std::vector<std::string>& pathData,
+	std::vector<std::vector<uint16_t>>& adjacentRoomData, std::vector<std::vector<uint16_t>>& doorListData, std::vector<LStaticAltRoomResourceData>& altResData,
+	std::vector<std::string>& altResPathData)
+{
+	std::vector<LStaticRoomData> roomData;
+
+	auto doors = map->GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door);
+	auto roomDatas = map->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData);
+	std::sort(roomDatas.begin(), roomDatas.end(),
+		[](const std::shared_ptr<LRoomDataDOMNode>& left, const std::shared_ptr<LRoomDataDOMNode>& right) -> bool { return right->GetRoomIndex() > left->GetRoomIndex(); });
+
+	for (auto rd : roomDatas)
+	{
+		LStaticRoomData staticRoom;
+		rd->Save(staticRoom);
+		roomData.push_back(staticRoom);
+
+		pathData.push_back(rd->GetResourcePath());
+
+		// Adjacent rooms
+		std::vector<uint16_t> currentAdjacents;
+
+		auto adjacentRooms = rd->GetAdjacencyList();
+		for (auto adj : adjacentRooms)
+		{
+			if (auto adjLocked = adj.lock())
+				currentAdjacents.push_back(adjLocked->GetRoomID());
+			else
+				currentAdjacents.push_back(-1);
+		}
+
+		adjacentRoomData.push_back(currentAdjacents);
+
+		// Doors
+		std::vector<uint16_t> currentDoors;
+
+		std::weak_ptr<LRoomDOMNode> room = rd->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room);
+		if (auto roomLocked = room.lock())
+		{
+			for (auto door : doors)
+			{
+				if (door->HasRoomReference(roomLocked))
+					currentDoors.push_back(LGenUtility::VectorIndexOf(doors, door));
+			}
+
+			doorListData.push_back(currentDoors);
+
+			LAlternateResource altResSrc = roomLocked->GetAlternateResource();
+			if (!altResSrc.mAltResourceName.empty())
+			{
+				LStaticAltRoomResourceData altRes;
+				altRes.mRoomNumber = altResSrc.mRoomNumber;
+				altRes.mUnknown1 = altResSrc.mUnknown1;
+
+				altResData.push_back(altRes);
+				altResPathData.push_back(altResSrc.mAltResourceName);
+			}
+		}
+	}
+
+	return roomData;
+}
+
+std::vector<LStaticDoorData> LStaticMapDataIO::GetDoorDataFromMap(std::shared_ptr<LMapDOMNode> map)
+{
+	std::vector<LStaticDoorData> doorData;
+
+	auto doors = map->GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door);
+	for (auto d : doors)
+	{
+		LStaticDoorData staticDoor;
+		d->PreProcess();
+		d->Save(staticDoor);
+		doorData.push_back(staticDoor);
+	}
+
+	return doorData;
 }
 
 void LStaticMapDataIO::WriteResStrings(bStream::CMemoryStream& stream, const std::vector<std::string>& resStrings)
