@@ -18,7 +18,7 @@ class LItemMode : public LEditorModeBase
 	{
 		if (ImGui::Selectable("Delete"))
 		{
-			auto mapNode = infoNode->GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+			auto mapNode = infoNode->template GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
 			if (auto mapNodeLocked = mapNode.lock())
 			{
 				mapNodeLocked->RemoveChild(infoNode);
