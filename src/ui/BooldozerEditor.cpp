@@ -117,6 +117,7 @@ void LBooldozerEditor::ChangeMode()
 			mCurrentMode = &mEnemyMode;
 			break;
 		case EEditorMode::Event_Mode:
+			mCurrentMode = &mEventMode;
 			break;
 		case EEditorMode::Item_Mode:
 			mCurrentMode = &mItemMode;

@@ -7,6 +7,7 @@
 #include "modes/ItemMode.hpp"
 #include "modes/PathMode.hpp"
 #include "modes/DoorMode.hpp"
+#include "modes/EventMode.hpp"
 #include "io/PrmIO.hpp"
 #include "ImGuizmo.h"
 
@@ -43,6 +44,7 @@ class LBooldozerEditor
 	LItemMode mItemMode;
 	LPathMode mPathMode;
 	LDoorMode mDoorMode;
+	LEventMode mEventMode;
 
 	void OpenMap(std::string file_path);
 	void SaveMapToFiles(std::string folder_path);

@@ -57,6 +57,38 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	// We'll call ourselves whatever the root directory of the archive is
 	mName = std::string(mapArc.dirs[0].name);
 
+	std::filesystem::path eventPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Event";
+	if(std::filesystem::exists(eventPath)){
+		for (auto& archive : std::filesystem::directory_iterator(eventPath)){
+			GCarchive eventArc;
+			//Exclude cvs subdir
+			if(archive.is_regular_file() && GCResourceManager.LoadArchive(archive.path().c_str(), &eventArc)){
+				//Name of the event file were loading, ex 'event48'
+				std::string eventName = archive.path().stem().string();
+				std::string csvName = eventName;
+				csvName.replace(0, 5, "message");
+				std::cout << csvName << std::endl;
+				std::shared_ptr<LEventDataDOMNode> eventData =  std::make_shared<LEventDataDOMNode>(eventName);
+				for (size_t i = 0; i < eventArc.filenum; i++){
+					if((eventName + ".txt").compare(eventArc.files[i].name) == 0){
+						eventData->mEventScript = std::string((char*)eventArc.files[i].data);
+					}
+					else if((csvName + ".csv").compare(eventArc.files[i].name) == 0){
+						std::stringstream csv_data((char*)eventArc.files[i].data);
+						std::string curline;
+						while (std::getline(csv_data, curline)){
+							eventData->mEventText.push_back(curline);
+						}
+						
+					}
+				}
+				
+				AddChild(eventData);
+			}
+		}
+		
+	}
+
 	std::filesystem::path roomsMap = LResUtility::GetStaticMapDataPath(mName);
 	if (!std::filesystem::exists(roomsMap))
 	{

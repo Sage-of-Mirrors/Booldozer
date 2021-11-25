@@ -41,7 +41,8 @@ enum class EDOMNodeType
 	Boo,
 	RoomData,
 	Door,
-	PathPoint
+	PathPoint,
+	EventData
 };
 
 // Base class for all DOM (Document Object Model) nodes.
