@@ -1,4 +1,12 @@
+#ifdef __linux__
+#include <unicode/ustring.h>
+#include <unicode/ucnv.h>
+#endif
+
+#ifdef _WIN32
 #include <icu.h>
+#endif
+
 #include "GenUtil.hpp"
 
 // The following was copied from https://gist.github.com/kilfu0701/e279e35372066ae1832850c438d5611e
