@@ -57,4 +57,10 @@ namespace LGenUtility
     {
         return (original + (boundary - 1)) & ~(boundary - 1);
     }
+
+    // Converts the given string from UTF-8 encoding to Shift-JIS.
+    std::string Utf8ToSjis(const std::string& value);
+
+    // Converts the given string from Shift-JIS encoding to UTF-8.
+    std::string SjisToUtf8(const std::string& value);
 }

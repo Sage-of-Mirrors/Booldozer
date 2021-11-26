@@ -62,7 +62,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		for (auto& archive : std::filesystem::directory_iterator(eventPath)){
 			GCarchive eventArc;
 			//Exclude cvs subdir
-			if(archive.is_regular_file() && GCResourceManager.LoadArchive(archive.path().c_str(), &eventArc)){
+			if(archive.is_regular_file() && GCResourceManager.LoadArchive(archive.path().generic_u8string().c_str(), &eventArc)){
 				//Name of the event file were loading, ex 'event48'
 				std::string eventName = archive.path().stem().string();
 				std::string csvName = eventName;
@@ -71,13 +71,13 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 				std::shared_ptr<LEventDataDOMNode> eventData =  std::make_shared<LEventDataDOMNode>(eventName);
 				for (size_t i = 0; i < eventArc.filenum; i++){
 					if((eventName + ".txt").compare(eventArc.files[i].name) == 0){
-						eventData->mEventScript = std::string((char*)eventArc.files[i].data);
+						eventData->mEventScript = LGenUtility::SjisToUtf8(std::string((char*)eventArc.files[i].data));
 					}
 					else if((csvName + ".csv").compare(eventArc.files[i].name) == 0){
 						std::stringstream csv_data((char*)eventArc.files[i].data);
 						std::string curline;
 						while (std::getline(csv_data, curline)){
-							eventData->mEventText.push_back(curline);
+							eventData->mEventText.push_back(LGenUtility::SjisToUtf8(curline));
 						}
 						
 					}
