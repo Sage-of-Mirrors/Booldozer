@@ -145,7 +145,7 @@ public:
 	bool GetRoomData(const uint32_t& index, LStaticRoomData& data) const;
 	bool GetRoomResourcePath(const uint32_t& index, std::string& data) const;
 	bool GetDoorData(const uint32_t& index, LStaticDoorData& data) const;
-	bool GetAltResourceData(const uint32_t& index, LStaticAltRoomResourceData& data) const;
+	std::vector<std::string> GetAltResourceData(const uint32_t& roomNo) const;
 	bool GetDoorListData(const uint32_t& starting_offset, std::vector<uint16_t>& data) const;
 	bool GetAdjacentRoomListData(const uint32_t& index, std::vector<uint16_t>& data) const;
 

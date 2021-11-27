@@ -10,7 +10,7 @@ class LRoomDOMNode;
 
 class LRoomDataDOMNode : public LBGRenderDOMNode
 {
-	uint8_t mCameraPositionIndex;
+	uint8_t mRoomIndex;
 	int8_t mFloor;
 	uint8_t mDoorZone;
 	uint8_t mRoomID;
@@ -29,7 +29,7 @@ class LRoomDataDOMNode : public LBGRenderDOMNode
 	std::vector<std::weak_ptr<LRoomDOMNode>> mAdjacentRooms;
 
 	std::string mResourcePath;
-	std::string mAltResourcePath;
+	std::vector<std::string> mAltResPaths;
 
 	void DeconstructBoundingBox(const glm::vec3& min, const glm::vec3& max);
 	void ConstructBoundingBox(glm::vec3& min, glm::vec3& max);
@@ -40,12 +40,21 @@ public:
 	LRoomDataDOMNode(std::string name);
 
 	std::string GetResourcePath() { return mResourcePath; }
+	std::vector<std::string> GetAltResourcePaths() { return mAltResPaths; }
+	std::string GetAltResourcePath(uint32_t index)
+	{
+		if (index < 0 || index >= mAltResPaths.size())
+			return mResourcePath;
+
+		return mAltResPaths[index];
+	}
+
 	std::vector<std::weak_ptr<LRoomDOMNode>>& GetAdjacencyList() { return mAdjacentRooms; }
 	std::vector<std::weak_ptr<LDoorDOMNode>> GetDoorList() { return mDoorList; }
 
 	float* GetDarkColor() { return &mDarkColor.r; }
 
-	int32_t GetRoomIndex() const { return mCameraPositionIndex; }
+	int32_t GetRoomIndex() const { return mRoomIndex; }
 	int32_t GetRoomID() const { return mRoomID; }
 
 	virtual void RenderDetailsUI(float dt) override;

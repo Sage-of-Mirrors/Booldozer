@@ -117,8 +117,8 @@ void LDoorDOMNode::PostProcess()
 	auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
 	if (auto mapNodeLocked = mapNode.lock())
 	{
-		mWestSouthRoom = mapNodeLocked->GetRoomByID(mNextEscape);
-		mEastNorthRoom = mapNodeLocked->GetRoomByID(mCurrentEscape);
+		mWestSouthRoom = mapNodeLocked->GetRoomByIndex(mNextEscape);
+		mEastNorthRoom = mapNodeLocked->GetRoomByIndex(mCurrentEscape);
 	}
 }
 

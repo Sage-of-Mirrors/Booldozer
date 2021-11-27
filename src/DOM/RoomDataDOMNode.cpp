@@ -18,7 +18,7 @@ bool LRoomDataDOMNode::Load(const uint32_t& index, const LStaticMapDataIO& sourc
 	LStaticRoomData roomData;
 	source.GetRoomData(index, roomData);
 
-	mCameraPositionIndex = roomData.mCameraPositionIndex;
+	mRoomIndex = roomData.mCameraPositionIndex;
 	mFloor = roomData.mFloor;
 	mDoorZone = roomData.mDoorZone;
 	mRoomID = roomData.mRoomID;
@@ -36,7 +36,7 @@ bool LRoomDataDOMNode::Load(const uint32_t& index, const LStaticMapDataIO& sourc
 	mDarkColor.a = roomData.mDarkColor.a / 255.f;
 
 	// Resource path
-	source.GetRoomResourcePath(mCameraPositionIndex, mResourcePath);
+	source.GetRoomResourcePath(mRoomID, mResourcePath);
 
 	// Doors
 	source.GetDoorListData(roomData.mDoorListIndex, mDoorListIndices);
@@ -45,17 +45,19 @@ bool LRoomDataDOMNode::Load(const uint32_t& index, const LStaticMapDataIO& sourc
 		mDoorList.push_back(mapDoors[dIndex]);
 
 	// Adjacent rooms
-	source.GetAdjacentRoomListData(mCameraPositionIndex, mAdjacentRoomIndices);
+	source.GetAdjacentRoomListData(mRoomID, mAdjacentRoomIndices);
 
 	for (uint16_t rIndex : mAdjacentRoomIndices)
 		mAdjacentRooms.push_back(mapRooms[rIndex]);
+
+	mAltResPaths = source.GetAltResourceData(mRoomID);
 
 	return true;
 }
 
 bool LRoomDataDOMNode::Save(LStaticRoomData& dest)
 {
-	dest.mCameraPositionIndex = mCameraPositionIndex;
+	dest.mCameraPositionIndex = mRoomIndex;
 	dest.mFloor = mFloor;
 	dest.mDoorZone = mDoorZone;
 	dest.mRoomID = mRoomID;

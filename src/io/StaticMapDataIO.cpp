@@ -105,18 +105,31 @@ bool LStaticMapDataIO::GetDoorData(const uint32_t& index, LStaticDoorData& data)
 	return true;
 }
 
-bool LStaticMapDataIO::GetAltResourceData(const uint32_t& index, LStaticAltRoomResourceData& data) const
+std::vector<std::string> LStaticMapDataIO::GetAltResourceData(const uint32_t& roomNo) const
 {
-	if (index < 0 || index >= mAltResourceCount)
-		return false;
+	std::vector<std::string> altResStrings;
 
-	uint32_t offset = index * ALT_RES_DATA_SIZE;
-	void* rawPtr = mData + mAltResourceDataOffset + offset - FILE_HEADER_SIZE;
+	if (roomNo < 0 || roomNo >= mRoomCount)
+		return altResStrings;
 
-	data = *static_cast<LStaticAltRoomResourceData*>(rawPtr);
-	SwapStaticAltResDataEndianness(data);
+	for (int i = 0; i < mAltResourceCount; i++)
+	{
+		uint32_t offset = i * ALT_RES_DATA_SIZE;
+		void* rawPtr = mData + mAltResourceDataOffset + offset - FILE_HEADER_SIZE;
 
-	return true;
+		LStaticAltRoomResourceData* data = static_cast<LStaticAltRoomResourceData*>(rawPtr);
+
+		if (data->mRoomNumber == roomNo)
+		{
+			char strBuffer[RES_STRING_SIZE + 1];
+			memcpy(strBuffer, mData + mAltResourceDataOffset + LGenUtility::SwapEndian(data->mPathOffset) - FILE_HEADER_SIZE, RES_STRING_SIZE);
+			strBuffer[RES_STRING_SIZE] = 0;
+
+			altResStrings.push_back(std::string(strBuffer));
+		}
+	}
+
+	return altResStrings;
 }
 
 bool LStaticMapDataIO::GetDoorListData(const uint32_t& starting_offset, std::vector<uint16_t>& data) const
@@ -499,15 +512,9 @@ std::vector<LStaticRoomData> LStaticMapDataIO::GetRoomDataFromMap(std::shared_pt
 
 	auto doors = map->GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door);
 	auto roomDatas = map->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData);
-	std::sort(roomDatas.begin(), roomDatas.end(),
-		[](const std::shared_ptr<LRoomDataDOMNode>& left, const std::shared_ptr<LRoomDataDOMNode>& right) -> bool { return right->GetRoomIndex() > left->GetRoomIndex(); });
 
 	for (auto rd : roomDatas)
 	{
-		LStaticRoomData staticRoom;
-		rd->Save(staticRoom);
-		roomData.push_back(staticRoom);
-
 		pathData.push_back(rd->GetResourcePath());
 
 		// Adjacent rooms
@@ -523,8 +530,32 @@ std::vector<LStaticRoomData> LStaticMapDataIO::GetRoomDataFromMap(std::shared_pt
 		}
 
 		adjacentRoomData.push_back(currentAdjacents);
+	}
 
-		// Doors
+	std::sort(roomDatas.begin(), roomDatas.end(),
+		[](const std::shared_ptr<LRoomDataDOMNode>& left, const std::shared_ptr<LRoomDataDOMNode>& right) -> bool { return right->GetRoomIndex() > left->GetRoomIndex(); });
+
+	for (auto rd : roomDatas)
+	{
+		LStaticRoomData staticRoom;
+		rd->Save(staticRoom);
+		roomData.push_back(staticRoom);
+
+		// Alt res
+		std::vector<std::string> altResStrings = rd->GetAltResourcePaths();
+		if (!altResStrings.empty())
+		{
+			for (int i = 0; i < altResStrings.size(); i++)
+			{
+				LStaticAltRoomResourceData altRes;
+				altRes.mRoomNumber = rd->GetRoomID();
+				altRes.mUnknown1 = 1;
+
+				altResData.push_back(altRes);
+				altResPathData.push_back(altResStrings[i]);
+			}
+		}
+
 		std::vector<uint16_t> currentDoors;
 
 		std::weak_ptr<LRoomDOMNode> room = rd->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room);
@@ -537,19 +568,15 @@ std::vector<LStaticRoomData> LStaticMapDataIO::GetRoomDataFromMap(std::shared_pt
 			}
 
 			doorListData.push_back(currentDoors);
-
-			LAlternateResource altResSrc = roomLocked->GetAlternateResource();
-			if (!altResSrc.mAltResourceName.empty())
-			{
-				LStaticAltRoomResourceData altRes;
-				altRes.mRoomNumber = altResSrc.mRoomNumber;
-				altRes.mUnknown1 = altResSrc.mUnknown1;
-
-				altResData.push_back(altRes);
-				altResPathData.push_back(altResSrc.mAltResourceName);
-			}
 		}
 	}
+
+	LStaticAltRoomResourceData terminalEntry;
+	terminalEntry.mRoomNumber = 0xFF;
+	terminalEntry.mUnknown1 = 0;
+	terminalEntry.mPadding = 0;
+	terminalEntry.mPathOffset = 0;
+	altResData.push_back(terminalEntry);
 
 	return roomData;
 }
@@ -665,7 +692,9 @@ void LStaticMapDataIO::WriteAltResData(bStream::CMemoryStream& stream, std::vect
 	// Write entries
 	for (uint32_t i = 0; i < altResData.size(); i++)
 	{
-		altResData[i].mPathOffset = stringTableOffset + (i * RES_STRING_SIZE);
+		if (altResData[i].mRoomNumber != 0xFF)
+			altResData[i].mPathOffset = stringTableOffset + (i * RES_STRING_SIZE);
+
 		SwapStaticAltResDataEndianness(altResData[i]);
 
 		stream.writeBytes((char*)&altResData[i], sizeof(LStaticAltRoomResourceData));
