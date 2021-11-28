@@ -72,7 +72,6 @@ public:
 
 	int32_t GetJmpId() const { return mJmpId; }
 	int32_t GetIndex() const { return mDoorEntryNumber; }
-	glm::vec3 GetViewportSize() const { return mViewportSize; }
 	EDoorModel GetModel() { return mModel; }
 	EDoorOrientation GetOrientation() { return mOrientation; }
 

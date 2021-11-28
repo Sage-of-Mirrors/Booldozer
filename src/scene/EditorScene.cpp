@@ -213,9 +213,9 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 				continue;
 
 			// Construct transform matrix...
-			glm::mat4 doorMat = *doorLocked->GetMat(); //glm::identity<glm::mat4>();
+			glm::mat4 doorMat = glm::identity<glm::mat4>();
 
-			doorMat[3][1] -= doorLocked->GetViewportSize().y / 2.f;
+			doorMat = glm::translate(doorMat, doorLocked->GetPosition() - glm::vec3(0, doorLocked->GetScale().y / 2.f, 0));
 
 			// Rotation is based on the door's orientation type.
 			if (doorLocked->GetOrientation() == EDoorOrientation::Side_Facing)
