@@ -215,12 +215,14 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 			// Construct transform matrix...
 			glm::mat4 doorMat = glm::identity<glm::mat4>();
 
-			doorMat = glm::translate(doorMat, doorLocked->GetPosition() - glm::vec3(0, doorLocked->GetScale().y / 2.f, 0));
+			// Translation. We need the translation from the transform matrix (column at [3]) as well as the Y scale (float at [1][1])
+			doorMat = glm::translate(doorMat, glm::vec3((*doorLocked->GetMat())[3]) - glm::vec3(0, (*doorLocked->GetMat())[1][1] / 2.f, 0));
 
 			// Rotation is based on the door's orientation type.
 			if (doorLocked->GetOrientation() == EDoorOrientation::Side_Facing)
 				doorMat = glm::rotate(doorMat, glm::radians(90.0f), glm::vec3(0, 1, 0));
 
+			// The Square Mansion Door model is fucked, so this is a hack to make sure it shows up (mostly) correctly in the editor.
 			bool bIgnoreTransforms = doorType == EDoorModel::Square_Mansion_Door;
 			if (bIgnoreTransforms)
 				doorMat = glm::translate(doorMat, glm::vec3(0, 0, 100));
