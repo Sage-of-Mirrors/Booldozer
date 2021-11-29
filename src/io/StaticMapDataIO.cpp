@@ -265,9 +265,13 @@ bool LStaticMapDataIO::RipStaticDataFromExecutable(const DOL& dol, std::filesyst
 	mFileSize = memStream.tell() + FILE_HEADER_SIZE;
 
 	if (mData)
+	{
 		delete[] mData;
+		mData = nullptr;
+	}
 
-	mData = memStream.getBuffer();
+	mData = new uint8_t[memStream.getSize()];
+	memcpy(mData, memStream.getBuffer(), memStream.getSize());
 
 	bStream::CFileStream f = bStream::CFileStream(dest_path.u8string(), bStream::Endianess::Big, bStream::OpenMode::Out);
 	Save(f);
@@ -305,9 +309,13 @@ bool LStaticMapDataIO::SaveMapFile(std::filesystem::path dest_path, std::shared_
 	mFileSize = memStream.tell() + FILE_HEADER_SIZE;
 
 	if (mData)
+	{
 		delete[] mData;
+		mData = nullptr;
+	}
 
-	mData = memStream.getBuffer();
+	mData = new uint8_t[memStream.getSize()];
+	memcpy(mData, memStream.getBuffer(), memStream.getSize());
 
 	bStream::CFileStream f = bStream::CFileStream(dest_path.u8string(), bStream::Endianess::Big, bStream::OpenMode::Out);
 	Save(f);
