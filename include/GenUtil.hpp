@@ -22,6 +22,21 @@ namespace LGenUtility
         return result;
     }
 
+    // Returns whether the given element is contained in the given vector.
+    template<typename T>
+    ptrdiff_t VectorContains(const std::vector<T>& vec, const T& elem)
+    {
+        return VectorIndexOf(vec, elem) != -1;
+    }
+
+    // Returns whether the given element is contained in the given vector, with the index parameter set to the element's position.
+    template<typename T>
+    ptrdiff_t VectorContains(const std::vector<T>& vec, const T& elem, ptrdiff_t& index)
+    {
+        index = VectorIndexOf(vec, elem);
+        return index != -1;
+    }
+
     // Returns a string with the given formatting.
     template<typename ... T>
     std::string Format(T && ... x)
