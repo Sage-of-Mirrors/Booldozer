@@ -9,5 +9,7 @@
   
 .org 0x8000BF50
   bl FreeMap_External
+.org 0x80010DA0
+  bl InitMirrors_External
   
 .close

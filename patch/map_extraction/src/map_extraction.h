@@ -31,7 +31,16 @@ void InitMap_External(uint16_t MapID);
 void FreeMap_External();
 
 // The address to which our extracted data is loaded at map init.
-extern  struct LMapFile* FileBuffer;
+extern struct LMapFile* FileBuffer;
 // The array of LMapData* that define what maps the game can load.
 // There are 14 slots, not all of which are used.
 extern struct LMapData* MapDataPtrs[14];
+
+char* TryLoadMirrorFile(uint16_t MapID);
+// Our new function to load mirrors from file.
+void InitMirrors_External();
+
+extern int OpenMapID;
+extern char OpenMapMirrorCount;
+extern struct LRuntimeMirror* OpenMapMirrors;
+extern void* MirrorConstructor;
