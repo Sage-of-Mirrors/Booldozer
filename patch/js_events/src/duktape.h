@@ -1,13 +1,13 @@
 /*
- *  Duktape public API for Duktape 2.6.0.
+ *  Duktape public API for Duktape 2.99.99.
  *
  *  See the API reference for documentation on call semantics.  The exposed,
  *  supported API is between the "BEGIN PUBLIC API" and "END PUBLIC API"
  *  comments.  Other parts of the header are Duktape internal and related to
  *  e.g. platform/compiler/feature detection.
  *
- *  Git commit fffa346eff06a8764b02c31d4336f63a773a95c3 (v2.6.0).
- *  Git branch v2-maintenance.
+ *  Git commit 769e37d20ba80d1160505f4f310d25628f6ac3a7 (v2.5.0-276-g769e37d2-dirty).
+ *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -15,13 +15,9 @@
 
 /* LICENSE.txt */
 /*
- *  ===============
- *  Duktape license
- *  ===============
+ *  The MIT License (MIT)
  *  
- *  (http://opensource.org/licenses/MIT)
- *  
- *  Copyright (c) 2013-2019 by Duktape authors (see AUTHORS.rst)
+ *  Copyright (c) 2013-present, Duktape authors (see AUTHORS.rst)
  *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -110,6 +106,12 @@
  *  * Luis de Bethencourt (https://github.com/luisbg)
  *  * Ian Whyman (https://github.com/v00d00)
  *  * Rick Sayre (https://github.com/whorfin)
+ *  * Craig Leres (https://github.com/leres)
+ *  * Maurici Abad (https://github.com/mauriciabad)
+ *  * Nancy Li (https://github.com/NancyLi1013)
+ *  * William Parks (https://github.com/WilliamParks)
+ *  * Sam Hellawell (https://github.com/samhellawell)
+ *  * Vladislavs Sokurenko (https://github.com/sokurenko)
  *  
  *  Other contributions
  *  ===================
@@ -176,16 +178,16 @@
  * development snapshots have 99 for patch level (e.g. 0.10.99 would be a
  * development version after 0.10.0 but before the next official release).
  */
-#define DUK_VERSION                       20600L
+#define DUK_VERSION                       29999L
 
 /* Git commit, describe, and branch for Duktape build.  Useful for
  * non-official snapshot builds so that application code can easily log
  * which Duktape snapshot was used.  Not available in the ECMAScript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "fffa346eff06a8764b02c31d4336f63a773a95c3"
-#define DUK_GIT_DESCRIBE                  "v2.6.0"
-#define DUK_GIT_BRANCH                    "v2-maintenance"
+#define DUK_GIT_COMMIT                    "769e37d20ba80d1160505f4f310d25628f6ac3a7"
+#define DUK_GIT_DESCRIBE                  "v2.5.0-276-g769e37d2-dirty"
+#define DUK_GIT_BRANCH                    "master"
 
 /* External duk_config.h provides platform/compiler/OS dependent
  * typedefs and macros, and DUK_USE_xxx config options so that
@@ -812,8 +814,9 @@ DUK_EXTERNAL_DECL duk_bool_t duk_check_type_mask(duk_context *ctx, duk_idx_t idx
 
 DUK_EXTERNAL_DECL duk_bool_t duk_is_undefined(duk_context *ctx, duk_idx_t idx);
 DUK_EXTERNAL_DECL duk_bool_t duk_is_null(duk_context *ctx, duk_idx_t idx);
-#define duk_is_null_or_undefined(ctx, idx) \
+#define duk_is_nullish(ctx, idx) \
 	((duk_get_type_mask((ctx), (idx)) & (DUK_TYPE_MASK_NULL | DUK_TYPE_MASK_UNDEFINED)) ? 1 : 0)
+#define duk_is_null_or_undefined(ctx, idx) duk_is_nullish((ctx), (idx))
 
 DUK_EXTERNAL_DECL duk_bool_t duk_is_boolean(duk_context *ctx, duk_idx_t idx);
 DUK_EXTERNAL_DECL duk_bool_t duk_is_number(duk_context *ctx, duk_idx_t idx);
@@ -1432,6 +1435,13 @@ DUK_EXTERNAL_DECL duk_double_t duk_components_to_time(duk_context *ctx, duk_time
  */
 #if defined(DUK_USE_ROM_OBJECTS) && defined(DUK_USE_HEAPPTR16)
 DUK_EXTERNAL_DECL const void * const duk_rom_compressed_pointers[];
+#endif
+
+/*
+ *  Fuzzilli fuzzing integration
+ */
+#if defined(DUK_USE_FUZZILLI)
+DUK_EXTERNAL_DECL void duk_assert_wrapper(duk_int_t x);
 #endif
 
 /*
