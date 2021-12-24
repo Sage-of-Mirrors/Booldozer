@@ -62,7 +62,15 @@ void LSceneCamera::Update(GLFWwindow* window, float dt)
 			mClickedThisFrame = false;
 		}
 
-		Rotate(dt, mPrevMouseX - x, mPrevMouseY - y);
+		if(mCamMode != ORBIT){
+			Rotate(dt, mPrevMouseX - x, mPrevMouseY - y);
+		} else {
+			if(mPrevMouseX - x < 0){
+				moveDir -= glm::normalize(glm::cross(mCenter - mEye, UNIT_Y));
+			} else if(mPrevMouseX - x > 0) {
+				moveDir += glm::normalize(glm::cross(mCenter - mEye, UNIT_Y));
+			}
+		}
 
 		mPrevMouseX = (float)x;
 		mPrevMouseY = (float)y;
