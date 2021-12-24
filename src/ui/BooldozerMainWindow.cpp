@@ -42,7 +42,7 @@ void LBooldozerMainWindow::render(float dt)
 
     // Mode combo
     ImGui::SetNextWindowPos(ImVec2(5, 25));
-    ImGui::SetNextWindowSize(ImVec2(195, 35));
+    ImGui::SetNextWindowSize(ImVec2(195, 40));
 
     ImGui::Begin("mode combo window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
     ImGui::SetNextItemWidth(150);
@@ -55,7 +55,7 @@ void LBooldozerMainWindow::render(float dt)
 
     // Render distance slider
     ImGui::SetNextWindowPos(ImVec2(205, 25));
-    ImGui::SetNextWindowSize(ImVec2(150, 35));
+    ImGui::SetNextWindowSize(ImVec2(150, 40));
 
     ImGui::Begin("render distance window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
     ImGui::SetNextItemWidth(105);
@@ -67,7 +67,7 @@ void LBooldozerMainWindow::render(float dt)
 
     // Gizmo mode selection 
     ImGui::SetNextWindowPos(ImVec2(360, 25));
-    ImGui::SetNextWindowSize(ImVec2(80, 35));
+    ImGui::SetNextWindowSize(ImVec2(85, 40));
 
     ImGui::Begin("gizmo mode window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
     ImGui::SetNextItemWidth(105);
@@ -80,6 +80,23 @@ void LBooldozerMainWindow::render(float dt)
     } else if (ImGui::SameLine();ImGui::Button("S")) {
         mEditorContext.SetGizmo(ImGuizmo::SCALE);
     }
+
+    ImGui::End();
+
+    // Camera mode selection
+    ImGui::SetNextWindowPos(ImVec2(450, 25));
+    ImGui::SetNextWindowSize(ImVec2(110, 40));
+
+    ImGui::Begin("cammove mode window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
+    ImGui::SetNextItemWidth(105);
+
+    //TODO: Disable if no room is loaded
+    if (ImGui::Button("Orbit"))
+    {
+        mEditorScene.Camera.mCamMode = ECamMode::ORBIT;
+    } else if (ImGui::SameLine(); ImGui::Button("Fly")) {
+        mEditorScene.Camera.mCamMode = ECamMode::FLY;
+    } 
 
     ImGui::End();
 

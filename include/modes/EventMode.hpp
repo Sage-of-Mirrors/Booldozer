@@ -3,14 +3,15 @@
 #include "EditorModeBase.hpp"
 
 #include <imgui.h>
+#include "TextEditor.h"
 
 class LEventMode : public LEditorModeBase
 {
 	void RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map);
 	void RenderDetailsWindow();
 
-	std::string EventScript;
-	std::vector<std::string> EventText;
+	TextEditor mEditor;
+	std::shared_ptr<LEventDataDOMNode> mSelected;
 
 
 public:

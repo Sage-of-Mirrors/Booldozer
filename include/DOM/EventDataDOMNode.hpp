@@ -2,6 +2,7 @@
 
 //#include "io/CmnIo.hpp"
 #include "BGRenderDOMNode.hpp"
+#include "TextEditor.h"
 
 class LEventDataDOMNode : public LBGRenderDOMNode {
 private:
@@ -20,7 +21,7 @@ public:
 
 	LEventDataDOMNode(std::string name);
 
-    virtual void RenderDetailsUI(float dt) override;
+    void RenderDetailsUI(float dt, TextEditor* editor);
 
 /*=== Type operations ===*/
 	// Returns whether this node is of the given type, or derives from a node of that type.

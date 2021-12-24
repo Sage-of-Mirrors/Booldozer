@@ -8,12 +8,13 @@ LEventDataDOMNode::LEventDataDOMNode(std::string name) : Super(name)
 	mType = EDOMNodeType::EventData;
 }
 
-void LEventDataDOMNode::RenderDetailsUI(float dt)
+void LEventDataDOMNode::RenderDetailsUI(float dt, TextEditor* editor)
 {
     ImGuiTabBarFlags tabflags = ImGuiTabBarFlags_None;
     if(ImGui::BeginTabBar("EventModeTabs", tabflags)){
         if(ImGui::BeginTabItem("Script")){
-            ImGui::InputTextMultiline("Script File", &mEventScript, {ImGui::GetWindowSize().x, ImGui::GetWindowSize().y - 50}, 0);
+            //ImGui::InputTextMultiline("Script File", &mEventScript, {ImGui::GetWindowSize().x, ImGui::GetWindowSize().y - 50}, 0);
+            editor->Render("TextEditor");
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Text")){

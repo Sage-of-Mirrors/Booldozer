@@ -11,6 +11,11 @@ constexpr glm::vec3 UNIT_X = glm::vec3(1.0f, 0.0f, 0.0f);
 constexpr glm::vec3 UNIT_Y = glm::vec3(0.0f, 1.0f, 0.0f);
 constexpr glm::vec3 UNIT_Z = glm::vec3(0.0f, 0.0f, 1.0f);
 
+enum ECamMode {
+	FLY,
+	ORBIT
+};
+
 class LSceneCamera
 {
 /*=== Matrix Calculation Members ===*/
@@ -43,6 +48,8 @@ public:
 
 	LSceneCamera();
 
+	ECamMode mCamMode;
+
 	// Handles user input for the given window.
 	void Update(GLFWwindow* window, float dt);
 
@@ -50,10 +57,13 @@ public:
 	glm::mat4 GetViewMatrix() { return glm::lookAtLH(mEye, mCenter, mUp); }
 	// Calculates and returns the projection matrix from this camera's settings.
 	glm::mat4 GetProjectionMatrix() { return glm::perspectiveLH<float>(Fovy, AspectRatio, NearPlane, FarPlane); }
+	glm::mat4 GetProjectionMatrixOrtho() { return glm::orthoLH<float>(0, 1920, 0, 720*Fovy, NearPlane, FarPlane); }
 
 	glm::vec3 GetEye() { return mEye; }
 	
 	glm::vec3 GetUp() { return mUp; }
+
+	void SetCenter(glm::vec3 center) { mCenter = center; }
 
 	std::pair<glm::vec3, glm::vec3> Raycast(double mouseX, double mouseY, glm::vec4 viewport);
 

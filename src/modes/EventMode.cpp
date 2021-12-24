@@ -51,8 +51,18 @@ void LEventMode::RenderDetailsWindow()
 
 	if (mSelectionManager.IsMultiSelection())
 		ImGui::Text("[Multiple Selection]");
-	else if (mSelectionManager.GetPrimarySelection() != nullptr)
-		std::static_pointer_cast<LUIRenderDOMNode>(mSelectionManager.GetPrimarySelection())->RenderDetailsUI(0);
+	else if (mSelectionManager.GetPrimarySelection() != nullptr){
+		std::shared_ptr<LEventDataDOMNode> selection = std::static_pointer_cast<LEventDataDOMNode>(mSelectionManager.GetPrimarySelection());
+
+		if(mSelected != selection){
+			if(mSelected != nullptr){
+				mSelected->mEventScript = mEditor.GetText();
+			}
+			mEditor.SetText(selection->mEventScript);
+			mSelected = selection;
+		}
+		selection->RenderDetailsUI(0, &mEditor);
+	}
 
 	ImGui::End();
 }

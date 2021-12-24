@@ -25,14 +25,29 @@ void LSceneCamera::Update(GLFWwindow* window, float dt)
 	glm::vec3 moveDir = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	// Decide which direction to move
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		moveDir += mForward;
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		moveDir -= mForward;
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		moveDir -= mRight;
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		moveDir += mRight;
+	if(mCamMode == FLY){
+		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+			moveDir += mForward;
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+			moveDir -= mForward;
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+			moveDir -= mRight;
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+			moveDir += mRight;
+	} else if(mCamMode == ORBIT) {
+		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+			moveDir += glm::normalize(mCenter - mEye);
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+			moveDir -= glm::normalize(mCenter - mEye);
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+			moveDir -= glm::normalize(glm::cross(mCenter - mEye, UNIT_Y));
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+			moveDir += glm::normalize(glm::cross(mCenter - mEye, UNIT_Y));
+		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+			moveDir += mUp;
+		if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+			moveDir -= mUp;
+	}
 
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 	{
@@ -63,7 +78,8 @@ void LSceneCamera::Update(GLFWwindow* window, float dt)
 		moveDir = glm::normalize(moveDir);
 
 	mEye += moveDir * (mMoveSpeed * dt);
-	mCenter = mEye + mForward;
+	if(mCamMode != ECamMode::ORBIT)
+		mCenter = mEye + mForward;
 }
 
 void LSceneCamera::Rotate(float dt, float x, float y)

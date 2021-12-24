@@ -3,6 +3,11 @@
 // Global reference to our duktape context.
 duk_context* DukGlobalContext = NULL;
 
+static duk_ret_t OSReportJS(duk_context* ctx){
+  OSReport("%s\n", duk_to_string(ctx, 0));
+  return 0;
+}
+
 // Initializes duktape's context.
 void init_duktape()
 {
