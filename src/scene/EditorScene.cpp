@@ -365,7 +365,8 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 void LEditorScene::update(GLFWwindow* window, float dt, LEditorSelection* selection)
 {
 	if(Camera.mCamMode == ECamMode::ORBIT){
-		Camera.SetCenter(mCurrentRooms[0].lock().get()->GetPosition());
+		//oh god no
+		Camera.SetCenter(mCurrentRooms[0].lock().get()->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0].get()->GetPosition());
 	}
 
 	Camera.Update(window, dt);

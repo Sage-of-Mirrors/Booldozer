@@ -70,6 +70,13 @@ void LSceneCamera::Update(GLFWwindow* window, float dt)
 			} else if(mPrevMouseX - x > 0) {
 				moveDir += glm::normalize(glm::cross(mCenter - mEye, UNIT_Y));
 			}
+
+			if(mPrevMouseY - y < 0){
+				moveDir -= mUp;
+			} else if(mPrevMouseY - y > 0) {
+				moveDir += mUp;
+			}
+
 		}
 
 		mPrevMouseX = (float)x;
