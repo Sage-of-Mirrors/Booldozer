@@ -11,7 +11,7 @@ LSceneCamera::LSceneCamera() :
 	NearPlane(0.1f), FarPlane(10000.0f), Fovy(glm::radians(60.0f)), mCenter(ZERO), mEye(ZERO),
 	mPitch(0.0f), mYaw(0.0f), mUp(UNIT_Y), mRight(UNIT_X), mForward(UNIT_Z),
 	AspectRatio(16.0f / 9.0f), mAllowUpdates(true), mMoveSpeed(1000.0f), mMouseSensitivity(1.0f),
-	mPrevMouseX(0.0f), mPrevMouseY(0.0f), mClickedThisFrame(true)
+	mPrevMouseX(0.0f), mPrevMouseY(0.0f), mClickedThisFrame(true), mCamMode(ECamMode::FLY)
 {
 	mCenter = mEye + mForward;
 }
