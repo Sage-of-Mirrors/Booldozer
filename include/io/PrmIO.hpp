@@ -6,7 +6,6 @@
 #include "DOM/ItemAppearDOMNode.hpp"
 #include "DOM/ItemFishingDOMNode.hpp"
 #include "GhostImg.h"
-#include "bgfx/bgfx.h"
 #include <memory>
 #include <glm/glm.hpp>
 #include <map>

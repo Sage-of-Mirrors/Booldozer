@@ -1,6 +1,5 @@
 #pragma once
 
-#include "bigg.hpp"
 #include <string>
 
 class LEditorWindowBase

@@ -24,7 +24,7 @@ void LSceneCamera::Update(GLFWwindow* window, float dt)
 	glm::vec3 moveDir = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	// Decide which direction to move
-	if(mCamMode == FLY){
+	if(mCamMode == ECamMode::FLY){
 		if (LInput::GetKey(GLFW_KEY_W))
 			moveDir -= mForward;
 		if (LInput::GetKey(GLFW_KEY_S))
@@ -34,7 +34,7 @@ void LSceneCamera::Update(GLFWwindow* window, float dt)
 		if (LInput::GetKey(GLFW_KEY_A))
 			moveDir += mRight;
 	}
-	else if(mCamMode == ORBIT) {
+	else if(mCamMode == ECamMode::ORBIT) {
 		if (LInput::GetKey(GLFW_KEY_W))
 			moveDir += glm::normalize(mCenter - mEye);
 		if (LInput::GetKey(GLFW_KEY_S))
@@ -57,7 +57,7 @@ void LSceneCamera::Update(GLFWwindow* window, float dt)
 	{
 		glm::vec2 mouseDelta = LInput::GetMouseDelta();
 
-		if(mCamMode != ORBIT){
+		if(mCamMode != ECamMode::ORBIT){
 			Rotate(dt, mouseDelta);
 		}
 		else {
