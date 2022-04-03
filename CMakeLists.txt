@@ -27,5 +27,5 @@ file(GLOB BOOLDOZER_SRC
 
 add_executable(booldozer ${BOOLDOZER_SRC})
 find_package(ICU 61.0 COMPONENTS uc i18n REQUIRED)
-target_include_directories(booldozer PUBLIC include lib/glfw/include)
+target_include_directories(booldozer PUBLIC include lib/glfw/include lib/glfw/deps lib/glm)
 target_link_libraries( booldozer PUBLIC imgui glfw gctools ICU::uc ICU::i18n)
