@@ -1,9 +1,6 @@
 [submodule "lib/libgctools"]
 	path = lib/libgctools
 	url = git@github.com:Astral-C/libgctools.git
-[submodule "lib/bigg"]
-	path = lib/bigg
-url=git@github.com:Sage-of-Mirrors/bigg.git
 [submodule "lib/ImGuiFileDialog"]
 	path = lib/ImGuiFileDialog
 	url = git@github.com:aiekick/ImGuiFileDialog.git
