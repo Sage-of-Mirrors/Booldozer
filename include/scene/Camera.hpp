@@ -11,7 +11,10 @@ constexpr glm::vec3 UNIT_X = glm::vec3(1.0f, 0.0f, 0.0f);
 constexpr glm::vec3 UNIT_Y = glm::vec3(0.0f, 1.0f, 0.0f);
 constexpr glm::vec3 UNIT_Z = glm::vec3(0.0f, 0.0f, 1.0f);
 
-enum ECamMode {
+constexpr float LOOK_UP_MIN = -glm::half_pi<float>() + glm::epsilon<float>();
+constexpr float LOOK_UP_MAX = glm::half_pi<float>() - glm::epsilon<float>();
+
+enum class ECamMode {
 	FLY,
 	ORBIT
 };
@@ -30,15 +33,10 @@ class LSceneCamera
 
 /*=== Movement ===*/
 	bool mAllowUpdates;
-	bool mClickedThisFrame;
-	bool mLeftClickedThisFrame;
 	float mMoveSpeed;
 	float mMouseSensitivity;
 
-	float mPrevMouseX;
-	float mPrevMouseY;
-
-	void Rotate(float dt, float x_delta, float y_delta);
+	void Rotate(float deltaTime, glm::vec2 mouseDelta);
 
 public:
 	float NearPlane;
@@ -66,7 +64,5 @@ public:
 	void SetCenter(glm::vec3 center) { mCenter = center; }
 
 	std::pair<glm::vec3, glm::vec3> Raycast(double mouseX, double mouseY, glm::vec4 viewport);
-
-	bool GetClicked() { return mLeftClickedThisFrame; }
 
 };

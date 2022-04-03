@@ -9,5 +9,5 @@ add_library(
   ${CMAKE_CURRENT_LIST_DIR}/imgui/backends/imgui_impl_glfw.cpp
   ${CMAKE_CURRENT_LIST_DIR}/imgui/backends/imgui_impl_opengl3.cpp
 )
-target_include_directories( imgui PUBLIC ${CMAKE_CURRENT_LIST_DIR}/imgui ${CMAKE_CURRENT_LIST_DIR}/imgui/backends )
+target_include_directories( imgui PUBLIC glfw/include ${CMAKE_CURRENT_LIST_DIR}/imgui ${CMAKE_CURRENT_LIST_DIR}/imgui/backends )
 set_target_properties( imgui PROPERTIES FOLDER "imgui" )

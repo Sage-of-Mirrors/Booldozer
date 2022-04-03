@@ -1,24 +1,23 @@
 #include "scene/Camera.hpp"
+#include "ui/LInput.hpp"
 #include <imgui.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/quaternion.hpp>
-#include <bx/bx.h>
-#include <bx/math.h>
+#include <algorithm>
 
 LSceneCamera::LSceneCamera() :
-	NearPlane(0.1f), FarPlane(10000.0f), Fovy(glm::radians(60.0f)), mCenter(ZERO), mEye(ZERO),
-	mPitch(0.0f), mYaw(0.0f), mUp(UNIT_Y), mRight(UNIT_X), mForward(UNIT_Z),
+	NearPlane(0.1f), FarPlane(100000.0f), Fovy(glm::radians(60.0f)), mCenter(ZERO), mEye(ZERO),
+	mPitch(0.0f), mYaw(glm::half_pi<float>()), mUp(UNIT_Y), mRight(UNIT_X), mForward(UNIT_Z),
 	AspectRatio(16.0f / 9.0f), mAllowUpdates(true), mMoveSpeed(1000.0f), mMouseSensitivity(1.0f),
-	mPrevMouseX(0.0f), mPrevMouseY(0.0f), mClickedThisFrame(true), mCamMode(ECamMode::FLY)
+	mCamMode(ECamMode::FLY)
 {
-	mCenter = mEye + mForward;
+	mCenter = mEye - mForward;
 }
 
 void LSceneCamera::Update(GLFWwindow* window, float dt)
 {
-	mLeftClickedThisFrame = false;
 	if (!mAllowUpdates || ImGui::GetIO().WantCaptureKeyboard || ImGui::GetIO().WantCaptureMouse)
 		return;
 
@@ -26,85 +25,74 @@ void LSceneCamera::Update(GLFWwindow* window, float dt)
 
 	// Decide which direction to move
 	if(mCamMode == FLY){
-		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-			moveDir += mForward;
-		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		if (LInput::GetKey(GLFW_KEY_W))
 			moveDir -= mForward;
-		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		if (LInput::GetKey(GLFW_KEY_S))
+			moveDir += mForward;
+		if (LInput::GetKey(GLFW_KEY_D))
 			moveDir -= mRight;
-		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		if (LInput::GetKey(GLFW_KEY_A))
 			moveDir += mRight;
-	} else if(mCamMode == ORBIT) {
-		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+	}
+	else if(mCamMode == ORBIT) {
+		if (LInput::GetKey(GLFW_KEY_W))
 			moveDir += glm::normalize(mCenter - mEye);
-		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		if (LInput::GetKey(GLFW_KEY_S))
 			moveDir -= glm::normalize(mCenter - mEye);
-		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		if (LInput::GetKey(GLFW_KEY_D))
 			moveDir -= glm::normalize(glm::cross(mCenter - mEye, UNIT_Y));
-		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		if (LInput::GetKey(GLFW_KEY_A))
 			moveDir += glm::normalize(glm::cross(mCenter - mEye, UNIT_Y));
-		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+		if (LInput::GetKey(GLFW_KEY_E))
 			moveDir += mUp;
-		if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+		if (LInput::GetKey(GLFW_KEY_Q))
 			moveDir -= mUp;
 	}
 
+	mMoveSpeed += LInput::GetMouseScrollDelta() * 100 * dt;
+	mMoveSpeed = std::clamp(mMoveSpeed, 100.f, 50000.f);
+	float actualMoveSpeed = LInput::GetKey(GLFW_KEY_LEFT_SHIFT) ? mMoveSpeed * 3.f : mMoveSpeed;
+
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 	{
-		double x, y;
-		glfwGetCursorPos(window, &x, &y);
-
-		if (mClickedThisFrame)
-		{
-			mPrevMouseX = (float)x;
-			mPrevMouseY = (float)y;
-
-			mClickedThisFrame = false;
-		}
+		glm::vec2 mouseDelta = LInput::GetMouseDelta();
 
 		if(mCamMode != ORBIT){
-			Rotate(dt, mPrevMouseX - x, mPrevMouseY - y);
-		} else {
-			if(mPrevMouseX - x < 0){
+			Rotate(dt, mouseDelta);
+		}
+		else {
+			if(mouseDelta.x < 0){
 				moveDir -= glm::normalize(glm::cross(mCenter - mEye, UNIT_Y));
-			} else if(mPrevMouseX - x > 0) {
+			} else if(mouseDelta.x > 0) {
 				moveDir += glm::normalize(glm::cross(mCenter - mEye, UNIT_Y));
 			}
 
-			if(mPrevMouseY - y < 0){
+			if(mouseDelta.y < 0){
 				moveDir -= mUp;
-			} else if(mPrevMouseY - y > 0) {
+			} else if(mouseDelta.y > 0) {
 				moveDir += mUp;
 			}
 
 		}
-
-		mPrevMouseX = (float)x;
-		mPrevMouseY = (float)y;
-	} else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-		mLeftClickedThisFrame = true;
-	}
-	else
-	{
-		mClickedThisFrame = true;
 	}
 
 	if (glm::length(moveDir) != 0.0f)
 		moveDir = glm::normalize(moveDir);
 
-	mEye += moveDir * (mMoveSpeed * dt);
+	mEye += moveDir * actualMoveSpeed * dt;
 	if(mCamMode != ECamMode::ORBIT)
-		mCenter = mEye + mForward;
+		mCenter = mEye - mForward;
 }
 
-void LSceneCamera::Rotate(float dt, float x, float y)
+void LSceneCamera::Rotate(float deltaTime, glm::vec2 mouseDelta)
 {
-	// Delta is 0, so return.
-	if (x == 0.0f && y == 0.0f)
+	if (mouseDelta.x == 0.f && mouseDelta.y == 0.f)
 		return;
 
-	mPitch += y * dt * mMouseSensitivity;
-	mYaw += x * dt * mMouseSensitivity;
+	mPitch += mouseDelta.y * deltaTime * mMouseSensitivity;
+	mYaw += mouseDelta.x * deltaTime * mMouseSensitivity;
+
+	mPitch = std::clamp(mPitch, LOOK_UP_MIN, LOOK_UP_MAX);
 
 	mForward.x = cos(mYaw) * cos(mPitch);
 	mForward.y = sin(mPitch);

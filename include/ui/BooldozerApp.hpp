@@ -9,6 +9,7 @@
 class LBooldozerApp
 {
 	struct GLFWwindow* mWindow;
+	int mWidth, mHeight;
 
 	LBooldozerEditor mEditorContext;
 	LEditorScene mEditorScene;
@@ -17,8 +18,9 @@ class LBooldozerApp
 	LOptionsMenu mOptionsMenu;
 
 	bool Execute(float deltaTime);
-	void Render(float dt);
-  
+	void Render(float deltaTime);
+	void RenderUI(float deltaTime);
+
 public:
 	LBooldozerApp();
 	virtual ~LBooldozerApp() {}
