@@ -3,8 +3,7 @@ project(booldozer)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_subdirectory(lib/bigg)
-add_subdirectory(lib/libgctools)
+add_subdirectory(lib)
 
 file(GLOB BOOLDOZER_SRC 
     "src/*.cpp"
@@ -28,5 +27,5 @@ file(GLOB BOOLDOZER_SRC
 
 add_executable(booldozer ${BOOLDOZER_SRC})
 find_package(ICU 61.0 COMPONENTS uc i18n REQUIRED)
-target_include_directories(booldozer PUBLIC include)
-target_link_libraries( booldozer PUBLIC bigg gctools ICU::uc ICU::i18n)
+target_include_directories(booldozer PUBLIC include lib/glfw/include)
+target_link_libraries( booldozer PUBLIC imgui glfw gctools ICU::uc ICU::i18n)
