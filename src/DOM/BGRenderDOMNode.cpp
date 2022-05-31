@@ -1,5 +1,5 @@
 #include "DOM/BGRenderDOMNode.hpp"
-#include "bigg.hpp"
+//#include "bigg.hpp"
 #include <glm/gtx/matrix_decompose.hpp>
 
 LBGRenderDOMNode::LBGRenderDOMNode(std::string name) : LUIRenderDOMNode(name),

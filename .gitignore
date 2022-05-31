@@ -351,3 +351,21 @@ MigrationBackup/
 build/
 # Booldozer-specific
 **/patch_diffs/
+
+
+# Booldozer stuff
+booldozer
+booldozer.exe
+user_settings.json
+
+#cmake stuff
+CMakeFiles/
+CMakeCache.txt
+*.cmake
+Makefile
+
+#submodules
+lib/*
+
+#vscode stuff
+.vscode

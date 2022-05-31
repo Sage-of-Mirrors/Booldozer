@@ -280,7 +280,7 @@ void LPrmIO::Load(std::string name, bStream::CStream* stream)
 
 void LPrmIO::RenderUI()
 {
-    if(!mConfigsLoaded) return;
+    if(!mConfigsLoaded || mLoadedConfigs.empty()) return;
     ImGui::Begin("Ghost Configurations");
     
     if (ImGui::BeginCombo("Ghost", mLoadedConfigs[mSelectedConfig].data(), 0))

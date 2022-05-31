@@ -3,11 +3,11 @@
 #include "TimeUtil.hpp"
 #include "UIUtil.hpp"
 
+#include "glad/glad.h"
 #include <GLFW/glfw3.h>
-#include <glad/gl.h>
-#include <imgui.h>
-#include <imgui_impl_opengl3.h>
-#include <imgui_impl_glfw.h>
+#include "imgui.h"
+#include "imgui_impl_opengl3.h"
+#include "imgui_impl_glfw.h"
 #include <iostream>
 
 constexpr int GL_VERSION_MAJOR = 4;
@@ -51,7 +51,7 @@ bool LBooldozerApp::Setup() {
 
 	// Set up GLAD
 	glfwMakeContextCurrent(mWindow);
-	gladLoadGL(glfwGetProcAddress);
+	gladLoadGL();
 	glClearColor(0.5f, 1.0f, 0.5f, 1.0f);
 	glfwSwapInterval(1);
 

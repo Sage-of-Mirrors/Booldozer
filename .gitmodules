@@ -20,3 +20,9 @@
 [submodule "lib/glm"]
 	path = lib/glm
 	url = git@github.com:g-truc/glm.git
+[submodule "lib/libflipper"]
+	path = lib/libflipper
+	url = https://github.com/Sage-of-Mirrors/libflipper.git
+[submodule "lib/libbti"]
+	path = lib/libbti
+	url = https://github.com/Sage-of-Mirrors/libbti.git
