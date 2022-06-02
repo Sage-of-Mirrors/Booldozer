@@ -22,6 +22,9 @@ void DealWithGLErrors(GLenum source, GLenum type, GLuint id, GLenum severity, GL
 }
 
 bool LBooldozerApp::Setup() {
+
+    GCResourceManager.Init();
+    
 	// Init GLFW
 	if (!glfwInit()) {
 		std::cout << "Failed to init GLFW!" << std::endl;
@@ -35,7 +38,7 @@ bool LBooldozerApp::Setup() {
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_IS_DEBUG_CONTEXT);
 
 	// Create GLFW window
-	mWindow = glfwCreateWindow(640, 480, "Booldozer", nullptr, nullptr);
+	mWindow = glfwCreateWindow(1280, 720, "Booldozer", nullptr, nullptr);
 	if (mWindow == nullptr) {
 		glfwTerminate();
 

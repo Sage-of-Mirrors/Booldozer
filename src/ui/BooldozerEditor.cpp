@@ -61,6 +61,16 @@ void LBooldozerEditor::OpenMap(std::string file_path)
 
 	mLoadedMap = std::make_shared<LMapDOMNode>();
 	mLoadedMap->LoadMap(std::filesystem::path(file_path));
+	if(mLoadedMap == nullptr || mLoadedMap->Children.empty()){
+		if (ImGui::BeginPopupModal("Map failed to load", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			ImGui::Text("No idea why, sorry boss.");
+			ImGui::Separator();
+
+			if (ImGui::Button("OK", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+			ImGui::EndPopup();
+		}
+	}
 	mGhostConfigs.LoadConfigs(mLoadedMap);
 	//mLoadedMap->LoadMap(std::filesystem::path("/home/spacey/Projects/LuigisMansion/Mods/LMArcade/files/Map/map2.szp")); /* Space */
 }

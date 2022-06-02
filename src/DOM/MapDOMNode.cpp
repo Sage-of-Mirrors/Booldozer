@@ -51,6 +51,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	GCarchive mapArc;
 	if (!GCResourceManager.LoadArchive(file_path.string().c_str(), &mapArc))
 	{
+		printf("Archive Load Failed\n");
 		return false;
 	}
 
