@@ -70,6 +70,32 @@ bool LBooldozerApp::Setup() {
 	ImGui_ImplGlfw_InitForOpenGL(mWindow, true);
 	ImGui_ImplOpenGL3_Init("#version 150");
 
+	unsigned char* data;
+	int width, height;
+	ImWchar ranges[] = { 0x1, 0xFFFF, 0 };
+
+	// Load font for Latin characters from file if it exists, or use imgui's default if not found.
+	std::filesystem::path fontPath = std::filesystem::path("./res/font/Input-Regular-Mono.ttf");
+	if (std::filesystem::exists(fontPath))
+	{
+		io.Fonts->AddFontFromFileTTF(fontPath.string().c_str(), 18.f, 0, ranges);
+	}
+	else
+		io.Fonts->AddFontDefault();
+
+	// Load font for Japanese characters from file, if it exists.
+	// Imgui has the handy feature that it can use specific font files for specific character ranges.
+	ImFontConfig config;
+	config.MergeMode = true;
+
+	fontPath = std::filesystem::path("./res/font/NotoSansJP-Regular.otf");
+	if (std::filesystem::exists(fontPath))
+		io.Fonts->AddFontFromFileTTF(fontPath.string().c_str(), 20.f, &config, io.Fonts->GetGlyphRangesJapanese());
+
+	io.Fonts->GetTexDataAsRGBA32(&data, &width, &height);
+	//imguiFontTexture = bgfx::createTexture2D((uint16_t)width, (uint16_t)height, false, 1, bgfx::TextureFormat::BGRA8, 0, bgfx::copy(data, width * height * 4));
+	//imguiFontUniform = bgfx::createUniform("s_tex", bgfx::UniformType::Sampler);
+
 	return true;
 }
 
@@ -245,6 +271,12 @@ void LBooldozerApp::RenderUI(float deltaTime) {
         }
 
         ImGui::EndMainMenuBar();
+    }
+
+
+    if (openOptionsMenu)
+    {
+        mOptionsMenu.OpenMenu();
     }
 
     ImGuizmo::BeginFrame();
