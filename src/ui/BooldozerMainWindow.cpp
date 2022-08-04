@@ -114,6 +114,10 @@ void LBooldozerMainWindow::render(float dt)
 
             ImGui::Separator();
 
+            if (ImGui::MenuItem("Save Map Archive..."))
+                mEditorContext.onSaveMapArchiveCB();
+
+
             if (ImGui::MenuItem("Save Map..."))
                 mEditorContext.onSaveMapCB();
 

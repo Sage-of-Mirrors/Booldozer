@@ -351,3 +351,11 @@ MigrationBackup/
 build/
 # Booldozer-specific
 **/patch_diffs/
+
+booldozer
+cmake_install.cmake
+CMakeCache.txt
+imgui.ini
+Makefile
+CMakeFiles/
+.vscode/

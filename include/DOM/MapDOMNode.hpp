@@ -16,6 +16,7 @@ class LRoomDOMNode;
 // DOM node representing an entire map, including rooms and objects.
 class LMapDOMNode : public LDOMNodeBase
 {
+	GCarchive mMapArchive;
 	LJmpIO JmpIOManagers[LEntityType_Max];
 	LStaticMapDataIO mStaticMapIO;
 
@@ -31,6 +32,7 @@ public:
 
 	bool LoadMap(std::filesystem::path file_path);
 	bool SaveMapToFiles(std::filesystem::path folder_path);
+	bool SaveMapToArchive(std::filesystem::path file_path);
 	std::shared_ptr<LRoomDOMNode> GetRoomByNumber(int32_t number);
 	std::shared_ptr<LRoomDOMNode> GetRoomByID(int32_t id);
 	std::shared_ptr<LRoomDOMNode> GetRoomByIndex(int32_t index);

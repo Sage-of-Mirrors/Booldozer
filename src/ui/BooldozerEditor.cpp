@@ -34,6 +34,14 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		LResUtility::SaveUserSettings();
 	}
 
+	if (LUIUtility::RenderFileDialog("SaveMapArchiveDlg", path))
+	{
+		SaveMapToArchive(path);
+
+		OPTIONS.mLastOpenedMap = path;
+		LResUtility::SaveUserSettings();
+	}
+
 	if (LUIUtility::RenderFileDialog("SaveMapFilesDlg", path))
 	{
 		SaveMapToFiles(path);
@@ -65,6 +73,16 @@ void LBooldozerEditor::OpenMap(std::string file_path)
 	//mLoadedMap->LoadMap(std::filesystem::path("/home/spacey/Projects/LuigisMansion/Mods/LMArcade/files/Map/map2.szp")); /* Space */
 }
 
+void LBooldozerEditor::SaveMapToArchive(std::string file_path){
+	if (OPTIONS.mRootPath == "")
+	{
+		ImGui::OpenPopup("Root Not Set");
+		return;
+	}
+
+	mLoadedMap->SaveMapToArchive(file_path);
+}
+
 void LBooldozerEditor::onOpenMapCB()
 {
 	ImGuiFileDialog::Instance()->OpenDialog("OpenMapDlg", "Open map archive", "Archives (*.arc *.szs *.szp){.arc,.szs,.szp}", OPTIONS.mLastOpenedMap);
@@ -80,6 +98,13 @@ void LBooldozerEditor::onSaveMapCB()
 	if (mLoadedMap != nullptr)
 		ImGuiFileDialog::Instance()->OpenDialog("SaveMapFilesDlg", "Choose a Folder", nullptr, OPTIONS.mLastSavedDirectory);
 }
+
+void LBooldozerEditor::onSaveMapArchiveCB()
+{
+	if (mLoadedMap != nullptr)
+		ImGuiFileDialog::Instance()->OpenDialog("SaveMapArchiveDlg", "Choose an Archive", "Archives (*.szp){.szp}", OPTIONS.mLastOpenedMap);
+}
+
 
 void LBooldozerEditor::onPlaytestCB()
 {

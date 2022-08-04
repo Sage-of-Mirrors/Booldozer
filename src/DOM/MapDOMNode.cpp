@@ -48,14 +48,13 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	}
 
 	// Attempt to load archive
-	GCarchive mapArc;
-	if (!GCResourceManager.LoadArchive(file_path.string().c_str(), &mapArc))
+	if (!GCResourceManager.LoadArchive(file_path.string().c_str(), &mMapArchive))
 	{
 		return false;
 	}
 
 	// We'll call ourselves whatever the root directory of the archive is
-	mName = std::string(mapArc.dirs[0].name);
+	mName = std::string(file_path.stem().string().c_str());
 
 	std::filesystem::path eventPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Event";
 	if(std::filesystem::exists(eventPath)){
@@ -111,12 +110,12 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	// Attempt to load roominfo data. Doesn't necessarily exist!
 	uint8_t* roominfoData = nullptr;
 	size_t roomInfoSize = 0;
-	for (uint32_t i = 0; i < mapArc.filenum; i++)
+	for (uint32_t i = 0; i < mMapArchive.filenum; i++)
 	{
-		if (strcmp(mapArc.files[i].name, "roominfo") == 0)
+		if (strcmp(mMapArchive.files[i].name, "roominfo") == 0)
 		{
-			roominfoData = (uint8_t*)mapArc.files[i].data;
-			roomInfoSize = (size_t)mapArc.files[i].size;
+			roominfoData = (uint8_t*)mMapArchive.files[i].data;
+			roomInfoSize = (size_t)mMapArchive.files[i].size;
 			break;
 		}
 	}
@@ -163,12 +162,12 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 		uint8_t* fileData = nullptr;
 		size_t fileSize = 0;
-		for (uint32_t i = 0; i < mapArc.filenum; i++)
+		for (uint32_t i = 0; i < mMapArchive.filenum; i++)
 		{
-			if (strcmp(mapArc.files[i].name, LEntityFileNames[entityType].c_str()) == 0)
+			if (strcmp(mMapArchive.files[i].name, LEntityFileNames[entityType].c_str()) == 0)
 			{
-				fileData = (uint8_t*)mapArc.files[i].data;
-				fileSize = mapArc.files[i].size;
+				fileData = (uint8_t*)mMapArchive.files[i].data;
+				fileSize = mMapArchive.files[i].size;
 				break;
 			}
 		}
@@ -201,7 +200,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 	// Load the path files into the path nodes
 	for (auto pathNode : GetChildrenOfType<LPathDOMNode>(EDOMNodeType::Path))
-		pathNode->PostProcess(mapArc);
+		pathNode->PostProcess(mMapArchive);
 
 	for (auto doorNode : GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door))
 		doorNode->PostProcess();
@@ -250,6 +249,60 @@ bool LMapDOMNode::LoadStaticData(std::vector<std::shared_ptr<LRoomDOMNode>> room
 	}
 
 	return true;
+}
+
+bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
+{
+	auto isNotBlackoutFilter = [](auto node) { return std::static_pointer_cast<LBlackoutDOMNode>(node)->IsActiveDuringBlackout() == false; };
+	auto isBlackoutFilter = [](auto node) { return std::static_pointer_cast<LBlackoutDOMNode>(node)->IsActiveDuringBlackout() == true; };
+
+	for (int32_t entityType = 0; entityType < LEntityType_Max; entityType++)
+	{
+		std::vector<std::shared_ptr<LEntityDOMNode>> entitiesOfType;
+		
+		if (entityType == LEntityType_Characters || entityType == LEntityType_Enemies || entityType == LEntityType_Observers || entityType == LEntityType_Keys)
+			entitiesOfType = GetChildrenOfType<LEntityDOMNode>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType), isNotBlackoutFilter);
+		else if (entityType == LEntityType_BlackoutCharacters || entityType == LEntityType_BlackoutEnemies || entityType == LEntityType_BlackoutObservers || entityType == LEntityType_BlackoutKeys)
+			entitiesOfType = GetChildrenOfType<LEntityDOMNode>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType), isBlackoutFilter);
+		else
+		{
+			entitiesOfType = GetChildrenOfType<LEntityDOMNode>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType));
+
+			if (entitiesOfType.size() == 0)
+				continue;
+		}
+
+		for (auto ent : entitiesOfType)
+			ent->PreProcess();
+
+		// Calculate the size of the required buffer. Header size + number of fields * field size + number of entities * entity size
+		size_t newFileSize = JmpIOManagers[entityType].CalculateNewFileSize(entitiesOfType.size());
+		bStream::CMemoryStream memWriter = bStream::CMemoryStream(newFileSize, bStream::Endianess::Big, bStream::OpenMode::Out);
+
+		JmpIOManagers[entityType].Save(entitiesOfType, memWriter);
+
+		for (uint32_t i = 0; i < mMapArchive.filenum; i++)
+		{
+			if (strcmp(mMapArchive.files[i].name, LEntityFileNames[entityType].c_str()) == 0)
+			{
+
+				if (!GCResourceManager.ReplaceArchiveFileData(&mMapArchive.files[i], memWriter.getBuffer(), newFileSize))
+				{
+					std::cout << "Error replacing file " << mMapArchive.files[i].name << std::endl;
+					return false;
+				}
+
+				break;
+			}
+		}
+	}
+
+	if (!GCResourceManager.SaveArchiveCompressed(file_path.string().c_str(), &mMapArchive))
+	{
+		std::cout << "Error saving archive " << file_path << std::endl;
+		return false;
+	}
+
 }
 
 bool LMapDOMNode::SaveMapToFiles(std::filesystem::path folder_path)

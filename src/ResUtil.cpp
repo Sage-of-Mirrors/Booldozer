@@ -80,6 +80,46 @@ bool LResUtility::LGCResourceManager::LoadArchive(const char* path, GCarchive* a
 	return true;
 }
 
+bool LResUtility::LGCResourceManager::ReplaceArchiveFileData(GCarcfile* file, uint8_t* new_data, size_t new_data_size){
+	if(!mInitialized) return false;
+	
+	// free existing file
+	gcFreeMem(&mResManagerContext, file->data);
+
+	//allocate size of new file
+	file->data = gcAllocMem(&mResManagerContext, new_data_size);
+		
+	//copy new jmp to file buffer for arc
+	memcpy(file->data, new_data, new_data_size);
+
+	//set size properly
+	file->size = new_data_size;
+
+	return true;
+}
+
+bool LResUtility::LGCResourceManager::SaveArchiveCompressed(const char* path, GCarchive* archive)
+{
+	if(!mInitialized) return false;
+
+	GCsize outSize = gcSaveArchive(archive, NULL);
+	GCuint8* archiveOut = new GCuint8[outSize];
+	GCuint8* archiveCmp = new GCuint8[outSize];
+
+	gcSaveArchive(archive, archiveOut);
+	GCsize cmpSize = gcYay0Compress(&mResManagerContext, archiveOut, archiveCmp, outSize);
+	
+	std::ofstream fileStream;
+	fileStream.open(path, std::ios::binary | std::ios::out);
+	fileStream.write((const char*)archiveCmp, cmpSize);
+	fileStream.close();
+
+	delete archiveOut;
+	delete archiveCmp;
+
+	return true;
+}
+
 nlohmann::ordered_json LResUtility::DeserializeJSON(std::filesystem::path file_path)
 {
 	nlohmann::ordered_json j;
