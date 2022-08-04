@@ -92,8 +92,8 @@ std::vector<BinVertex>ReadGXPrimitives(bStream::CStream* stream, std::vector<glm
                 vtx.x = pos.x;
                 vtx.y = pos.y;
                 vtx.z = pos.z;
-                vtx.u = texcoord.x;
-                vtx.v = texcoord.y;
+                vtx.u = texcoord.y;
+                vtx.v = texcoord.x;
                 vd_out.push_back(vtx);
             }
             break;
