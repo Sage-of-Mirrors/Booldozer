@@ -1,6 +1,7 @@
 #include "DOM/RoomDataDOMNode.hpp"
 #include "DOM/RoomDOMNode.hpp"
 #include "io/StaticMapDataIO.hpp"
+#include "UIUtil.hpp"
 
 LRoomDataDOMNode::LRoomDataDOMNode(std::string name) : Super(name)
 {
@@ -84,6 +85,10 @@ bool LRoomDataDOMNode::Save(LStaticRoomData& dest)
 	dest.mDarkColor.a = mDarkColor.a * 255;
 
 	return true;
+}
+
+void LRoomDataDOMNode::RenderTransformUI(){
+	LUIUtility::RenderTransformUI(mTransform.get(), mPosition, mRotation, mScale);
 }
 
 void LRoomDataDOMNode::DeconstructBoundingBox(const glm::vec3& min, const glm::vec3& max)

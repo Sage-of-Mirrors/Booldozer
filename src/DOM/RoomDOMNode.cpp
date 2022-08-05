@@ -31,6 +31,32 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 	// Room tree start
 	bool treeSelected = false;
 	bool treeOpened = LUIUtility::RenderNodeSelectableTreeNode(GetName(), GetIsSelected(), treeSelected);
+
+	/*if(ImGui::BeginDragDropTarget()){
+		LDOMNodeBase* dragDropNode = nullptr;
+
+		const ImGuiPayload* payload = ImGui::GetDragDropPayload();
+
+		if (payload != nullptr && payload->Data != nullptr)
+		{
+			if (ImGui::AcceptDragDropPayload(payload->DataType) != nullptr) dragDropNode = *(LEntityDOMNode**)payload->Data;
+		}
+
+		// Skip if there's no pending drag and drop to handle
+		if (dragDropNode != nullptr)
+		{
+
+			switch (dragDropNode->GetNodeType())
+			{
+			case EDOMNodeType::Furniture:
+				mRoomEntities[LRoomEntityType_Furniture].push_back(std::make_shared<LFurnitureDOMNode>(**(LFurnitureDOMNode**)payload->Data));
+				break;
+			}
+
+		}
+		ImGui::EndDragDropTarget();
+	}*/
+
 	if (treeOpened)
 	{
 		// Iterating all of the entity types
@@ -210,6 +236,8 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 	LUIUtility::RenderTooltip("How much sound echoes within this room.");
 
 	LUIUtility::RenderNodeReferenceVector("Adjacent Rooms", EDOMNodeType::Room, Parent, dataNode->GetAdjacencyList());
+
+	dataNode->RenderTransformUI();
 
 	ImGui::NewLine();
 	ImGui::Separator();

@@ -39,6 +39,45 @@ void LActorMode::RenderDetailsWindow()
 
 void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene)
 {
+
+	//render prefabs
+	/*ImGui::Begin("Prefab Nodes");
+
+	if(ImGui::TreeNode("Nodes")){
+		if(ImGui::BeginDragDropTarget()){
+			LDOMNodeBase* dragDropNode = nullptr;
+
+			const ImGuiPayload* payload = ImGui::GetDragDropPayload();
+
+			if (payload != nullptr && payload->Data != nullptr)
+			{
+				if (ImGui::AcceptDragDropPayload(payload->DataType) != nullptr) dragDropNode = *(LEntityDOMNode**)payload->Data;
+			}
+
+			// Skip if there's no pending drag and drop to handle
+			if (dragDropNode != nullptr)
+			{
+				std::shared_ptr<LEntityDOMNode> sharedNode = dragDropNode->GetSharedPtr<LEntityDOMNode>(EDOMNodeType::Entity);
+
+				//if(mNodePrefabs.count(sharedNode) == 0){ //make sure we only add it once
+					mNodePrefabs.push_back(sharedNode);
+				//}
+			}
+			ImGui::EndDragDropTarget();
+		}
+
+		for (auto node : mNodePrefabs)
+		{
+			std::static_pointer_cast<LUIRenderDOMNode>(node)->RenderHierarchyUI(node, &mSelectionManager);
+		}
+		
+
+		ImGui::TreePop();
+	}
+
+	ImGui::End();*/
+
+
 	//LUIUtility::RenderGizmoToggle();
 	RenderSceneHierarchy(current_map);
 	RenderDetailsWindow();

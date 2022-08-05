@@ -57,6 +57,8 @@ public:
 	int32_t GetRoomIndex() const { return mRoomIndex; }
 	int32_t GetRoomID() const { return mRoomID; }
 
+	void RenderTransformUI();
+
 	virtual void RenderDetailsUI(float dt) override;
 
 	bool Load(const uint32_t& index, const LStaticMapDataIO& source, const std::vector<std::shared_ptr<LRoomDOMNode>>& mapRooms, const std::vector<std::shared_ptr<LDoorDOMNode>>& mapDoors);
