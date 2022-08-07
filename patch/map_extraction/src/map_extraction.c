@@ -131,10 +131,8 @@ void InitMirrors_External()
     OpenMapMirrorCount = data->mMirrorCount;
     data->mMirrorDefinitions = (LMirrorFileDef*)((char*)data + 8);
     
-    LRuntimeMirror* test = (LRuntimeMirror*)FUN_801ce804(sizeof(LRuntimeMirror) * OpenMapMirrorCount + 8);
-    LRuntimeMirror* test2 = __construct_array(test, &MirrorConstructor, 0, sizeof(LRuntimeMirror), OpenMapMirrorCount);
-    
-    OpenMapMirrors = test2;
+    LRuntimeMirror* mirrorBuffer = (LRuntimeMirror*)FUN_801ce804(sizeof(LRuntimeMirror) * OpenMapMirrorCount + 8);
+    OpenMapMirrors = __construct_array(test, &MirrorConstructor, 0, sizeof(LRuntimeMirror), OpenMapMirrorCount);
     
     for (int i = 0; i < OpenMapMirrorCount; i++)
     {
@@ -156,7 +154,7 @@ void InitMirrors_External()
       
       OpenMapMirrors[i].mRenderCameraVerticalOffset = data->mMirrorDefinitions[i].mRenderCameraVerticalOffset;
       
-      OpenMapMirrors[i].mUnkField_1D0 = data->mMirrorDefinitions[i].mUnkField_1D0;
+      OpenMapMirrors[i].mRenderCameraDistance = data->mMirrorDefinitions[i].mRenderCameraDistance;
       
       OpenMapMirrors[i].mImageBaseWidth = data->mMirrorDefinitions[i].mImageBaseWidth;
       OpenMapMirrors[i].mImageBaseHeight = data->mMirrorDefinitions[i].mImageBaseHeight;

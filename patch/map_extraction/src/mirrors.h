@@ -26,7 +26,7 @@ typedef struct LRuntimeMirror
   
   char mUnkBlock3[0x158];
   
-  float mUnkField_1D0;
+  float mRenderCameraDistance;
   
   char mUnkBlock4[0x3C];
   
@@ -63,7 +63,7 @@ typedef struct LMirrorFileDef
   
   int32_t mRenderCameraVerticalOffset;
   
-  float mUnkField_1D0;
+  float mRenderCameraDistance;
   
   uint16_t mImageBaseWidth;
   uint16_t mImageBaseHeight;
