@@ -194,6 +194,24 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		}
 	}
 
+	// Get the path the mirrors file should be at.
+	std::filesystem::path mirrorsPath = LResUtility::GetMirrorDataPath(mName);
+	// If the file doesn't exist, and we're in the main mansion (map2), try to load the JSON template.
+	if (!std::filesystem::exists(mirrorsPath) && mName == "map2")
+	{
+		nlohmann::ordered_json mansionMirrorTemplate = LResUtility::GetMirrorTemplate("mirrors_map2");
+
+		if (!mansionMirrorTemplate.empty())
+		{
+			for (auto j : mansionMirrorTemplate)
+			{
+				std::shared_ptr<LMirrorDOMNode> newNode = std::make_shared<LMirrorDOMNode>("Mirror");
+				newNode->Load(j);
+				AddChild(newNode);
+			}
+		}
+	}
+
 	// Shore up things like entity references now that all of the entity data has been loaded
 	for (auto loadedNode : GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Entity))
 		loadedNode->PostProcess();
@@ -204,6 +222,9 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 	for (auto doorNode : GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door))
 		doorNode->PostProcess();
+
+	for (auto mirrorNode : GetChildrenOfType<LMirrorDOMNode>(EDOMNodeType::Mirror))
+		mirrorNode->PostProcess();
 
 	// To finish loading the map we're going to delegate grabbing room data to the rooms themselves,
 	// where they'll also set up things like models for furniture

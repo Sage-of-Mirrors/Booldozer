@@ -1,8 +1,8 @@
 [
   {
-    "Position" : { 420.0, 50.0, -395.0 },
-    "Rotation" : { 0.0, -3640.0, 0.0 },
-    "Scale": { 1.0, 1.0, 1.0 },
+    "Position" : [ 420.0, 50.0, -395.0 ],
+    "Rotation" : [ 0.0, -20.0, 0.0 ],
+    "Scale": [ 1.0, 1.0, 1.0 ],
     "ImageBaseWidth" : 70,
     "ImageBaseHeight" : 100,
     "RenderCameraZoom": 18.5,
@@ -11,9 +11,9 @@
     "RenderGBHOnly": false
   },
   {
-    "Position" : { -1960.0, 185.0, -4395.0 },
-    "Rotation" : { 1820.0, 0.0, 0.0 },
-    "Scale": { 1.0, 1.0, 1.0 },
+    "Position" : [ -1960.0, 185.0, -4395.0 ],
+    "Rotation" : [ 10.0, 0.0, 0.0 ],
+    "Scale": [ 1.0, 1.0, 1.0 ],
     "ImageBaseWidth" : 80,
     "ImageBaseHeight" : 110,
     "RenderCameraZoom": 16.0,
@@ -22,9 +22,9 @@
     "RenderGBHOnly": false
   },
   {
-    "Position" : { -1740.0, 150.0, -5360.0 },
-    "Rotation" : { 0.0, 0.0, 0.0 },
-    "Scale": { 1.0, 1.0, 1.0 },
+    "Position" : [ -1740.0, 150.0, -5360.0 ],
+    "Rotation" : [ 0.0, 0.0, 0.0 ],
+    "Scale": [ 1.0, 1.0, 1.0 ],
     "ImageBaseWidth" : 80,
     "ImageBaseHeight" : 114,
     "RenderCameraZoom": 16.0,
@@ -33,9 +33,9 @@
     "RenderGBHOnly": false
   },
   {
-    "Position" : { -1960.0, 730.0, -4395.0 },
-    "Rotation" : { 1820.0, 0.0, 0.0 },
-    "Scale": { 1.0, 1.0, 1.0 },
+    "Position" : [ -1960.0, 730.0, -4395.0 ],
+    "Rotation" : [ 10.0, 0.0, 0.0 ],
+    "Scale": [ 1.0, 1.0, 1.0 ],
     "ImageBaseWidth" : 80,
     "ImageBaseHeight" : 114,
     "RenderCameraZoom": 16.0,
@@ -44,9 +44,9 @@
     "RenderGBHOnly": false
   },
   {
-    "Position" : { -1740.0, 710.0, -5360.0 },
-    "Rotation" : { 0.0, 0.0, 0.0 },
-    "Scale": { 1.0, 1.0, 1.0 },
+    "Position" : [ -1740.0, 710.0, -5360.0 ],
+    "Rotation" : [ 0.0, 0.0, 0.0 ],
+    "Scale": [ 1.0, 1.0, 1.0 ],
     "ImageBaseWidth" : 80,
     "ImageBaseHeight" : 114,
     "RenderCameraZoom": 16.0,
@@ -55,9 +55,9 @@
     "RenderGBHOnly": false
   },
   {
-    "Position" : { -2740.0, 690.0, -2405.0 },
-    "Rotation" : { 0.0, -3640.0, 0.0 },
-    "Scale": { 1.0, 1.0, 1.0 },
+    "Position" : [ -2740.0, 690.0, -2405.0 ],
+    "Rotation" : [ 0.0, -20.0, 0.0 ],
+    "Scale": [ 1.0, 1.0, 1.0 ],
     "ImageBaseWidth" : 64,
     "ImageBaseHeight" : 90,
     "RenderCameraZoom": 16.0,
@@ -66,9 +66,9 @@
     "RenderGBHOnly": false
   },
   {
-    "Position" : { 3478.0, 98.0, -5448.0 },
-    "Rotation" : { 0.0, 0.0, 0.0 },
-    "Scale": { 1.0, 1.0, 1.0 },
+    "Position" : [ 3478.0, 98.0, -5448.0 ],
+    "Rotation" : [ 0.0, 0.0, 0.0 ],
+    "Scale": [ 1.0, 1.0, 1.0 ],
     "ImageBaseWidth" : 82,
     "ImageBaseHeight" : 180,
     "RenderCameraZoom": 30.0,
@@ -77,9 +77,9 @@
     "RenderGBHOnly": false
   },
   {
-    "Position" : { -1670.0, 100.0, -3850.0 },
-    "Rotation" : { 0.0, 0.0, 0.0 },
-    "Scale": { 2.0, 2.0, 1.0 },
+    "Position" : [ -1670.0, 100.0, -3850.0 ],
+    "Rotation" : [ 0.0, 0.0, 0.0 ],
+    "Scale": [ 2.0, 2.0, 1.0 ],
     "ImageBaseWidth" : 170,
     "ImageBaseHeight" : 76,
     "RenderCameraZoom": 8.0,
@@ -88,9 +88,9 @@
     "RenderGBHOnly": false
   },
   {
-    "Position" : { 2900.0, 752.0, -689.0 },
-    "Rotation" : { 2731.0, 0.0, 0.0 },
-    "Scale": { 1.0, 1.0, 1.0 },
+    "Position" : [ 2900.0, 752.0, -689.0 ],
+    "Rotation" : [ 15.0, 0.0, 0.0 ],
+    "Scale": [ 1.0, 1.0, 1.0 ],
     "ImageBaseWidth" : 40,
     "ImageBaseHeight" : 62,
     "RenderCameraZoom": 20.0,
@@ -99,9 +99,9 @@
     "RenderGBHOnly": false
   },
   {
-    "Position" : { 3340.0, 65.0, -689.0 },
-    "Rotation" : { 0.0, 0.0, 0.0 },
-    "Scale": { 2.0, 2.0, 1.0 },
+    "Position" : [ 3340.0, 65.0, -689.0 ],
+    "Rotation" : [ 0.0, 0.0, 0.0 ],
+    "Scale": [ 2.0, 2.0, 1.0 ],
     "ImageBaseWidth" : 308,
     "ImageBaseHeight" : 84,
     "RenderCameraZoom": 8.0,
@@ -110,9 +110,9 @@
     "RenderGBHOnly": false
   },
   {
-    "Position" : { -1540.0, 650.0, -3855.0 },
-    "Rotation" : { 0.0, 0.0, 0.0 },
-    "Scale": { 1.0, 1.0, 1.0 },
+    "Position" : [ -1540.0, 650.0, -3855.0 ],
+    "Rotation" : [ 0.0, 0.0, 0.0 ],
+    "Scale": [ 1.0, 1.0, 1.0 ],
     "ImageBaseWidth" : 92,
     "ImageBaseHeight" : 134,
     "RenderCameraZoom": 20.0,
@@ -121,9 +121,9 @@
     "RenderGBHOnly": false
   },
   {
-    "Position" : { 3008.0, -461.0, -5955.0 },
-    "Rotation" : { 0.0, -16383.0, 0.0 },
-    "Scale": { 1.0, 1.0, 1.0 },
+    "Position" : [ 3008.0, -461.0, -5955.0 ],
+    "Rotation" : [ 0.0, 90.0, 0.0 ],
+    "Scale": [ 1.0, 1.0, 1.0 ],
     "ImageBaseWidth" : 70,
     "ImageBaseHeight" : 108,
     "RenderCameraZoom": 20.0,
@@ -132,9 +132,9 @@
     "RenderGBHOnly": false
   },
   {
-    "Position" : { 3765.0, 760.0, -2790.0 },
-    "Rotation" : { 0.0, 0.0, 0.0 },
-    "Scale": { 1.0, 1.0, 1.0 },
+    "Position" : [ 3765.0, 760.0, -2790.0 ],
+    "Rotation" : [ 0.0, 0.0, 0.0 ],
+    "Scale": [ 1.0, 1.0, 1.0 ],
     "ImageBaseWidth" : 84,
     "ImageBaseHeight" : 110,
     "RenderCameraZoom": 20.0,
@@ -143,9 +143,9 @@
     "RenderGBHOnly": false
   },
   {
-    "Position" : { 3280.0, 175.0, -3843.0 },
-    "Rotation" : { 0.0, 0.0, 0.0 },
-    "Scale": { 1.0, 1.0, 1.0 },
+    "Position" : [ 3280.0, 175.0, -3843.0 ],
+    "Rotation" : [ 0.0, 0.0, 0.0 ],
+    "Scale": [ 1.0, 1.0, 1.0 ],
     "ImageBaseWidth" : 70,
     "ImageBaseHeight" : 100,
     "RenderCameraZoom": 20.0,
@@ -154,9 +154,9 @@
     "RenderGBHOnly": false
   },
   {
-    "Position" : { -2950.0, 1242.0, -1258.0 },
-    "Rotation" : { 0.0, 0.0, 0.0 },
-    "Scale": { 1.0, 1.0, 1.0 },
+    "Position" : [ -2950.0, 1242.0, -1258.0 ],
+    "Rotation" : [ 0.0, 0.0, 0.0 ],
+    "Scale": [ 1.0, 1.0, 1.0 ],
     "ImageBaseWidth" : 92,
     "ImageBaseHeight" : 112,
     "RenderCameraZoom": 20.0,
@@ -165,9 +165,9 @@
     "RenderGBHOnly": false
   },
   {
-    "Position" : { -1799.0, 190.0, 272.0 },
-    "Rotation" : { 0.0, -32768.0, 0.0 },
-    "Scale": { 1.0, 1.0, 1.0 },
+    "Position" : [ -1799.0, 190.0, 272.0 ],
+    "Rotation" : [ 0.0, -180.0, 0.0 ],
+    "Scale": [ 1.0, 1.0, 1.0 ],
     "ImageBaseWidth" : 58,
     "ImageBaseHeight" : 58,
     "RenderCameraZoom": 20.0,
@@ -176,9 +176,9 @@
     "RenderGBHOnly": true
   },
   {
-    "Position" : { 2986.0, 1177.0, 283.0 },
-    "Rotation" : { 0.0, -32768.0, 0.0 },
-    "Scale": { 1.0, 1.0, 1.0 },
+    "Position" : [ 2986.0, 1177.0, 283.0 ],
+    "Rotation" : [ 0.0, -180.0, 0.0 ],
+    "Scale": [ 1.0, 1.0, 1.0 ],
     "ImageBaseWidth" : 94,
     "ImageBaseHeight" : 114,
     "RenderCameraZoom": 20.0,
@@ -187,14 +187,14 @@
     "RenderGBHOnly": true
   },
   {
-    "Position" : { 3350.0, -459.0, -1321.0 },
-    "Rotation" : { 0.0, -32768.0, 0.0 },
-    "Scale": { 1.0, 1.0, 1.0 },
+    "Position" : [ 3350.0, -459.0, -1321.0 ],
+    "Rotation" : [ 0.0, -180.0, 0.0 ],
+    "Scale": [ 1.0, 1.0, 1.0 ],
     "ImageBaseWidth" : 74,
     "ImageBaseHeight" : 100,
     "RenderCameraZoom": 20.0,
     "RenderCameraVerticalOffset": 0,
     "RenderCameraDistance": 550.0,
     "RenderGBHOnly": true
-  },
+  }
 ]

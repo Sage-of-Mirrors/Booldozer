@@ -20,10 +20,12 @@ namespace LResUtility
 	nlohmann::ordered_json DeserializeJSON(std::filesystem::path file_path);
 
 	nlohmann::ordered_json GetNameMap(std::string name);
+	nlohmann::ordered_json GetMirrorTemplate(std::string name);
 
 	uint32_t GetStaticMapDataOffset(std::string mapName, std::string region);
 
 	std::filesystem::path GetStaticMapDataPath(std::string mapName);
+	std::filesystem::path GetMirrorDataPath(std::string mapName);
 
 	class LGCResourceManager
 	{

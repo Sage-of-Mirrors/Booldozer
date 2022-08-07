@@ -1,20 +1,21 @@
 #pragma once
 
 #include "BGRenderDOMNode.hpp"
+#include <nlohmann/json.hpp>
 
 class LMirrorDOMNode : public LBGRenderDOMNode
 {
 	
 	int32_t mCameraHeightOffset;
 	
-	uint16_t mResolutionWidth;
-	uint16_t mResolutionHeight;
+	int32_t mResolutionWidth;
+	int32_t mResolutionHeight;
 	
 	float mZoom;
 
 	bool mGBHOnly; //u32
 
-	float mUnkValue1;
+	float mCameraDistance;
 
 public:
 	typedef LBGRenderDOMNode Super;
@@ -29,6 +30,8 @@ public:
 	bool Save(LStaticDoorData& dest);
 	*/
 	
+	bool Load(const nlohmann::ordered_json& jsonEntry);
+
 	void PostProcess();
 	void PreProcess();
 

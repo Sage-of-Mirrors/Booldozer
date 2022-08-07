@@ -153,6 +153,13 @@ nlohmann::ordered_json LResUtility::GetNameMap(std::string name)
 	return json;
 }
 
+nlohmann::ordered_json LResUtility::GetMirrorTemplate(std::string name)
+{
+	std::filesystem::path fullPath = std::filesystem::current_path() / RES_BASE_PATH / LGenUtility::Format(name, ".json");
+
+	return DeserializeJSON(fullPath);
+}
+
 uint32_t LResUtility::GetStaticMapDataOffset(std::string mapName, std::string region)
 {
 	std::filesystem::path fullPath = std::filesystem::current_path() / RES_BASE_PATH / "static_room_data.json";
@@ -179,6 +186,14 @@ std::filesystem::path LResUtility::GetStaticMapDataPath(std::string mapName)
 		return "";
 
 	return std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / mapName / "rooms.map";
+}
+
+std::filesystem::path LResUtility::GetMirrorDataPath(std::string mapName)
+{
+	if (OPTIONS.mRootPath == "")
+		return "";
+
+	return std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / mapName / "mirrors.bin";
 }
 
 void LResUtility::LoadUserSettings()
