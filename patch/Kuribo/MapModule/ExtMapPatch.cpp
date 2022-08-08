@@ -1,8 +1,8 @@
+#include <stddef.h>
+
 #include "ExtMapPatch.hpp"
 #include "MirrorFile.hpp"
 #include "Utility.hpp"
-
-#include <stddef.h>
 
 LMapFile* FileBuffer = nullptr;
 

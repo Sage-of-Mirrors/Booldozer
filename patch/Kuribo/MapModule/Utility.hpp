@@ -1,8 +1,8 @@
 #pragma once
 
-#define OSRoundUp32B(n) ((unsigned int) (((unsigned int)(n) + 31) & ~31))
-
 #include <stdint.h>
+
+#define OSRoundUp32B(n) ((unsigned int) (((unsigned int)(n) + 31) & ~31))
 
 // This has a lot of components and isn't necessary for our use case,
 // so we're dummying it out with a char array of appropriate size.

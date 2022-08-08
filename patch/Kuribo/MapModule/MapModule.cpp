@@ -1,9 +1,7 @@
 #include <sdk/kuribo_sdk.h>
-
 #include "ExtMapPatch.hpp"
 
-
-pp::DefineModule("Map Module", "Booldozer Modules", "1.0");
+pp::DefineModule("Map Module", "Booldozer Team", "1.0");
 
 // Init
 pp:PatchBL(0x80012738, ExtMapPatch::InitExtMapData);

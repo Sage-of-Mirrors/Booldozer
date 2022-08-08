@@ -1,7 +1,8 @@
 #pragma once
 
-#include "MapFile.hpp"
 #include <stdint.h>
+
+#include "MapFile.hpp"
 
 namespace ExtMapPatch
 {
@@ -39,7 +40,7 @@ namespace ExtMapPatch
   char* TryLoadMirrorFile(uint16_t MapID);
 
 /* === Custom variables === */
-  // The address to which our extracted data is loaded at map init.
+  // The pointer to the location where our custom map data resides. Marked extern to make it global.
   extern LMapFile* FileBuffer;
 
 /* === Native variables === */
@@ -49,10 +50,11 @@ namespace ExtMapPatch
 
   // The ID of the currently open map.
   extern int OpenMapID;
-  // The number of mirrors currently in memory.
+  // The number of mirrors loaded for the currently open map.
   extern char OpenMapMirrorCount;
-  // The starting address of the array of existing mirrors.
+  // The pointer to the start of an array containg the mirrors loaded for the currently open map.
   extern LRuntimeMirror* OpenMapMirrors;
+  
   // Constructor for the LRuntimeMirror struct.
   extern void* MirrorConstructor; 
 }
