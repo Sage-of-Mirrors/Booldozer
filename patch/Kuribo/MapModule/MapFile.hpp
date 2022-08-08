@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-typedef struct LBoundingBox
+struct LBoundingBox
 {
   int32_t Min_X;
   int32_t Min_Y;
@@ -11,10 +11,10 @@ typedef struct LBoundingBox
   int32_t Max_X;
   int32_t Max_Y;
   int32_t Max_Z;
-} LBoundingBox;
+};
 
 // The data that makes up each room in a map.
-typedef struct LRoomData
+struct LRoomData
 {
   uint8_t mCameraPositionIndex;
   uint8_t mFloor;
@@ -36,11 +36,11 @@ typedef struct LRoomData
   uint8_t mDarkColor_G;
   uint8_t mDarkColor_B;
   uint8_t mDarkColor_A;
-} LRoomData;
+};
 
 // The data that defines alternate resources a room in a map can use;
 // Used to make Guest Room upside-down.
-typedef struct LAltResourceData
+struct LAltResourceData
 {
   uint8_t mRoomNumber;
   uint8_t mUnknown1;
@@ -48,10 +48,10 @@ typedef struct LAltResourceData
 
   // This is updated to point to the correct location at runtime.
   char* mPath;
-} LAltResourceData;
+};
 
 // The data that makes up each door within a map.
-typedef struct LDoorData
+struct LDoorData
 {
   uint8_t mOrientation;
   uint8_t mType;
@@ -72,10 +72,10 @@ typedef struct LDoorData
 
   uint8_t mNextEscape;
   uint8_t mCurrentEscape;
-} LDoorData;
+};
 
 // Layout for the header of the *.map file containing the extracted map data.
-typedef struct LMapFile
+struct LMapFile
 {
   // Total size of the file, used for bounds checking.
   uint32_t mFileSize;
@@ -106,4 +106,4 @@ typedef struct LMapFile
   // This is a uint16_t* array of size mRoomCount.
   // The pointers are updated to point to the correct locations at runtime.
   uint32_t* mRoomAdjacencyList;
-} LMapFile;
+};

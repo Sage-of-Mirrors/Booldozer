@@ -21,21 +21,24 @@ namespace ExtMapPatch
     /* 0x18 */ LDoorData* mDoorDefs; // Structs defining the doors within the map
   };
 
+/* === Functions === */
+  // Our new function to load the room data from file.
+  void InitExtMapData(uint16_t MapID);
+  // Our new function to delete the file data on map destruction.
+  void FreeExtMapData();
+  
+  // Our new function to load mirrors from file.
+  void InitExtMirrorData();
+  
   // Attempts to load the external map data file; returns whether it succeeded.
   uint32_t TryLoadMapFile(uint16_t MapID);
   // Updates the offsets in the map file to pointers.
   void UpdateMapFileOffsets();
 
-  // Our new function to load the room data from file.
-  void InitExtMapData(uint16_t MapID);
-  // Our new function to delete the file data on map destruction.
-  void FreeExtMapData();
-
   // Attempts to load the external mirror file; returns whether it succeeded.
   char* TryLoadMirrorFile(uint16_t MapID);
-  // Our new function to load mirrors from file.
-  void InitExtMirrorData();
 
+/* === RAM variables === */
   // The address to which our extracted data is loaded at map init.
   extern LMapFile* FileBuffer;
   // The array of LMapData* that define what maps the game can load.

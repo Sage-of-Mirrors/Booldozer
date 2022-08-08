@@ -1,67 +1,14 @@
 #include "ExtMapPatch.hpp"
-#include "mirrors.h"
-#include "util.h"
+#include "MirrorFile.hpp"
+#include "Utility.hpp"
 
 #include <stddef.h>
 
-LMapFile* FileBuffer = NULL;
-
-uint32_t ExtMapPatch::TryLoadMapFile(uint16_t MapID)
-{
-  // Generate the path to the map file.
-  char FormattedPath[32];
-  snprintf(FormattedPath, 32, "/Iwamoto/map%d/rooms.map", MapID);
-  
-  // Query the DVD to check if the map file exists; if not, early out.
-  uint32_t DoesFileExist = DVDConvertPathToEntrynum(FormattedPath);
-  if (DoesFileExist == -1)
-    return 0;
-  
-  // Grab the info about the map file from the DVD.
-  DVDFileInfo FileInfo;
-  DVDOpen(FormattedPath, &FileInfo);
-  
-  // Allocate memory to hold the map file.
-  uint32_t FileSize = OSRoundUp32B(FileInfo.mLength);
-  FileBuffer = (LMapFile*)JKRHeap_alloc(FileSize, 32, NULL);
-  
-  // Read the map file from the DVD.
-  DVDReadPrio(&FileInfo, (char*)FileBuffer, FileSize, NULL, 2);
-  DVDClose(&FileInfo);
-  
-  return 1;
-}
-
-void ExtMapPatch::UpdateMapFileOffsets()
-{
-  // Header offsets
-  FileBuffer->mRoomData = offset_to_ptr(FileBuffer, (uint32_t)FileBuffer->mRoomData);
-  FileBuffer->mRoomResourcePaths = offset_to_ptr(FileBuffer, (uint32_t)FileBuffer->mRoomResourcePaths);
-  FileBuffer->mAltResourceData = offset_to_ptr(FileBuffer, (uint32_t)FileBuffer->mAltResourceData);
-  FileBuffer->mDoorData = offset_to_ptr(FileBuffer, (uint32_t)FileBuffer->mDoorData);
-  FileBuffer->mDoorListData = offset_to_ptr(FileBuffer, (uint32_t)FileBuffer->mDoorListData);
-  FileBuffer->mRoomAdjacencyList = offset_to_ptr(FileBuffer, (uint32_t)FileBuffer->mRoomAdjacencyList);
-  
-  // Room doors
-  for (uint32_t i = 0; i < FileBuffer->mRoomCount; i++)
-    FileBuffer->mRoomData[i].mDoorListRef = offset_to_ptr(FileBuffer->mDoorListData, (uint32_t)FileBuffer->mRoomData[i].mDoorListRef);
-  
-  // Room resources
-  for (uint32_t i = 0; i < FileBuffer->mRoomCount; i++)
-    FileBuffer->mRoomResourcePaths[i] = offset_to_ptr(FileBuffer->mRoomResourcePaths, (uint32_t)FileBuffer->mRoomResourcePaths[i]);
-  
-  // Alt room resources
-  for (uint32_t i = 0; i < FileBuffer->mAltResourceCount; i++)
-    FileBuffer->mAltResourceData[i].mPath = offset_to_ptr(FileBuffer->mAltResourceData, (uint32_t)FileBuffer->mAltResourceData[i].mPath);
-  
-  // Room adjacency list
-  for (uint32_t i = 0; i < FileBuffer->mRoomAdjacencyListCount; i++)
-    FileBuffer->mRoomAdjacencyList[i] = offset_to_ptr(FileBuffer->mRoomAdjacencyList, (uint32_t)FileBuffer->mRoomAdjacencyList[i]);
-}
+LMapFile* FileBuffer = nullptr;
 
 void ExtMapPatch::InitExtMapData(uint16_t MapID)
 {
-  FileBuffer = NULL;
+  FileBuffer = nullptr;
   
   if (TryLoadMapFile(MapID))
   {
@@ -87,46 +34,20 @@ void ExtMapPatch::InitExtMapData(uint16_t MapID)
 void ExtMapPatch::FreeExtMapData()
 {
   // Free the memory where the map file was stored, if it was loaded in the first place.
-  if (FileBuffer != NULL)
+  if (FileBuffer != nullptr)
   {
-     JKRHeap_free(FileBuffer, NULL);
-     FileBuffer = NULL;     
+     JKRHeap_free(FileBuffer, nullptr);
+     FileBuffer = nullptr;     
   }
   
   // Continue with native map destruction.
   FreeMap();
 }
 
-char* ExtMapPatch::TryLoadMirrorFile(uint16_t MapID)
-{
-  // Generate the path to the map file.
-  char FormattedPath[32];
-  snprintf(FormattedPath, 32, "/Iwamoto/map%d/mirrors.bin", MapID);
-  
-  // Query the DVD to check if the map file exists; if not, early out.
-  uint32_t DoesFileExist = DVDConvertPathToEntrynum(FormattedPath);
-  if (DoesFileExist == -1)
-    return NULL;
-  
-  // Grab the info about the map file from the DVD.
-  DVDFileInfo FileInfo;
-  DVDOpen(FormattedPath, &FileInfo);
-  
-  // Allocate memory to hold the map file.
-  uint32_t FileSize = OSRoundUp32B(FileInfo.mLength);
-  char* data = (char*)JKRHeap_alloc(FileSize, 32, NULL);
-  
-  // Read the map file from the DVD.
-  DVDReadPrio(&FileInfo, data, FileSize, NULL, 2);
-  DVDClose(&FileInfo);
-  
-  return data;
-}
-
 void ExtMapPatch::InitExtMirrorData()
 {
   LMirrorFile* data = (LMirrorFile*)TryLoadMirrorFile(OpenMapID);
-  if (data != NULL)
+  if (data != nullptr)
   {
     OpenMapMirrorCount = data->mMirrorCount;
     data->mMirrorDefinitions = (LMirrorFileDef*)((char*)data + 8);
@@ -166,8 +87,87 @@ void ExtMapPatch::InitExtMirrorData()
       FUN_8001054c(&OpenMapMirrors[i].mRenderCameraRotationX, &OpenMapMirrors[i].mRotationX);
     }
     
-    JKRHeap_free(data, NULL);
+    JKRHeap_free(data, nullptr);
   }
   else
     InitMirrors();
+}
+
+uint32_t ExtMapPatch::TryLoadMapFile(uint16_t MapID)
+{
+  // Generate the path to the map file.
+  char FormattedPath[32];
+  snprintf(FormattedPath, 32, "/Iwamoto/map%d/rooms.map", MapID);
+  
+  // Query the DVD to check if the map file exists; if not, early out.
+  uint32_t DoesFileExist = DVDConvertPathToEntrynum(FormattedPath);
+  if (DoesFileExist == -1)
+    return 0;
+  
+  // Grab the info about the map file from the DVD.
+  DVDFileInfo FileInfo;
+  DVDOpen(FormattedPath, &FileInfo);
+  
+  // Allocate memory to hold the map file.
+  uint32_t FileSize = OSRoundUp32B(FileInfo.mLength);
+  FileBuffer = (LMapFile*)JKRHeap_alloc(FileSize, 32, nullptr);
+  
+  // Read the map file from the DVD.
+  DVDReadPrio(&FileInfo, (char*)FileBuffer, FileSize, nullptr, 2);
+  DVDClose(&FileInfo);
+  
+  return 1;
+}
+
+void ExtMapPatch::UpdateMapFileOffsets()
+{
+  // Header offsets
+  FileBuffer->mRoomData = offset_to_ptr(FileBuffer, (uint32_t)FileBuffer->mRoomData);
+  FileBuffer->mRoomResourcePaths = offset_to_ptr(FileBuffer, (uint32_t)FileBuffer->mRoomResourcePaths);
+  FileBuffer->mAltResourceData = offset_to_ptr(FileBuffer, (uint32_t)FileBuffer->mAltResourceData);
+  FileBuffer->mDoorData = offset_to_ptr(FileBuffer, (uint32_t)FileBuffer->mDoorData);
+  FileBuffer->mDoorListData = offset_to_ptr(FileBuffer, (uint32_t)FileBuffer->mDoorListData);
+  FileBuffer->mRoomAdjacencyList = offset_to_ptr(FileBuffer, (uint32_t)FileBuffer->mRoomAdjacencyList);
+  
+  // Room doors
+  for (uint32_t i = 0; i < FileBuffer->mRoomCount; i++)
+    FileBuffer->mRoomData[i].mDoorListRef = offset_to_ptr(FileBuffer->mDoorListData, (uint32_t)FileBuffer->mRoomData[i].mDoorListRef);
+  
+  // Room resources
+  for (uint32_t i = 0; i < FileBuffer->mRoomCount; i++)
+    FileBuffer->mRoomResourcePaths[i] = offset_to_ptr(FileBuffer->mRoomResourcePaths, (uint32_t)FileBuffer->mRoomResourcePaths[i]);
+  
+  // Alt room resources
+  for (uint32_t i = 0; i < FileBuffer->mAltResourceCount; i++)
+    FileBuffer->mAltResourceData[i].mPath = offset_to_ptr(FileBuffer->mAltResourceData, (uint32_t)FileBuffer->mAltResourceData[i].mPath);
+  
+  // Room adjacency list
+  for (uint32_t i = 0; i < FileBuffer->mRoomAdjacencyListCount; i++)
+    FileBuffer->mRoomAdjacencyList[i] = offset_to_ptr(FileBuffer->mRoomAdjacencyList, (uint32_t)FileBuffer->mRoomAdjacencyList[i]);
+}
+
+char* ExtMapPatch::TryLoadMirrorFile(uint16_t MapID)
+{
+  // Generate the path to the map file.
+  char FormattedPath[32];
+  snprintf(FormattedPath, 32, "/Iwamoto/map%d/mirrors.bin", MapID);
+  
+  // Query the DVD to check if the map file exists; if not, early out.
+  uint32_t DoesFileExist = DVDConvertPathToEntrynum(FormattedPath);
+  if (DoesFileExist == -1)
+    return nullptr;
+  
+  // Grab the info about the map file from the DVD.
+  DVDFileInfo FileInfo;
+  DVDOpen(FormattedPath, &FileInfo);
+  
+  // Allocate memory to hold the map file.
+  uint32_t FileSize = OSRoundUp32B(FileInfo.mLength);
+  char* data = (char*)JKRHeap_alloc(FileSize, 32, nullptr);
+  
+  // Read the map file from the DVD.
+  DVDReadPrio(&FileInfo, data, FileSize, nullptr, 2);
+  DVDClose(&FileInfo);
+  
+  return data;
 }
