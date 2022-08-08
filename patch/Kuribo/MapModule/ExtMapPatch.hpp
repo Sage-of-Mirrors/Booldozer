@@ -52,7 +52,7 @@ namespace ExtMapPatch
   extern int OpenMapID;
   // The number of mirrors loaded for the currently open map.
   extern char OpenMapMirrorCount;
-  // The pointer to the start of an array containg the mirrors loaded for the currently open map.
+  // The pointer to the start of an array containing the mirrors loaded for the currently open map.
   extern LRuntimeMirror* OpenMapMirrors;
   
   // Constructor for the LRuntimeMirror struct.
