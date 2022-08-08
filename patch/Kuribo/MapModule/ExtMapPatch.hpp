@@ -31,16 +31,18 @@ namespace ExtMapPatch
   void InitExtMirrorData();
   
   // Attempts to load the external map data file; returns whether it succeeded.
-  uint32_t TryLoadMapFile(uint16_t MapID);
+  bool TryLoadMapFile(uint16_t MapID);
   // Updates the offsets in the map file to pointers.
   void UpdateMapFileOffsets();
 
-  // Attempts to load the external mirror file; returns whether it succeeded.
+  // Attempts to load the external mirror file; returns the mirror data if it succeeded, or nullptr if not.
   char* TryLoadMirrorFile(uint16_t MapID);
 
-/* === RAM variables === */
+/* === Custom variables === */
   // The address to which our extracted data is loaded at map init.
   extern LMapFile* FileBuffer;
+
+/* === Native variables === */
   // The array of LMapData* that define what maps the game can load.
   // There are 14 slots, not all of which are used.
   extern LMapData* MapDataPtrs[14];

@@ -12,8 +12,6 @@ void ExtMapPatch::InitExtMapData(uint16_t MapID)
   
   if (TryLoadMapFile(MapID))
   {
-    UpdateMapFileOffsets();
-    
     LMapData* Map = MapDataPtrs[MapID];
     
     Map->mRoomCount = FileBuffer->mRoomCount;
@@ -90,19 +88,21 @@ void ExtMapPatch::InitExtMirrorData()
     JKRHeap_free(data, nullptr);
   }
   else
-    InitMirrors();
+  {
+    InitMirrors(); 
+  }
 }
 
-uint32_t ExtMapPatch::TryLoadMapFile(uint16_t MapID)
+bool ExtMapPatch::TryLoadMapFile(uint16_t MapID)
 {
   // Generate the path to the map file.
   char FormattedPath[32];
   snprintf(FormattedPath, 32, "/Iwamoto/map%d/rooms.map", MapID);
   
   // Query the DVD to check if the map file exists; if not, early out.
-  uint32_t DoesFileExist = DVDConvertPathToEntrynum(FormattedPath);
-  if (DoesFileExist == -1)
-    return 0;
+  uint32_t EntryNum = DVDConvertPathToEntrynum(FormattedPath);
+  if (EntryNum == -1)
+    return false;
   
   // Grab the info about the map file from the DVD.
   DVDFileInfo FileInfo;
@@ -116,7 +116,9 @@ uint32_t ExtMapPatch::TryLoadMapFile(uint16_t MapID)
   DVDReadPrio(&FileInfo, (char*)FileBuffer, FileSize, nullptr, 2);
   DVDClose(&FileInfo);
   
-  return 1;
+  UpdateMapFileOffsets();  
+  
+  return true;
 }
 
 void ExtMapPatch::UpdateMapFileOffsets()
