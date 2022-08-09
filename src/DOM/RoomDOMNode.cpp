@@ -17,6 +17,21 @@ std::string const LRoomEntityTreeNodeNames[LRoomEntityType_Max] = {
 	"Observers (Blackout)"
 };
 
+LRoomEntityType DOMToEntityType(EDOMNodeType type){
+	switch (type)
+	{
+	case EDOMNodeType::Furniture: return LRoomEntityType_Furniture;
+	case EDOMNodeType::Observer: return LRoomEntityType_Observers;
+	case EDOMNodeType::Object: return LRoomEntityType_Objects;
+	case EDOMNodeType::Enemy: return LRoomEntityType_Enemies;
+	case EDOMNodeType::Generator: return LRoomEntityType_Generators;
+	case EDOMNodeType::Path: return LRoomEntityType_Paths;
+	case EDOMNodeType::Character: return LRoomEntityType_Characters;
+	
+	default: return LRoomEntityType_Max;
+	}
+}
+
 LRoomDOMNode::LRoomDOMNode(std::string name) : LBGRenderDOMNode(name)
 {
 	mType = EDOMNodeType::Room;
@@ -32,7 +47,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 	bool treeSelected = false;
 	bool treeOpened = LUIUtility::RenderNodeSelectableTreeNode(GetName(), GetIsSelected(), treeSelected);
 
-	/*if(ImGui::BeginDragDropTarget()){
+	if(ImGui::BeginDragDropTarget()){
 		LDOMNodeBase* dragDropNode = nullptr;
 
 		const ImGuiPayload* payload = ImGui::GetDragDropPayload();
@@ -45,17 +60,33 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 		// Skip if there's no pending drag and drop to handle
 		if (dragDropNode != nullptr)
 		{
+			std::shared_ptr<LEntityDOMNode> sharedNode = dragDropNode->GetSharedPtr<LEntityDOMNode>(EDOMNodeType::Entity);
+			if(!sharedNode->Parent.expired()){
+				std::shared_ptr<LRoomDOMNode> oldRoom = sharedNode->Parent.lock()->GetSharedPtr<LRoomDOMNode>(EDOMNodeType::Room);
 
-			switch (dragDropNode->GetNodeType())
-			{
-			case EDOMNodeType::Furniture:
-				mRoomEntities[LRoomEntityType_Furniture].push_back(std::make_shared<LFurnitureDOMNode>(**(LFurnitureDOMNode**)payload->Data));
-				break;
+				LRoomEntityType nodeType = DOMToEntityType(sharedNode->GetNodeType());
+				// Skip if source and destination groups are the same
+				if (nodeType != LRoomEntityType_Max && oldRoom.get() != this)
+				{
+					AddChild(sharedNode);
+					mRoomEntities[nodeType].push_back(sharedNode);
+
+					for (auto iter = oldRoom->mRoomEntities[nodeType].begin(); iter != oldRoom->mRoomEntities[nodeType].end(); ++iter)
+					{
+						if (*iter == sharedNode)
+						{
+							oldRoom->mRoomEntities[nodeType].erase(iter);
+							break;
+						}
+					}
+
+					oldRoom->RemoveChild(sharedNode);
+				}
 			}
 
 		}
 		ImGui::EndDragDropTarget();
-	}*/
+	}
 
 	if (treeOpened)
 	{
@@ -80,6 +111,52 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 			// Entity tree <i> start
 			if (ImGui::TreeNode(LRoomEntityTreeNodeNames[i].c_str()))
 			{
+				if(ImGui::Button("+"))
+				{
+					std::shared_ptr<LEntityDOMNode> newNode;
+					switch (i)
+					{
+					case LRoomEntityType_Furniture: newNode = std::make_shared<LFurnitureDOMNode>("furniture"); break;
+					case LRoomEntityType_Observers: newNode = std::make_shared<LObserverDOMNode>("observer"); break;
+					case LRoomEntityType_Objects: newNode = std::make_shared<LObjectDOMNode>("object"); break;
+					case LRoomEntityType_Enemies: newNode = std::make_shared<LEnemyDOMNode>("enemy"); break;
+					case LRoomEntityType_Generators: newNode = std::make_shared<LGeneratorDOMNode>("generator"); break;
+					case LRoomEntityType_Paths: newNode = std::make_shared<LPathDOMNode>("path"); break;
+					case LRoomEntityType_Characters: newNode = std::make_shared<LCharacterDOMNode>("character"); break;
+					}
+
+					newNode->SetRoomNumber(mRoomNumber);
+					AddChild(newNode);
+					mRoomEntities[i].push_back(newNode);
+				}
+				ImGui::SameLine();
+				if(ImGui::Button("-")){
+					if(mode_selection->IsSingleSelection()){
+						for (auto iter = mRoomEntities[i].begin(); iter != mRoomEntities[i].end(); ++iter)
+						{
+							if (*iter == mode_selection->GetPrimarySelection())
+							{
+								mRoomEntities[i].erase(iter);
+								break;
+							}
+						}
+						RemoveChild(mode_selection->GetPrimarySelection());
+						mode_selection->ClearSelection();
+					}
+				}
+
+				if(i == LRoomEntityType::LRoomEntityType_Furniture){
+					ImGui::SameLine();
+					if(ImGui::Button("Dupe")){
+						if(mode_selection->IsSingleSelection()){
+							std::shared_ptr<LFurnitureDOMNode> newNode = std::make_shared<LFurnitureDOMNode>("furniture");
+							mode_selection->GetPrimarySelection()->GetSharedPtr<LFurnitureDOMNode>(EDOMNodeType::Furniture)->CopyTo(newNode.get());
+							AddChild(newNode);
+							mRoomEntities[i].push_back(newNode);
+						}
+					}
+				}
+
 				// Iterating all of the entities of type <i>
 				for (uint32_t j = 0; j < mRoomEntities[i].size(); j++)
 				{
@@ -231,9 +308,6 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 	ImGui::NewLine();
 	ImGui::Separator();
 	ImGui::NewLine();
-
-	ImGui::InputInt("Camera Position Index", &mSoundEchoParameter);
-	LUIUtility::RenderTooltip("How much sound echoes within this room.");
 
 	LUIUtility::RenderNodeReferenceVector("Adjacent Rooms", EDOMNodeType::Room, Parent, dataNode->GetAdjacencyList());
 

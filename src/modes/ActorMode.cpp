@@ -41,7 +41,7 @@ void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 {
 
 	//render prefabs
-	/*ImGui::Begin("Prefab Nodes");
+	ImGui::Begin("Prefab Nodes");
 
 	if(ImGui::TreeNode("Nodes")){
 		if(ImGui::BeginDragDropTarget()){
@@ -75,7 +75,7 @@ void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 		ImGui::TreePop();
 	}
 
-	ImGui::End();*/
+	ImGui::End();
 
 
 	//LUIUtility::RenderGizmoToggle();

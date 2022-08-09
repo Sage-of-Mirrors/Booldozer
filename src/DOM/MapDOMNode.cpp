@@ -326,6 +326,9 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 
 
 	mStaticMapIO.SaveMapFile(LResUtility::GetStaticMapDataPath(mName), GetSharedPtr<LMapDOMNode>(EDOMNodeType::Map));
+
+	
+
 }
 
 bool LMapDOMNode::SaveMapToFiles(std::filesystem::path folder_path)

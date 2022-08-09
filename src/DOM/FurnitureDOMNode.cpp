@@ -4,17 +4,49 @@
 
 LFurnitureDOMNode::LFurnitureDOMNode(std::string name) : LEntityDOMNode(name),
 	mModelName("(null)"), mAccessName("(null)"),
-	mVerticalItemSpawnOffset(0.0f), mItemTableIndex(-1), mGenerateNumber(-1), mBooHideChance(-1),
-	mShakeIntensity(-1), mVecArgs(glm::vec3(0.0f, 0.0f, 0.0f)), mSpawnFlag(-1), mDespawnFlag(-1),
-	mHitboxExtents(glm::ivec3(0, 0, 0)), mGBHScanID(-1), mBehaviorType(EMoveType::Heavy_No_Open), mSoundID(EFurnitureSound::Door_Opening), mSheetBehavior(ESheetBehavior::None),
+	mVerticalItemSpawnOffset(0.0f), mItemTableIndex(0), mGenerateNumber(0), mBooHideChance(0),
+	mShakeIntensity(0), mVecArgs(glm::vec3(0.0f, 0.0f, 0.0f)), mSpawnFlag(0), mDespawnFlag(0),
+	mHitboxExtents(glm::ivec3(0, 0, 0)), mGBHScanID(0), mBehaviorType(EMoveType::Heavy_No_Open), mSoundID(EFurnitureSound::Door_Opening), mSheetBehavior(ESheetBehavior::None),
 	mMoneyType(EMoneyType::None), mSheetTexture(ESheetTexture::Tablecloth_Gold), mShouldCutaway(false), mCanSheetBeVaccuumed(false), mBooAppear(false)
 {
 	mType = EDOMNodeType::Furniture;
 }
 
+//todo
+void LFurnitureDOMNode::CopyTo(LFurnitureDOMNode* other){
+	other->mModelName = mModelName;
+	other->mAccessName = mAccessName;
+	other->mVerticalItemSpawnOffset = mVerticalItemSpawnOffset;
+	other->mItemTableIndex = mItemTableIndex;
+	other->mGenerateNumber = mGenerateNumber;
+	other->mBooHideChance = mBooHideChance;
+	other->mShakeIntensity = mShakeIntensity;
+	other->mVecArgs = mVecArgs;
+	other->mSpawnFlag = mSpawnFlag;
+	other->mDespawnFlag = mDespawnFlag;
+	other->mHitboxExtents = mHitboxExtents;
+	other->mGBHScanID = mGBHScanID;
+	other->mBehaviorType = mBehaviorType;
+	other->mSoundID = mSoundID;
+	other->mSheetBehavior = mSheetBehavior;
+	other->mMoneyType = mMoneyType;
+	other->mSheetTexture = mSheetTexture;
+	other->mShouldCutaway = mShouldCutaway;
+	other->mCanSheetBeVaccuumed = mCanSheetBeVaccuumed;
+	other->mBooAppear = mBooAppear;
+	other->mItemTableRef = mItemTableRef;
+	other->mRoomNumber = mRoomNumber;
+	other->mPosition = mPosition;
+	other->mRotation = mRotation;
+	other->mScale = mScale;
+}
+
 void LFurnitureDOMNode::RenderDetailsUI(float dt)
 {
 	LUIUtility::RenderTransformUI(mTransform.get(), mPosition, mRotation, mScale);
+
+	LUIUtility::RenderTextInput("Model", &mModelName);
+	ImGui::InputInt("ruum", &mRoomNumber);
 
 	LUIUtility::RenderTextInput("Name", &mName);
 	LUIUtility::RenderTooltip("The name of this furniture object. The game doesn't do anything with this, so feel free to use it for notes.");

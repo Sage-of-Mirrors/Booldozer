@@ -58,12 +58,12 @@ bool LRoomDataDOMNode::Load(const uint32_t& index, const LStaticMapDataIO& sourc
 
 bool LRoomDataDOMNode::Save(LStaticRoomData& dest)
 {
-	dest.mCameraPositionIndex = mRoomIndex;
+	dest.mCameraPositionIndex = (uint8_t)mRoomIndex;
 	dest.mFloor = mFloor;
 	dest.mDoorZone = mDoorZone;
-	dest.mRoomID = mRoomID;
+	dest.mRoomID = (uint8_t)mRoomID;
 
-	dest.mCameraBehavior = mCameraBehavior;
+	dest.mCameraBehavior = (uint32_t)mCameraBehavior;
 
 	glm::vec3 bmin, bmax;
 	ConstructBoundingBox(bmin, bmax);
