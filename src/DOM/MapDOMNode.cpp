@@ -197,18 +197,35 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	// Get the path the mirrors file should be at.
 	std::filesystem::path mirrorsPath = LResUtility::GetMirrorDataPath(mName);
 	// If the file doesn't exist, and we're in the main mansion (map2), try to load the JSON template.
-	if (!std::filesystem::exists(mirrorsPath) && mName == "map2")
+	if (!std::filesystem::exists(mirrorsPath))
 	{
-		nlohmann::ordered_json mansionMirrorTemplate = LResUtility::GetMirrorTemplate("mirrors_map2");
-
-		if (!mansionMirrorTemplate.empty())
+		if (mName == "map2")
 		{
-			for (auto j : mansionMirrorTemplate)
+			nlohmann::ordered_json mansionMirrorTemplate = LResUtility::GetMirrorTemplate("mirrors_map2");
+
+			if (!mansionMirrorTemplate.empty())
 			{
-				std::shared_ptr<LMirrorDOMNode> newNode = std::make_shared<LMirrorDOMNode>("Mirror");
-				newNode->Load(j);
-				AddChild(newNode);
+				for (auto j : mansionMirrorTemplate)
+				{
+					std::shared_ptr<LMirrorDOMNode> newNode = std::make_shared<LMirrorDOMNode>("Mirror");
+					newNode->Load(j);
+					AddChild(newNode);
+				}
 			}
+		}
+	}
+	else
+	{
+		bStream::CFileStream mirrorFile = bStream::CFileStream(mirrorsPath.generic_u8string(), bStream::Big);
+		
+		uint32_t mirrorCount = mirrorFile.readUInt32();
+		mirrorFile.skip(4);
+
+		for (int i = 0; i < mirrorCount; i++)
+		{
+			std::shared_ptr<LMirrorDOMNode> newNode = std::make_shared<LMirrorDOMNode>("Mirror");
+			newNode->Load(&mirrorFile);
+			AddChild(newNode);
 		}
 	}
 
@@ -327,7 +344,7 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 
 	mStaticMapIO.SaveMapFile(LResUtility::GetStaticMapDataPath(mName), GetSharedPtr<LMapDOMNode>(EDOMNodeType::Map));
 
-	
+	SaveMirrorData();
 
 }
 
@@ -403,7 +420,38 @@ bool LMapDOMNode::SaveMapToFiles(std::filesystem::path folder_path)
 
 	mStaticMapIO.SaveMapFile(LResUtility::GetStaticMapDataPath(mName), GetSharedPtr<LMapDOMNode>(EDOMNodeType::Map));
 
+	SaveMirrorData();
+
 	return true;
+}
+
+bool LMapDOMNode::SaveMirrorData()
+{
+	std::filesystem::path mirrorsPath = LResUtility::GetMirrorDataPath(mName);
+
+	std::vector<std::shared_ptr<LMirrorDOMNode>> MirrorNodes = GetChildrenOfType<LMirrorDOMNode>(EDOMNodeType::Mirror);
+
+	if (MirrorNodes.size() == 0)
+	{
+		if (std::filesystem::exists(mirrorsPath))
+		{
+			std::filesystem::remove(mirrorsPath);
+		}
+
+		return true;
+	}
+
+	bStream::CMemoryStream memStream = bStream::CMemoryStream(8 + (MirrorNodes.size() * 0x38), bStream::Big, bStream::Out);
+	memStream.writeUInt32(MirrorNodes.size());
+	memStream.writeUInt32(0);
+
+	for (int i = 0; i < MirrorNodes.size(); i++)
+	{
+		MirrorNodes[i]->Save(&memStream);
+	}
+
+	bStream::CFileStream fileStream = bStream::CFileStream(mirrorsPath.u8string(), bStream::Big, bStream::Out);
+	fileStream.writeBytes((char*)memStream.getBuffer(), memStream.getSize());
 }
 
 bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)

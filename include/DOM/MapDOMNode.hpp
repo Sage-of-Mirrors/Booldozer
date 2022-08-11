@@ -25,6 +25,8 @@ class LMapDOMNode : public LDOMNodeBase
 	bool ReadStaticData(std::filesystem::path filePath);
 	bool LoadStaticData(std::vector<std::shared_ptr<LRoomDOMNode>> rooms);
 
+	bool SaveMirrorData();
+
 public:
 	typedef LDOMNodeBase Super;
 

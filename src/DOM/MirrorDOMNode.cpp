@@ -4,6 +4,7 @@
 #include "UIUtil.hpp"
 #include "GenUtil.hpp"
 #include "imgui.h"
+#include "../lib/bStream/bstream.h"
 
 LMirrorDOMNode::LMirrorDOMNode(std::string name) : Super(name),
 	mCameraHeightOffset(0), mResolutionWidth(128), mResolutionHeight(128),
@@ -62,6 +63,79 @@ bool LMirrorDOMNode::Load(const nlohmann::ordered_json& jsonEntry)
 	jsonEntry.at("RenderCameraDistance").get_to(mCameraDistance);
 
 	jsonEntry.at("RenderGBHOnly").get_to(mGBHOnly);
+
+	return true;
+}
+
+bool LMirrorDOMNode::Load(bStream::CFileStream* stream)
+{
+	try
+	{
+		float posX, posY, posZ;
+		posX = stream->readFloat();
+		posY = stream->readFloat();
+		posZ = stream->readFloat();
+		mPosition = glm::vec3(posZ, posY, posX);
+
+		float scaleX, scaleY, scaleZ;
+		scaleX = stream->readFloat();
+		scaleY = stream->readFloat();
+		scaleZ = stream->readFloat();
+		mScale = glm::vec3(scaleX, scaleY, scaleZ);
+
+		float rotX, rotY, rotZ;
+		rotX = stream->readInt32() * (180.0f / 32768.0f);
+		rotY = stream->readInt32() * (180.0f / 32768.0f);
+		rotZ = stream->readInt32() * (180.0f / 32768.0f);
+		mRotation = glm::vec3(rotZ, rotY, rotX);
+
+		mCameraHeightOffset = stream->readInt32();
+		mCameraDistance = stream->readFloat();
+
+		mResolutionWidth = stream->readUInt16();
+		mResolutionHeight = stream->readUInt16();
+
+		mZoom = stream->readFloat();
+		mGBHOnly = stream->readInt32();
+	}
+	catch (std::exception e)
+	{
+		return false;
+	}
+	
+
+	return true;
+}
+
+bool LMirrorDOMNode::Save(bStream::CMemoryStream* stream)
+{
+	try
+	{
+		stream->writeFloat(mPosition.z);
+		stream->writeFloat(mPosition.y);
+		stream->writeFloat(mPosition.x);
+
+		stream->writeFloat(mScale.x);
+		stream->writeFloat(mScale.y);
+		stream->writeFloat(mScale.z);
+
+		stream->writeInt32(mRotation.z * (32678.0f / 180.0f));
+		stream->writeInt32(mRotation.y * (32678.0f / 180.0f));
+		stream->writeInt32(mRotation.x * (32678.0f / 180.0f));
+
+		stream->writeInt32(mCameraHeightOffset);
+		stream->writeFloat(mCameraDistance);
+
+		stream->writeUInt16(mResolutionWidth);
+		stream->writeUInt16(mResolutionHeight);
+
+		stream->writeFloat(mZoom);
+		stream->writeInt32(mGBHOnly);
+	}
+	catch (std::exception e)
+	{
+		return false;
+	}
 
 	return true;
 }
