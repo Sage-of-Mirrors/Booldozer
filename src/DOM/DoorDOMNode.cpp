@@ -105,9 +105,9 @@ bool LDoorDOMNode::Save(LStaticDoorData& dest)
 
 	// Scale is the diagonal of the transform matrix ([0][0] for X, [1][1] for Y, [2][2] for Z).
 	// Swap Z and X to account for BGFX's coordinate system.
-	dest.mViewportSize.x = (uint16_t)(*mTransform)[2][2];
-	dest.mViewportSize.y = (uint16_t)(*mTransform)[1][1];
-	dest.mViewportSize.z = (uint16_t)(*mTransform)[0][0];
+	dest.mViewportSize.x = (uint16_t)mScale.z;
+	dest.mViewportSize.y = (uint16_t)mScale.y;
+	dest.mViewportSize.z = (uint16_t)mScale.x;
 
 	dest.mNextEscape = mNextEscape;
 	dest.mCurrentEscape = mCurrentEscape;
