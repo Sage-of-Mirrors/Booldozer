@@ -137,7 +137,7 @@ void LPathDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetString(entry_index, "next", mNextPathName);
 
 	JmpIO->SetSignedInt(entry_index, "no", mOrganizationNumber);
-	JmpIO->SetSignedInt(entry_index, "num_pnt", mNumPoints);
+	JmpIO->SetSignedInt(entry_index, "num_pnt", Children.size());
 	JmpIO->SetSignedInt(entry_index, "room_no", mRoomNumber);
 	JmpIO->SetSignedInt(entry_index, "arg0", mArg0);
 
