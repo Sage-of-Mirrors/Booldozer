@@ -37,6 +37,8 @@ public:
 
 	virtual void RenderDetailsUI(float dt) override;
 
+	void CopyTo(LGeneratorDOMNode* other);
+
 	// Writes the data this JMP node into the given LJmpIO instance at the specified entry.
 	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const override;
 	// Reads the data from the specified entry in the given LJmpIO instance into this JMP node.

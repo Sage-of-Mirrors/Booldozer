@@ -43,7 +43,8 @@ enum class EDOMNodeType
 	Door,
 	PathPoint,
 	EventData,
-	Mirror
+	Mirror,
+	CameraAnim
 };
 
 // Base class for all DOM (Document Object Model) nodes.

@@ -6,7 +6,7 @@
 
 #include <memory>
 
-extern std::map<std::string, std::string> InterpolationTypes = {
+std::map<std::string, std::string> InterpolationTypes = {
 	{ "(null)", "None" },
 	{ "Linear", "Linear" },
 	{ "Bezier", "Bezier" },
@@ -86,6 +86,7 @@ void LPathPointDOMNode::PreProcess()
 void LPathPointDOMNode::RenderDetailsUI(float dt)
 {
 	auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+	LUIUtility::RenderTransformUI(mTransform.get(), mPosition, mRotation, mScale);
 	LUIUtility::RenderNodeReferenceCombo<LRoomDOMNode>("Next Room", EDOMNodeType::Room, mapNode, mRoomRef);
 	LUIUtility::RenderTooltip("What room a Boo using this path to escape from Luigi should end up in.");
 
@@ -105,6 +106,10 @@ LPathDOMNode::LPathDOMNode(std::string name) : Super(name)
 
 void LPathDOMNode::RenderDetailsUI(float dt)
 {
+
+	LUIUtility::RenderTextInput("Path File", &mName);
+	ImGui::InputInt("Room No", &mRoomNumber);
+	
 	// Integers
 	ImGui::InputInt("ID", &mOrganizationNumber);
 	LUIUtility::RenderTooltip("An ID to organize paths by floor. Seems to be unused by the game?");
@@ -137,7 +142,8 @@ void LPathDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetString(entry_index, "next", mNextPathName);
 
 	JmpIO->SetSignedInt(entry_index, "no", mOrganizationNumber);
-	JmpIO->SetSignedInt(entry_index, "num_pnt", Children.size());
+	std::cout << Children.size() << std::endl;
+	JmpIO->SetSignedInt(entry_index, "num_pnt", (int32_t)Children.size());
 	JmpIO->SetSignedInt(entry_index, "room_no", mRoomNumber);
 	JmpIO->SetSignedInt(entry_index, "arg0", mArg0);
 
@@ -233,6 +239,7 @@ void LPathDOMNode::PostProcess(const GCarchive& mapArchive)
 		{
 			auto roomData = r->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
 
+			if(Children.empty() || Children[0].get() == nullptr || Children[0]->GetNodeType() != EDOMNodeType::PathPoint) continue;
 			if (roomData->CheckPointInBounds(std::static_pointer_cast<LPathPointDOMNode>(Children[0])->GetPosition()))
 			{
 				r->AddChild(GetSharedPtr<LPathDOMNode>(EDOMNodeType::Path));

@@ -3,7 +3,9 @@
 
 LEventMode::LEventMode()
 {
+}
 
+LEventMode::~LEventMode(){
 }
 
 void LEventMode::RenderLeafContextMenu(std::shared_ptr<LDoorDOMNode> node)
@@ -30,13 +32,6 @@ void LEventMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 		ImGui::PushID(i);
 
 		events[i]->RenderHierarchyUI(events[i], &mSelectionManager);
-		
-		//if (ImGui::BeginPopupContextItem())
-		//	RenderLeafContextMenu(events[i]);
-
-
-		//if (newNode != nullptr && newNode == doors[i])
-		//	ImGui::SetScrollHereY(1.0f);
 
 		ImGui::PopID();
 	}
@@ -45,26 +40,31 @@ void LEventMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 	ImGui::End();
 }
 
-void LEventMode::RenderDetailsWindow()
+void LEventMode::RenderDetailsWindow(LSceneCamera* camera)
 {
-	ImGui::Begin("Event Script");
 
 	if (mSelectionManager.IsMultiSelection())
 		ImGui::Text("[Multiple Selection]");
 	else if (mSelectionManager.GetPrimarySelection() != nullptr){
-		std::shared_ptr<LEventDataDOMNode> selection = std::static_pointer_cast<LEventDataDOMNode>(mSelectionManager.GetPrimarySelection());
+		if(mSelectionManager.GetPrimarySelection()->GetNodeType() == EDOMNodeType::EventData){
+			ImGui::Begin("Event Script");
+			std::shared_ptr<LEventDataDOMNode> selection = std::static_pointer_cast<LEventDataDOMNode>(mSelectionManager.GetPrimarySelection());
 
-		if(mSelected != selection){
-			if(mSelected != nullptr){
-				mSelected->mEventScript = mEditor.GetText();
+			if(mSelected != selection){
+				if(mSelected != nullptr){
+					mSelected->mEventScript = mEditor.GetText();
+				}
+				mEditor.SetText(selection->mEventScript);
+				mSelected = selection;
 			}
-			mEditor.SetText(selection->mEventScript);
-			mSelected = selection;
+			selection->RenderDetailsUI(0, &mEditor);
+			ImGui::End();
+		} else {
+			ImGui::Begin("Camera Animation", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+			std::static_pointer_cast<LCameraAnimationDOMNode>(mSelectionManager.GetPrimarySelection())->RenderDetailsUI(0, camera);
+			ImGui::End();
 		}
-		selection->RenderDetailsUI(0, &mEditor);
 	}
-
-	ImGui::End();
 }
 
 void LEventMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene)
@@ -76,7 +76,7 @@ void LEventMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 		node->RenderBG(0);
 	}
 
-	RenderDetailsWindow();
+	RenderDetailsWindow(&renderer_scene->Camera);
 }
 
 void LEventMode::OnBecomeActive()

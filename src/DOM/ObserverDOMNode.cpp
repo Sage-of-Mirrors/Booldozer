@@ -26,6 +26,8 @@ void LObserverDOMNode::RenderDetailsUI(float dt)
 {
 	LUIUtility::RenderTransformUI(mTransform.get(), mPosition, mRotation, mScale);
 
+	ImGui::InputInt("Room Number", &mRoomNumber);
+
 	LUIUtility::RenderComboBox("Observer Type", ObserverNames, mName);
 	LUIUtility::RenderTooltip("What kind of observer this actor is.");
 

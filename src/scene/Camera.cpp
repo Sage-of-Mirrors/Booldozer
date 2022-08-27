@@ -18,6 +18,11 @@ LSceneCamera::LSceneCamera() :
 
 void LSceneCamera::Update(GLFWwindow* window, float dt)
 {
+
+	if(mCamMode == ANIMATION){
+		return;
+	}
+
 	mLeftClickedThisFrame = false;
 	if (!mAllowUpdates || ImGui::GetIO().WantCaptureKeyboard || ImGui::GetIO().WantCaptureMouse)
 		return;

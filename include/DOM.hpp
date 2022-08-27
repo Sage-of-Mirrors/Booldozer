@@ -27,3 +27,4 @@
 #include "DOM/BlackoutDOMNode.hpp"
 #include "DOM/PathDOMNode.hpp"
 #include "DOM/MirrorDOMNode.hpp"
+#include "DOM/CameraAnimationDOMNode.hpp"

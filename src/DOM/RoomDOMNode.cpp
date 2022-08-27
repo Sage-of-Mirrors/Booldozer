@@ -145,14 +145,32 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 					}
 				}
 
-				if(i == LRoomEntityType::LRoomEntityType_Furniture){
-					ImGui::SameLine();
-					if(ImGui::Button("Dupe")){
-						if(mode_selection->IsSingleSelection()){
+				ImGui::SameLine();
+				if(ImGui::Button("Dupe")){
+					if(mode_selection->IsSingleSelection()){
+						switch (i)
+						{
+						case LRoomEntityType_Furniture: {
 							std::shared_ptr<LFurnitureDOMNode> newNode = std::make_shared<LFurnitureDOMNode>("furniture");
 							mode_selection->GetPrimarySelection()->GetSharedPtr<LFurnitureDOMNode>(EDOMNodeType::Furniture)->CopyTo(newNode.get());
 							AddChild(newNode);
 							mRoomEntities[i].push_back(newNode);
+							break;
+						}
+						case LRoomEntityType_Enemies: {
+							std::shared_ptr<LEnemyDOMNode> newNode = std::make_shared<LEnemyDOMNode>("furniture");
+							mode_selection->GetPrimarySelection()->GetSharedPtr<LEnemyDOMNode>(EDOMNodeType::Enemy)->CopyTo(newNode.get());
+							AddChild(newNode);
+							mRoomEntities[i].push_back(newNode);
+							break;
+						}
+						case LRoomEntityType_Generators: {
+							std::shared_ptr<LGeneratorDOMNode> newNode = std::make_shared<LGeneratorDOMNode>("generator");
+							mode_selection->GetPrimarySelection()->GetSharedPtr<LGeneratorDOMNode>(EDOMNodeType::Generator)->CopyTo(newNode.get());
+							AddChild(newNode);
+							mRoomEntities[i].push_back(newNode);
+							break;
+						}
 						}
 					}
 				}

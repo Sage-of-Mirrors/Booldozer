@@ -13,7 +13,8 @@ constexpr glm::vec3 UNIT_Z = glm::vec3(0.0f, 0.0f, 1.0f);
 
 enum ECamMode {
 	FLY,
-	ORBIT
+	ORBIT,
+	ANIMATION
 };
 
 class LSceneCamera
@@ -60,10 +61,12 @@ public:
 	glm::mat4 GetProjectionMatrixOrtho() { return glm::orthoLH<float>(0, 1920, 0, 720*Fovy, NearPlane, FarPlane); }
 
 	glm::vec3 GetEye() { return mEye; }
+	glm::vec3 GetCenter() { return mCenter; }
 	
 	glm::vec3 GetUp() { return mUp; }
 
 	void SetCenter(glm::vec3 center) { mCenter = center; }
+	void SetEye(glm::vec3 eye) { mEye = eye; }
 
 	std::pair<glm::vec3, glm::vec3> Raycast(double mouseX, double mouseY, glm::vec4 viewport);
 

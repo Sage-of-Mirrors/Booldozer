@@ -30,11 +30,34 @@ std::string LEnemyDOMNode::GetName()
             }
         }
     }
+    return "(null)";
+}
+
+void LEnemyDOMNode::CopyTo(LEnemyDOMNode* other){
+    other->mRoomNumber = mRoomNumber;
+    other->mName = mName;
+    other->mCreateName = mCreateName;
+    other->mPathName = mPathName;
+    other->mAccessName = mAccessName;
+    other->mCodeName = mCodeName;
+    other->mFloatingHeight = mFloatingHeight;
+    other->mAppearChance = mAppearChance;
+    other->mSpawnFlag = mSpawnFlag;
+    other->mDespawnFlag = mDespawnFlag;
+    other->mEventSetNumber = mEventSetNumber;
+    other->mCondType = mCondType;
+    other->mAppearType = mAppearType;
+    other->mPlaceType = mPlaceType;
+    other->mIsVisible = mIsVisible;
+    other->mStay = mStay;
+    other->mPosition = mPosition;
 }
 
 void LEnemyDOMNode::RenderDetailsUI(float dt)
 {
     LUIUtility::RenderTransformUI(mTransform.get(), mPosition, mRotation, mScale);
+
+    ImGui::InputInt("Room Number", &mRoomNumber);
 
     LUIUtility::RenderComboBox("Enemy Type", LResUtility::GetNameMap("enemies"), mName);
     LUIUtility::RenderTooltip("What kind of enemy this actor is.");

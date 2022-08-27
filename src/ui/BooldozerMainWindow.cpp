@@ -12,8 +12,9 @@ LBooldozerMainWindow::LBooldozerMainWindow() : bigg::Application("Booldozer")
 
 void LBooldozerMainWindow::onReset()
 {
-  bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0xC0C0C0FF, 1.0f, 0);
-  bgfx::setViewRect(0, 0, 0, uint16_t(getWidth()), uint16_t( getHeight() ));
+    bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0xC0C0C0FF, 1.0f, 0);
+    bgfx::setViewRect(0, 0, 0, uint16_t(getWidth()), uint16_t( getHeight()));
+
 }
 
 void LBooldozerMainWindow::update(float dt)

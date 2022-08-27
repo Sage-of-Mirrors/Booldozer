@@ -60,6 +60,8 @@ class LEditorScene {
 
 public:
     LSceneCamera Camera;
+    std::vector<LSceneCamera*> mViewports;
+    
     glm::mat4 getCameraView();
     glm::mat4 getCameraProj();
 

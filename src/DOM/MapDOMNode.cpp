@@ -57,30 +57,52 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	mName = std::string(file_path.stem().string().c_str());
 
 	std::filesystem::path eventPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Event";
-	if(std::filesystem::exists(eventPath)){
-		for (auto& archive : std::filesystem::directory_iterator(eventPath)){
+	if(std::filesystem::exists(eventPath))
+	{
+		for (auto& archive : std::filesystem::directory_iterator(eventPath))
+		{
+
 			GCarchive eventArc;
+
 			//Exclude cvs subdir
-			if(archive.is_regular_file() && GCResourceManager.LoadArchive(archive.path().generic_u8string().c_str(), &eventArc)){
+			if(archive.is_regular_file() && GCResourceManager.LoadArchive(archive.path().generic_u8string().c_str(), &eventArc))
+			{
+
 				//Name of the event file were loading, ex 'event48'
 				std::string eventName = archive.path().stem().string();
 				std::string csvName = eventName;
+
 				csvName.replace(0, 5, "message");
-				std::cout << csvName << std::endl;
 				std::shared_ptr<LEventDataDOMNode> eventData =  std::make_shared<LEventDataDOMNode>(eventName);
-				for (size_t i = 0; i < eventArc.filenum; i++){
-					if((eventName + ".txt").compare(eventArc.files[i].name) == 0){
+
+				for (size_t i = 0; i < eventArc.filenum; i++)
+				{
+					if((eventName + ".txt").compare(eventArc.files[i].name) == 0)
+					{
 						eventData->mEventScript = LGenUtility::SjisToUtf8(std::string((char*)eventArc.files[i].data));
 					}
-					else if((csvName + ".csv").compare(eventArc.files[i].name) == 0){
-						std::stringstream csv_data((char*)eventArc.files[i].data);
+					else if((csvName + ".csv").compare(eventArc.files[i].name) == 0)
+					{
 						std::string curline;
+						std::stringstream csv_data((char*)eventArc.files[i].data);
 						while (std::getline(csv_data, curline)){
 							eventData->mEventText.push_back(LGenUtility::SjisToUtf8(curline));
 						}
 						
+					} 
+					else if(std::string(eventArc.files[i].name).find("cmn") != std::string::npos)
+					{
+						bStream::CMemoryStream cmn((uint8_t*)eventArc.files[i].data, eventArc.files[i].size, bStream::Endianess::Big, bStream::OpenMode::In);
+						std::shared_ptr<LCameraAnimationDOMNode> camNode = std::make_shared<LCameraAnimationDOMNode>(std::string(eventArc.files[i].name));
+
+						std::cout << "Loading Anim " << eventArc.files[i].name << " in event " << eventName << "..." << std::endl;
+						camNode->Load(&cmn);
+						std::cout << "Finished" << std::endl;
+
+						eventData->AddChild(camNode);
 					}
 				}
+				
 				
 				AddChild(eventData);
 			}
@@ -335,6 +357,42 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 		}
 	}
 
+	for (auto pathNode : GetChildrenOfType<LPathDOMNode>(EDOMNodeType::Path))
+	{
+		nlohmann::json jmpTemplate = LResUtility::DeserializeJSON(RES_BASE_PATH / "jmp_templates" / "path.json");
+
+		if (jmpTemplate.find("fields") == jmpTemplate.end())
+		{
+			std::cout << LGenUtility::Format("Failed to read JSON at ", RES_BASE_PATH / "jmp_templates" / "path.json");
+			return false;
+		}
+
+		LJmpIO pathJmp;
+		pathJmp.Load(jmpTemplate, pathNode->GetNumPoints());
+
+		size_t pathSize = pathJmp.CalculateNewFileSize(pathNode->GetNumPoints());
+
+		bStream::CMemoryStream pathFile = bStream::CMemoryStream(pathSize, bStream::Endianess::Big, bStream::OpenMode::Out);
+		pathNode->PreProcess(pathJmp, pathFile);
+
+		for (uint32_t i = 0; i < mMapArchive.filenum; i++)
+		{
+			if (strcmp(mMapArchive.files[i].name, pathNode->GetName().data()) == 0)
+			{
+
+				if (!GCResourceManager.ReplaceArchiveFileData(&mMapArchive.files[i], pathFile.getBuffer(), pathSize))
+				{
+					std::cout << "Error replacing file " << mMapArchive.files[i].name << std::endl;
+					return false;
+				}
+
+				break;
+			}
+		}
+
+	}
+
+
 	if (!GCResourceManager.SaveArchiveCompressed(file_path.string().c_str(), &mMapArchive))
 	{
 		std::cout << "Error saving archive " << file_path << std::endl;
@@ -507,16 +565,16 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 				newNode = std::make_shared<LBooDOMNode>("Boo");
 				break;
 			case LEntityType_BlackoutEnemies:
-				newNode = std::make_shared<LEnemyDOMNode>("Enemy", true);
+				newNode = std::make_shared<LEnemyDOMNode>("Enemy");
 				break;
 			case LEntityType_BlackoutCharacters:
-				newNode = std::make_shared<LCharacterDOMNode>("Character", true);
+				newNode = std::make_shared<LCharacterDOMNode>("Character");
 				break;
 			case LEntityType_BlackoutObservers:
-				newNode = std::make_shared<LObserverDOMNode>("Observer", true);
+				newNode = std::make_shared<LObserverDOMNode>("Observer");
 				break;
 			case LEntityType_BlackoutKeys:
-				newNode = std::make_shared<LKeyDOMNode>("key01", true);
+				newNode = std::make_shared<LKeyDOMNode>("key01");
 				break;
 			case LEntityType_Paths:
 				newNode = std::make_shared<LPathDOMNode>("path");
