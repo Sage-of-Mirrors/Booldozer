@@ -15,14 +15,20 @@
 #include "ResUtil.hpp"
 
 #include "scene/Camera.hpp"
+#include <J3D/J3DModelLoader.hpp>
+#include <J3D/J3DModelData.hpp>
+#include <J3D/J3DUniformBufferObject.hpp>
+#include <J3D/J3DLight.hpp>
+#include <J3D/J3DModelInstance.hpp>
 
 class LCubeManager {
 private:
+    uint32_t mVao, mVbo, mIbo, mCubeProgram, mCubeTex;
 
 public:
 
     void init();
-    void render(glm::mat4* transform);
+    void render(glm::mat4* transform, bool wireframe);
 
     LCubeManager();
     ~LCubeManager();
@@ -35,6 +41,7 @@ class LEditorScene {
     glm::mat4 gridMatrix;
 
     LCubeManager mCubeManager;
+    
     std::vector<std::weak_ptr<LDoorDOMNode>> mRoomDoors;
     std::vector<std::weak_ptr<LRoomDOMNode>> mCurrentRooms;
     
@@ -42,6 +49,8 @@ class LEditorScene {
     std::vector<std::shared_ptr<BinModel>> mDoorModels;
     std::vector<std::shared_ptr<BinModel>> mRoomModels;
     std::map<std::string, std::shared_ptr<BinModel>> mRoomFurniture;
+    std::shared_ptr<J3DModelData> mSkyboxModel;
+    std::shared_ptr<J3DModelInstance> mSkyBox;
 
 public:
     LSceneCamera Camera;

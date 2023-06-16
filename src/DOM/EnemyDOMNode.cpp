@@ -235,7 +235,7 @@ void LEnemyDOMNode::PreProcess()
             }
 
             // Set the new access name in this enemy and in the associated furniture node.
-            mAccessName = LGenUtility::Format(mRoomNumber, '_', furnitureIndex);
+            mAccessName = fmt::format("{0}_{1}", mRoomNumber, furnitureIndex);
             furnitureShared->SetAccessName(mAccessName);
         }
         // Furniture already has a valid access name, so we'll just grab it.

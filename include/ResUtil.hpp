@@ -32,6 +32,7 @@ namespace LResUtility
 		public:
 			GCarchive mGameArchive;
 			bool LoadArchive(const char* path, GCarchive* archive);
+			GCarcfile* GetFile(GCarchive* archive, std::filesystem::path filepath);
 			void Init();
 	};
 

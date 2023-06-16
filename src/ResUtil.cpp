@@ -1,6 +1,7 @@
 #include "ResUtil.hpp"
 #include "Options.hpp"
 #include "imgui.h"
+#include "fmt/core.h"
 
 LResUtility::LGCResourceManager GCResourceManager;
 std::map<std::string, nlohmann::ordered_json> LResUtility::NameMaps = {};
@@ -80,13 +81,28 @@ bool LResUtility::LGCResourceManager::LoadArchive(const char* path, GCarchive* a
 	return true;
 }
 
+GCarcfile* LResUtility::LGCResourceManager::GetFile(GCarchive* archive, std::filesystem::path filepath){
+	int dirID = 0;
+	for(std::string component : filepath){
+		for (GCarcfile* file = &archive->files[archive->dirs[dirID].fileoff]; file < &archive->files[archive->dirs[dirID].fileoff] + archive->dirs[dirID].filenum; file++){
+			if(strcmp(file->name, component.c_str()) == 0 && (file->attr & 0x02)){
+				dirID = file->size;
+				break;
+			} else if(strcmp(file->name, component.c_str()) == 0 && !(file->attr & 0x02)) {
+				return file;
+			}
+		}
+	}
+	return nullptr;
+}
+
 nlohmann::ordered_json LResUtility::DeserializeJSON(std::filesystem::path file_path)
 {
 	nlohmann::ordered_json j;
 
 	if (file_path.empty() || !std::filesystem::exists(file_path))
 	{
-		std::cout << LGenUtility::Format("Unable to load JSON file from ", file_path) << std::endl;
+		std::cout << fmt::format("Unable to load JSON file from {0}", file_path.string()) << std::endl;
 		return j;
 	}
 
@@ -104,7 +120,7 @@ nlohmann::ordered_json LResUtility::GetNameMap(std::string name)
 	if (NameMaps.count(name) != 0)
 		return NameMaps[name];
 
-	std::filesystem::path fullPath = std::filesystem::current_path() / NAMES_BASE_PATH / LGenUtility::Format(name, ".json");
+	std::filesystem::path fullPath = std::filesystem::current_path() / NAMES_BASE_PATH / fmt::format("{0}.json", name);
 
 	auto json = DeserializeJSON(fullPath);
 	if (!json.empty())
@@ -120,13 +136,13 @@ uint32_t LResUtility::GetStaticMapDataOffset(std::string mapName, std::string re
 
 	if (deserializedJson.find(mapName) == deserializedJson.end())
 	{
-		std::cout << LGenUtility::Format("Map ", mapName, " not found in static room data at ", fullPath);
+		//std::cout << LGenUtility::Format("Map ", mapName, " not found in static room data at ", fullPath);
 		return 0;
 	}
 
 	if (deserializedJson[mapName].find(region) == deserializedJson[mapName].end())
 	{
-		std::cout << LGenUtility::Format("Map ", mapName, " does not have static room data for region ", region);
+		//std::cout << LGenUtility::Format("Map ", mapName, " does not have static room data for region ", region);
 		return 0;
 	}
 
@@ -166,5 +182,5 @@ void LResUtility::SaveUserSettings()
 	if (destFile.is_open())
 		destFile << serialize;
 	else
-		std::cout << LGenUtility::Format("Error saving user settings to ", fullPath);
+		std::cout << fmt::format("Error saving user settings to {0}", fullPath.string());
 }

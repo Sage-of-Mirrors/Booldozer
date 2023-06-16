@@ -2,6 +2,7 @@
 #include "DOM/EventDataDOMNode.hpp"
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
+#include "fmt/core.h"
 
 LEventDataDOMNode::LEventDataDOMNode(std::string name) : Super(name)
 {
@@ -20,7 +21,7 @@ void LEventDataDOMNode::RenderDetailsUI(float dt, TextEditor* editor)
         if(ImGui::BeginTabItem("Text")){
 
             for (int i = 0; i < mEventText.size(); i++){
-                ImGui::InputText(LGenUtility::Format("Speak ", i).c_str(), &mEventText[i], 0);
+                ImGui::InputText(fmt::format("Speak {0}", i).c_str(), &mEventText[i], 0);
             }
 
             ImGui::EndTabItem();

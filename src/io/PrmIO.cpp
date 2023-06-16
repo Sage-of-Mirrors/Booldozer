@@ -72,8 +72,8 @@ void LPrmIO::LoadConfigs(std::shared_ptr<LMapDOMNode>& map)
                 auto name = std::filesystem::path(GCResourceManager.mGameArchive.files[i].name).filename().stem();
                 if(name == "." || name == "..") continue;
                 bStream::CMemoryStream prm((uint8_t*)GCResourceManager.mGameArchive.files[i].data, GCResourceManager.mGameArchive.files[i].size, bStream::Endianess::Big, bStream::OpenMode::In);
-                Load(name.u8string(), &prm);
-                mLoadedConfigs.push_back(name.u8string());
+                Load(name.string(), &prm);
+                mLoadedConfigs.push_back(name.string());
 			}
 			
 		}

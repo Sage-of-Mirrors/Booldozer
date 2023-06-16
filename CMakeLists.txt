@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.8)
 project(booldozer)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(CMAKE_BUILD_TYPE Debug)
 
 add_subdirectory(lib)
 
@@ -28,7 +30,8 @@ file(GLOB BOOLDOZER_SRC
     "lib/glad/src/*.c"
 )
 
+find_package(Iconv REQUIRED)
+
 add_executable(booldozer ${BOOLDOZER_SRC})
-find_package(ICU 61.0 COMPONENTS uc i18n REQUIRED)
-target_include_directories(booldozer PUBLIC include lib/glfw/include lib/glad/include lib/glm lib/libflipper/include lib/libbti/include)
-target_link_libraries( booldozer PUBLIC imgui glfw gctools bti flipper ICU::uc ICU::i18n)
+target_include_directories(booldozer PUBLIC include lib/fmt/include lib/glfw/include lib/glad/include lib/glm lib/libflipper/include lib/J3DUltra/include)
+target_link_libraries(booldozer PUBLIC imgui glfw gctools libflipper ${ICONV_LIBRARIES} fmt j3dultra)
