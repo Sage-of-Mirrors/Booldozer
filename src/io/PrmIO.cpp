@@ -5,6 +5,7 @@
 #include "Options.hpp"
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
 #include "stb_image.h"
+#include <glad/glad.h>
 
 constexpr float pi = 3.14159f;
 
@@ -18,7 +19,7 @@ void SwapVec4(glm::vec4* s)
     s->b = a;
 }
 
-bool AngleVisualizer(const char* label, float* angle, bgfx::TextureHandle& sGhostImg)
+bool AngleVisualizer(const char* label, float* angle, uint32_t sGhostImg)
 {
 	ImGuiIO& io = ImGui::GetIO();
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -35,7 +36,7 @@ bool AngleVisualizer(const char* label, float* angle, bgfx::TextureHandle& sGhos
     //TODO: figure out why this breaks the combo box
     //draw_list->PathArcTo(ImVec2(center.x, center.y), 30.0f, 0.0f, -((*angle) * (pi / 180)), 10);
 
-	draw_list->AddImage((void*)(intptr_t)sGhostImg.idx, ImVec2(center.x - 8, center.y - 8), ImVec2(center.x + 8, center.y + 8));
+	draw_list->AddImage((void*)(intptr_t)sGhostImg, ImVec2(center.x - 8, center.y - 8), ImVec2(center.x + 8, center.y + 8));
 
 
     pos.y += 80;
@@ -44,21 +45,25 @@ bool AngleVisualizer(const char* label, float* angle, bgfx::TextureHandle& sGhos
 	return true;
 }
 
-LPrmIO::LPrmIO() : mConfigsLoaded(false), mSelectedConfig(0) {
+LPrmIO::LPrmIO() : mConfigsLoaded(false), mSelectedConfig(0), mGhostImg(0) {
 }
-LPrmIO::~LPrmIO(){}
+LPrmIO::~LPrmIO() {
+    glDeleteTextures(1, &mGhostImg);
+}
 
 void LPrmIO::LoadConfigs(std::shared_ptr<LMapDOMNode>& map)
 {
     int x, y, n;
 	uint8_t* data = stbi_load_from_memory(&ghostImgData[0], ghostImgData_size, &x, &y, &n, 4);
-	mGhostImg = bgfx::createTexture2D((uint16_t)x, (uint16_t)y, false, 1, bgfx::TextureFormat::RGBA8, 0, bgfx::copy(data, x*y*4));
-	stbi_image_free(data);
+	
+    glCreateTextures(GL_TEXTURE_2D, 1, &mGhostImg);
+    glTextureStorage2D(mGhostImg, 1, GL_RGBA8, x, y);
+    glTextureSubImage2D(mGhostImg, 0, 0, 0, x, y, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
+    stbi_image_free(data);
 
     mMap = map;
 
-    
 	for (size_t f = 0; f < GCResourceManager.mGameArchive.dirnum; f++)
 	{
 		if(std::string(GCResourceManager.mGameArchive.dirs[f].name) == "ctp"){
@@ -67,8 +72,8 @@ void LPrmIO::LoadConfigs(std::shared_ptr<LMapDOMNode>& map)
                 auto name = std::filesystem::path(GCResourceManager.mGameArchive.files[i].name).filename().stem();
                 if(name == "." || name == "..") continue;
                 bStream::CMemoryStream prm((uint8_t*)GCResourceManager.mGameArchive.files[i].data, GCResourceManager.mGameArchive.files[i].size, bStream::Endianess::Big, bStream::OpenMode::In);
-                Load(name.u8string(), &prm);
-                mLoadedConfigs.push_back(name.u8string());
+                Load(name.string(), &prm);
+                mLoadedConfigs.push_back(name.string());
 			}
 			
 		}
@@ -275,7 +280,7 @@ void LPrmIO::Load(std::string name, bStream::CStream* stream)
 
 void LPrmIO::RenderUI()
 {
-    if(!mConfigsLoaded) return;
+    if(!mConfigsLoaded || mLoadedConfigs.empty()) return;
     ImGui::Begin("Ghost Configurations");
     
     if (ImGui::BeginCombo("Ghost", mLoadedConfigs[mSelectedConfig].data(), 0))

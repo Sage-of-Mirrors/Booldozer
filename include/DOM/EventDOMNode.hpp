@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EntityDOMNode.hpp"
+#include "fmt/core.h"
 
 constexpr int32_t HOUR_MAX = 23;
 constexpr int32_t MINUTE_MAX = 59;
@@ -49,7 +50,7 @@ public:
 
 	LEventDOMNode(std::string name);
 
-	std::string GetName() override { return LGenUtility::Format("Event No: ", mEventNo, ", Character Name: ", mCharacterName); }
+	std::string GetName() override { return fmt::format("Event No: {0} Character Name: {1}", mEventNo, mCharacterName); }
 
 	virtual void RenderDetailsUI(float dt) override;
 

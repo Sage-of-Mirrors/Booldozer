@@ -149,6 +149,8 @@ public:
 
 	int32_t GetRoomIndex() { return GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0]->GetRoomIndex(); }
 	int32_t GetRoomID() { return GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0]->GetRoomID(); }
+	
+	bool GetSkyboxEnabled() { return mShouldRenderSkybox; }
 
 	LAlternateResource GetAlternateResource() const { return mAlternateResource; }
 

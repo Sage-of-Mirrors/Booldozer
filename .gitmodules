@@ -1,9 +1,6 @@
 [submodule "lib/libgctools"]
 	path = lib/libgctools
 	url = git@github.com:Astral-C/libgctools.git
-[submodule "lib/bigg"]
-	path = lib/bigg
-url=git@github.com:Sage-of-Mirrors/bigg.git
 [submodule "lib/ImGuiFileDialog"]
 	path = lib/ImGuiFileDialog
 	url = git@github.com:aiekick/ImGuiFileDialog.git
@@ -14,3 +11,25 @@ url=git@github.com:Sage-of-Mirrors/bigg.git
 [submodule "lib/magic_enum"]
 	path = lib/magic_enum
 	url = git@github.com:Neargye/magic_enum.git
+[submodule "lib/glfw"]
+	path = lib/glfw
+	url = git@github.com:glfw/glfw.git
+[submodule "lib/imgui"]
+	path = lib/imgui
+	url = git@github.com:ocornut/imgui.git
+	branch = docking
+[submodule "lib/glm"]
+	path = lib/glm
+	url = git@github.com:g-truc/glm.git
+[submodule "lib/libflipper"]
+	path = lib/libflipper
+	url = https://github.com/Sage-of-Mirrors/libflipper.git
+[submodule "lib/libbti"]
+	path = lib/libbti
+	url = https://github.com/Sage-of-Mirrors/libbti.git
+[submodule "lib/fmt"]
+	path = lib/fmt
+	url = https://github.com/fmtlib/fmt.git
+[submodule "lib/J3DUltra"]
+	path = lib/J3DUltra
+	url = https://github.com/Sage-of-Mirrors/J3DUltra.git

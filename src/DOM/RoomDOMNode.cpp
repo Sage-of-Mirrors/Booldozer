@@ -401,12 +401,12 @@ bool LRoomDOMNode::CompleteLoad()
 	std::filesystem::path fullResPath = basePath / t.relative_path();
 
 	if (std::filesystem::exists(fullResPath))
-		std::cout << LGenUtility::Format(mName, " has resource at ", fullResPath) << std::endl;
+		//std::cout << fmt::format(mName, "{0} has resource at {1}", fullResPath) << std::endl;
 
 	// Load models here
 
-	auto isNotBlackoutFilter = [](auto node) { return std::static_pointer_cast<LBlackoutDOMNode>(node)->IsActiveDuringBlackout() == false; };
 	auto isBlackoutFilter = [](auto node) { return std::static_pointer_cast<LBlackoutDOMNode>(node)->IsActiveDuringBlackout() == true; };
+	auto isNotBlackoutFilter = [](auto node) { return std::static_pointer_cast<LBlackoutDOMNode>(node)->IsActiveDuringBlackout() == false; };
 
 	for (uint32_t i = 0; i < LRoomEntityType_Max; i++)
 	{
@@ -443,9 +443,9 @@ bool LRoomDOMNode::CompleteLoad()
 		}
 
 		if (i == LRoomEntityType_Characters || i == LRoomEntityType_Enemies || i == LRoomEntityType_Observers)
-			mRoomEntities[i] = GetChildrenOfType<LEntityDOMNode>(findType, isNotBlackoutFilter);
+			mRoomEntities[i] = GetChildrenOfType<LEntityDOMNode>(findType, [](auto node) { return std::static_pointer_cast<LBlackoutDOMNode>(node)->IsActiveDuringBlackout() == false; });
 		else if (i == LRoomEntityType_BlackoutCharacters || i == LRoomEntityType_BlackoutEnemies || i == LRoomEntityType_BlackoutObservers)
-			mRoomEntities[i] = GetChildrenOfType<LEntityDOMNode>(findType, isBlackoutFilter);
+			mRoomEntities[i] = GetChildrenOfType<LEntityDOMNode>(findType, [](auto node) { return std::static_pointer_cast<LBlackoutDOMNode>(node)->IsActiveDuringBlackout() == true; });
 		else
 			mRoomEntities[i] = GetChildrenOfType<LEntityDOMNode>(findType);
 	}

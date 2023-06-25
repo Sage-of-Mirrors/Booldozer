@@ -4,7 +4,6 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include "../../lib/bigg/include/bigg.hpp"
 #include "DOM/RoomDOMNode.hpp"
 #include "DOM/RoomDataDOMNode.hpp"
 #include "DOM/FurnitureDOMNode.hpp"
@@ -12,27 +11,24 @@
 #include "DOM/ObserverDOMNode.hpp"
 #include "DOM/MapDOMNode.hpp"
 #include "DOM/DoorDOMNode.hpp"
-#include <bx/math.h>
-#include <bgfx/bgfx.h>
 #include "io/BinIO.hpp"
 #include "ResUtil.hpp"
 
 #include "scene/Camera.hpp"
+#include <J3D/J3DModelLoader.hpp>
+#include <J3D/J3DModelData.hpp>
+#include <J3D/J3DUniformBufferObject.hpp>
+#include <J3D/J3DLight.hpp>
+#include <J3D/J3DModelInstance.hpp>
 
 class LCubeManager {
 private:
-
-    bgfx::VertexBufferHandle mCubeVbh;
-    bgfx::IndexBufferHandle mCubeIbh;
-    bgfx::TextureHandle mCubeTexture;
+    uint32_t mVao, mVbo, mIbo, mCubeProgram, mCubeTex;
 
 public:
 
-    bgfx::ProgramHandle mCubeShader;
-    bgfx::UniformHandle mCubeTexUniform;
     void init();
-    void render(glm::mat4* transform);
-    void renderAltTex(glm::mat4* transform, bgfx::TextureHandle& tex);
+    void render(glm::mat4* transform, bool wireframe);
 
     LCubeManager();
     ~LCubeManager();
@@ -45,18 +41,16 @@ class LEditorScene {
     glm::mat4 gridMatrix;
 
     LCubeManager mCubeManager;
+    
     std::vector<std::weak_ptr<LDoorDOMNode>> mRoomDoors;
     std::vector<std::weak_ptr<LRoomDOMNode>> mCurrentRooms;
     
     //TODO: Fill door models and figure out how to handle drawing them
-    std::vector<std::shared_ptr<BGFXBin>> mDoorModels;
-    std::vector<std::shared_ptr<BGFXBin>> mRoomModels;
-    std::map<std::string, std::shared_ptr<BGFXBin>> mRoomFurniture;
-    
-    bgfx::ProgramHandle mShader;
-    bgfx::UniformHandle mTexUniform;
-    bgfx::TextureHandle mBorderTex;
-    bgfx::TextureHandle mObserverTex;
+    std::vector<std::shared_ptr<BinModel>> mDoorModels;
+    std::vector<std::shared_ptr<BinModel>> mRoomModels;
+    std::map<std::string, std::shared_ptr<BinModel>> mRoomFurniture;
+    std::shared_ptr<J3DModelData> mSkyboxModel;
+    std::shared_ptr<J3DModelInstance> mSkyBox;
 
 public:
     LSceneCamera Camera;

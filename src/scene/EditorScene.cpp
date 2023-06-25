@@ -3,176 +3,253 @@
 #include <fstream>
 #include <iostream>
 #include <filesystem>
+#include <glad/glad.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-#include "cube_shader_f.h"
-#include "cube_shader_v.h"
-#include "cube_tex.h"
 #include "border.h"
 #include "ObserverIcon.hpp"
+#include "imgui.h"
 #include "ImGuizmo.h"
 #include "Options.hpp"
 #include "modes/EditorSelection.hpp"
+#include "GLFW/glfw3.h"
+#include "io/BinIO.hpp"
 
-struct Vertex
-{
-	float x;
-	float y;
-	float z;
-	int16_t u;
-	int16_t v;
-	static void init()
-	{
-		ms_layout
-			.begin()
-			.add( bgfx::Attrib::Position, 3, bgfx::AttribType::Float )
-			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Int16, true, true)
-			.end();
-	}
-	static bgfx::VertexLayout ms_layout;
+#include "cube_tex.h"
+
+#include <J3D/J3DUniformBufferObject.hpp>
+#include <J3D/J3DModelLoader.hpp>
+
+struct cube_vertex {
+	float x, y, z, u, v;
 };
 
-bgfx::VertexLayout Vertex::ms_layout;
+//hardcoded cube rendering data
+static const GLfloat s_cubeVertices[] = {
+    -1.0f,-1.0f,-1.0f, 0.000059f, 1.0f-0.000004f,
+    -1.0f,-1.0f, 1.0f, 0.000103f, 1.0f-0.336048f,
+    -1.0f, 1.0f, 1.0f, 0.335973f, 1.0f-0.335903f,
+    1.0f, 1.0f,-1.0f, 1.000023f, 1.0f-0.000013f,
+    -1.0f,-1.0f,-1.0f, 0.667979f, 1.0f-0.335851f,
+    -1.0f, 1.0f,-1.0f, 0.999958f, 1.0f-0.336064f,
+    1.0f,-1.0f, 1.0f, 0.667979f, 1.0f-0.335851f,
+    -1.0f,-1.0f,-1.0f, 0.336024f, 1.0f-0.671877f,
+    1.0f,-1.0f,-1.0f, 0.667969f, 1.0f-0.671889f,
+    1.0f, 1.0f,-1.0f, 1.000023f, 1.0f-0.000013f,
+    1.0f,-1.0f,-1.0f, 0.668104f, 1.0f-0.000013f,
+    -1.0f,-1.0f,-1.0f, 0.667979f, 1.0f-0.335851f,
+    -1.0f,-1.0f,-1.0f, 0.000059f, 1.0f-0.000004f,
+    -1.0f, 1.0f, 1.0f, 0.335973f, 1.0f-0.335903f,
+    -1.0f, 1.0f,-1.0f, 0.336098f, 1.0f-0.000071f,
+    1.0f,-1.0f, 1.0f, 0.667979f, 1.0f-0.335851f,
+    -1.0f,-1.0f, 1.0f, 0.335973f, 1.0f-0.335903f,
+    -1.0f,-1.0f,-1.0f, 0.336024f, 1.0f-0.671877f,
+    -1.0f, 1.0f, 1.0f, 1.000004f, 1.0f-0.671847f,
+    -1.0f,-1.0f, 1.0f, 0.999958f, 1.0f-0.336064f,
+    1.0f,-1.0f, 1.0f, 0.667979f, 1.0f-0.335851f,
+    1.0f, 1.0f, 1.0f, 0.668104f, 1.0f-0.000013f,
+    1.0f,-1.0f,-1.0f, 0.335973f, 1.0f-0.335903f,
+    1.0f, 1.0f,-1.0f, 0.667979f, 1.0f-0.335851f,
+    1.0f,-1.0f,-1.0f, 0.335973f, 1.0f-0.335903f,
+    1.0f, 1.0f, 1.0f, 0.668104f, 1.0f-0.000013f,
+    1.0f,-1.0f, 1.0f, 0.336098f, 1.0f-0.000071f,
+    1.0f, 1.0f, 1.0f, 0.000103f, 1.0f-0.336048f,
+    1.0f, 1.0f,-1.0f, 0.000004f, 1.0f-0.671870f,
+    -1.0f, 1.0f,-1.0f, 0.336024f, 1.0f-0.671877f,
+    1.0f, 1.0f, 1.0f, 0.000103f, 1.0f-0.336048f,
+    -1.0f, 1.0f,-1.0f, 0.336024f, 1.0f-0.671877f,
+    -1.0f, 1.0f, 1.0f, 0.335973f, 1.0f-0.335903f,
+    1.0f, 1.0f, 1.0f, 0.667969f, 1.0f-0.671889f,
+    -1.0f, 1.0f, 1.0f, 1.000004f, 1.0f-0.671847f,
+    1.0f,-1.0f, 1.0f, 0.667979f, 1.0f-0.335851f
+	};
+const char* cube_vtx_shader = "#version 460\n\
+    #extension GL_ARB_separate_shader_objects : enable\n\
+	struct GXLight {\n\
+		vec4 Position;\n\
+		vec4 Direction;\n\
+		vec4 Color;\n\
+		vec4 AngleAtten;\n\
+		vec4 DistAtten;\n\
+	};\n\
+    layout (std140, binding=0) uniform uSharedData {\n\
+		mat4 Proj;\n\
+		mat4 View;\n\
+		mat4 Model;\n\
+		vec4 TevColor[4];\n\
+		vec4 KonstColor[4];\n\
+		GXLight Lights[8];\n\
+		mat4 Envelopes[512];\n\
+		mat4 TexMatrices[10];\n\
+    };\n\
+    uniform mat4 transform;\n\
+    \
+    layout(location = 0) in vec3 inPosition;\n\
+    layout(location = 1) in vec2 inTexCoord;\n\
+    \
+    layout(location = 0) out vec2 fragTexCoord;\n\
+    \
+    void main()\n\
+    {\
+        gl_Position = Proj * View * transform * vec4(inPosition, 1.0);\n\
+        fragTexCoord = inTexCoord;\n\
+    }\
+";
 
-static Vertex s_cubeVertices[] =
-{
-	{-1.0f,  1.0f,  1.0f,      0,      0 },
-	{ 1.0f,  1.0f,  1.0f, 0x7fff,      0 },
-	{-1.0f, -1.0f,  1.0f,      0, 0x7fff },
-	{ 1.0f, -1.0f,  1.0f, 0x7fff, 0x7fff },
-	{-1.0f,  1.0f, -1.0f,      0,      0 },
-	{ 1.0f,  1.0f, -1.0f, 0x7fff,      0 },
-	{-1.0f, -1.0f, -1.0f,      0, 0x7fff },
-	{ 1.0f, -1.0f, -1.0f, 0x7fff, 0x7fff },
-	{-1.0f,  1.0f,  1.0f,      0,      0 },
-	{ 1.0f,  1.0f,  1.0f, 0x7fff,      0 },
-	{-1.0f,  1.0f, -1.0f,      0, 0x7fff },
-	{ 1.0f,  1.0f, -1.0f, 0x7fff, 0x7fff },
-	{-1.0f, -1.0f,  1.0f,      0,      0 },
-	{ 1.0f, -1.0f,  1.0f, 0x7fff,      0 },
-	{-1.0f, -1.0f, -1.0f,      0, 0x7fff },
-	{ 1.0f, -1.0f, -1.0f, 0x7fff, 0x7fff },
-	{ 1.0f, -1.0f,  1.0f,      0,      0 },
-	{ 1.0f,  1.0f,  1.0f, 0x7fff,      0 },
-	{ 1.0f, -1.0f, -1.0f,      0, 0x7fff },
-	{ 1.0f,  1.0f, -1.0f, 0x7fff, 0x7fff },
-	{-1.0f, -1.0f,  1.0f,      0,      0 },
-	{-1.0f,  1.0f,  1.0f, 0x7fff,      0 },
-	{-1.0f, -1.0f, -1.0f,      0, 0x7fff },
-	{-1.0f,  1.0f, -1.0f, 0x7fff, 0x7fff },
-};
+const char* cube_frg_shader = "#version 460\n\
+    #extension GL_ARB_separate_shader_objects : enable\n\
+    \
+    uniform sampler2D texSampler;\n\
+    layout(location = 0) in vec2 fragTexCoord;\n\
+    layout(location = 0) out vec4 outColor;\n\
+    \
+    void main()\n\
+    {\n\
+        vec4 baseColor = texture(texSampler, vec2(fragTexCoord.y, fragTexCoord.x));\n\
+        outColor = baseColor;\n\
+        if(baseColor.a < 1.0 / 255.0) discard;\n\
+    }\
+";
 
-static const uint16_t s_cubeTriList[] = { 
-	0,  2,  1,
-	1,  2,  3,
-	4,  5,  6,
-	5,  7,  6,
 
-	8, 10,  9,
-	9, 10, 11,
-	12, 13, 14,
-	13, 15, 14,
+void LCubeManager::render(glm::mat4* transform, bool wireframe=false){
+	glUseProgram(mCubeProgram);
 
-	16, 18, 17,
-	17, 18, 19,
-	20, 21, 22,
-	21, 23, 22,
-};
+	glUniformMatrix4fv(glGetUniformLocation(mCubeProgram, "transform"), 1, 0, &(*transform)[0][0]);
 
-void LCubeManager::render(glm::mat4* transform){
-	bgfx::setVertexBuffer(0, mCubeVbh);
-	bgfx::setIndexBuffer(mCubeIbh);
+	if(wireframe) glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
-	bgfx::setTexture(0, mCubeTexUniform, mCubeTexture);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, mCubeTex);
 
-	uint64_t  _state = 0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_MSAA;
-	bgfx::setState( _state );
+	glBindVertexArray(mVao);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
 
-	glm::mat4 t = glm::scale(*transform, glm::vec3(25,25,25));
-	bgfx::setTransform(&t);
-	bgfx::submit(0, mCubeShader, 0);
+	if(wireframe) glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 }
 
-void LCubeManager::renderAltTex(glm::mat4* transform, bgfx::TextureHandle& tex){
-	bgfx::setVertexBuffer(0, mCubeVbh);
-	bgfx::setIndexBuffer(mCubeIbh);
-
-	bgfx::setTexture(0, mCubeTexUniform, tex);
-
-	uint64_t  _state = 0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_MSAA | BGFX_STATE_BLEND_ALPHA;
-	bgfx::setState( _state );
-
-	bgfx::setTransform(transform);
-	bgfx::submit(0, mCubeShader, 0);
+LCubeManager::LCubeManager(){
 }
-
-LCubeManager::LCubeManager(){}
 
 void LCubeManager::init(){
-	/*
-		TODO: System Agnostic Paths. Embed cube shaders using header output option of shaderc? 
-	*/
-    Vertex::init();
-
-	bgfx::ShaderHandle vs = bgfx::createShader(bgfx::makeRef(cube_shader_v, cube_shader_v_len));
-	bgfx::ShaderHandle fs = bgfx::createShader(bgfx::makeRef(cube_shader_f, cube_shader_f_len));
-	mCubeShader = bgfx::createProgram(vs, fs, true);
-
-	//mCubeShader = bigg::loadProgram("shaders/cube_shader_v.bin", "shaders/cube_shader_f.bin");
-
-	mCubeVbh = bgfx::createVertexBuffer(bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices)), Vertex::ms_layout );
-	mCubeIbh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeTriList, sizeof(s_cubeTriList)));
-	
 	int x, y, n;
 	uint8_t* data = stbi_load_from_memory(&cube_png[0], cube_png_size, &x, &y, &n, 4);
-	mCubeTexture = bgfx::createTexture2D((uint16_t)x, (uint16_t)y, false, 1, bgfx::TextureFormat::RGBA8, 0, bgfx::copy(data, x*y*4));
-	stbi_image_free(data);
+	
+	glGenTextures(1, &mCubeTex);
+    glBindTexture(GL_TEXTURE_2D, mCubeTex);
 
-	mCubeTexUniform = bgfx::createUniform("s_texColor",  bgfx::UniformType::Sampler);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    
+    glBindTexture(GL_TEXTURE_2D, 0);
+	
+	stbi_image_free(data);
+	
+    glGenVertexArrays(1, &mVao);
+    glBindVertexArray(mVao);
+
+    glGenBuffers(1, &mVbo);
+    glBindBuffer(GL_ARRAY_BUFFER, mVbo);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(cube_vertex), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(cube_vertex), (void*)12);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(s_cubeVertices), s_cubeVertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    char glErrorLogBuffer[4096];
+    GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+    GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+
+    glShaderSource(vs, 1, &cube_vtx_shader, NULL);
+    glShaderSource(fs, 1, &cube_frg_shader, NULL);
+
+    glCompileShader(vs);
+
+    GLint status;
+    glGetShaderiv(vs, GL_COMPILE_STATUS, &status);
+    if(status == GL_FALSE){
+        GLint infoLogLength;
+        glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &infoLogLength);
+
+        glGetShaderInfoLog(vs, infoLogLength, NULL, glErrorLogBuffer);
+
+        printf("Compile failure in vertex shader:\n%s\n", glErrorLogBuffer);
+    }
+
+    glCompileShader(fs);
+
+    glGetShaderiv(fs, GL_COMPILE_STATUS, &status);
+    if(status == GL_FALSE){
+        GLint infoLogLength;
+        glGetShaderiv(fs, GL_INFO_LOG_LENGTH, &infoLogLength);
+
+        glGetShaderInfoLog(fs, infoLogLength, NULL, glErrorLogBuffer);
+
+        printf("Compile failure in fragment shader:\n%s\n", glErrorLogBuffer);
+    }
+
+    mCubeProgram = glCreateProgram();
+
+    glAttachShader(mCubeProgram, vs);
+    glAttachShader(mCubeProgram, fs);
+
+    glLinkProgram(mCubeProgram);
+
+    glGetProgramiv(mCubeProgram, GL_LINK_STATUS, &status); 
+    if(GL_FALSE == status) {
+        GLint logLen; 
+        glGetProgramiv(mCubeProgram, GL_INFO_LOG_LENGTH, &logLen); 
+        glGetProgramInfoLog(mCubeProgram, logLen, NULL, glErrorLogBuffer); 
+        printf("Shader Program Linking Error:\n%s\n", glErrorLogBuffer);
+    } 
+
+    glDetachShader(mCubeProgram, vs);
+    glDetachShader(mCubeProgram, fs);
+
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+
 }
 
-LCubeManager::~LCubeManager(){} //Should destroy bgfx things here, but it segfault?
+LCubeManager::~LCubeManager(){
+	glDeleteTextures(1, &mCubeTex);
+    glDeleteVertexArrays(1, &mVao);
+    glDeleteBuffers(1, &mVbo);
+	glDeleteBuffers(1, &mIbo);
+}
 
 
 LEditorScene::LEditorScene() : Initialized(false) {}
 
-LEditorScene::~LEditorScene(){}
+LEditorScene::~LEditorScene(){
+	BinModel::DestroyShaders();
+}
 
 void LEditorScene::init(){
 	Initialized = true;
 	mCubeManager.init();
-	
-	bgfx::ShaderHandle vs = bgfx::createShader(bgfx::makeRef(cube_shader_v, cube_shader_v_len));
-	bgfx::ShaderHandle fs = bgfx::createShader(bgfx::makeRef(cube_shader_f, cube_shader_f_len));
-	mShader = bgfx::createProgram(vs, fs, true);
-	mTexUniform = bgfx::createUniform("s_texColor",  bgfx::UniformType::Sampler);
-	
-	int x, y, n;
-	uint8_t* data = stbi_load_from_memory(&outline_png[0], outline_png_size, &x, &y, &n, 4);
-	mBorderTex = bgfx::createTexture2D((uint16_t)x, (uint16_t)y, false, 1, bgfx::TextureFormat::RGBA8, 0, bgfx::copy(data, x*y*4));
-	stbi_image_free(data);
-
-	data = stbi_load_from_memory(&Icon_Observer_png[0], Icon_Observer_png_size, &x, &y, &n, 4);
-	mObserverTex = bgfx::createTexture2D((uint16_t)x, (uint16_t)y, false, 1, bgfx::TextureFormat::RGBA8, 0, bgfx::copy(data, x*y*4));
-	stbi_image_free(data);
-
-	BGFXBin::InitBinVertex();
 
 	mDoorModels.reserve(14);
+	BinModel::InitShaders();
 	for (size_t f = 0; f < GCResourceManager.mGameArchive.dirnum; f++)
 	{
 		if(std::string(GCResourceManager.mGameArchive.dirs[f].name) == "door"){
 			for (size_t i = GCResourceManager.mGameArchive.dirs[f].fileoff; i < GCResourceManager.mGameArchive.dirs[f].fileoff + GCResourceManager.mGameArchive.dirs[f].filenum; i++)
 			{
-				bStream::CMemoryStream bin((uint8_t*)GCResourceManager.mGameArchive.files[i].data, GCResourceManager.mGameArchive.files[i].size, bStream::Endianess::Big, bStream::OpenMode::In);
+				bStream::CMemoryStream bin_data((uint8_t*)GCResourceManager.mGameArchive.files[i].data, GCResourceManager.mGameArchive.files[i].size, bStream::Endianess::Big, bStream::OpenMode::In);
 				if(std::filesystem::path(GCResourceManager.mGameArchive.files[i].name).extension() == ".bin"){
-					auto doorModel = std::make_shared<BGFXBin>(&bin);
-					//Haha holy shit the door models are so fucking broken.
-					if(std::filesystem::path(GCResourceManager.mGameArchive.files[i].name).filename().stem() == "door_01"){
-						//doorModel->TranslateRoot(glm::vec3(200,0,0));
-					} else {
-						//doorModel->TranslateRoot(glm::vec3(0,-150,0));
-					}
+					auto doorModel = std::make_shared<BinModel>(&bin_data);
 					mDoorModels.push_back(doorModel);
 				}
 			}
@@ -180,6 +257,25 @@ void LEditorScene::init(){
 		}
 	}
 	
+	J3DModelLoader Loader;
+	
+	GCarchive vrballArchive;
+
+	if(!GCResourceManager.LoadArchive((std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp").string().c_str(), &vrballArchive)){
+		std::cout << "skybox problem oop" << std::endl;
+	}
+
+	GCarcfile* skyboxModel = GCResourceManager.GetFile(&vrballArchive, std::filesystem::path("vrball01.bmd"));
+
+	if(skyboxModel != nullptr){
+		bStream::CMemoryStream modelData((uint8_t*)skyboxModel->data, skyboxModel->size, bStream::Endianess::Big, bStream::OpenMode::In);
+		mSkyboxModel = Loader.Load(&modelData, 0);
+		mSkyBox = mSkyboxModel->GetInstance();
+	} else {
+		std::cout << "Couldn't find skybox" << std::endl;
+	}
+
+	gcFreeArchive(&vrballArchive);
 }
 
 glm::mat4 LEditorScene::getCameraView(){
@@ -199,9 +295,30 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 	glm::mat4 view = Camera.GetViewMatrix();
 	glm::mat4 proj = Camera.GetProjectionMatrix();
 
-	bgfx::setViewTransform(0, &view[0][0], &proj[0][0]);
-    bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height));
-    bgfx::touch(0);
+	J3DUniformBufferObject::SetProjAndViewMatrices(&proj, &view);
+
+	for(std::weak_ptr<LRoomDOMNode> room : mCurrentRooms){
+		if(!room.expired() && Initialized)
+		{
+			std::shared_ptr<LRoomDOMNode> roomLocked = room.lock();
+			//vrball01.bmd
+			if(roomLocked->GetSkyboxEnabled()){
+				mSkyBox->SetTranslation(roomLocked->GetPosition());
+				mSkyBox->SetRotation({0,0,0});
+				mSkyBox->SetScale({10,10,10});
+				mSkyBox->Render(0);
+				break;
+			}
+		}
+	}
+
+    glFrontFace(GL_CW);
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	std::vector<glm::mat4> roomBounds;
 
@@ -234,7 +351,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 
 				// Offset the first door (right/forward) and render it.
 				doorMat = glm::translate(doorMat, doubleDoorOffset);
-				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, mShader, mTexUniform);
+				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat);
 
 				// Now offset the second door (left/backward) and rotate it 180 degrees.
 				doubleDoorOffset *= 2;
@@ -242,12 +359,12 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 				doorMat = glm::rotate(doorMat, glm::radians(180.f), glm::vec3(0, 1, 0));
 
 				// Render second door.
-				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, mShader, mTexUniform);
+				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat);
 			}
 			// Single door can just be rendered without hassle.
 			else
 			{
-				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, mShader, mTexUniform, bIgnoreTransforms);
+				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, bIgnoreTransforms);
 			}
 		}
 	}
@@ -256,7 +373,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 		glm::mat4 identity = glm::identity<glm::mat4>();
 		for (auto room : mRoomModels)
 		{
-			room->Draw(&identity, mShader, mTexUniform);
+			room->Draw(&identity);
 		}
 		
 		if(!room.expired() && Initialized)
@@ -272,12 +389,15 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 						{
 							mCubeManager.render(node->GetMat());
 						} else {
-							mRoomFurniture[node->GetName()]->Draw(node->GetMat(), mShader, mTexUniform);
+							mRoomFurniture[node->GetName()]->Draw(node->GetMat());
 						}
 						break;
 					
 					case EDOMNodeType::RoomData:
-						roomBounds.push_back(glm::scale(glm::translate(transform, node->GetPosition()), node->GetScale()));
+						{
+							glm::mat4 room = glm::scale(glm::translate(transform, node->GetPosition()), node->GetScale());
+							mCubeManager.render(&room, true);
+						}
 						break;
 
 					case EDOMNodeType::Character:
@@ -292,9 +412,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 
 		}
 	}
-	for(auto& bb : roomBounds){
-		mCubeManager.renderAltTex(&bb, mBorderTex);
-	}
+	//Draw GL Lines Based thing for room boundaries
 }
 
 bool LEditorScene::HasRoomLoaded(int32_t roomNumber){
@@ -343,10 +461,10 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 						std::cout << "loading " << curPath.filename() << std::endl;
 						if (curPath.filename().stem() != "room")
 						{
-							mRoomFurniture[curPath.filename().stem().string()] = std::make_shared<BGFXBin>(&bin);
+							mRoomFurniture[curPath.filename().stem().string()] = std::make_shared<BinModel>(&bin);
 							std::cout << "completed loading " << curPath.filename() << std::endl;
 						} else {
-							mRoomModels.push_back(std::make_shared<BGFXBin>(&bin));
+							mRoomModels.push_back(std::make_shared<BinModel>(&bin));
 							std::cout << "completed loading room model" << std::endl;
 						}
 						
@@ -355,8 +473,8 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 				std::cout << "all models locked and loaded" << std::endl;
 			} else {
 				//If this is happening the map only has room models, no furniture.
-				bStream::CFileStream bin(resPath.u8string(), bStream::Endianess::Big, bStream::OpenMode::In);
-				mRoomModels.push_back(std::make_shared<BGFXBin>(&bin));
+				bStream::CFileStream bin(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
+				mRoomModels.push_back(std::make_shared<BinModel>(&bin));
 			}
 		}
 	}
@@ -379,27 +497,5 @@ void LEditorScene::update(GLFWwindow* window, float dt, LEditorSelection* select
 	glfwGetWindowSize(window, &w, &h);
 	glfwGetWindowPos(window, &vx, &vy);
 
-	if(Camera.GetClicked()){
-		selection->ClearSelection();
-		auto ray = Camera.Raycast(x, y, glm::vec4(0,0,w,h));
-		for(auto room : mCurrentRooms){			
-			if(!room.expired() && Initialized)
-			{
-				auto curRoom = room.lock();
-
-				curRoom->ForEachChildOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender, [&](auto node){
-					auto check = ray.first + (ray.second * glm::distance(node->GetPosition(), ray.first));
-
-					
-					if(glm::distance(node->GetPosition(), check) < 150.0f){
-						std::cout << "clicked on " << node->GetName() << std::endl;
-						if(selection != nullptr){
-							selection->AddToSelection(node);
-						}
-					}
-				});
-
-			}
-		}
-	}
+	//TODO: replace with depth picking or other
 }

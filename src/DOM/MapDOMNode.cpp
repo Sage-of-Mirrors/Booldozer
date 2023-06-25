@@ -50,6 +50,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	// Attempt to load archive
 	if (!GCResourceManager.LoadArchive(file_path.string().c_str(), &mMapArchive))
 	{
+		printf("Archive Load Failed\n");
 		return false;
 	}
 
@@ -65,9 +66,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 			GCarchive eventArc;
 
 			//Exclude cvs subdir
-			if(archive.is_regular_file() && GCResourceManager.LoadArchive(archive.path().generic_u8string().c_str(), &eventArc))
-			{
-
+			if(archive.is_regular_file() && GCResourceManager.LoadArchive(archive.path().string().c_str(), &eventArc)){
 				//Name of the event file were loading, ex 'event48'
 				std::string eventName = archive.path().stem().string();
 				std::string csvName = eventName;
@@ -118,14 +117,14 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 		if (!mStaticMapIO.RipStaticDataFromExecutable(dol, roomsMap, mName, "GLME01"))
 		{
-			std::cout << LGenUtility::Format("Failed to rip static map data to ", roomsMap) << std::endl;
+			std::cout << fmt::format("Failed to rip static map data to {0}", roomsMap.string()) << std::endl;
 			return false;
 		}
 	}
 
 	if (!ReadStaticData(roomsMap))
 	{
-		std::cout << LGenUtility::Format("Failed to open static data from ", roomsMap) << std::endl;
+		std::cout << fmt::format("Failed to open static data from {0}", roomsMap.string()) << std::endl;
 		return false;
 	}
 
@@ -150,12 +149,12 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	}
 
 	// Grab the friendly room names for this map
-	nlohmann::json roomNames = LResUtility::GetNameMap(LGenUtility::Format(mName, "_rooms"));
+	nlohmann::json roomNames = LResUtility::GetNameMap(fmt::format("{0}_rooms", mName));
 
 	// Use the static room data to know how many rooms to load
 	for (size_t i = 0; i < mStaticMapIO.GetRoomCount(); i++)
 	{
-		std::string roomName = LGenUtility::Format("room_", std::setfill('0'), std::setw(2), i);
+		std::string roomName = fmt::format("room_{:02}", i);
 		if (roomNames.find(roomName) != roomNames.end())
 			roomName = roomNames[roomName];
 
@@ -275,7 +274,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 bool LMapDOMNode::ReadStaticData(std::filesystem::path filePath)
 {
-	bStream::CFileStream mapFileReader = bStream::CFileStream(filePath.u8string(), bStream::Endianess::Big, bStream::OpenMode::In);
+	bStream::CFileStream mapFileReader = bStream::CFileStream(filePath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
 	size_t mapFileSize = mapFileReader.getSize();
 
 	uint8_t* mapBuf = new uint8_t[mapFileSize];
@@ -295,14 +294,14 @@ bool LMapDOMNode::LoadStaticData(std::vector<std::shared_ptr<LRoomDOMNode>> room
 		LStaticDoorData d;
 		mStaticMapIO.GetDoorData(i, d);
 
-		std::shared_ptr<LDoorDOMNode> doorNode = std::make_shared<LDoorDOMNode>(LGenUtility::Format("Door ", i));
+		std::shared_ptr<LDoorDOMNode> doorNode = std::make_shared<LDoorDOMNode>(fmt::format("Door {0}", i));
 		doorNode->Load(d);
 		AddChild(doorNode);
 	}
 
 	for (size_t i = 0; i < rooms.size(); i++)
 	{
-		std::shared_ptr<LRoomDataDOMNode> roomData = std::make_shared<LRoomDataDOMNode>(LGenUtility::Format("room data ", i));
+		std::shared_ptr<LRoomDataDOMNode> roomData = std::make_shared<LRoomDataDOMNode>(fmt::format("room data {0}", i));
 		roomData->Load(i, mStaticMapIO, rooms, GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door));
 
 		rooms[i]->AddChild(roomData);
@@ -457,7 +456,7 @@ bool LMapDOMNode::SaveMapToFiles(std::filesystem::path folder_path)
 
 		if (jmpTemplate.find("fields") == jmpTemplate.end())
 		{
-			std::cout << LGenUtility::Format("Failed to read JSON at ", RES_BASE_PATH / "jmp_templates" / "path.json");
+			std::cout << fmt::format("Failed to read JSON at {0}", (RES_BASE_PATH / "jmp_templates" / "path.json").string());
 			return false;
 		}
 
@@ -523,37 +522,37 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 		switch (type)
 		{
 			case LEntityType_Furniture:
-				newNode = std::make_shared<LFurnitureDOMNode>(LGenUtility::Format("Furniture ", i));
+				newNode = std::make_shared<LFurnitureDOMNode>(fmt::format("Furniture {0}", i));
 				break;
 			case LEntityType_Observers:
-				newNode = std::make_shared<LObserverDOMNode>(LGenUtility::Format("Observer ", i));
+				newNode = std::make_shared<LObserverDOMNode>(fmt::format("Observer {0}", i));
 				break;
 			case LEntityType_Enemies:
-				newNode = std::make_shared<LEnemyDOMNode>(LGenUtility::Format("Enemy ", i));
+				newNode = std::make_shared<LEnemyDOMNode>(fmt::format("Enemy {0}", i));
 				break;
 			case LEntityType_Events:
-				newNode = std::make_shared<LEventDOMNode>(LGenUtility::Format("Event ", i));
+				newNode = std::make_shared<LEventDOMNode>(fmt::format("Event {0}", i));
 				break;
 			case LEntityType_Characters:
-				newNode = std::make_shared<LCharacterDOMNode>(LGenUtility::Format("Character ", i));
+				newNode = std::make_shared<LCharacterDOMNode>(fmt::format("Character {0}", i));
 				break;
 			case LEntityType_ItemInfoTable:
-				newNode = std::make_shared<LItemInfoDOMNode>(LGenUtility::Format("Item Info ", i));
+				newNode = std::make_shared<LItemInfoDOMNode>(fmt::format("Item Info {0}", i));
 				break;
 			case LEntityType_ItemAppear:
-				newNode = std::make_shared<LItemAppearDOMNode>(LGenUtility::Format("Item Drop Group ", i));
+				newNode = std::make_shared<LItemAppearDOMNode>(fmt::format("Item Drop Group {0}", i));
 				break;
 			case LEntityType_ItemFishing:
-				newNode = std::make_shared<LItemFishingDOMNode>(LGenUtility::Format("Capture Item Group ", i));
+				newNode = std::make_shared<LItemFishingDOMNode>(fmt::format("Capture Item Group {0}", i));
 				break;
 			case LEntityType_TreasureTable:
-				newNode = std::make_shared<LTreasureTableDOMNode>(LGenUtility::Format("Treasure Table ", i));
+				newNode = std::make_shared<LTreasureTableDOMNode>(fmt::format("Treasure Table {0}", i));
 				break;
 			case LEntityType_Generators:
 				newNode = std::make_shared<LGeneratorDOMNode>("generator");
 				break;
 			case LEntityType_Objects:
-				newNode = std::make_shared<LObjectDOMNode>(LGenUtility::Format("Object ", i));
+				newNode = std::make_shared<LObjectDOMNode>(fmt::format("Object {0}", i));
 				break;
 			case LEntityType_Keys:
 				newNode = std::make_shared<LKeyDOMNode>("key01");

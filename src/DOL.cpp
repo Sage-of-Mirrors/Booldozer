@@ -23,7 +23,7 @@ bool DOL::LoadDOLFile(std::filesystem::path dolPath)
 		return false;
 
 	// Open DOL file and ensure it's valid
-	mFileStream = new bStream::CFileStream(dolPath.u8string(), bStream::Endianess::Big);
+	mFileStream = new bStream::CFileStream(dolPath.string(), bStream::Endianess::Big);
 	if (!mFileStream || !mFileStream->getStream().is_open())
 		return false;
 

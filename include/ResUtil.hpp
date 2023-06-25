@@ -36,6 +36,7 @@ namespace LResUtility
 			bool LoadArchive(const char* path, GCarchive* archive);
 			bool SaveArchiveCompressed(const char* path, GCarchive* archive);
 			bool ReplaceArchiveFileData(GCarcfile* file, uint8_t* new_data, size_t new_data_size);
+			GCarcfile* GetFile(GCarchive* archive, std::filesystem::path filepath);
 			void Init();
 	};
 
