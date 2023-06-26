@@ -196,35 +196,43 @@ void LPathDOMNode::PreProcess()
 
 void LPathDOMNode::PostProcess(const GCarchive& mapArchive)
 {
-	bStream::CMemoryStream fileMemStream;
 
 	// Find the correct path file in the archive
-	for (uint32_t i = 0; i < mapArchive.filenum; i++)
+	/*for (uint32_t i = 0; i < mapArchive.filenum; i++)
 	{
 		if (strcmp(mapArchive.files[i].name, mName.c_str()) == 0)
 		{
 			fileMemStream = bStream::CMemoryStream(static_cast<uint8_t*>(mapArchive.files[i].data), mapArchive.files[i].size, bStream::Endianess::Big, bStream::OpenMode::In);
 			break;
 		}
-	}
+	}*/
 
-	// If the file wasn't found, emit an error and return
-	if (fileMemStream.getSize() == 0)
-	{
+	GCarcfile* pathFile = GCResourceManager.GetFile((GCarchive*)&mapArchive, std::filesystem::path("path") / mName);
+	
+	if(pathFile == nullptr){
 		std::cout << "Unable to load path file " << mName << " !" << std::endl;
 		return;
 	}
 
-	LJmpIO pathLoader = LJmpIO();
+	bStream::CMemoryStream fileMemStream(static_cast<uint8_t*>(pathFile->data), pathFile->size, bStream::Endianess::Big, bStream::OpenMode::In);
+
+	LJmpIO pathLoader;
 	pathLoader.Load(&fileMemStream);
+
+	float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+	float g = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+	float b = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 
 	for (size_t i = 0; i < mNumPoints; i++)
 	{
 		std::shared_ptr<LPathPointDOMNode> newPoint = std::make_shared<LPathPointDOMNode>("Path Point");
 		newPoint->Deserialize(&pathLoader, i);
+		
+
 		AddChild(newPoint);
 
 		newPoint->PostProcess();
+		mPathRenderable.push_back({newPoint->GetPosition(), {r, g, b, 1.0f}, 12800});
 	}
 
 	// Boo escape paths are defined outside of the rooms they're for; skip sorting them.

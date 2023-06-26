@@ -5,7 +5,9 @@
 
 bool LUIUtility::RenderCheckBox(std::string name, bool* c)
 {
-    if (ImGui::Checkbox(name.c_str(), c))
+	bool x = !(*c);
+    if (ImGui::Checkbox(name.c_str(), &x))
+		*c = !x;
         return true;
 
     return false;
@@ -15,7 +17,7 @@ void LUIUtility::RenderCheckBox(LDOMNodeBase* node)
 {
     bool c = node->GetIsRendered();
 
-    if (RenderCheckBox("##is_rendered", &c))
+    if (ImGui::Checkbox("##is_rendered", &c))
         node->SetIsRendered(c);
 }
 

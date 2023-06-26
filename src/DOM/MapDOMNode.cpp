@@ -78,14 +78,14 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 				{
 					if((eventName + ".txt").compare(eventArc.files[i].name) == 0)
 					{
-						eventData->mEventScript = LGenUtility::SjisToUtf8(std::string((char*)eventArc.files[i].data));
+						eventData->mEventScript = std::string((char*)eventArc.files[i].data);
 					}
 					else if((csvName + ".csv").compare(eventArc.files[i].name) == 0)
 					{
 						std::string curline;
 						std::stringstream csv_data((char*)eventArc.files[i].data);
 						while (std::getline(csv_data, curline)){
-							eventData->mEventText.push_back(LGenUtility::SjisToUtf8(curline));
+							eventData->mEventText.push_back(curline);
 						}
 						
 					} 
@@ -237,7 +237,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	}
 	else
 	{
-		bStream::CFileStream mirrorFile = bStream::CFileStream(mirrorsPath.generic_u8string(), bStream::Big);
+		bStream::CFileStream mirrorFile = bStream::CFileStream(mirrorsPath.string(), bStream::Big);
 		
 		uint32_t mirrorCount = mirrorFile.readUInt32();
 		mirrorFile.skip(4);
@@ -362,7 +362,7 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 
 		if (jmpTemplate.find("fields") == jmpTemplate.end())
 		{
-			std::cout << LGenUtility::Format("Failed to read JSON at ", RES_BASE_PATH / "jmp_templates" / "path.json");
+			std::cout << fmt::format("Failed to read JSON at {0}", (RES_BASE_PATH / "jmp_templates" / "path.json").string());
 			return false;
 		}
 
@@ -403,6 +403,7 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 
 	SaveMirrorData();
 
+	return true;
 }
 
 bool LMapDOMNode::SaveMapToFiles(std::filesystem::path folder_path)
@@ -507,8 +508,10 @@ bool LMapDOMNode::SaveMirrorData()
 		MirrorNodes[i]->Save(&memStream);
 	}
 
-	bStream::CFileStream fileStream = bStream::CFileStream(mirrorsPath.u8string(), bStream::Big, bStream::Out);
+	bStream::CFileStream fileStream = bStream::CFileStream(mirrorsPath.string(), bStream::Big, bStream::Out);
 	fileStream.writeBytes((char*)memStream.getBuffer(), memStream.getSize());
+
+	return true;
 }
 
 bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
@@ -564,16 +567,16 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 				newNode = std::make_shared<LBooDOMNode>("Boo");
 				break;
 			case LEntityType_BlackoutEnemies:
-				newNode = std::make_shared<LEnemyDOMNode>("Enemy");
+				newNode = std::make_shared<LEnemyDOMNode>("Enemy", true);
 				break;
 			case LEntityType_BlackoutCharacters:
-				newNode = std::make_shared<LCharacterDOMNode>("Character");
+				newNode = std::make_shared<LCharacterDOMNode>("Character", true);
 				break;
 			case LEntityType_BlackoutObservers:
-				newNode = std::make_shared<LObserverDOMNode>("Observer");
+				newNode = std::make_shared<LObserverDOMNode>("Observer", true);
 				break;
 			case LEntityType_BlackoutKeys:
-				newNode = std::make_shared<LKeyDOMNode>("key01");
+				newNode = std::make_shared<LKeyDOMNode>("key01", true);
 				break;
 			case LEntityType_Paths:
 				newNode = std::make_shared<LPathDOMNode>("path");

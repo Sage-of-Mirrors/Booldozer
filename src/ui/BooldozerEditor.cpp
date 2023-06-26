@@ -50,11 +50,12 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		LResUtility::SaveUserSettings();
 	}
 
-	mGhostConfigs.RenderUI();
 
 	if (mLoadedMap != nullptr && !mLoadedMap->Children.empty() && mCurrentMode != nullptr)
 		mCurrentMode->Render(mLoadedMap, renderer_scene);
 
+	mGhostConfigs.RenderUI();
+	
 	// Popups
 	RenderNoRootPopup();
 

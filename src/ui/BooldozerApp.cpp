@@ -64,7 +64,8 @@ bool LBooldozerApp::Setup() {
 
 	// Init imgui
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGuiIO& io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(mWindow, true);
@@ -171,7 +172,9 @@ void LBooldozerApp::Render(float deltaTime) {
 
 void LBooldozerApp::RenderUI(float deltaTime) {
     // Mode combo
-    ImGui::SetNextWindowPos(ImVec2(5, 25));
+	//TODO allow modes to switch mode? Perhaps app should have request change mode func
+	/*
+    ImGui::SetNextWindowPos(ImVec2(mWidth - 200, mHeight - 80));
     ImGui::SetNextWindowSize(ImVec2(195, 40));
 
     ImGui::Begin("mode combo window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
@@ -180,8 +183,9 @@ void LBooldozerApp::RenderUI(float deltaTime) {
     if (LUIUtility::RenderComboEnum<EEditorMode>("##modecombo", mEditorContext.CurrentMode))
         mEditorContext.ChangeMode();
 
-    LUIUtility::RenderTooltip("Editor mode. Determines what objects are visible and what can be edited.");
     ImGui::End();
+	
+    LUIUtility::RenderTooltip("Editor mode. Determines what objects are visible and what can be edited.");
 
     // Render distance slider
     ImGui::SetNextWindowPos(ImVec2(205, 25));
@@ -232,6 +236,7 @@ void LBooldozerApp::RenderUI(float deltaTime) {
     }
 
     ImGui::End();
+	*/
 
     bool openOptionsMenu = false;
 
@@ -247,20 +252,49 @@ void LBooldozerApp::RenderUI(float deltaTime) {
 
             ImGui::Separator();
 
-            if (ImGui::MenuItem("Save Map..."))
+			if (ImGui::MenuItem("Save Map Archive..."))
+                mEditorContext.onSaveMapArchiveCB();
+            
+			if (ImGui::MenuItem("Save Map..."))
                 mEditorContext.onSaveMapCB();
+			
 
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Edit"))
         {
+			if(ImGui::MenuItem("Actors")){
+				mEditorContext.CurrentMode = EEditorMode::Actor_Mode;
+				mEditorContext.ChangeMode();
+			}
+			if(ImGui::MenuItem("Doors")){
+				mEditorContext.CurrentMode = EEditorMode::Door_Mode;
+				mEditorContext.ChangeMode();
+			}
+			if(ImGui::MenuItem("Items")){
+				mEditorContext.CurrentMode = EEditorMode::Item_Mode;
+				mEditorContext.ChangeMode();
+			}
+			if(ImGui::MenuItem("Waves")){
+				mEditorContext.CurrentMode = EEditorMode::Enemy_Mode;
+				mEditorContext.ChangeMode();
+			}
+			if(ImGui::MenuItem("Paths")){
+				mEditorContext.CurrentMode = EEditorMode::Path_Mode;
+				mEditorContext.ChangeMode();
+			}
+			ImGui::Separator();
             if (ImGui::MenuItem("Options"))
                 openOptionsMenu = true;
+
+
 
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Tools"))
         {
+			if	(ImGui::MenuItem("Ghost Config Editor"))
+				mEditorContext.mGhostConfigs.mParamToolOpen = true; //bad
             if (ImGui::MenuItem("Playtest"))
                 mEditorContext.onPlaytestCB();
 

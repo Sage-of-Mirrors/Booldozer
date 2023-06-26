@@ -6,8 +6,6 @@
 #include <glad/glad.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-#include "border.h"
-#include "ObserverIcon.hpp"
 #include "imgui.h"
 #include "ImGuizmo.h"
 #include "Options.hpp"
@@ -16,6 +14,10 @@
 #include "io/BinIO.hpp"
 
 #include "cube_tex.h"
+
+#include "DOM/EventDOMNode.hpp"
+#include "DOM/GeneratorDOMNode.hpp"
+#include "DOM/PathDOMNode.hpp"
 
 #include <J3D/J3DUniformBufferObject.hpp>
 #include <J3D/J3DModelLoader.hpp>
@@ -107,7 +109,7 @@ const char* cube_frg_shader = "#version 460\n\
     {\n\
         vec4 baseColor = texture(texSampler, vec2(fragTexCoord.y, fragTexCoord.x));\n\
         outColor = baseColor;\n\
-        if(baseColor.a < 1.0 / 255.0) discard;\n\
+        if(baseColor.a < 1.0 / 1.0f) discard;\n\
     }\
 ";
 
@@ -211,7 +213,7 @@ void LCubeManager::init(){
         GLint logLen; 
         glGetProgramiv(mCubeProgram, GL_INFO_LOG_LENGTH, &logLen); 
         glGetProgramInfoLog(mCubeProgram, logLen, NULL, glErrorLogBuffer); 
-        printf("Shader Program Linking Error:\n%s\n", glErrorLogBuffer);
+        printf("Cube Shader Program Linking Error:\n%s\n", glErrorLogBuffer);
     } 
 
     glDetachShader(mCubeProgram, vs);
@@ -240,6 +242,21 @@ void LEditorScene::init(){
 	Initialized = true;
 	mCubeManager.init();
 
+	mPathRenderer.Init();
+	mPointManager.Init(512, 9);
+	
+	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "ice_generator.png", 0);
+	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "fire_generator.png", 1);
+	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "water_generator.png", 2);
+
+	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "event.png", 3);
+	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "observer.png", 4);
+	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "enemy_placeholder.png", 5);
+
+	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "rat1.png", 6);
+	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "rat3.png", 7);
+	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "soundobj.png", 8);
+
 	mDoorModels.reserve(14);
 	BinModel::InitShaders();
 	for (size_t f = 0; f < GCResourceManager.mGameArchive.dirnum; f++)
@@ -261,21 +278,37 @@ void LEditorScene::init(){
 	
 	GCarchive vrballArchive;
 
-	if(!GCResourceManager.LoadArchive((std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp").string().c_str(), &vrballArchive)){
-		std::cout << "skybox problem oop" << std::endl;
+	if(GCResourceManager.mGameArchive.filenum != 0){
+		GCarcfile* coinModelFile = GCResourceManager.GetFile(&GCResourceManager.mGameArchive, std::filesystem::path("kt_static") / "coin.bmd");
+		if(coinModelFile != nullptr){
+			//bStream::CMemoryStream modelData((uint8_t*)coinModelFile->data, coinModelFile->size, bStream::Endianess::Big, bStream::OpenMode::In);
+			//mCoinModel = Loader.Load(&modelData, 0);
+			//mCoin = mCoinModel->GetInstance();
+		} else {
+			std::cout << "Couldn't find coin" << std::endl;
+		}
 	}
 
-	GCarcfile* skyboxModel = GCResourceManager.GetFile(&vrballArchive, std::filesystem::path("vrball01.bmd"));
+	if((std::filesystem::exists(std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp"))){
 
-	if(skyboxModel != nullptr){
-		bStream::CMemoryStream modelData((uint8_t*)skyboxModel->data, skyboxModel->size, bStream::Endianess::Big, bStream::OpenMode::In);
-		mSkyboxModel = Loader.Load(&modelData, 0);
-		mSkyBox = mSkyboxModel->GetInstance();
-	} else {
-		std::cout << "Couldn't find skybox" << std::endl;
+		if(!GCResourceManager.LoadArchive((std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp").string().c_str(), &vrballArchive)){
+			std::cout << "skybox problem oop" << std::endl;
+		}
+
+		if(vrballArchive.filenum != 0){
+			GCarcfile* skyboxModel = GCResourceManager.GetFile(&vrballArchive, std::filesystem::path("vrball01.bmd"));
+
+			if(skyboxModel != nullptr){
+				bStream::CMemoryStream modelData((uint8_t*)skyboxModel->data, skyboxModel->size, bStream::Endianess::Big, bStream::OpenMode::In);
+				mSkyboxModel = Loader.Load(&modelData, 0);
+				mSkyBox = mSkyboxModel->GetInstance();
+			} else {
+				std::cout << "Couldn't find skybox" << std::endl;
+			}
+
+			gcFreeArchive(&vrballArchive);
+		}
 	}
-
-	gcFreeArchive(&vrballArchive);
 }
 
 glm::mat4 LEditorScene::getCameraView(){
@@ -302,10 +335,10 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 		{
 			std::shared_ptr<LRoomDOMNode> roomLocked = room.lock();
 			//vrball01.bmd
-			if(roomLocked->GetSkyboxEnabled()){
+			if(roomLocked->GetSkyboxEnabled() && mSkyBox != nullptr){
 				mSkyBox->SetTranslation(roomLocked->GetPosition());
 				mSkyBox->SetRotation({0,0,0});
-				mSkyBox->SetScale({10,10,10});
+				mSkyBox->SetScale({15,15,15});
 				mSkyBox->Render(0);
 				break;
 			}
@@ -320,7 +353,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	std::vector<glm::mat4> roomBounds;
+	mPointManager.mBillboards.clear();
 
 	for(auto door : mRoomDoors){
 		if (auto doorLocked = door.lock())
@@ -392,20 +425,41 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 							mRoomFurniture[node->GetName()]->Draw(node->GetMat());
 						}
 						break;
-					
-					case EDOMNodeType::RoomData:
-						{
-							glm::mat4 room = glm::scale(glm::translate(transform, node->GetPosition()), node->GetScale());
-							mCubeManager.render(&room, true);
-						}
-						break;
 
 					case EDOMNodeType::Character:
 					case EDOMNodeType::Generator:
+						if (node->GetName() == "elice"){
+							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 0, false, false});
+						} else if(node->GetName() == "elfire"){
+							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 1, false, false});
+						} else if(node->GetName() == "rat1"){
+							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 6, false, false});
+						} else if(node->GetName() == "rat3"){
+							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 7, false, false});
+						} else {
+							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 2, false, false});
+						}
+						break;
+					case EDOMNodeType::Event:
+						mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 3, false, false});
+						break;
 					case EDOMNodeType::Observer:
+						if(node->GetName() == "Sound Effect Player"){
+							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 8, false, false});
+						} else {
+							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 4, false, false});
+						}
+						break;
 					case EDOMNodeType::Object:
+						if(node->GetName() == "coin" && mCoin != nullptr){
+							mCoin->SetTranslation(node->GetPosition());
+							mCoin->SetRotation(node->GetRotation());
+							mCoin->SetScale({1,1,1});
+							mCoin->Render(0);
+						}
+						break;
 					case EDOMNodeType::Enemy:
-						mCubeManager.render(node->GetMat());
+						mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 5, false, false});
 						break;
 				}
 			});
@@ -413,6 +467,10 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 		}
 	}
 	//Draw GL Lines Based thing for room boundaries
+
+
+	mPointManager.Draw(&Camera);
+	mPathRenderer.Draw(&Camera);
 }
 
 bool LEditorScene::HasRoomLoaded(int32_t roomNumber){
@@ -430,6 +488,14 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 
 	mRoomModels.clear();
 	mRoomFurniture.clear();
+	mPathRenderer.mPaths.clear();
+	
+	auto paths = room->GetChildrenOfType<LPathDOMNode>(EDOMNodeType::Path);
+	
+	for(auto path : paths){
+		mPathRenderer.mPaths.push_back(path->mPathRenderable);
+		std::cout << "Added path " << path->GetName() << " to renderer" << std::endl; 
+	}
 
 	//This is ensured to exist, but check it anyway
 	if(roomData.size() != 0)
@@ -442,6 +508,40 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 		{
 			
 			auto curRoomData = aroom.lock()->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+
+
+			glm::vec4 color = (roomData.front() == curRoomData ? (glm::vec4){0.0f, 1.0f, 0.0f, 1.0f} : (glm::vec4){1.0f, 1.0f, 1.0f, 1.0f});
+
+			glm::vec3 min = curRoomData->GetMin();
+			glm::vec3 max = curRoomData->GetMax();
+			std::vector<CPathPoint> bounds_bottom = {
+				{min, color, 51200},
+				{{min.x, min.y, max.z}, color, 51200},
+				{{max.x, min.y, max.z}, color, 51200},
+				{{max.x, min.y, min.z}, color, 51200},
+				{min, color, 51200},
+			};
+
+			std::vector<CPathPoint> bounds_top = {
+				{max, color, 51200},
+				{{max.x, max.y, min.z}, color, 51200},
+				{{min.x, max.y, min.z}, color, 51200},
+				{{min.x, max.y, max.z}, color, 51200},
+				{max, color, 51200},
+			};
+
+			std::vector<CPathPoint> bounds_edge1 = {{min, color, 51200}, {{min.x, max.y, min.z}, color, 51200}};
+			std::vector<CPathPoint> bounds_edge2 = {{{max.x, min.y, min.z}, color, 51200}, {{max.x, max.y, min.z}, color, 51200}};
+			std::vector<CPathPoint> bounds_edge3 = {{{min.x, min.y, max.z}, color, 51200}, {{min.x, max.y, max.z}, color, 51200}};
+			std::vector<CPathPoint> bounds_edge4 = {{max, color, 51200}, {{max.x, min.y, max.z}, color, 51200}};
+
+			mPathRenderer.mPaths.push_back(bounds_bottom);
+			mPathRenderer.mPaths.push_back(bounds_top);
+
+			mPathRenderer.mPaths.push_back(bounds_edge1);
+			mPathRenderer.mPaths.push_back(bounds_edge2);
+			mPathRenderer.mPaths.push_back(bounds_edge3);
+			mPathRenderer.mPaths.push_back(bounds_edge4);
 
 			std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(curRoomData->GetResourcePath()).relative_path();
 			
@@ -477,7 +577,10 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 				mRoomModels.push_back(std::make_shared<BinModel>(&bin));
 			}
 		}
+
 	}
+
+	mPathRenderer.UpdateData();
 }
 
 void LEditorScene::update(GLFWwindow* window, float dt, LEditorSelection* selection)

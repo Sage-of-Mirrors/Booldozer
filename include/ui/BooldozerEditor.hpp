@@ -32,8 +32,6 @@ class LBooldozerEditor
 	// The map that is currently being edited.
 	std::shared_ptr<LMapDOMNode> mLoadedMap;
 
-	// Param files for this root
-	LPrmIO mGhostConfigs;
 
 /*=== Editor modes ===*/
 	// The mode that is currently executing.
@@ -54,6 +52,9 @@ class LBooldozerEditor
 
 public:
 	LBooldozerEditor();
+	
+	// Param files for this root
+	LPrmIO mGhostConfigs;
 
 	EEditorMode CurrentMode;
 
@@ -76,4 +77,5 @@ public:
 
 	// Switches the current mode to the given new one.
 	void ChangeMode();
+
 };

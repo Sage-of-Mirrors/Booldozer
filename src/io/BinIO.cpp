@@ -548,7 +548,11 @@ void BinScenegraphNode::AddMesh(int16_t material, int16_t mesh){
 }
 
 void BinScenegraphNode::Draw(glm::mat4 localTransform, glm::mat4* instance, BinModel* bin, bool bIgnoreTransforms){
-    glUniformMatrix4fv(glGetUniformLocation(mProgramID, "transform"), 1, 0, &(*instance * localTransform * transform)[0][0]);
+    if(!bIgnoreTransforms){
+        glUniformMatrix4fv(glGetUniformLocation(mProgramID, "transform"), 1, 0, &(*instance * localTransform * transform)[0][0]);
+    } else {
+        glUniformMatrix4fv(glGetUniformLocation(mProgramID, "transform"), 1, 0, &(*instance)[0][0]);
+    }
     for (auto& mesh : meshes)
     {
         bin->BindMesh(mesh.first);
@@ -719,6 +723,13 @@ void BinModel::TranslateRoot(glm::vec3 translation){
 }
 
 void BinModel::Draw(glm::mat4* transform, bool bIgnoreTransforms){
+    glFrontFace(GL_CW);
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glUseProgram(mProgramID);
     mRoot->Draw(glm::identity<glm::mat4>(), transform, this, bIgnoreTransforms);
 }

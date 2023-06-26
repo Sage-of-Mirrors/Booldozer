@@ -4,6 +4,7 @@
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "fmt/core.h"
+#include "UIUtil.hpp"
 
 LEventDataDOMNode::LEventDataDOMNode(std::string name) : Super(name)
 {

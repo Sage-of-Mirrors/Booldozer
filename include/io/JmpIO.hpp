@@ -1,11 +1,11 @@
 #pragma once
 
 #include "../lib/bStream/bstream.h"
+#include <nlohmann/json.hpp>
 #include "GenUtil.hpp"
 #include <memory>
 #include <vector>
-
-#include <nlohmann/json.hpp>
+#include <map>
 
 constexpr size_t JMP_HEADER_SIZE = 16;
 constexpr size_t JMP_FIELD_DEF_SIZE = 12;
@@ -52,6 +52,10 @@ struct LJmpFieldInfo
 	EJmpFieldType Type;
 };
 
+typedef std::tuple<uint32_t, float, std::string> LJmpValue; 
+
+typedef std::map<uint32_t, LJmpValue> LJmpEntry;
+
 // Handles reading and writing data from the map JMP files.
 class LJmpIO
 {
@@ -64,14 +68,15 @@ class LJmpIO
 	// Size of an entry in this JMP file.
 	uint32_t mEntrySize { 0 };
 
-	// Size of a string. Can vary between 16 and 32.
+	// Size of a string. Can vary between 16 and 32. BCSV uses this for _inline_ strings!
 	size_t mStringSize { 32 };
+
+	size_t mStringTableSize { 0 };
 
 	// A vector of the fields that define the data within the JMP entries.
 	std::vector<LJmpFieldInfo> mFields;
 
-	// Pointer to the data blob containing the entries in this JMP file.
-	uint8_t* mData { nullptr };
+	std::vector<LJmpEntry> mData;
 
 	// Hashes the given field name so that the field can be found from the list of loaded instances.
 	uint32_t HashFieldName(std::string name) const;
@@ -82,29 +87,21 @@ class LJmpIO
 	// Returns a pointer to the field info corresponding to the given hash if it exists within this JMP file,
 	// or nullptr if it does not exist.
 	const LJmpFieldInfo* FetchJmpFieldInfo(uint32_t hash);
-	// Retrieves the unsigned integer at the given offset from this JMP file's entry data.
-	uint32_t PeekU32(uint32_t offset);
-	// Retrieves the signed integer at the given offset from this JMP file's entry data.
-	int32_t PeekS32(uint32_t offset);
-	// Retrieves the float at the given offset from this JMP file's entry data.
-	float PeekF32(uint32_t offset);
 
-	bool PokeU32(uint32_t offset, uint32_t value);
-	bool PokeS32(uint32_t offset, int32_t value);
-	bool PokeF32(uint32_t offset, float value);
 
 	// Recalculates the size of each entry by examining the fields defining the entry data.
 	uint32_t CalculateNewEntrySize();
 
 public:
 	LJmpIO();
+	~LJmpIO();
 
 	int32_t GetEntryCount() const { return mEntryCount; }
 	uint32_t GetEntrySize() const { return mEntrySize; }
 	int32_t GetFieldCount() const { return mFieldCount; }
 
 	size_t GetStringSize() const { return mStringSize; }
-	void SetStringSize(uint32_t newStringSize) { mStringSize = newStringSize; }
+	void SetStringSize(uint32_t nestringSize) { mStringSize = nestringSize; }
 
 	size_t CalculateNewFileSize(size_t entityCount) { return LGenUtility::PadToBoundary(JMP_HEADER_SIZE + (mFieldCount * JMP_FIELD_DEF_SIZE) + (entityCount * mEntrySize), 32); }
 

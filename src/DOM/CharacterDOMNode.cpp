@@ -77,11 +77,12 @@ void LCharacterDOMNode::RenderDetailsUI(float dt)
 
 void LCharacterDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 {
+
 	JmpIO->SetString(entry_index, "name", mName);
 	JmpIO->SetString(entry_index, "create_name", mCreateName);
 	JmpIO->SetString(entry_index, "path_name", mPathName);
 	JmpIO->SetString(entry_index, "CodeName", mCodeName);
-
+	
 	JmpIO->SetFloat(entry_index, "pos_x", mPosition.z);
 	JmpIO->SetFloat(entry_index, "pos_y", mPosition.y);
 	JmpIO->SetFloat(entry_index, "pos_z", mPosition.x);
@@ -90,6 +91,8 @@ void LCharacterDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetFloat(entry_index, "dir_y", mRotation.y);
 	JmpIO->SetFloat(entry_index, "dir_z", mRotation.x);
 
+
+	std::cout << "Writing character " << mName << " as in room " << mRoomNumber << std::endl;
 	JmpIO->SetSignedInt(entry_index, "room_no", mRoomNumber);
 
 	JmpIO->SetSignedInt(entry_index, "appear_flag", mSpawnFlag);

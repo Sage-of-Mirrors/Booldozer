@@ -81,14 +81,54 @@ bool LResUtility::LGCResourceManager::LoadArchive(const char* path, GCarchive* a
 	return true;
 }
 
+bool LResUtility::LGCResourceManager::ReplaceArchiveFileData(GCarcfile* file, uint8_t* new_data, size_t new_data_size){
+	if(!mInitialized) return false;
+	
+	// free existing file
+	gcFreeMem(&mResManagerContext, file->data);
+
+	//allocate size of new file
+	file->data = gcAllocMem(&mResManagerContext, new_data_size);
+		
+	//copy new jmp to file buffer for arc
+	memcpy(file->data, new_data, new_data_size);
+
+	//set size properly
+	file->size = new_data_size;
+
+	return true;
+}
+
+bool LResUtility::LGCResourceManager::SaveArchiveCompressed(const char* path, GCarchive* archive)
+{
+	if(!mInitialized) return false;
+
+	GCsize outSize = gcSaveArchive(archive, NULL);
+	GCuint8* archiveOut = new GCuint8[outSize];
+	GCuint8* archiveCmp = new GCuint8[outSize];
+
+	gcSaveArchive(archive, archiveOut);
+	GCsize cmpSize = gcYay0Compress(&mResManagerContext, archiveOut, archiveCmp, outSize);
+	
+	std::ofstream fileStream;
+	fileStream.open(path, std::ios::binary | std::ios::out);
+	fileStream.write((const char*)archiveCmp, cmpSize);
+	fileStream.close();
+
+	delete archiveOut;
+	delete archiveCmp;
+
+	return true;
+}
+
 GCarcfile* LResUtility::LGCResourceManager::GetFile(GCarchive* archive, std::filesystem::path filepath){
 	int dirID = 0;
-	for(std::string component : filepath){
+	for(auto component : filepath){
 		for (GCarcfile* file = &archive->files[archive->dirs[dirID].fileoff]; file < &archive->files[archive->dirs[dirID].fileoff] + archive->dirs[dirID].filenum; file++){
-			if(strcmp(file->name, component.c_str()) == 0 && (file->attr & 0x02)){
+			if(strcmp(file->name, component.string().c_str()) == 0 && (file->attr & 0x02)){
 				dirID = file->size;
 				break;
-			} else if(strcmp(file->name, component.c_str()) == 0 && !(file->attr & 0x02)) {
+			} else if(strcmp(file->name, component.string().c_str()) == 0 && !(file->attr & 0x02)) {
 				return file;
 			}
 		}
@@ -131,7 +171,7 @@ nlohmann::ordered_json LResUtility::GetNameMap(std::string name)
 
 nlohmann::ordered_json LResUtility::GetMirrorTemplate(std::string name)
 {
-	std::filesystem::path fullPath = std::filesystem::current_path() / RES_BASE_PATH / LGenUtility::Format(name, ".json");
+	std::filesystem::path fullPath = std::filesystem::current_path() / RES_BASE_PATH / fmt::format("{0}.json", name);
 
 	return DeserializeJSON(fullPath);
 }

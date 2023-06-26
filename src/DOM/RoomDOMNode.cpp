@@ -12,6 +12,8 @@ std::string const LRoomEntityTreeNodeNames[LRoomEntityType_Max] = {
 	"Objects",
 	"Observers",
 	"Paths",
+	"Events",
+	"Mirrors",
 	"Characters (Blackout)",
 	"Enemies (Blackout)",
 	"Observers (Blackout)"
@@ -27,6 +29,8 @@ LRoomEntityType DOMToEntityType(EDOMNodeType type){
 	case EDOMNodeType::Generator: return LRoomEntityType_Generators;
 	case EDOMNodeType::Path: return LRoomEntityType_Paths;
 	case EDOMNodeType::Character: return LRoomEntityType_Characters;
+	case EDOMNodeType::Event: return LRoomEntityType_Events;
+	case EDOMNodeType::Mirror: return LRoomEntityType_Mirrors;
 	
 	default: return LRoomEntityType_Max;
 	}
@@ -297,10 +301,12 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 	auto dataNode = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
 
 	// Integers
-	ImGui::InputInt("Lightning Frequency", &mThunder);
+	ImGui::Text("Lightning Frequency");
+	ImGui::InputInt("##LightningFrequency", &mThunder);
 	LUIUtility::RenderTooltip("How frequently thunder and lightning occurs while in this room.");
 
-	ImGui::InputInt("Dust Intensity", &mDustLevel);
+	ImGui::Text("Dust Intensity");
+	ImGui::InputInt("##DustIntensity", &mDustLevel);
 	LUIUtility::RenderTooltip("How dusty this room is.");
 
 	ImGui::InputInt("Light Falloff", &mDistance);
@@ -314,6 +320,15 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 	LUIUtility::RenderTooltip("???");
 	ImGui::InputInt("Sound Room Size", &mSoundRoomSize);
 	LUIUtility::RenderTooltip("???");
+
+	// Bounding Box
+	ImGui::Text("Bounding Box");
+	glm::vec3 min = dataNode->GetMin();
+	glm::vec3 max = dataNode->GetMax();
+	ImGui::InputFloat3("Min", &min[0]);
+	ImGui::InputFloat3("Max", &max[0]);
+	dataNode->SetMin(min);
+	dataNode->SetMax(max);
 
 	// Colors
 	ImGui::ColorEdit3("Darkened Color", dataNode->GetDarkColor());
@@ -329,7 +344,7 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 
 	LUIUtility::RenderNodeReferenceVector("Adjacent Rooms", EDOMNodeType::Room, Parent, dataNode->GetAdjacencyList());
 
-	dataNode->RenderTransformUI();
+	//dataNode->RenderTransformUI();
 
 	ImGui::NewLine();
 	ImGui::Separator();
@@ -437,6 +452,12 @@ bool LRoomDOMNode::CompleteLoad()
 				break;
 			case LRoomEntityType_Paths:
 				findType = EDOMNodeType::Path;
+				break;
+			case LRoomEntityType_Mirrors:
+				findType = EDOMNodeType::Mirror;
+				break;
+			case LRoomEntityType_Events:
+				findType = EDOMNodeType::Event;
 				break;
 			default:
 				break;

@@ -1,5 +1,6 @@
 #include "modes/ActorMode.hpp"
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "ImGuizmo.h"
 #include "UIUtil.hpp"
 
@@ -10,9 +11,14 @@ LActorMode::LActorMode()
 
 void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 {
-	ImGui::Begin("Scene Hierarchy");
+	
+	ImGui::Begin("sceneHierarchy", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
 
-	mRoomChanged = LUIUtility::RenderNodeReferenceCombo("Room to Render", EDOMNodeType::Room, current_map, mManualRoomSelect);
+	ImGui::Text("Rooms");
+	ImGui::Separator();
+
+	ImGui::Text("Current Room");
+	mRoomChanged = LUIUtility::RenderNodeReferenceCombo("##selectedRoom", EDOMNodeType::Room, current_map, mManualRoomSelect);
 
 	auto rooms = current_map->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
 	for (uint32_t i = 0; i < rooms.size(); i++)
@@ -27,7 +33,10 @@ void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 
 void LActorMode::RenderDetailsWindow()
 {
-	ImGui::Begin("Selected Object Details");
+	ImGui::Begin("detailWindow", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
+
+	ImGui::Text("Object Details");
+	ImGui::Separator();
 
 	if (mSelectionManager.IsMultiSelection())
 		ImGui::Text("[Multiple Selection]");
@@ -39,47 +48,38 @@ void LActorMode::RenderDetailsWindow()
 
 void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene)
 {
+	//LUIUtility::RenderGizmoToggle();
+	const ImGuiViewport* mainViewport = ImGui::GetMainViewport();
 
-	//render prefabs
-	ImGui::Begin("Prefab Nodes");
+	ImGuiDockNodeFlags dockFlags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_AutoHideTabBar | ImGuiDockNodeFlags_NoDockingInCentralNode;
+	mMainDockSpaceID = ImGui::DockSpaceOverViewport(mainViewport, dockFlags);
+	
+	if(!bIsDockingSetUp){
+		ImGui::DockBuilderRemoveNode(mMainDockSpaceID); // clear any previous layout
+		ImGui::DockBuilderAddNode(mMainDockSpaceID, dockFlags | ImGuiDockNodeFlags_DockSpace);
+		ImGui::DockBuilderSetNodeSize(mMainDockSpaceID, mainViewport->Size);
 
-	if(ImGui::TreeNode("Nodes")){
-		if(ImGui::BeginDragDropTarget()){
-			LDOMNodeBase* dragDropNode = nullptr;
 
-			const ImGuiPayload* payload = ImGui::GetDragDropPayload();
+		mDockNodeLeftID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Left, 0.25f, nullptr, &mMainDockSpaceID);
+		mDockNodeRightID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Right, 0.25f, nullptr, &mMainDockSpaceID);
+		mDockNodeDownLeftID = ImGui::DockBuilderSplitNode(mDockNodeLeftID, ImGuiDir_Down, 0.5f, nullptr, &mDockNodeUpLeftID);
 
-			if (payload != nullptr && payload->Data != nullptr)
-			{
-				if (ImGui::AcceptDragDropPayload(payload->DataType) != nullptr) dragDropNode = *(LEntityDOMNode**)payload->Data;
-			}
 
-			// Skip if there's no pending drag and drop to handle
-			if (dragDropNode != nullptr)
-			{
-				std::shared_ptr<LEntityDOMNode> sharedNode = dragDropNode->GetSharedPtr<LEntityDOMNode>(EDOMNodeType::Entity);
+		ImGui::DockBuilderDockWindow("sceneHierarchy", mDockNodeUpLeftID);
+		ImGui::DockBuilderDockWindow("detailWindow", mDockNodeDownLeftID);
+		ImGui::DockBuilderDockWindow("toolWindow", mDockNodeRightID);
 
-				//if(mNodePrefabs.count(sharedNode) == 0){ //make sure we only add it once
-					mNodePrefabs.push_back(sharedNode);
-				//}
-			}
-			ImGui::EndDragDropTarget();
-		}
-
-		for (auto node : mNodePrefabs)
-		{
-			std::static_pointer_cast<LUIRenderDOMNode>(node)->RenderHierarchyUI(node, &mSelectionManager);
-		}
-		
-
-		ImGui::TreePop();
+		ImGui::DockBuilderFinish(mMainDockSpaceID);
+		bIsDockingSetUp = true;
 	}
 
-	ImGui::End();
+	ImGuiWindowClass mainWindowOverride;
+	mainWindowOverride.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
+	ImGui::SetNextWindowClass(&mainWindowOverride);
 
-
-	//LUIUtility::RenderGizmoToggle();
 	RenderSceneHierarchy(current_map);
+
+	ImGui::SetNextWindowClass(&mainWindowOverride);
 	RenderDetailsWindow();
 	
 	for(auto& node : current_map.get()->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)){
@@ -96,7 +96,7 @@ void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 			}
 		}
 
-		glm::mat4* m = ((LBGRenderDOMNode*)(mSelectionManager.GetPrimarySelection().get()))->GetMat();
+		glm::mat4* m = static_cast<LBGRenderDOMNode*>(mSelectionManager.GetPrimarySelection().get())->GetMat();
 		glm::mat4 view = renderer_scene->getCameraView();
 		glm::mat4 proj = renderer_scene->getCameraProj();
 		ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::LOCAL, &(*m)[0][0], NULL, NULL);

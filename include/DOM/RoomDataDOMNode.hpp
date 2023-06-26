@@ -31,6 +31,8 @@ class LRoomDataDOMNode : public LBGRenderDOMNode
 	std::string mResourcePath;
 	std::vector<std::string> mAltResPaths;
 
+	glm::vec3 bbmin, bbmax;
+
 	void DeconstructBoundingBox(const glm::vec3& min, const glm::vec3& max);
 	void ConstructBoundingBox(glm::vec3& min, glm::vec3& max);
 
@@ -51,6 +53,12 @@ public:
 
 	std::vector<std::weak_ptr<LRoomDOMNode>>& GetAdjacencyList() { return mAdjacentRooms; }
 	std::vector<std::weak_ptr<LDoorDOMNode>> GetDoorList() { return mDoorList; }
+
+	glm::vec3 GetMin() { return bbmin; }
+	glm::vec3 GetMax() { return bbmax; }
+
+	void SetMin(glm::vec3 min) { bbmin = min; }
+	void SetMax(glm::vec3 max) { bbmax = max; }
 
 	float* GetDarkColor() { return &mDarkColor.r; }
 

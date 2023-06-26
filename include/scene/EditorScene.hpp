@@ -21,6 +21,9 @@
 #include <J3D/J3DLight.hpp>
 #include <J3D/J3DModelInstance.hpp>
 
+#include "UPathRenderer.hpp"
+#include "UPointSpriteManager.hpp"
+
 class LCubeManager {
 private:
     uint32_t mVao, mVbo, mIbo, mCubeProgram, mCubeTex;
@@ -41,6 +44,8 @@ class LEditorScene {
     glm::mat4 gridMatrix;
 
     LCubeManager mCubeManager;
+    CPointSpriteManager mPointManager;
+    CPathRenderer mPathRenderer;
     
     std::vector<std::weak_ptr<LDoorDOMNode>> mRoomDoors;
     std::vector<std::weak_ptr<LRoomDOMNode>> mCurrentRooms;
@@ -49,8 +54,9 @@ class LEditorScene {
     std::vector<std::shared_ptr<BinModel>> mDoorModels;
     std::vector<std::shared_ptr<BinModel>> mRoomModels;
     std::map<std::string, std::shared_ptr<BinModel>> mRoomFurniture;
-    std::shared_ptr<J3DModelData> mSkyboxModel;
-    std::shared_ptr<J3DModelInstance> mSkyBox;
+
+    std::shared_ptr<J3DModelData> mSkyboxModel, mCoinModel;
+    std::shared_ptr<J3DModelInstance> mSkyBox, mCoin;
 
 public:
     LSceneCamera Camera;

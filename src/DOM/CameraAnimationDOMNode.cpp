@@ -15,7 +15,7 @@ void LCameraAnimationDOMNode::RenderDetailsUI(float dt, LSceneCamera* camera)
     if(ImGui::Button(">"))
     {
         mPlaying = true;
-        camera->mCamMode = ANIMATION;
+        camera->mCamMode = ECamMode::ANIMATION;
 
         camera->SetEye(glm::vec3(mPosFramesX.mFrames[mPosFramesX.mKeys[0]].value, mPosFramesY.mFrames[mPosFramesY.mKeys[0]].value, mPosFramesZ.mFrames[mPosFramesZ.mKeys[0]].value));
         camera->SetCenter(glm::vec3(mTargetFramesX.mFrames[mTargetFramesX.mKeys[0]].value, mTargetFramesY.mFrames[mTargetFramesY.mKeys[0]].value, mTargetFramesZ.mFrames[mTargetFramesZ.mKeys[0]].value));
@@ -38,14 +38,14 @@ void LCameraAnimationDOMNode::RenderDetailsUI(float dt, LSceneCamera* camera)
 
     if(ImGui::Button("||")){
         mPlaying = false;
-        camera->mCamMode = FLY;
+        camera->mCamMode = ECamMode::FLY;
     }
 
     if(mPlaying)
     {
-        if(camera->mCamMode != ANIMATION)
+        if(camera->mCamMode != ECamMode::ANIMATION)
         {
-            camera->mCamMode = ANIMATION;
+            camera->mCamMode = ECamMode::ANIMATION;
         }
 
 

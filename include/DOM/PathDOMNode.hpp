@@ -2,6 +2,7 @@
 
 #include "EntityDOMNode.hpp"
 #include "io/JmpIO.hpp"
+#include "UPathRenderer.hpp"
 
 struct GCarchive;
 class LRoomDOMNode;
@@ -92,6 +93,8 @@ public:
 	size_t GetNumPoints() { return Children.size(); }
 
 	virtual void RenderDetailsUI(float dt) override;
+	
+	std::vector<CPathPoint> mPathRenderable;
 
 	// Writes the data this JMP node into the given LJmpIO instance at the specified entry.
 	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const override;

@@ -30,9 +30,9 @@ void LSceneCamera::Update(GLFWwindow* window, float dt)
 		if (LInput::GetKey(GLFW_KEY_S))
 			moveDir += mForward;
 		if (LInput::GetKey(GLFW_KEY_D))
-			moveDir -= mRight;
-		if (LInput::GetKey(GLFW_KEY_A))
 			moveDir += mRight;
+		if (LInput::GetKey(GLFW_KEY_A))
+			moveDir -= mRight;
 	}
 	else if(mCamMode == ECamMode::ORBIT) {
 		if (LInput::GetKey(GLFW_KEY_W))
@@ -40,9 +40,9 @@ void LSceneCamera::Update(GLFWwindow* window, float dt)
 		if (LInput::GetKey(GLFW_KEY_S))
 			moveDir -= glm::normalize(mCenter - mEye);
 		if (LInput::GetKey(GLFW_KEY_D))
-			moveDir -= glm::normalize(glm::cross(mCenter - mEye, UNIT_Y));
-		if (LInput::GetKey(GLFW_KEY_A))
 			moveDir += glm::normalize(glm::cross(mCenter - mEye, UNIT_Y));
+		if (LInput::GetKey(GLFW_KEY_A))
+			moveDir -= glm::normalize(glm::cross(mCenter - mEye, UNIT_Y));
 		if (LInput::GetKey(GLFW_KEY_E))
 			moveDir += mUp;
 		if (LInput::GetKey(GLFW_KEY_Q))
@@ -68,9 +68,9 @@ void LSceneCamera::Update(GLFWwindow* window, float dt)
 			}
 
 			if(mouseDelta.y < 0){
-				moveDir -= mUp;
-			} else if(mouseDelta.y > 0) {
 				moveDir += mUp;
+			} else if(mouseDelta.y > 0) {
+				moveDir -= mUp;
 			}
 
 		}
@@ -90,7 +90,7 @@ void LSceneCamera::Rotate(float deltaTime, glm::vec2 mouseDelta)
 		return;
 
 	mPitch += mouseDelta.y * deltaTime * mMouseSensitivity;
-	mYaw += mouseDelta.x * deltaTime * mMouseSensitivity;
+	mYaw += -mouseDelta.x * deltaTime * mMouseSensitivity;
 
 	mPitch = std::clamp(mPitch, LOOK_UP_MIN, LOOK_UP_MAX);
 
