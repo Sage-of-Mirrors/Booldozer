@@ -73,19 +73,20 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 				csvName.replace(0, 5, "message");
 				std::shared_ptr<LEventDataDOMNode> eventData =  std::make_shared<LEventDataDOMNode>(eventName);
+				eventData->SetEventArchivePath(archive.path().string());
 
 				for (size_t i = 0; i < eventArc.filenum; i++)
 				{
 					if((eventName + ".txt").compare(eventArc.files[i].name) == 0)
 					{
-						eventData->mEventScript = std::string((char*)eventArc.files[i].data);
+						eventData->mEventScript = LGenUtility::SjisToUtf8(std::string((char*)eventArc.files[i].data));
 					}
 					else if((csvName + ".csv").compare(eventArc.files[i].name) == 0)
 					{
 						std::string curline;
-						std::stringstream csv_data((char*)eventArc.files[i].data);
-						while (std::getline(csv_data, curline)){
-							eventData->mEventText.push_back(curline);
+						std::stringstream lines(LGenUtility::SjisToUtf8(std::string((char*)eventArc.files[i].data)));
+						while (std::getline(lines, curline, '\n')){
+							eventData->mEventText.push_back(LGenUtility::SjisToUtf8(curline));
 						}
 						
 					} 
@@ -105,6 +106,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 				
 				AddChild(eventData);
 			}
+			gcFreeArchive(&eventArc);
 		}
 		
 	}

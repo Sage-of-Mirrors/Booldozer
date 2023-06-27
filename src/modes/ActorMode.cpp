@@ -97,7 +97,6 @@ void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 
 		glm::mat4 view = renderer_scene->getCameraView();
 		glm::mat4 proj = renderer_scene->getCameraProj();
-		std::cout << "Selected: " << mSelectionManager.GetPrimarySelection()->GetNodeTypeString() << std::endl;
 		if(mSelectionManager.GetPrimarySelection().get()->GetNodeType() != EDOMNodeType::Room){
 			glm::mat4* m = static_cast<LBGRenderDOMNode*>(mSelectionManager.GetPrimarySelection().get())->GetMat();
 			if(ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::LOCAL, &(*m)[0][0], NULL, NULL)){

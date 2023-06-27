@@ -64,7 +64,9 @@ void LEventMode::RenderDetailsWindow(LSceneCamera* camera)
 			selection->RenderDetailsUI(0, &mEditor);
 			ImGui::End();
 		} else {
-			ImGui::Begin("Camera Animation", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+			ImGui::Begin("bottomPanel");
+			ImGui::Text("Camera Animation");
+			ImGui::Separator();
 			std::static_pointer_cast<LCameraAnimationDOMNode>(mSelectionManager.GetPrimarySelection())->RenderDetailsUI(0, camera);
 			ImGui::End();
 		}
@@ -86,11 +88,13 @@ void LEventMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 		mDockNodeLeftID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Left, 0.25f, nullptr, &mMainDockSpaceID);
 		mDockNodeRightID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Right, 0.25f, nullptr, &mMainDockSpaceID);
 		mDockNodeDownLeftID = ImGui::DockBuilderSplitNode(mDockNodeLeftID, ImGuiDir_Down, 0.5f, nullptr, &mDockNodeUpLeftID);
+		mDockNodeBottom = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Down, 0.25f, nullptr, &mMainDockSpaceID);
 
 
 		ImGui::DockBuilderDockWindow("sceneHierarchy", mDockNodeUpLeftID);
 		ImGui::DockBuilderDockWindow("detailWindow", mDockNodeDownLeftID);
 		ImGui::DockBuilderDockWindow("toolWindow", mDockNodeRightID);
+		ImGui::DockBuilderDockWindow("bottomPanel", mDockNodeBottom);
 
 		ImGui::DockBuilderFinish(mMainDockSpaceID);
 		bIsDockingSetUp = true;

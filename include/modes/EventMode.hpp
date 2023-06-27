@@ -13,6 +13,7 @@ class LEventMode : public LEditorModeBase
 	TextEditor mEditor;
 	std::shared_ptr<LEventDataDOMNode> mSelected;
 
+	uint32_t mDockNodeBottom;
 
 public:
 	LEventMode();
