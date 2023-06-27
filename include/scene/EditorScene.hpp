@@ -58,6 +58,8 @@ class LEditorScene {
     std::shared_ptr<J3DModelData> mSkyboxModel, mCoinModel;
     std::shared_ptr<J3DModelInstance> mSkyBox, mCoin;
 
+    uint32_t mSelectedRoomNumber;
+
 public:
     LSceneCamera Camera;
     std::vector<LSceneCamera*> mViewports;
@@ -67,6 +69,8 @@ public:
 
     void SetRoom(std::shared_ptr<LRoomDOMNode> room);
     bool HasRoomLoaded(int32_t roomNumber);
+
+    void UpdateRenderers();
     void RenderSubmit(uint32_t m_width, uint32_t m_height);
 
     void init();

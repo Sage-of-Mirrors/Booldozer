@@ -186,6 +186,10 @@ void LPathDOMNode::PostProcess()
 	}
 }
 
+
+void LPathDOMNode::RenderPath(CPathRenderer* renderer){
+}
+
 void LPathDOMNode::PreProcess()
 {
 	if (auto nextPathLocked = mNextPathRef.lock())
@@ -198,14 +202,6 @@ void LPathDOMNode::PostProcess(const GCarchive& mapArchive)
 {
 
 	// Find the correct path file in the archive
-	/*for (uint32_t i = 0; i < mapArchive.filenum; i++)
-	{
-		if (strcmp(mapArchive.files[i].name, mName.c_str()) == 0)
-		{
-			fileMemStream = bStream::CMemoryStream(static_cast<uint8_t*>(mapArchive.files[i].data), mapArchive.files[i].size, bStream::Endianess::Big, bStream::OpenMode::In);
-			break;
-		}
-	}*/
 
 	GCarcfile* pathFile = GCResourceManager.GetFile((GCarchive*)&mapArchive, std::filesystem::path("path") / mName);
 	
@@ -223,6 +219,8 @@ void LPathDOMNode::PostProcess(const GCarchive& mapArchive)
 	float g = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 	float b = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 
+	mPathColor = {r, g, b, 1.0f};
+
 	for (size_t i = 0; i < mNumPoints; i++)
 	{
 		std::shared_ptr<LPathPointDOMNode> newPoint = std::make_shared<LPathPointDOMNode>("Path Point");
@@ -232,7 +230,7 @@ void LPathDOMNode::PostProcess(const GCarchive& mapArchive)
 		AddChild(newPoint);
 
 		newPoint->PostProcess();
-		mPathRenderable.push_back({newPoint->GetPosition(), {r, g, b, 1.0f}, 12800});
+		mPathRenderable.push_back({newPoint->GetPosition(), mPathColor, 12800});
 	}
 
 	// Boo escape paths are defined outside of the rooms they're for; skip sorting them.

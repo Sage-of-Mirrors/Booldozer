@@ -11,13 +11,6 @@ class LActorMode : public LEditorModeBase
 	std::vector<std::shared_ptr<LEntityDOMNode>> mNodePrefabs;
 
 	bool mRoomChanged { false };
-	bool bIsDockingSetUp { false };
-
-	uint32_t mMainDockSpaceID { 0 };
-	uint32_t mDockNodeLeftID { 0 };
-	uint32_t mDockNodeRightID { 0 };
-	uint32_t mDockNodeUpLeftID { 0 };
-	uint32_t mDockNodeDownLeftID { 0 };
 	
 public:
 	LActorMode();

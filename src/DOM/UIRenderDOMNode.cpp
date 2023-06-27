@@ -16,5 +16,5 @@ void LUIRenderDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEd
 
 void LUIRenderDOMNode::RenderDetailsUI(float dt)
 {
-    ImGui::Text(mName.c_str());
+    ImGui::Text("%s", mName.c_str());
 }

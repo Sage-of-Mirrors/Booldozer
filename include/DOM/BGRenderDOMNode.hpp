@@ -25,6 +25,8 @@ public:
 	// Renders this node to the main window's background.
 	virtual void RenderBG(float dt);
 
+	virtual void Manipulate();
+
 	// Returns this node's position.
 	glm::vec3 GetPosition() { return mPosition; }
 	// Returns this node's rotation.

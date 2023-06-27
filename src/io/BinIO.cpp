@@ -6,7 +6,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
 #include <J3D/J3DTexture.hpp>
-#include <geometry/GXGeometryEnums.hpp>
+#include <GXGeometryEnums.hpp>
 
 /*
 *

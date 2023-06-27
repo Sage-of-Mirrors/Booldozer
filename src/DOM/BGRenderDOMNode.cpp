@@ -8,6 +8,10 @@ LBGRenderDOMNode::LBGRenderDOMNode(std::string name) : LUIRenderDOMNode(name),
 	mType = EDOMNodeType::BGRender;
 }
 
+void LBGRenderDOMNode::Manipulate(){
+	
+}
+
 void LBGRenderDOMNode::RenderBG(float dt)
 {
 	if(!GetIsInitialized()){

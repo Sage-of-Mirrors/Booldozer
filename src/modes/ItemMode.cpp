@@ -1,5 +1,6 @@
 #include "modes/ItemMode.hpp"
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "ImGuizmo.h"
 #include "UIUtil.hpp"
 
@@ -10,7 +11,9 @@ LItemMode::LItemMode()
 
 void LItemMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 {
-	ImGui::Begin("Item Data");
+	ImGui::Begin("sceneHierarchy");
+	ImGui::Text("Item Data");
+	ImGui::Separator();
 
 	auto iteminfos = current_map->GetChildrenOfType<LItemInfoDOMNode>(EDOMNodeType::ItemInfo);
 	bool definitionTreeOpened = ImGui::TreeNode("Item Definitions");
@@ -122,7 +125,9 @@ void LItemMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 
 void LItemMode::RenderDetailsWindow()
 {
-	ImGui::Begin("Selected Object Details");
+	ImGui::Begin("detailWindow");
+	ImGui::Text("Object Details");
+	ImGui::Separator();
 
 	if (mSelectionManager.IsMultiSelection())
 		ImGui::Text("[Multiple Selection]");
@@ -134,7 +139,35 @@ void LItemMode::RenderDetailsWindow()
 
 void LItemMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene)
 {
+	const ImGuiViewport* mainViewport = ImGui::GetMainViewport();
+	ImGuiDockNodeFlags dockFlags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_AutoHideTabBar | ImGuiDockNodeFlags_NoDockingInCentralNode;
+	mMainDockSpaceID = ImGui::DockSpaceOverViewport(mainViewport, dockFlags);
+	
+	if(!bIsDockingSetUp){
+		ImGui::DockBuilderRemoveNode(mMainDockSpaceID); // clear any previous layout
+		ImGui::DockBuilderAddNode(mMainDockSpaceID, dockFlags | ImGuiDockNodeFlags_DockSpace);
+		ImGui::DockBuilderSetNodeSize(mMainDockSpaceID, mainViewport->Size);
+
+
+		mDockNodeLeftID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Left, 0.25f, nullptr, &mMainDockSpaceID);
+		mDockNodeRightID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Right, 0.25f, nullptr, &mMainDockSpaceID);
+		mDockNodeDownLeftID = ImGui::DockBuilderSplitNode(mDockNodeLeftID, ImGuiDir_Down, 0.5f, nullptr, &mDockNodeUpLeftID);
+
+
+		ImGui::DockBuilderDockWindow("sceneHierarchy", mDockNodeUpLeftID);
+		ImGui::DockBuilderDockWindow("detailWindow", mDockNodeDownLeftID);
+		ImGui::DockBuilderDockWindow("toolWindow", mDockNodeRightID);
+
+		ImGui::DockBuilderFinish(mMainDockSpaceID);
+		bIsDockingSetUp = true;
+	}
+
+	ImGuiWindowClass mainWindowOverride;
+	mainWindowOverride.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
+	ImGui::SetNextWindowClass(&mainWindowOverride);
 	RenderSceneHierarchy(current_map);
+
+	ImGui::SetNextWindowClass(&mainWindowOverride);
 	RenderDetailsWindow();
 
 	for (auto& node : current_map.get()->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)) {

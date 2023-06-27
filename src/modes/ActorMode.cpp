@@ -76,7 +76,6 @@ void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 	ImGuiWindowClass mainWindowOverride;
 	mainWindowOverride.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
 	ImGui::SetNextWindowClass(&mainWindowOverride);
-
 	RenderSceneHierarchy(current_map);
 
 	ImGui::SetNextWindowClass(&mainWindowOverride);
@@ -96,10 +95,36 @@ void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 			}
 		}
 
-		glm::mat4* m = static_cast<LBGRenderDOMNode*>(mSelectionManager.GetPrimarySelection().get())->GetMat();
 		glm::mat4 view = renderer_scene->getCameraView();
 		glm::mat4 proj = renderer_scene->getCameraProj();
-		ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::LOCAL, &(*m)[0][0], NULL, NULL);
+		std::cout << "Selected: " << mSelectionManager.GetPrimarySelection()->GetNodeTypeString() << std::endl;
+		if(mSelectionManager.GetPrimarySelection().get()->GetNodeType() != EDOMNodeType::Room){
+			glm::mat4* m = static_cast<LBGRenderDOMNode*>(mSelectionManager.GetPrimarySelection().get())->GetMat();
+			if(ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::LOCAL, &(*m)[0][0], NULL, NULL)){
+				renderer_scene->UpdateRenderers();
+			}
+		} else {
+			auto data = mSelectionManager.GetPrimarySelection()->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+
+			glm::mat4 mat = glm::identity<glm::mat4>();
+			
+			if(ImGui::IsKeyDown(ImGuiKey_LeftCtrl)){
+				mat = glm::translate(mat, data->GetMax());
+			} else {
+				mat =glm::translate(mat, data->GetMin());
+			}
+
+			if(ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::LOCAL, &(mat)[0][0], NULL, NULL)){
+				renderer_scene->UpdateRenderers();
+
+				if(ImGui::IsKeyDown(ImGuiKey_LeftCtrl)){
+					data->SetMax(mat[3]);
+				} else {
+					data->SetMin(mat[3]);
+				}
+			}
+
+		}
 	}
 
 	if(mRoomChanged){

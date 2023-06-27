@@ -5,9 +5,7 @@
 
 bool LUIUtility::RenderCheckBox(std::string name, bool* c)
 {
-	bool x = !(*c);
-    if (ImGui::Checkbox(name.c_str(), &x))
-		*c = !x;
+    if (ImGui::Checkbox(name.c_str(), c))
         return true;
 
     return false;

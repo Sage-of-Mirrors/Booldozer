@@ -150,6 +150,12 @@ void CPointSpriteManager::SetBillboardTexture(std::filesystem::path ImagePath, i
 	stbi_image_free(img);
 }
 
+void CPointSpriteManager::UpdateData(){
+    glBindBuffer(GL_ARRAY_BUFFER, mVbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(CPointSprite) * mBillboards.size(), mBillboards.data(), GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
 void CPointSpriteManager::Draw(LSceneCamera *Camera) {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -165,10 +171,6 @@ void CPointSpriteManager::Draw(LSceneCamera *Camera) {
 
     glUseProgram(0);
     glBindVertexArray(0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, mVbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(CPointSprite) * mBillboards.size(), mBillboards.data(), GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glUseProgram(mShaderID);
 

@@ -319,6 +319,106 @@ glm::mat4 LEditorScene::getCameraProj(){
 	return Camera.GetProjectionMatrix();
 }
 
+void LEditorScene::UpdateRenderers(){
+	mPathRenderer.mPaths.clear();
+	mPointManager.mBillboards.clear();
+	for(auto room : mCurrentRooms){
+		if(!room.expired() && Initialized)
+		{
+			auto curRoom = room.lock();
+
+			curRoom->ForEachChildOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender, [&](auto node){
+					if(!node->GetIsRendered()) return;
+					switch (node->GetNodeType())
+					{
+					case EDOMNodeType::RoomData:
+						{
+							glm::vec4 color = (curRoom->GetRoomNumber() == mSelectedRoomNumber ? (glm::vec4){0.0f, 1.0f, 0.0f, 1.0f} : (glm::vec4){1.0f, 1.0f, 1.0f, 1.0f});
+
+							glm::vec3 min = static_cast<LRoomDataDOMNode*>(node.get())->GetMin();
+							glm::vec3 max = static_cast<LRoomDataDOMNode*>(node.get())->GetMax();
+							std::vector<CPathPoint> bounds_bottom = {
+								{min, color, 51200},
+								{{min.x, min.y, max.z}, color, 51200},
+								{{max.x, min.y, max.z}, color, 51200},
+								{{max.x, min.y, min.z}, color, 51200},
+								{min, color, 51200},
+							};
+
+							std::vector<CPathPoint> bounds_top = {
+								{max, color, 51200},
+								{{max.x, max.y, min.z}, color, 51200},
+								{{min.x, max.y, min.z}, color, 51200},
+								{{min.x, max.y, max.z}, color, 51200},
+								{max, color, 51200},
+							};
+
+							std::vector<CPathPoint> bounds_edge1 = {{min, color, 51200}, {{min.x, max.y, min.z}, color, 51200}};
+							std::vector<CPathPoint> bounds_edge2 = {{{max.x, min.y, min.z}, color, 51200}, {{max.x, max.y, min.z}, color, 51200}};
+							std::vector<CPathPoint> bounds_edge3 = {{{min.x, min.y, max.z}, color, 51200}, {{min.x, max.y, max.z}, color, 51200}};
+							std::vector<CPathPoint> bounds_edge4 = {{max, color, 51200}, {{max.x, min.y, max.z}, color, 51200}};
+
+							mPathRenderer.mPaths.push_back(bounds_bottom);
+							mPathRenderer.mPaths.push_back(bounds_top);
+
+							mPathRenderer.mPaths.push_back(bounds_edge1);
+							mPathRenderer.mPaths.push_back(bounds_edge2);
+							mPathRenderer.mPaths.push_back(bounds_edge3);
+							mPathRenderer.mPaths.push_back(bounds_edge4);
+						}
+						break;
+					case EDOMNodeType::Path:
+						{
+							std::vector<CPathPoint> path;
+							
+							auto points = node->template GetChildrenOfType<LPathPointDOMNode>(EDOMNodeType::PathPoint);
+							
+							for(auto& point : points){
+								path.push_back((CPathPoint){point->GetPosition(), static_cast<LPathDOMNode*>(node.get())->mPathColor, 12800});
+							}
+							
+							mPathRenderer.mPaths.push_back(path);
+						}
+						break;
+					case EDOMNodeType::Generator:
+						if (node->GetName() == "elice"){
+							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 0, false, false});
+						} else if(node->GetName() == "elfire"){
+							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 1, false, false});
+						} else if(node->GetName() == "rat1"){
+							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 6, false, false});
+						} else if(node->GetName() == "rat3"){
+							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 7, false, false});
+						} else {
+							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 2, false, false});
+						}
+						break;
+					case EDOMNodeType::Event:
+						mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 3, false, false});
+						break;
+					case EDOMNodeType::Observer:
+						if(node->GetName() == "Sound Effect Player"){
+							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 8, false, false});
+						} else {
+							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 4, false, false});
+						}
+						break;
+					case EDOMNodeType::Object:
+						break;
+					case EDOMNodeType::Enemy:
+						mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 5, false, false});
+						break;
+				}
+			});
+
+		}
+	}
+	mPointManager.UpdateData();
+	mPathRenderer.UpdateData();
+}
+
+// This whole thing is so so SO awful.
+
 void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 	if (m_height == 0)
 		m_height = 1;
@@ -352,8 +452,6 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	mPointManager.mBillboards.clear();
 
 	for(auto door : mRoomDoors){
 		if (auto doorLocked = door.lock())
@@ -403,6 +501,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 	}
 
 	for(auto room : mCurrentRooms){
+
 		glm::mat4 identity = glm::identity<glm::mat4>();
 		for (auto room : mRoomModels)
 		{
@@ -414,7 +513,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 			auto curRoom = room.lock();
 
 			curRoom->ForEachChildOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender, [&](auto node){
-					glm::mat4 transform = glm::identity<glm::mat4>();
+					if(!node->GetIsRendered()) return;
 					switch (node->GetNodeType())
 					{
 					case EDOMNodeType::Furniture:
@@ -425,49 +524,12 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 							mRoomFurniture[node->GetName()]->Draw(node->GetMat());
 						}
 						break;
-
-					case EDOMNodeType::Character:
-					case EDOMNodeType::Generator:
-						if (node->GetName() == "elice"){
-							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 0, false, false});
-						} else if(node->GetName() == "elfire"){
-							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 1, false, false});
-						} else if(node->GetName() == "rat1"){
-							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 6, false, false});
-						} else if(node->GetName() == "rat3"){
-							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 7, false, false});
-						} else {
-							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 2, false, false});
-						}
-						break;
-					case EDOMNodeType::Event:
-						mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 3, false, false});
-						break;
-					case EDOMNodeType::Observer:
-						if(node->GetName() == "Sound Effect Player"){
-							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 8, false, false});
-						} else {
-							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 4, false, false});
-						}
-						break;
-					case EDOMNodeType::Object:
-						if(node->GetName() == "coin" && mCoin != nullptr){
-							mCoin->SetTranslation(node->GetPosition());
-							mCoin->SetRotation(node->GetRotation());
-							mCoin->SetScale({1,1,1});
-							mCoin->Render(0);
-						}
-						break;
-					case EDOMNodeType::Enemy:
-						mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 5, false, false});
-						break;
-				}
+					}
 			});
 
 		}
 	}
 	//Draw GL Lines Based thing for room boundaries
-
 
 	mPointManager.Draw(&Camera);
 	mPathRenderer.Draw(&Camera);
@@ -485,17 +547,10 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 {
 	// Get the select room's data so we can get the preload list
 	auto roomData = room->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData);
+	mSelectedRoomNumber = room->GetRoomNumber();
 
 	mRoomModels.clear();
 	mRoomFurniture.clear();
-	mPathRenderer.mPaths.clear();
-	
-	auto paths = room->GetChildrenOfType<LPathDOMNode>(EDOMNodeType::Path);
-	
-	for(auto path : paths){
-		mPathRenderer.mPaths.push_back(path->mPathRenderable);
-		std::cout << "Added path " << path->GetName() << " to renderer" << std::endl; 
-	}
 
 	//This is ensured to exist, but check it anyway
 	if(roomData.size() != 0)
@@ -508,40 +563,6 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 		{
 			
 			auto curRoomData = aroom.lock()->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
-
-
-			glm::vec4 color = (roomData.front() == curRoomData ? (glm::vec4){0.0f, 1.0f, 0.0f, 1.0f} : (glm::vec4){1.0f, 1.0f, 1.0f, 1.0f});
-
-			glm::vec3 min = curRoomData->GetMin();
-			glm::vec3 max = curRoomData->GetMax();
-			std::vector<CPathPoint> bounds_bottom = {
-				{min, color, 51200},
-				{{min.x, min.y, max.z}, color, 51200},
-				{{max.x, min.y, max.z}, color, 51200},
-				{{max.x, min.y, min.z}, color, 51200},
-				{min, color, 51200},
-			};
-
-			std::vector<CPathPoint> bounds_top = {
-				{max, color, 51200},
-				{{max.x, max.y, min.z}, color, 51200},
-				{{min.x, max.y, min.z}, color, 51200},
-				{{min.x, max.y, max.z}, color, 51200},
-				{max, color, 51200},
-			};
-
-			std::vector<CPathPoint> bounds_edge1 = {{min, color, 51200}, {{min.x, max.y, min.z}, color, 51200}};
-			std::vector<CPathPoint> bounds_edge2 = {{{max.x, min.y, min.z}, color, 51200}, {{max.x, max.y, min.z}, color, 51200}};
-			std::vector<CPathPoint> bounds_edge3 = {{{min.x, min.y, max.z}, color, 51200}, {{min.x, max.y, max.z}, color, 51200}};
-			std::vector<CPathPoint> bounds_edge4 = {{max, color, 51200}, {{max.x, min.y, max.z}, color, 51200}};
-
-			mPathRenderer.mPaths.push_back(bounds_bottom);
-			mPathRenderer.mPaths.push_back(bounds_top);
-
-			mPathRenderer.mPaths.push_back(bounds_edge1);
-			mPathRenderer.mPaths.push_back(bounds_edge2);
-			mPathRenderer.mPaths.push_back(bounds_edge3);
-			mPathRenderer.mPaths.push_back(bounds_edge4);
 
 			std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(curRoomData->GetResourcePath()).relative_path();
 			
@@ -580,7 +601,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 
 	}
 
-	mPathRenderer.UpdateData();
+	UpdateRenderers();
 }
 
 void LEditorScene::update(GLFWwindow* window, float dt, LEditorSelection* selection)

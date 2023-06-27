@@ -1,5 +1,7 @@
 #include "modes/EventMode.hpp"
 #include "ResUtil.hpp"
+#include "imgui.h"
+#include "imgui_internal.h"
 
 LEventMode::LEventMode()
 {
@@ -16,8 +18,8 @@ void LEventMode::RenderLeafContextMenu(std::shared_ptr<LDoorDOMNode> node)
 void LEventMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 {
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar;
-	ImGui::Begin("Available Events", 0, window_flags);
-
+	ImGui::Begin("sceneHierarchy", 0, window_flags);
+	ImGui::Text("Available Events");
 	ImGui::Separator();
 	
 	auto events = current_map->GetChildrenOfType<LEventDataDOMNode>(EDOMNodeType::EventData);
@@ -47,7 +49,9 @@ void LEventMode::RenderDetailsWindow(LSceneCamera* camera)
 		ImGui::Text("[Multiple Selection]");
 	else if (mSelectionManager.GetPrimarySelection() != nullptr){
 		if(mSelectionManager.GetPrimarySelection()->GetNodeType() == EDOMNodeType::EventData){
-			ImGui::Begin("Event Script");
+			ImGui::Begin("toolWindow");
+			ImGui::Text("Event Script");
+			ImGui::Separator();
 			std::shared_ptr<LEventDataDOMNode> selection = std::static_pointer_cast<LEventDataDOMNode>(mSelectionManager.GetPrimarySelection());
 
 			if(mSelected != selection){
@@ -69,14 +73,41 @@ void LEventMode::RenderDetailsWindow(LSceneCamera* camera)
 
 void LEventMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene)
 {
+	const ImGuiViewport* mainViewport = ImGui::GetMainViewport();
+	ImGuiDockNodeFlags dockFlags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_AutoHideTabBar | ImGuiDockNodeFlags_NoDockingInCentralNode;
+	mMainDockSpaceID = ImGui::DockSpaceOverViewport(mainViewport, dockFlags);
+	
+	if(!bIsDockingSetUp){
+		ImGui::DockBuilderRemoveNode(mMainDockSpaceID); // clear any previous layout
+		ImGui::DockBuilderAddNode(mMainDockSpaceID, dockFlags | ImGuiDockNodeFlags_DockSpace);
+		ImGui::DockBuilderSetNodeSize(mMainDockSpaceID, mainViewport->Size);
+
+
+		mDockNodeLeftID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Left, 0.25f, nullptr, &mMainDockSpaceID);
+		mDockNodeRightID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Right, 0.25f, nullptr, &mMainDockSpaceID);
+		mDockNodeDownLeftID = ImGui::DockBuilderSplitNode(mDockNodeLeftID, ImGuiDir_Down, 0.5f, nullptr, &mDockNodeUpLeftID);
+
+
+		ImGui::DockBuilderDockWindow("sceneHierarchy", mDockNodeUpLeftID);
+		ImGui::DockBuilderDockWindow("detailWindow", mDockNodeDownLeftID);
+		ImGui::DockBuilderDockWindow("toolWindow", mDockNodeRightID);
+
+		ImGui::DockBuilderFinish(mMainDockSpaceID);
+		bIsDockingSetUp = true;
+	}
+
+	ImGuiWindowClass mainWindowOverride;
+	mainWindowOverride.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
+	ImGui::SetNextWindowClass(&mainWindowOverride);
 	RenderSceneHierarchy(current_map);
+
+	ImGui::SetNextWindowClass(&mainWindowOverride);
+	RenderDetailsWindow(&renderer_scene->Camera);
 
 	// Render the nodes so that we're sure new nodes are initialized.
 	for (auto& node : current_map.get()->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)) {
 		node->RenderBG(0);
 	}
-
-	RenderDetailsWindow(&renderer_scene->Camera);
 }
 
 void LEventMode::OnBecomeActive()

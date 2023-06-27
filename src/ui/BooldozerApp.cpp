@@ -279,10 +279,17 @@ void LBooldozerApp::RenderUI(float deltaTime) {
 				mEditorContext.CurrentMode = EEditorMode::Enemy_Mode;
 				mEditorContext.ChangeMode();
 			}
+
 			if(ImGui::MenuItem("Paths")){
 				mEditorContext.CurrentMode = EEditorMode::Path_Mode;
 				mEditorContext.ChangeMode();
 			}
+
+			if(ImGui::MenuItem("Events")){
+				mEditorContext.CurrentMode = EEditorMode::Event_Mode;
+				mEditorContext.ChangeMode();
+			}
+
 			ImGui::Separator();
             if (ImGui::MenuItem("Options"))
                 openOptionsMenu = true;
