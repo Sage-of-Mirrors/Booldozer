@@ -3,12 +3,15 @@
 #include "TimeUtil.hpp"
 #include "UIUtil.hpp"
 
+
 #include "glad/glad.h"
 #include <GLFW/glfw3.h>
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_glfw.h"
 #include <iostream>
+
+#include <DiscordIntegration.hpp>
 
 constexpr int GL_VERSION_MAJOR = 4;
 constexpr int GL_VERSION_MINOR = 6;
@@ -22,6 +25,21 @@ void DealWithGLErrors(GLenum source, GLenum type, GLuint id, GLenum severity, GL
 }
 
 bool LBooldozerApp::Setup() {
+
+	mDiscordHandlers.ready = Discord::HandleReady;
+	mDiscordHandlers.disconnected = Discord::HandleDisconnected;
+	mDiscordHandlers.errored = Discord::HandleError;
+	mDiscordHandlers.joinGame = Discord::HandleJoin;
+	mDiscordHandlers.spectateGame = Discord::HandleSpectate;
+	mDiscordHandlers.joinRequest = Discord::HandleJoinRequest;
+
+	Discord_Initialize("", &mDiscordHandlers, 1, NULL);
+
+	Discord::RichPresence.state = "Editing Map";
+	Discord::RichPresence.details = "No Room Selected";
+	Discord::RichPresence.largeImageKey = "weeg";
+	Discord::RichPresence.startTimestamp = 0;
+	Discord_UpdatePresence(&Discord::RichPresence);
 
     GCResourceManager.Init();
     
@@ -103,6 +121,12 @@ bool LBooldozerApp::Setup() {
 }
 
 bool LBooldozerApp::Teardown() {
+
+	Discord_ClearPresence();
+	Discord_Shutdown();
+
+	GCResourceManager.Cleanup();
+
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
@@ -172,71 +196,6 @@ void LBooldozerApp::Render(float deltaTime) {
 
 void LBooldozerApp::RenderUI(float deltaTime) {
     // Mode combo
-	//TODO allow modes to switch mode? Perhaps app should have request change mode func
-	/*
-    ImGui::SetNextWindowPos(ImVec2(mWidth - 200, mHeight - 80));
-    ImGui::SetNextWindowSize(ImVec2(195, 40));
-
-    ImGui::Begin("mode combo window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
-    ImGui::SetNextItemWidth(150);
-
-    if (LUIUtility::RenderComboEnum<EEditorMode>("##modecombo", mEditorContext.CurrentMode))
-        mEditorContext.ChangeMode();
-
-    ImGui::End();
-	
-    LUIUtility::RenderTooltip("Editor mode. Determines what objects are visible and what can be edited.");
-
-    // Render distance slider
-    ImGui::SetNextWindowPos(ImVec2(205, 25));
-    ImGui::SetNextWindowSize(ImVec2(150, 40));
-
-    ImGui::Begin("render distance window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
-    ImGui::SetNextItemWidth(105);
-
-    ImGui::SliderFloat("##renderdistance", &mEditorScene.Camera.FarPlane, 1.0f, 20000.0f);
-
-    LUIUtility::RenderTooltip("Render distance. Determines how far away objects must be before they are no longer visible.");
-    ImGui::End();
-
-    // Gizmo mode selection 
-    ImGui::SetNextWindowPos(ImVec2(360, 25));
-    ImGui::SetNextWindowSize(ImVec2(85, 40));
-
-    ImGui::Begin("gizmo mode window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
-    ImGui::SetNextItemWidth(105);
-
-    if (ImGui::Button("T"))
-    {
-        mEditorContext.SetGizmo(ImGuizmo::TRANSLATE);
-    }
-    else if (ImGui::SameLine(); ImGui::Button("R")) {
-        mEditorContext.SetGizmo(ImGuizmo::ROTATE);
-    }
-    else if (ImGui::SameLine(); ImGui::Button("S")) {
-        mEditorContext.SetGizmo(ImGuizmo::SCALE);
-    }
-
-    ImGui::End();
-
-    // Camera mode selection
-    ImGui::SetNextWindowPos(ImVec2(450, 25));
-    ImGui::SetNextWindowSize(ImVec2(110, 40));
-
-    ImGui::Begin("cammove mode window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
-    ImGui::SetNextItemWidth(105);
-
-    //TODO: Disable if no room is loaded
-    if (ImGui::Button("Orbit"))
-    {
-        mEditorScene.Camera.mCamMode = ECamMode::ORBIT;
-    }
-    else if (ImGui::SameLine(); ImGui::Button("Fly")) {
-        mEditorScene.Camera.mCamMode = ECamMode::FLY;
-    }
-
-    ImGui::End();
-	*/
 
     bool openOptionsMenu = false;
 
@@ -295,7 +254,6 @@ void LBooldozerApp::RenderUI(float deltaTime) {
                 openOptionsMenu = true;
 
 
-
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Tools"))
@@ -323,5 +281,6 @@ void LBooldozerApp::RenderUI(float deltaTime) {
     }
 
     ImGuizmo::BeginFrame();
+	ImGuizmo::SetDrawlist(ImGui::GetBackgroundDrawList()); 
     ImGuizmo::SetRect(0, 0, (float)mWidth, (float)mHeight);
 }

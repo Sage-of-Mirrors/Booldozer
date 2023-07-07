@@ -4,6 +4,7 @@
 std::map<std::string, std::string> ObserverNames = {
 	{ "observer", "Logic" },
 	{ "kinopio", "Toad" },
+	{ "kinopio2", "Green Toad" },
 	{ "soundobj", "Sound Effect Player" },
 	{ "otobira", "Clockwork Room Elevators" },
 	{ "iphone", "Telephone" }

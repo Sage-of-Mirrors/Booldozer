@@ -3,7 +3,7 @@ project(booldozer)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 
 add_subdirectory(lib)
 
@@ -36,9 +36,8 @@ target_include_directories(booldozer PUBLIC include lib/libflipper/include lib/l
 add_definitions(-DIMGUI_DEFINE_MATH_OPERATORS)
 
 
-
 find_package(ICU 61.0 COMPONENTS uc i18n REQUIRED)
-target_link_libraries(booldozer PUBLIC imgui glfw gctools ICU::uc ICU::i18n fmt j3dultra)
+target_link_libraries(booldozer PUBLIC imgui glfw gctools ICU::uc ICU::i18n fmt j3dultra discord-rpc)
 
 
 #if(WIN32)

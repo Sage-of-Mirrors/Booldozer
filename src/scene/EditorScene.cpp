@@ -12,15 +12,18 @@
 #include "modes/EditorSelection.hpp"
 #include "GLFW/glfw3.h"
 #include "io/BinIO.hpp"
+#include <io/MdlIo.hpp>
 
 #include "cube_tex.h"
 
 #include "DOM/EventDOMNode.hpp"
 #include "DOM/GeneratorDOMNode.hpp"
 #include "DOM/PathDOMNode.hpp"
+#include "DOM/EnemyDOMNode.hpp"
 
 #include <J3D/J3DUniformBufferObject.hpp>
 #include <J3D/J3DModelLoader.hpp>
+
 
 struct cube_vertex {
 	float x, y, z, u, v;
@@ -236,6 +239,7 @@ LEditorScene::LEditorScene() : Initialized(false) {}
 
 LEditorScene::~LEditorScene(){
 	BinModel::DestroyShaders();
+	MDL::DestroyShaders();
 }
 
 void LEditorScene::init(){
@@ -257,8 +261,11 @@ void LEditorScene::init(){
 	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "rat3.png", 7);
 	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "soundobj.png", 8);
 
-	mDoorModels.reserve(14);
 	BinModel::InitShaders();
+	MDL::InitShaders();
+
+	mDoorModels.reserve(14);
+
 	for (size_t f = 0; f < GCResourceManager.mGameArchive.dirnum; f++)
 	{
 		if(std::string(GCResourceManager.mGameArchive.dirs[f].name) == "door"){
@@ -320,6 +327,7 @@ glm::mat4 LEditorScene::getCameraProj(){
 }
 
 void LEditorScene::UpdateRenderers(){
+	std::cout << "calling update renderers. this should only happen a few times!" << std::endl;
 	mPathRenderer.mPaths.clear();
 	mPointManager.mBillboards.clear();
 	for(auto room : mCurrentRooms){
@@ -405,9 +413,9 @@ void LEditorScene::UpdateRenderers(){
 						break;
 					case EDOMNodeType::Object:
 						break;
-					case EDOMNodeType::Enemy:
-						mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 5, false, false});
-						break;
+					//case EDOMNodeType::Enemy:
+					//	mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 5, false, false});
+					//	break;
 				}
 			});
 
@@ -453,10 +461,10 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	for(auto door : mRoomDoors){
-		if (auto doorLocked = door.lock())
+	for(std::weak_ptr<LDoorDOMNode> doorRef : mRoomDoors){
+		if (std::shared_ptr<LDoorDOMNode> door = doorRef.lock())
 		{
-			auto doorType = doorLocked->GetModel();
+			EDoorModel doorType = door->GetModel();
 			if (doorType == EDoorModel::None)
 				continue;
 
@@ -464,10 +472,10 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 			glm::mat4 doorMat = glm::identity<glm::mat4>();
 
 			// Translation. We need the translation from the transform matrix (column at [3]) as well as the Y scale (float at [1][1])
-			doorMat = glm::translate(doorMat, glm::vec3((*doorLocked->GetMat())[3]) - glm::vec3(0, (*doorLocked->GetMat())[1][1] / 2.f, 0));
+			doorMat = glm::translate(doorMat, glm::vec3((*door->GetMat())[3]) - glm::vec3(0, (*door->GetMat())[1][1] / 2.f, 0));
 
 			// Rotation is based on the door's orientation type.
-			if (doorLocked->GetOrientation() == EDoorOrientation::Side_Facing)
+			if (door->GetOrientation() == EDoorOrientation::Side_Facing)
 				doorMat = glm::rotate(doorMat, glm::radians(90.0f), glm::vec3(0, 1, 0));
 
 			// The Square Mansion Door model is fucked, so this is a hack to make sure it shows up (mostly) correctly in the editor.
@@ -500,20 +508,24 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 		}
 	}
 
-	for(auto room : mCurrentRooms){
+	for(std::weak_ptr<LRoomDOMNode> roomRef : mCurrentRooms){
 
 		glm::mat4 identity = glm::identity<glm::mat4>();
-		for (auto room : mRoomModels)
+		for (std::shared_ptr<BinModel> room : mRoomModels)
 		{
 			room->Draw(&identity);
 		}
 		
-		if(!room.expired() && Initialized)
+		std::shared_ptr<LRoomDOMNode> curRoom;
+
+		if((curRoom = roomRef.lock()) && Initialized)
 		{
-			auto curRoom = room.lock();
 
 			curRoom->ForEachChildOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender, [&](auto node){
 					if(!node->GetIsRendered()) return;
+					
+					//TODO: Render MDL if type is character
+
 					switch (node->GetNodeType())
 					{
 					case EDOMNodeType::Furniture:
@@ -522,6 +534,11 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 							mCubeManager.render(node->GetMat());
 						} else {
 							mRoomFurniture[node->GetName()]->Draw(node->GetMat());
+						}
+					case EDOMNodeType::Character:
+					case EDOMNodeType::Enemy:
+						if(mActorModels.contains(node->GetName())){
+							mActorModels[node->GetName()]->Draw(node->GetMat());
 						}
 						break;
 					}
@@ -536,9 +553,9 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 }
 
 bool LEditorScene::HasRoomLoaded(int32_t roomNumber){
-	for (auto& room : mCurrentRooms)
+	for (std::weak_ptr<LRoomDOMNode>& room : mCurrentRooms)
 	{
-		if(room.lock()->GetRoomNumber() == roomNumber) return true;
+		if(!room.expired() && room.lock()->GetRoomNumber() == roomNumber) return true;
 	}
 	return false;
 }
@@ -546,11 +563,13 @@ bool LEditorScene::HasRoomLoaded(int32_t roomNumber){
 void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 {
 	// Get the select room's data so we can get the preload list
-	auto roomData = room->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData);
+	std::vector<std::shared_ptr<LRoomDataDOMNode>> roomData = room->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData);
 	mSelectedRoomNumber = room->GetRoomNumber();
 
 	mRoomModels.clear();
 	mRoomFurniture.clear();
+
+	mActorModels.clear();
 
 	//This is ensured to exist, but check it anyway
 	if(roomData.size() != 0)
@@ -559,18 +578,73 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 			
 		mRoomDoors = roomData.front()->GetDoorList();
 
-		for (auto& aroom :  roomData.front()->GetAdjacencyList())
+		for (std::weak_ptr<LRoomDOMNode>& adjacentRoomRef :  roomData.front()->GetAdjacencyList())
 		{
-			
-			auto curRoomData = aroom.lock()->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+			std::shared_ptr<LRoomDOMNode> adjacentRoom;
+
+			if(!(adjacentRoom = adjacentRoomRef.lock())){
+				continue;
+			}
+
+			adjacentRoom->ForEachChildOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender, [&](auto node){
+				if(node->GetNodeType() == EDOMNodeType::Character || node->GetNodeType() == EDOMNodeType::Enemy){
+					std::string name = node->GetName();
+					if(node->GetNodeType() == EDOMNodeType::Enemy) name = static_pointer_cast<LEnemyDOMNode>(node)->GetNameSimple();
+					
+					//Hacks
+					if(name.find("takara1") != std::string::npos){
+						name = "takara1";
+					} else if (name.find("mopoo") != std::string::npos){
+						name = "obake03";
+					} else if (name.find("mapoo") != std::string::npos){
+						name = "obake02";
+					} else if (name.find("yapoo") != std::string::npos){
+						name = "obake01";
+					} else if (name.find("topoo") != std::string::npos){
+						name = "topoo";
+					} else if (name.find("heypo") != std::string::npos){
+						name = "heypo";
+					}
+					
+					std::filesystem::path modelPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "model" / (name + ".szp");
+
+					if(std::filesystem::exists(modelPath)){
+
+						GCarchive modelArchive;
+						if(!GCResourceManager.LoadArchive(modelPath.string().data(), &modelArchive)){
+							std::cout << "Unable to load model archive " << modelPath << std::endl;
+							return;
+						}
+
+						GCarcfile* modelFile = GCResourceManager.GetFile(&modelArchive, std::filesystem::path("model") / (name + ".mdl"));
+
+						if(modelFile == nullptr){
+							std::cout << "Couldn't find model/" << name << ".mdl in archive" << std::endl;
+							return;
+						}
+
+						bStream::CMemoryStream modelData((uint8_t*)modelFile->data, modelFile->size, bStream::Endianess::Big, bStream::OpenMode::In);
+
+						mActorModels[node->GetName()] = std::make_unique<MDLModel>();
+						mActorModels[node->GetName()]->Load(&modelData);
+					} else {
+						std::cout << "Couldnt find model archive " << modelPath << std::endl;
+					}
+				}
+			});
+
+			std::shared_ptr<LRoomDataDOMNode> curRoomData = adjacentRoom->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
 
 			std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(curRoomData->GetResourcePath()).relative_path();
+
+			if(!std::filesystem::exists(resPath)) continue;
 			
 			if(resPath.extension() == ".arc")
 			{
 				GCarchive roomArc;
 				if(!GCResourceManager.LoadArchive(resPath.string().data(), &roomArc)){
 					std::cout << "Unable to load room archive " << resPath << std::endl;
+					continue;
 				}
 
 				for(int file = 0; file < roomArc.filenum; file++)
@@ -592,6 +666,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 					}
 				}
 				std::cout << "all models locked and loaded" << std::endl;
+				gcFreeArchive(&roomArc);
 			} else {
 				//If this is happening the map only has room models, no furniture.
 				bStream::CFileStream bin(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);

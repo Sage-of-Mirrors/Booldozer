@@ -40,9 +40,6 @@ void LEventDataDOMNode::RenderDetailsUI(float dt, TextEditor* editor)
     ImGuiTabBarFlags tabflags = ImGuiTabBarFlags_None;
     if(ImGui::BeginTabBar("EventModeTabs", tabflags)){
         if(ImGui::BeginTabItem("Script")){
-            if(ImGui::Button("Save To Archive")){
-                
-            }
             //ImGui::InputTextMultiline("Script File", &mEventScript, {ImGui::GetWindowSize().x, ImGui::GetWindowSize().y - 50}, 0);
             editor->Render("TextEditor");
             ImGui::EndTabItem();

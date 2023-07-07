@@ -13,7 +13,6 @@ std::string const LRoomEntityTreeNodeNames[LRoomEntityType_Max] = {
 	"Observers",
 	"Paths",
 	"Events",
-	"Mirrors",
 	"Characters (Blackout)",
 	"Enemies (Blackout)",
 	"Observers (Blackout)"
@@ -30,7 +29,6 @@ LRoomEntityType DOMToEntityType(EDOMNodeType type){
 	case EDOMNodeType::Path: return LRoomEntityType_Paths;
 	case EDOMNodeType::Character: return LRoomEntityType_Characters;
 	case EDOMNodeType::Event: return LRoomEntityType_Events;
-	case EDOMNodeType::Mirror: return LRoomEntityType_Mirrors;
 	
 	default: return LRoomEntityType_Max;
 	}
@@ -117,21 +115,23 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 			{
 				if(ImGui::Button("+"))
 				{
-					std::shared_ptr<LEntityDOMNode> newNode;
+					std::shared_ptr<LEntityDOMNode> newNode = nullptr;
 					switch (i)
 					{
-					case LRoomEntityType_Furniture: newNode = std::make_shared<LFurnitureDOMNode>("furniture"); break;
-					case LRoomEntityType_Observers: newNode = std::make_shared<LObserverDOMNode>("observer"); break;
-					case LRoomEntityType_Objects: newNode = std::make_shared<LObjectDOMNode>("object"); break;
-					case LRoomEntityType_Enemies: newNode = std::make_shared<LEnemyDOMNode>("enemy"); break;
-					case LRoomEntityType_Generators: newNode = std::make_shared<LGeneratorDOMNode>("generator"); break;
-					case LRoomEntityType_Paths: newNode = std::make_shared<LPathDOMNode>("path"); break;
-					case LRoomEntityType_Characters: newNode = std::make_shared<LCharacterDOMNode>("character"); break;
+						case LRoomEntityType_Furniture: newNode = std::make_shared<LFurnitureDOMNode>("furniture"); break;
+						case LRoomEntityType_Observers: newNode = std::make_shared<LObserverDOMNode>("observer"); break;
+						case LRoomEntityType_Objects: newNode = std::make_shared<LObjectDOMNode>("object"); break;
+						case LRoomEntityType_Enemies: newNode = std::make_shared<LEnemyDOMNode>("enemy"); break;
+						case LRoomEntityType_Generators: newNode = std::make_shared<LGeneratorDOMNode>("generator"); break;
+						case LRoomEntityType_Paths: newNode = std::make_shared<LPathDOMNode>("path"); break;
+						case LRoomEntityType_Characters: newNode = std::make_shared<LCharacterDOMNode>("character"); break;
+						case LRoomEntityType_Events: newNode = std::make_shared<LEventDOMNode>("event"); break;
 					}
-
-					newNode->SetRoomNumber(mRoomNumber);
-					AddChild(newNode);
-					mRoomEntities[i].push_back(newNode);
+					if(newNode != nullptr){
+						newNode->SetRoomNumber(mRoomNumber);
+						AddChild(newNode);
+						mRoomEntities[i].push_back(newNode);
+					}
 				}
 				ImGui::SameLine();
 				if(ImGui::Button("-")){
@@ -146,36 +146,6 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 						}
 						RemoveChild(mode_selection->GetPrimarySelection());
 						mode_selection->ClearSelection();
-					}
-				}
-
-				ImGui::SameLine();
-				if(ImGui::Button("Dupe")){
-					if(mode_selection->IsSingleSelection()){
-						switch (i)
-						{
-						case LRoomEntityType_Furniture: {
-							std::shared_ptr<LFurnitureDOMNode> newNode = std::make_shared<LFurnitureDOMNode>("furniture");
-							mode_selection->GetPrimarySelection()->GetSharedPtr<LFurnitureDOMNode>(EDOMNodeType::Furniture)->CopyTo(newNode.get());
-							AddChild(newNode);
-							mRoomEntities[i].push_back(newNode);
-							break;
-						}
-						case LRoomEntityType_Enemies: {
-							std::shared_ptr<LEnemyDOMNode> newNode = std::make_shared<LEnemyDOMNode>("furniture");
-							mode_selection->GetPrimarySelection()->GetSharedPtr<LEnemyDOMNode>(EDOMNodeType::Enemy)->CopyTo(newNode.get());
-							AddChild(newNode);
-							mRoomEntities[i].push_back(newNode);
-							break;
-						}
-						case LRoomEntityType_Generators: {
-							std::shared_ptr<LGeneratorDOMNode> newNode = std::make_shared<LGeneratorDOMNode>("generator");
-							mode_selection->GetPrimarySelection()->GetSharedPtr<LGeneratorDOMNode>(EDOMNodeType::Generator)->CopyTo(newNode.get());
-							AddChild(newNode);
-							mRoomEntities[i].push_back(newNode);
-							break;
-						}
-						}
 					}
 				}
 
@@ -208,6 +178,50 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 
 			// ImGui ID stack returns to <room name>
 			ImGui::PopID();
+		}
+
+		//Mirrors are technically map entities not room entities, but thats ok
+		if (ImGui::TreeNode("Mirrors"))
+		{
+			if(ImGui::Button("+"))
+			{
+				std::shared_ptr<LMirrorDOMNode> mirror = std::make_shared<LMirrorDOMNode>("Mirror");
+				AddChild(mirror);
+			}
+
+			ImGui::SameLine();
+			if(ImGui::Button("-")){
+				if(mode_selection->IsSingleSelection()){
+					//TODO: Remove from map as well
+					RemoveChild(mode_selection->GetPrimarySelection());
+					mode_selection->ClearSelection();
+				}
+			}
+
+			// ImGui ID stack is now at <room name>##<i>##<j>
+			ImGui::PushID("mirrors");
+
+			std::vector<std::shared_ptr<LMirrorDOMNode>> mirrors = GetChildrenOfType<LMirrorDOMNode>(EDOMNodeType::Mirror);
+
+			for(int i = 0; i < mirrors.size(); i++){
+				ImGui::PushID(i);
+				// This checkbox toggles rendering of the individual node that
+				// we're currently building the UI for.
+				LUIUtility::RenderCheckBox(mirrors[i].get());
+				ImGui::SameLine();
+
+				// Render the current node however it wants to be rendered
+				ImGui::Indent();
+				mirrors[i]->RenderHierarchyUI(mirrors[i], mode_selection);
+				ImGui::Unindent();
+
+				// ImGui ID stack returns to <room name>##<i>
+				ImGui::PopID();
+			}
+			ImGui::PopID();
+
+			// End entity tree <i>
+			ImGui::TreePop();
 		}
 
 		// End room tree
@@ -298,15 +312,13 @@ void LRoomDOMNode::RenderWaveHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEd
 
 void LRoomDOMNode::RenderDetailsUI(float dt)
 {
-	auto dataNode = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
+	std::shared_ptr<LRoomDataDOMNode> dataNode = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
 
 	// Integers
-	ImGui::Text("Lightning Frequency");
-	ImGui::InputInt("##LightningFrequency", &mThunder);
+	ImGui::InputInt("Lightning Direction", &mThunder);
 	LUIUtility::RenderTooltip("How frequently thunder and lightning occurs while in this room.");
 
-	ImGui::Text("Dust Intensity");
-	ImGui::InputInt("##DustIntensity", &mDustLevel);
+	ImGui::InputInt("Dust Intensity", &mDustLevel);
 	LUIUtility::RenderTooltip("How dusty this room is.");
 
 	ImGui::InputInt("Light Falloff", &mDistance);
@@ -357,6 +369,15 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 	if (ImGui::TreeNode("Treasure Chest Settings"))
 	{
 		chestData[0]->RenderDetailsUI(dt);
+		ImGui::TreePop();
+	}
+
+	if (ImGui::TreeNode("Advanced"))
+	{
+		int index = dataNode->GetRoomIndex();
+		int id = dataNode->GetRoomID();
+		ImGui::InputInt("Room Index", &index);
+		ImGui::InputInt("Room ID", &id);
 		ImGui::TreePop();
 	}
 }
@@ -452,9 +473,6 @@ bool LRoomDOMNode::CompleteLoad()
 				break;
 			case LRoomEntityType_Paths:
 				findType = EDOMNodeType::Path;
-				break;
-			case LRoomEntityType_Mirrors:
-				findType = EDOMNodeType::Mirror;
 				break;
 			case LRoomEntityType_Events:
 				findType = EDOMNodeType::Event;

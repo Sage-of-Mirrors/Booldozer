@@ -31,6 +31,7 @@ public:
 	typedef LDOMNodeBase Super;
 
 	LMapDOMNode();
+	~LMapDOMNode();
 
 	bool LoadMap(std::filesystem::path file_path);
 	bool SaveMapToFiles(std::filesystem::path folder_path);

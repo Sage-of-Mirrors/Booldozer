@@ -522,7 +522,7 @@ BinMaterial::BinMaterial(bStream::CStream* stream, uint32_t textureOffset){
     
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    delete textureData;
+    delete[] textureData;
 
 }
 
@@ -668,7 +668,7 @@ std::shared_ptr<BinScenegraphNode> BinModel::ParseSceneraph(bStream::CStream* st
     current->transform = glm::identity<glm::mat4>();
     current->transform = glm::scale(current->transform, glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat())); 
     glm::vec3 rotation(stream->readFloat(), stream->readFloat(), stream->readFloat());
-    glm::quat rotationQuat = glm::angleAxis(glm::radians(rotation.x), glm::vec3(1.0,0.0,0.0)) * glm::angleAxis(-glm::radians(rotation.y), glm::vec3(0.0,1.0,0.0)) * glm::angleAxis(glm::radians(rotation.z), glm::vec3(0.0,0.0,1.0));
+    glm::quat rotationQuat = glm::angleAxis(glm::radians(rotation.x), glm::vec3(1.0,0.0,0.0)) * glm::angleAxis(glm::radians(rotation.y), glm::vec3(0.0,1.0,0.0)) * glm::angleAxis(glm::radians(rotation.z), glm::vec3(0.0,0.0,1.0));
     current->transform *= glm::toMat4(rotationQuat);
     current->transform = glm::translate(current->transform, glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat()));
 

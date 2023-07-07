@@ -24,6 +24,7 @@ public:
 	LEventDataDOMNode(std::string name);
 
 	void SetEventArchivePath(std::string path){ mEventArchivePath = path; }
+	std::string GetEventArchivePath(){ return mEventArchivePath; }
 
     void RenderDetailsUI(float dt, TextEditor* editor);
 	void RenderHierarchyUI(std::shared_ptr<LEventDataDOMNode> self, LEditorSelection* mode_selection);

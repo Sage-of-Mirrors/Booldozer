@@ -71,6 +71,8 @@ public:
 
 	virtual std::string GetName() override;
 
+	std::string GetNameSimple() { return mName; }
+
 	virtual void RenderDetailsUI(float dt) override;
 
 	void CopyTo(LEnemyDOMNode* other);

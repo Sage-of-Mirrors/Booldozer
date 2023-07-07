@@ -545,7 +545,7 @@ std::vector<LStaticRoomData> LStaticMapDataIO::GetRoomDataFromMap(std::shared_pt
 
 	for (auto rd : roomDatas)
 	{
-		LStaticRoomData staticRoom;
+		LStaticRoomData staticRoom {0};
 		rd->Save(staticRoom);
 		roomData.push_back(staticRoom);
 

@@ -30,6 +30,7 @@ namespace LResUtility
 	class LGCResourceManager
 	{
 		bool mInitialized = false;
+		bool mLoadedGameArchive = false;
 		GCcontext mResManagerContext;
 		public:
 			GCarchive mGameArchive;
@@ -38,6 +39,7 @@ namespace LResUtility
 			bool ReplaceArchiveFileData(GCarcfile* file, uint8_t* new_data, size_t new_data_size);
 			GCarcfile* GetFile(GCarchive* archive, std::filesystem::path filepath);
 			void Init();
+			void Cleanup();
 	};
 
 	void LoadUserSettings();

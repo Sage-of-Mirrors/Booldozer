@@ -38,8 +38,19 @@ LMapDOMNode::LMapDOMNode() : Super("map")
 	mType = EDOMNodeType::Map;
 }
 
+LMapDOMNode::~LMapDOMNode(){
+	if(mMapArchive.filenum != 0){
+		gcFreeArchive(&mMapArchive);
+	}	
+}
+
 bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 {
+
+	if(mMapArchive.filenum != 0){
+		gcFreeArchive(&mMapArchive);
+	}
+
 	// Make sure file path is valid
 	if (!std::filesystem::exists(file_path))
 	{
@@ -101,12 +112,13 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 						eventData->AddChild(camNode);
 					}
+
 				}
 				
 				
+				gcFreeArchive(&eventArc);
 				AddChild(eventData);
 			}
-			gcFreeArchive(&eventArc);
 		}
 		
 	}
@@ -117,6 +129,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		DOL dol;
 		dol.LoadDOLFile(std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol");
 
+		std::cout << "Ripping static data for map " << mName << std::endl;
 		if (!mStaticMapIO.RipStaticDataFromExecutable(dol, roomsMap, mName, "GLME01"))
 		{
 			std::cout << fmt::format("Failed to rip static map data to {0}", roomsMap.string()) << std::endl;

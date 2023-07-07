@@ -41,7 +41,7 @@ void LDoorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 		newNode = std::make_shared<LDoorDOMNode>("new door");
 		newNode->AssignJmpIdAndIndex(doors);
 		current_map->AddChild(newNode);
-		mSelectionManager.AddToSelection(newNode);
+		//mSelectionManager.AddToSelection(newNode);
 	}
 
 	ImGui::Separator();

@@ -19,6 +19,14 @@ void LResUtility::LGCResourceManager::Init()
 	std::filesystem::path gameArcPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Game" / "game_usa.szp";
 	if(!GCResourceManager.LoadArchive(gameArcPath.string().data(), &mGameArchive)){
 		std::cout << "Unable to load game archive " << gameArcPath.string() << std::endl;
+	} else {
+		mLoadedGameArchive = true;
+	}
+}
+
+void LResUtility::LGCResourceManager::Cleanup(){
+	if(mLoadedGameArchive){
+		gcFreeArchive(&mGameArchive);
 	}
 }
 
@@ -115,8 +123,8 @@ bool LResUtility::LGCResourceManager::SaveArchiveCompressed(const char* path, GC
 	fileStream.write((const char*)archiveCmp, cmpSize);
 	fileStream.close();
 
-	delete archiveOut;
-	delete archiveCmp;
+	delete[] archiveOut;
+	delete[] archiveCmp;
 
 	return true;
 }
@@ -183,13 +191,13 @@ uint32_t LResUtility::GetStaticMapDataOffset(std::string mapName, std::string re
 
 	if (deserializedJson.find(mapName) == deserializedJson.end())
 	{
-		//std::cout << LGenUtility::Format("Map ", mapName, " not found in static room data at ", fullPath);
+		std::cout << fmt::format("Map {0} not found in static room data at {1}\n", mapName, fullPath.string());
 		return 0;
 	}
 
 	if (deserializedJson[mapName].find(region) == deserializedJson[mapName].end())
 	{
-		//std::cout << LGenUtility::Format("Map ", mapName, " does not have static room data for region ", region);
+		std::cout << fmt::format("Map {0} does not have static room data for region {1}\n", mapName, region);
 		return 0;
 	}
 

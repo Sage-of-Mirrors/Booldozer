@@ -54,6 +54,29 @@ void LEventMode::RenderDetailsWindow(LSceneCamera* camera)
 			ImGui::Separator();
 			std::shared_ptr<LEventDataDOMNode> selection = std::static_pointer_cast<LEventDataDOMNode>(mSelectionManager.GetPrimarySelection());
 
+			if(ImGui::Button("Save Event")){
+				GCarchive eventArc;
+				if(GCResourceManager.LoadArchive(selection->GetEventArchivePath().c_str(), &eventArc)){
+					std::cout << "Writing Event " << std::filesystem::path(std::filesystem::path(selection->GetEventArchivePath()).stem().string() + ".txt").string() << std::endl;
+					GCarcfile* script = GCResourceManager.GetFile(&eventArc, std::filesystem::path("text/" + std::filesystem::path(selection->GetEventArchivePath()).stem().string() + ".txt"));
+
+					if(script != nullptr){
+						bStream::CMemoryStream eventData(mEditor.GetText().size(), bStream::Endianess::Big, bStream::OpenMode::Out);
+						
+						eventData.writeString(LGenUtility::Utf8ToSjis(mEditor.GetText()));
+						
+						GCResourceManager.ReplaceArchiveFileData(script, eventData.getBuffer(), eventData.getSize());
+
+						GCResourceManager.SaveArchiveCompressed(selection->GetEventArchivePath().c_str(), &eventArc);
+
+					} else {
+						std::cout << "Couldn't find file " << std::endl;
+					}
+					
+					gcFreeArchive(&eventArc);
+				}
+			}
+
 			if(mSelected != selection){
 				if(mSelected != nullptr){
 					mSelected->mEventScript = mEditor.GetText();

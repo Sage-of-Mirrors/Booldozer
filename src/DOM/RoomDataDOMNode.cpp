@@ -16,7 +16,7 @@ void LRoomDataDOMNode::RenderDetailsUI(float dt)
 bool LRoomDataDOMNode::Load(const uint32_t& index, const LStaticMapDataIO& source, const std::vector<std::shared_ptr<LRoomDOMNode>>& mapRooms, const std::vector<std::shared_ptr<LDoorDOMNode>>& mapDoors)
 {
 	// Room data
-	LStaticRoomData roomData;
+	LStaticRoomData roomData {0};
 	source.GetRoomData(index, roomData);
 
 	mRoomIndex = roomData.mCameraPositionIndex;

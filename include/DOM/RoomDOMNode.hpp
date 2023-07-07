@@ -24,7 +24,6 @@ enum LRoomEntityType : uint32_t
 	LRoomEntityType_Observers,
 	LRoomEntityType_Paths,
 	LRoomEntityType_Events,
-	LRoomEntityType_Mirrors,
 	LRoomEntityType_BlackoutCharacters,
 	LRoomEntityType_BlackoutEnemies,
 	LRoomEntityType_BlackoutObservers,

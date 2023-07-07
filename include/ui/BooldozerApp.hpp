@@ -4,6 +4,7 @@
 #include "scene/EditorScene.hpp"
 #include "ui/BooldozerEditor.hpp"
 #include "Options.hpp"
+#include <discord_rpc.h>
 
 // Main window's UI.
 class LBooldozerApp
@@ -14,6 +15,8 @@ class LBooldozerApp
 	LBooldozerEditor mEditorContext;
 	LEditorScene mEditorScene;
 	LEditorWindowMain mMainEditorWindow = LEditorWindowMain("Main Menu");
+
+	DiscordEventHandlers mDiscordHandlers = {0};
 
 	LOptionsMenu mOptionsMenu;
 

@@ -12,6 +12,7 @@
 #include "DOM/MapDOMNode.hpp"
 #include "DOM/DoorDOMNode.hpp"
 #include "io/BinIO.hpp"
+#include "io/MdlIo.hpp"
 #include "ResUtil.hpp"
 
 #include "scene/Camera.hpp"
@@ -54,6 +55,7 @@ class LEditorScene {
     std::vector<std::shared_ptr<BinModel>> mDoorModels;
     std::vector<std::shared_ptr<BinModel>> mRoomModels;
     std::map<std::string, std::shared_ptr<BinModel>> mRoomFurniture;
+    std::map<std::string, std::unique_ptr<MDLModel>> mActorModels;
 
     std::shared_ptr<J3DModelData> mSkyboxModel, mCoinModel;
     std::shared_ptr<J3DModelInstance> mSkyBox, mCoin;

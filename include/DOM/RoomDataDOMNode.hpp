@@ -10,28 +10,28 @@ class LRoomDOMNode;
 
 class LRoomDataDOMNode : public LBGRenderDOMNode
 {
-	uint8_t mRoomIndex;
-	int8_t mFloor;
-	uint8_t mDoorZone;
-	uint8_t mRoomID;
+	uint8_t mRoomIndex { 0 };
+	int8_t mFloor { 0 };
+	uint8_t mDoorZone { 0 };
+	uint8_t mRoomID { 0 };
 
-	uint32_t mCameraBehavior;
+	uint32_t mCameraBehavior { 0 };
 
-	uint32_t mUnknown1;
-	uint32_t mUnknown2;
+	uint32_t mUnknown1 { 0 };
+	uint32_t mUnknown2 { 0 };
 
 	std::vector<uint16_t> mDoorListIndices;
 	std::vector<uint16_t> mAdjacentRoomIndices;
 
-	glm::vec4 mDarkColor;
+	glm::vec4 mDarkColor { 1.0f, 1.0f, 1.0f, 1.0f };
 
 	std::vector<std::weak_ptr<LDoorDOMNode>> mDoorList;
 	std::vector<std::weak_ptr<LRoomDOMNode>> mAdjacentRooms;
 
-	std::string mResourcePath;
+	std::string mResourcePath { "" };
 	std::vector<std::string> mAltResPaths;
 
-	glm::vec3 bbmin, bbmax;
+	glm::vec3 bbmin { 0.0f }, bbmax { 1.0f };
 
 	void DeconstructBoundingBox(const glm::vec3& min, const glm::vec3& max);
 	void ConstructBoundingBox(glm::vec3& min, glm::vec3& max);
@@ -64,6 +64,10 @@ public:
 
 	int32_t GetRoomIndex() const { return mRoomIndex; }
 	int32_t GetRoomID() const { return mRoomID; }
+
+	void SetRoomIndex(int32_t idx) { mRoomIndex = idx; }
+	void SetRoomID(int32_t id) { mRoomID = id; }
+	void SetRoomResourcePath(std::string resourcePath) { mResourcePath = resourcePath; mAltResPaths.push_back(resourcePath); }
 
 	void RenderTransformUI();
 
