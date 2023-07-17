@@ -1,7 +1,9 @@
 #pragma once
 #include <discord_rpc.h>
 
-#define AppID "1123354866870394922"
+// Invalidated Old ID
+//TODO: find a better way to include the app id for releases
+#define AppID "" 
 
 namespace Discord {
     void HandleReady(const DiscordUser* user);
