@@ -369,3 +369,6 @@ lib/*
 
 #vscode stuff
 .vscode
+
+src/DiscordIntegration.cpp
+include/DiscordIntegration.hpp
