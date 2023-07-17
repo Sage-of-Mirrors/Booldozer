@@ -13,6 +13,7 @@ std::string const LRoomEntityTreeNodeNames[LRoomEntityType_Max] = {
 	"Observers",
 	"Paths",
 	"Events",
+	"Keys",
 	"Characters (Blackout)",
 	"Enemies (Blackout)",
 	"Observers (Blackout)"
@@ -29,6 +30,7 @@ LRoomEntityType DOMToEntityType(EDOMNodeType type){
 	case EDOMNodeType::Path: return LRoomEntityType_Paths;
 	case EDOMNodeType::Character: return LRoomEntityType_Characters;
 	case EDOMNodeType::Event: return LRoomEntityType_Events;
+	case EDOMNodeType::Key: return LRoomEntityType_Keys;
 	
 	default: return LRoomEntityType_Max;
 	}
@@ -126,6 +128,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 						case LRoomEntityType_Paths: newNode = std::make_shared<LPathDOMNode>("path"); break;
 						case LRoomEntityType_Characters: newNode = std::make_shared<LCharacterDOMNode>("character"); break;
 						case LRoomEntityType_Events: newNode = std::make_shared<LEventDOMNode>("event"); break;
+						case LRoomEntityType_Keys: newNode = std::make_shared<LKeyDOMNode>("key01"); break;
 					}
 					if(newNode != nullptr){
 						newNode->SetRoomNumber(mRoomNumber);
@@ -476,6 +479,9 @@ bool LRoomDOMNode::CompleteLoad()
 				break;
 			case LRoomEntityType_Events:
 				findType = EDOMNodeType::Event;
+				break;
+			case LRoomEntityType_Keys:
+				findType = EDOMNodeType::Key;
 				break;
 			default:
 				break;

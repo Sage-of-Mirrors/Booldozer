@@ -220,6 +220,22 @@ std::filesystem::path LResUtility::GetMirrorDataPath(std::string mapName)
 	return std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / mapName / "mirrors.bin";
 }
 
+
+std::tuple<std::string, std::string, bool> LResUtility::GetActorModelFromName(std::string name){
+	std::filesystem::path fullPath = std::filesystem::current_path() / RES_BASE_PATH / "names" / "ActorNames.json";
+	nlohmann::json deserializedJson = DeserializeJSON(fullPath);
+
+	if (deserializedJson.find(name) == deserializedJson.end())
+	{
+		std::cout << fmt::format("Actor {0} not found in actor data\n", name);
+		return {name, "", false};
+	}
+
+	bool fromGameArchive = deserializedJson.at(name).size() == 3;
+
+	return { deserializedJson.at(name)[0], deserializedJson.at(name)[1],  fromGameArchive };
+}
+
 void LResUtility::LoadUserSettings()
 {
 	std::filesystem::path fullPath = std::filesystem::current_path() / "user_settings.json";

@@ -12,7 +12,8 @@
 #include "DOM/MapDOMNode.hpp"
 #include "DOM/DoorDOMNode.hpp"
 #include "io/BinIO.hpp"
-#include "io/MdlIo.hpp"
+#include "io/MdlIO.hpp"
+#include "io/TxpIO.hpp"
 #include "ResUtil.hpp"
 
 #include "scene/Camera.hpp"
@@ -51,11 +52,13 @@ class LEditorScene {
     std::vector<std::weak_ptr<LDoorDOMNode>> mRoomDoors;
     std::vector<std::weak_ptr<LRoomDOMNode>> mCurrentRooms;
     
-    //TODO: Fill door models and figure out how to handle drawing them
     std::vector<std::shared_ptr<BinModel>> mDoorModels;
     std::vector<std::shared_ptr<BinModel>> mRoomModels;
     std::map<std::string, std::shared_ptr<BinModel>> mRoomFurniture;
-    std::map<std::string, std::unique_ptr<MDLModel>> mActorModels;
+
+
+    std::map<std::string, std::unique_ptr<MDL::Model>> mActorModels;
+    std::map<std::string, std::unique_ptr<TXP::Animation>> mMaterialAnimations;
 
     std::shared_ptr<J3DModelData> mSkyboxModel, mCoinModel;
     std::shared_ptr<J3DModelInstance> mSkyBox, mCoin;

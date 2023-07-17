@@ -8,6 +8,7 @@
 #include "modes/PathMode.hpp"
 #include "modes/DoorMode.hpp"
 #include "modes/EventMode.hpp"
+#include "modes/BooMode.hpp"
 #include "io/PrmIO.hpp"
 #include "ImGuizmo.h"
 
@@ -23,6 +24,7 @@ enum class EEditorMode : uint32_t
 	Path_Mode,
 	Item_Mode,
 	Event_Mode,
+	Boo_Mode,
 	Collision_Mode,
 };
 
@@ -43,6 +45,7 @@ class LBooldozerEditor
 	LPathMode mPathMode;
 	LDoorMode mDoorMode;
 	LEventMode mEventMode;
+	LBooMode mBooMode;
 
 	void OpenMap(std::string file_path);
 	void SaveMapToFiles(std::string folder_path);

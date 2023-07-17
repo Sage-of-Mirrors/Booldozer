@@ -1,6 +1,7 @@
 #pragma once
 #include <discord_rpc.h>
 
+#define AppID "1123354866870394922"
 
 namespace Discord {
     void HandleReady(const DiscordUser* user);

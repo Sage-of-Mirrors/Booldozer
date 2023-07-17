@@ -28,6 +28,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 	if (LUIUtility::RenderFileDialog("OpenMapDlg", path))
 	{
+		GetSelectionManager()->ClearSelection();
 		OpenMap(path);
 
 		OPTIONS.mLastOpenedMap = path;
@@ -83,7 +84,6 @@ void LBooldozerEditor::OpenMap(std::string file_path)
 		}
 	}
 	mGhostConfigs.LoadConfigs(mLoadedMap);
-	//mLoadedMap->LoadMap(std::filesystem::path("/home/spacey/Projects/LuigisMansion/Mods/LMArcade/files/Map/map2.szp")); /* Space */
 }
 
 void LBooldozerEditor::SaveMapToArchive(std::string file_path){
@@ -162,6 +162,9 @@ void LBooldozerEditor::ChangeMode()
 			break;
 		case EEditorMode::Path_Mode:
 			mCurrentMode = &mPathMode;
+			break;
+		case EEditorMode::Boo_Mode:
+			mCurrentMode = &mBooMode;
 			break;
 		default:
 			mCurrentMode = nullptr;

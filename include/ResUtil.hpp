@@ -26,6 +26,7 @@ namespace LResUtility
 
 	std::filesystem::path GetStaticMapDataPath(std::string mapName);
 	std::filesystem::path GetMirrorDataPath(std::string mapName);
+	std::tuple<std::string, std::string, bool> GetActorModelFromName(std::string name);
 
 	class LGCResourceManager
 	{

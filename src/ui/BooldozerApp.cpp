@@ -33,7 +33,7 @@ bool LBooldozerApp::Setup() {
 	mDiscordHandlers.spectateGame = Discord::HandleSpectate;
 	mDiscordHandlers.joinRequest = Discord::HandleJoinRequest;
 
-	Discord_Initialize("", &mDiscordHandlers, 1, NULL);
+	Discord_Initialize(AppID, &mDiscordHandlers, 1, NULL);
 
 	Discord::RichPresence.state = "Editing Map";
 	Discord::RichPresence.details = "No Room Selected";
@@ -74,7 +74,7 @@ bool LBooldozerApp::Setup() {
 	glfwMakeContextCurrent(mWindow);
 	gladLoadGL();
 	glClearColor(0.5f, 1.0f, 0.5f, 1.0f);
-	glfwSwapInterval(1);
+	glfwSwapInterval(0);
 
 	// Set up GL debug error handling.
 	glEnable(GL_DEBUG_OUTPUT);
@@ -172,7 +172,7 @@ bool LBooldozerApp::Execute(float deltaTime) {
 	glViewport(0, 0, mWidth, mHeight);
 
 	// Clear buffers
-	glClearColor(0.353f, 0.294f, 0.647f, 1.0f);
+	glClearColor(0.100f, 0.261f, 0.402f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	Render(deltaTime);
@@ -248,6 +248,12 @@ void LBooldozerApp::RenderUI(float deltaTime) {
 				mEditorContext.CurrentMode = EEditorMode::Event_Mode;
 				mEditorContext.ChangeMode();
 			}
+
+			if(ImGui::MenuItem("Boos")){
+				mEditorContext.CurrentMode = EEditorMode::Boo_Mode;
+				mEditorContext.ChangeMode();
+			}
+
 
 			ImGui::Separator();
             if (ImGui::MenuItem("Options"))

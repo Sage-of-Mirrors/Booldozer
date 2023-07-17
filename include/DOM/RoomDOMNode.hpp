@@ -24,6 +24,7 @@ enum LRoomEntityType : uint32_t
 	LRoomEntityType_Observers,
 	LRoomEntityType_Paths,
 	LRoomEntityType_Events,
+	LRoomEntityType_Keys,
 	LRoomEntityType_BlackoutCharacters,
 	LRoomEntityType_BlackoutEnemies,
 	LRoomEntityType_BlackoutObservers,
@@ -86,6 +87,8 @@ class LRoomDOMNode : public LBGRenderDOMNode, public ISerializable
 {
 	std::vector<std::shared_ptr<LEntityDOMNode>> mRoomEntities[LRoomEntityType_Max];
 	bool mRoomEntityVisibility[LRoomEntityType_Max] = {
+		true,
+		true,
 		true,
 		true,
 		true,

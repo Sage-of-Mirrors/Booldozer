@@ -5,6 +5,8 @@
 #include "../lib/bStream/bstream.h"
 #include <glm/glm.hpp>
 
+#include "io/TxpIO.hpp"
+
 namespace MDL {
     struct Readable {
         virtual void Read(bStream::CStream* stream) = 0;
@@ -120,7 +122,7 @@ namespace MDL {
     };
 
     struct Material : Readable {
-        uint32_t DiffuseColor;
+        glm::vec4 DiffuseColor;
         uint16_t Unknown;
         uint8_t AlphaFlag;
         uint8_t TevStageCount;
@@ -180,38 +182,40 @@ namespace MDL {
 
     void InitShaders();
     void DestroyShaders();
-};
 
-class MDLModel
-{
-private:
-    
-    MDL::MDLHeader mHeader;
-    
-    std::vector<MDL::TextureHeader> mTexturesHeaders;
+    class Model
+    {
+    private:
+        
+        MDLHeader mHeader;
+        
+        std::vector<TextureHeader> mTexturesHeaders;
 
-    std::vector<MDL::Sampler> mSamplers;
-    std::vector<MDL::Shape> mShapes;
-    std::vector<MDL::Packet> mPackets;
-    std::vector<MDL::DrawElement> mDrawElements;
+        std::vector<Sampler> mSamplers;
+        std::vector<Shape> mShapes;
+        std::vector<Packet> mPackets;
+        std::vector<DrawElement> mDrawElements;
 
-    std::vector<MDL::Material> mMaterials;
-    std::vector<MDL::SceneGraphNode> mGraphNodes;
+        std::vector<Material> mMaterials;
+        std::vector<SceneGraphNode> mGraphNodes;
 
-    std::vector<glm::vec3> mPositions;
-    std::vector<glm::vec3> mNormals;
-    std::vector<glm::vec2> mTexCoords;
-    std::vector<glm::vec4> mColors;
+        std::vector<glm::vec3> mPositions;
+        std::vector<glm::vec3> mNormals;
+        std::vector<glm::vec2> mTexCoords;
+        std::vector<glm::vec4> mColors;
 
-    std::vector<glm::mat4> mMatrixTable;
-    std::vector<MDL::Weight> mWeights;
+        std::vector<glm::mat4> mMatrixTable;
+        std::vector<Weight> mWeights;
 
-public:
 
-    void Draw(glm::mat4* transform);
+    public:
+        glm::vec3 bbMax {0, 0, 0}, bbMin {0, 0, 0};
 
-    void Load(bStream::CStream* stream);
-    
-    MDLModel(){}
-    ~MDLModel();
+        void Draw(glm::mat4* transform, TXP::Animation* materialAnimtion);
+
+        void Load(bStream::CStream* stream);
+        
+        Model(){}
+        ~Model();
+    };
 };

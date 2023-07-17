@@ -12,7 +12,7 @@
 #include "modes/EditorSelection.hpp"
 #include "GLFW/glfw3.h"
 #include "io/BinIO.hpp"
-#include <io/MdlIo.hpp>
+#include <io/MdlIO.hpp>
 
 #include "cube_tex.h"
 
@@ -67,7 +67,8 @@ static const GLfloat s_cubeVertices[] = {
     1.0f, 1.0f, 1.0f, 0.667969f, 1.0f-0.671889f,
     -1.0f, 1.0f, 1.0f, 1.000004f, 1.0f-0.671847f,
     1.0f,-1.0f, 1.0f, 0.667979f, 1.0f-0.335851f
-	};
+};
+
 const char* cube_vtx_shader = "#version 460\n\
     #extension GL_ARB_separate_shader_objects : enable\n\
 	struct GXLight {\n\
@@ -115,6 +116,177 @@ const char* cube_frg_shader = "#version 460\n\
         if(baseColor.a < 1.0 / 1.0f) discard;\n\
     }\
 ";
+
+// From: https://github.com/opengl-tutorials/ogl/blob/master/misc05_picking/misc05_picking_custom.cpp
+
+void ScreenPosToWorldRay(
+	int mouseX, int mouseY,             // Mouse position, in pixels, from bottom-left corner of the window
+	int screenWidth, int screenHeight,  // Window size, in pixels
+	glm::mat4 ViewMatrix,               // Camera position and orientation
+	glm::mat4 ProjectionMatrix,         // Camera parameters (ratio, field of view, near and far planes)
+	glm::vec3& out_origin,              // Ouput : Origin of the ray. /!\ Starts at the near plane, so if you want the ray to start at the camera's position instead, ignore this.
+	glm::vec3& out_direction            // Ouput : Direction, in world space, of the ray that goes "through" the mouse.
+){
+
+	// The ray Start and End positions, in Normalized Device Coordinates (Have you read Tutorial 4 ?)
+	glm::vec4 lRayStart_NDC(
+		((float)mouseX/(float)screenWidth  - 0.5f) * 2.0f, // [0,1024] -> [-1,1]
+		((float)mouseY/(float)screenHeight - 0.5f) * 2.0f, // [0, 768] -> [-1,1]
+		-1.0, // The near plane maps to Z=-1 in Normalized Device Coordinates
+		1.0f
+	);
+	glm::vec4 lRayEnd_NDC(
+		((float)mouseX/(float)screenWidth  - 0.5f) * 2.0f,
+		((float)mouseY/(float)screenHeight - 0.5f) * 2.0f,
+		0.0,
+		1.0f
+	);
+
+
+	// The Projection matrix goes from Camera Space to NDC.
+	// So inverse(ProjectionMatrix) goes from NDC to Camera Space.
+	glm::mat4 InverseProjectionMatrix = glm::inverse(ProjectionMatrix);
+	
+	// The View Matrix goes from World Space to Camera Space.
+	// So inverse(ViewMatrix) goes from Camera Space to World Space.
+	glm::mat4 InverseViewMatrix = glm::inverse(ViewMatrix);
+	
+	glm::vec4 lRayStart_camera = InverseProjectionMatrix * lRayStart_NDC;    lRayStart_camera/=lRayStart_camera.w;
+	glm::vec4 lRayStart_world  = InverseViewMatrix       * lRayStart_camera; lRayStart_world /=lRayStart_world .w;
+	glm::vec4 lRayEnd_camera   = InverseProjectionMatrix * lRayEnd_NDC;      lRayEnd_camera  /=lRayEnd_camera  .w;
+	glm::vec4 lRayEnd_world    = InverseViewMatrix       * lRayEnd_camera;   lRayEnd_world   /=lRayEnd_world   .w;
+
+
+	// Faster way (just one inverse)
+	//glm::mat4 M = glm::inverse(ProjectionMatrix * ViewMatrix);
+	//glm::vec4 lRayStart_world = M * lRayStart_NDC; lRayStart_world/=lRayStart_world.w;
+	//glm::vec4 lRayEnd_world   = M * lRayEnd_NDC  ; lRayEnd_world  /=lRayEnd_world.w;
+
+
+	glm::vec3 lRayDir_world(lRayEnd_world - lRayStart_world);
+	lRayDir_world = glm::normalize(lRayDir_world);
+
+
+	out_origin = glm::vec3(lRayStart_world);
+	out_direction = glm::normalize(lRayDir_world);
+}
+
+
+bool TestRayOBBIntersection(
+	glm::vec3 ray_origin,        // Ray origin, in world space
+	glm::vec3 ray_direction,     // Ray direction (NOT target position!), in world space. Must be normalize()'d.
+	glm::vec3 aabb_min,          // Minimum X,Y,Z coords of the mesh when not transformed at all.
+	glm::vec3 aabb_max,          // Maximum X,Y,Z coords. Often aabb_min*-1 if your mesh is centered, but it's not always the case.
+	glm::mat4 ModelMatrix,       // Transformation applied to the mesh (which will thus be also applied to its bounding box)
+	float& intersection_distance // Output : distance between ray_origin and the intersection with the OBB
+){
+	
+	// Intersection method from Real-Time Rendering and Essential Mathematics for Games
+	
+	float tMin = 0.0f;
+	float tMax = 100000.0f;
+
+	glm::vec3 OBBposition_worldspace(ModelMatrix[3].x, ModelMatrix[3].y, ModelMatrix[3].z);
+
+	glm::vec3 delta = OBBposition_worldspace - ray_origin;
+
+	// Test intersection with the 2 planes perpendicular to the OBB's X axis
+	{
+		glm::vec3 xaxis(ModelMatrix[0].x, ModelMatrix[0].y, ModelMatrix[0].z);
+		float e = glm::dot(xaxis, delta);
+		float f = glm::dot(ray_direction, xaxis);
+
+		if ( fabs(f) > 0.001f ){ // Standard case
+
+			float t1 = (e+aabb_min.x)/f; // Intersection with the "left" plane
+			float t2 = (e+aabb_max.x)/f; // Intersection with the "right" plane
+			// t1 and t2 now contain distances betwen ray origin and ray-plane intersections
+
+			// We want t1 to represent the nearest intersection, 
+			// so if it's not the case, invert t1 and t2
+			if (t1>t2){
+				float w=t1;t1=t2;t2=w; // swap t1 and t2
+			}
+
+			// tMax is the nearest "far" intersection (amongst the X,Y and Z planes pairs)
+			if ( t2 < tMax )
+				tMax = t2;
+			// tMin is the farthest "near" intersection (amongst the X,Y and Z planes pairs)
+			if ( t1 > tMin )
+				tMin = t1;
+
+			// And here's the trick :
+			// If "far" is closer than "near", then there is NO intersection.
+			// See the images in the tutorials for the visual explanation.
+			if (tMax < tMin )
+				return false;
+
+		}else{ // Rare case : the ray is almost parallel to the planes, so they don't have any "intersection"
+			if(-e+aabb_min.x > 0.0f || -e+aabb_max.x < 0.0f)
+				return false;
+		}
+	}
+
+
+	// Test intersection with the 2 planes perpendicular to the OBB's Y axis
+	// Exactly the same thing than above.
+	{
+		glm::vec3 yaxis(ModelMatrix[1].x, ModelMatrix[1].y, ModelMatrix[1].z);
+		float e = glm::dot(yaxis, delta);
+		float f = glm::dot(ray_direction, yaxis);
+
+		if ( fabs(f) > 0.001f ){
+
+			float t1 = (e+aabb_min.y)/f;
+			float t2 = (e+aabb_max.y)/f;
+
+			if (t1>t2){float w=t1;t1=t2;t2=w;}
+
+			if ( t2 < tMax )
+				tMax = t2;
+			if ( t1 > tMin )
+				tMin = t1;
+			if (tMin > tMax)
+				return false;
+
+		}else{
+			if(-e+aabb_min.y > 0.0f || -e+aabb_max.y < 0.0f)
+				return false;
+		}
+	}
+
+
+	// Test intersection with the 2 planes perpendicular to the OBB's Z axis
+	// Exactly the same thing than above.
+	{
+		glm::vec3 zaxis(ModelMatrix[2].x, ModelMatrix[2].y, ModelMatrix[2].z);
+		float e = glm::dot(zaxis, delta);
+		float f = glm::dot(ray_direction, zaxis);
+
+		if ( fabs(f) > 0.001f ){
+
+			float t1 = (e+aabb_min.z)/f;
+			float t2 = (e+aabb_max.z)/f;
+
+			if (t1>t2){float w=t1;t1=t2;t2=w;}
+
+			if ( t2 < tMax )
+				tMax = t2;
+			if ( t1 > tMin )
+				tMin = t1;
+			if (tMin > tMax)
+				return false;
+
+		}else{
+			if(-e+aabb_min.z > 0.0f || -e+aabb_max.z < 0.0f)
+				return false;
+		}
+	}
+
+	intersection_distance = tMin;
+	return true;
+
+}
 
 
 void LCubeManager::render(glm::mat4* transform, bool wireframe=false){
@@ -257,9 +429,7 @@ void LEditorScene::init(){
 	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "observer.png", 4);
 	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "enemy_placeholder.png", 5);
 
-	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "rat1.png", 6);
-	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "rat3.png", 7);
-	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "soundobj.png", 8);
+	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "soundobj.png", 6);
 
 	BinModel::InitShaders();
 	MDL::InitShaders();
@@ -393,11 +563,7 @@ void LEditorScene::UpdateRenderers(){
 							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 0, false, false});
 						} else if(node->GetName() == "elfire"){
 							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 1, false, false});
-						} else if(node->GetName() == "rat1"){
-							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 6, false, false});
-						} else if(node->GetName() == "rat3"){
-							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 7, false, false});
-						} else {
+						} else if(node->GetName() == "elwater") {
 							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 2, false, false});
 						}
 						break;
@@ -406,13 +572,13 @@ void LEditorScene::UpdateRenderers(){
 						break;
 					case EDOMNodeType::Observer:
 						if(node->GetName() == "Sound Effect Player"){
-							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 8, false, false});
+							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 6, false, false});
 						} else {
 							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 4, false, false});
 						}
 						break;
-					case EDOMNodeType::Object:
-						break;
+					//case EDOMNodeType::Object:
+					//	break;
 					//case EDOMNodeType::Enemy:
 					//	mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 5, false, false});
 					//	break;
@@ -529,16 +695,23 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 					switch (node->GetNodeType())
 					{
 					case EDOMNodeType::Furniture:
-						if(mRoomFurniture.count(node->GetName()) == 0)
+						if(mRoomFurniture.count(static_pointer_cast<LFurnitureDOMNode>(node)->GetModelName()) == 0)
 						{
 							mCubeManager.render(node->GetMat());
 						} else {
-							mRoomFurniture[node->GetName()]->Draw(node->GetMat());
+							mRoomFurniture[static_pointer_cast<LFurnitureDOMNode>(node)->GetModelName()]->Draw(node->GetMat());
 						}
 					case EDOMNodeType::Character:
 					case EDOMNodeType::Enemy:
+					case EDOMNodeType::Observer:
+					case EDOMNodeType::Generator:
+					case EDOMNodeType::Key:
 						if(mActorModels.contains(node->GetName())){
-							mActorModels[node->GetName()]->Draw(node->GetMat());
+							if(mMaterialAnimations.contains(node->GetName())){
+								mActorModels[node->GetName()]->Draw(node->GetMat(), mMaterialAnimations[node->GetName()].get());
+							} else {
+								mActorModels[node->GetName()]->Draw(node->GetMat(), nullptr);
+							}
 						}
 						break;
 					}
@@ -570,6 +743,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 	mRoomFurniture.clear();
 
 	mActorModels.clear();
+	mMaterialAnimations.clear();
 
 	//This is ensured to exist, but check it anyway
 	if(roomData.size() != 0)
@@ -587,48 +761,73 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 			}
 
 			adjacentRoom->ForEachChildOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender, [&](auto node){
-				if(node->GetNodeType() == EDOMNodeType::Character || node->GetNodeType() == EDOMNodeType::Enemy){
+				if(node->GetNodeType() == EDOMNodeType::Character || node->GetNodeType() == EDOMNodeType::Enemy || node->GetNodeType() == EDOMNodeType::Observer || node->GetNodeType() == EDOMNodeType::Generator || node->GetNodeType() == EDOMNodeType::Key){
 					std::string name = node->GetName();
-					if(node->GetNodeType() == EDOMNodeType::Enemy) name = static_pointer_cast<LEnemyDOMNode>(node)->GetNameSimple();
 					
-					//Hacks
-					if(name.find("takara1") != std::string::npos){
-						name = "takara1";
-					} else if (name.find("mopoo") != std::string::npos){
-						name = "obake03";
-					} else if (name.find("mapoo") != std::string::npos){
-						name = "obake02";
-					} else if (name.find("yapoo") != std::string::npos){
-						name = "obake01";
-					} else if (name.find("topoo") != std::string::npos){
-						name = "topoo";
-					} else if (name.find("heypo") != std::string::npos){
-						name = "heypo";
-					}
-					
-					std::filesystem::path modelPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "model" / (name + ".szp");
+					std::tuple<std::string, std::string, bool> actorRef = LResUtility::GetActorModelFromName(name);
 
-					if(std::filesystem::exists(modelPath)){
+					if(mActorModels.count(name) != 0 && (mMaterialAnimations.count(name) != 0 && std::get<1>(actorRef) != "")) return;
+
+					std::filesystem::path modelPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "model" / (std::get<0>(actorRef) + ".szp");
+
+					if(!std::get<2>(actorRef) && std::filesystem::exists(modelPath)){
+						std::string actorName = std::get<0>(actorRef);
+						std::string txpName = std::get<1>(actorRef);
 
 						GCarchive modelArchive;
 						if(!GCResourceManager.LoadArchive(modelPath.string().data(), &modelArchive)){
-							std::cout << "Unable to load model archive " << modelPath << std::endl;
+							std::cout << "Unable to load model archive " << modelPath.string() << std::endl;
 							return;
 						}
 
-						GCarcfile* modelFile = GCResourceManager.GetFile(&modelArchive, std::filesystem::path("model") / (name + ".mdl"));
+						if(mActorModels.count(name) == 0){
+							GCarcfile* modelFile = GCResourceManager.GetFile(&modelArchive, std::filesystem::path("model") / (actorName + ".mdl"));
 
-						if(modelFile == nullptr){
-							std::cout << "Couldn't find model/" << name << ".mdl in archive" << std::endl;
-							return;
+							if(modelFile == nullptr){
+								std::cout << "Couldn't find model/" << actorName << ".mdl in archive" << std::endl;
+							} else {
+								bStream::CMemoryStream modelData((uint8_t*)modelFile->data, modelFile->size, bStream::Endianess::Big, bStream::OpenMode::In);
+								mActorModels[name] = std::make_unique<MDL::Model>();
+								mActorModels[name]->Load(&modelData);
+							}
 						}
 
-						bStream::CMemoryStream modelData((uint8_t*)modelFile->data, modelFile->size, bStream::Endianess::Big, bStream::OpenMode::In);
-
-						mActorModels[node->GetName()] = std::make_unique<MDLModel>();
-						mActorModels[node->GetName()]->Load(&modelData);
+						if(mMaterialAnimations.count(name) == 0 && txpName != ""){
+							GCarcfile* txpFile = GCResourceManager.GetFile(&modelArchive, std::filesystem::path("txp") / (txpName + ".txp"));
+							if(txpFile == nullptr){
+								std::cout << "Couldn't find txp/" << txpName << ".txp in archive" << std::endl;
+							} else {
+								std::cout << "Loading txp " << txpName << std::endl;
+								bStream::CMemoryStream txpData((uint8_t*)txpFile->data, txpFile->size, bStream::Endianess::Big, bStream::OpenMode::In);
+								mMaterialAnimations[name] = std::make_unique<TXP::Animation>();
+								mMaterialAnimations[name]->Load(&txpData);
+							}
+						}
 					} else {
-						std::cout << "Couldnt find model archive " << modelPath << std::endl;
+						// look in the game archive
+						//todo: load archive from memstream
+						GCarcfile* gameArchiveModelFile = GCResourceManager.GetFile(&GCResourceManager.mGameArchive, std::filesystem::path("model") / (std::get<0>(actorRef) + ".arc"));
+						
+						if(gameArchiveModelFile != nullptr){
+							GCarchive modelArchive;
+							gcInitArchive(&modelArchive, gameArchiveModelFile->ctx);
+							
+							if(gcLoadArchive(&modelArchive, gameArchiveModelFile->data, gameArchiveModelFile->size) == GC_ERROR_SUCCESS){
+								GCarcfile* modelFile = GCResourceManager.GetFile(&modelArchive, std::filesystem::path("model") / (std::get<0>(actorRef) + ".mdl"));
+
+								if(modelFile == nullptr){
+									std::cout << "Couldn't find " << std::get<0>(actorRef) << ".mdl in game archive" << std::endl;
+								} else {
+									std::cout << "loading model from game archive..." << std::endl;
+									bStream::CMemoryStream modelData((uint8_t*)modelFile->data, modelFile->size, bStream::Endianess::Big, bStream::OpenMode::In);
+									mActorModels[name] = std::make_unique<MDL::Model>();
+									mActorModels[name]->Load(&modelData);
+								}
+								gcFreeArchive(&modelArchive);
+							}
+						} else {
+							std::cout << "Couldn't find model/" << std::get<0>(actorRef) << ".arc in game archive" << std::endl;
+						}
 					}
 				}
 			});
@@ -696,5 +895,47 @@ void LEditorScene::update(GLFWwindow* window, float dt, LEditorSelection* select
 	glfwGetWindowSize(window, &w, &h);
 	glfwGetWindowPos(window, &vx, &vy);
 
-	//TODO: replace with depth picking or other
+	// Easter egg where luigi occasionally blinks
+	if(mActorModels.count("luige") > 0){
+		if(mMaterialAnimations["luige"]->GetFrame() < mMaterialAnimations["luige"]->GetFrameCount()-1){
+			mMaterialAnimations["luige"]->Update(dt);
+		} else {
+			if(rand() % 5000 == 1) mMaterialAnimations["luige"]->SetFrame(0);
+		}
+	}
+
+	if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS && !ImGuizmo::IsUsing()){
+		bool foundObject = false;
+		glm::vec3 pos, dir;
+		ScreenPosToWorldRay(x, y, w, h, Camera.GetViewMatrix(), Camera.GetProjectionMatrix(), pos, dir);
+
+		for(std::weak_ptr<LRoomDOMNode> roomRef : mCurrentRooms){			
+			std::shared_ptr<LRoomDOMNode> curRoom;
+			if((curRoom = roomRef.lock()) && Initialized)
+			{
+				curRoom->ForEachChildOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender, [&](auto node){
+						if(!node->GetIsRendered() && !foundObject) return;
+						
+						switch (node->GetNodeType())
+						{
+						case EDOMNodeType::Character:
+						case EDOMNodeType::Enemy:
+						case EDOMNodeType::Observer:
+						case EDOMNodeType::Generator:
+						case EDOMNodeType::Key:
+							if(mActorModels.contains(node->GetName())){
+								float dist;
+								if(TestRayOBBIntersection(pos, dir, mActorModels[node->GetName()]->bbMin, mActorModels[node->GetName()]->bbMax, *node->GetMat(), dist)){
+									selection->AddToSelection(node);
+									foundObject = true;
+								}
+							}
+							break;
+						}
+				});
+
+			}
+		}
+
+	}
 }
