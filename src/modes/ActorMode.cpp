@@ -4,7 +4,7 @@
 #include "ImGuizmo.h"
 #include "UIUtil.hpp"
 
-#include <DiscordIntegration.hpp>
+//#include <DiscordIntegration.hpp>
 
 LActorMode::LActorMode()
 {
@@ -216,10 +216,12 @@ void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 	if(mRoomChanged){
 		
 		if(std::shared_ptr<LRoomDOMNode> room = mManualRoomSelect.lock()){
+			/*
 			std::string room_name = fmt::format("Editing {}", room->GetName());
 
 			Discord::RichPresence.details = room_name.c_str();
 			Discord_UpdatePresence(&Discord::RichPresence);
+			*/
 			renderer_scene->SetRoom(room);
 		}
 	}

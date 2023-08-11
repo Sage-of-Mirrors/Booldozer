@@ -31,46 +31,46 @@ struct cube_vertex {
 
 //hardcoded cube rendering data
 static const GLfloat s_cubeVertices[] = {
-    -1.0f,-1.0f,-1.0f, 0.000059f, 1.0f-0.000004f,
-    -1.0f,-1.0f, 1.0f, 0.000103f, 1.0f-0.336048f,
-    -1.0f, 1.0f, 1.0f, 0.335973f, 1.0f-0.335903f,
-    1.0f, 1.0f,-1.0f, 1.000023f, 1.0f-0.000013f,
-    -1.0f,-1.0f,-1.0f, 0.667979f, 1.0f-0.335851f,
-    -1.0f, 1.0f,-1.0f, 0.999958f, 1.0f-0.336064f,
-    1.0f,-1.0f, 1.0f, 0.667979f, 1.0f-0.335851f,
-    -1.0f,-1.0f,-1.0f, 0.336024f, 1.0f-0.671877f,
-    1.0f,-1.0f,-1.0f, 0.667969f, 1.0f-0.671889f,
-    1.0f, 1.0f,-1.0f, 1.000023f, 1.0f-0.000013f,
-    1.0f,-1.0f,-1.0f, 0.668104f, 1.0f-0.000013f,
-    -1.0f,-1.0f,-1.0f, 0.667979f, 1.0f-0.335851f,
-    -1.0f,-1.0f,-1.0f, 0.000059f, 1.0f-0.000004f,
-    -1.0f, 1.0f, 1.0f, 0.335973f, 1.0f-0.335903f,
-    -1.0f, 1.0f,-1.0f, 0.336098f, 1.0f-0.000071f,
-    1.0f,-1.0f, 1.0f, 0.667979f, 1.0f-0.335851f,
-    -1.0f,-1.0f, 1.0f, 0.335973f, 1.0f-0.335903f,
-    -1.0f,-1.0f,-1.0f, 0.336024f, 1.0f-0.671877f,
-    -1.0f, 1.0f, 1.0f, 1.000004f, 1.0f-0.671847f,
-    -1.0f,-1.0f, 1.0f, 0.999958f, 1.0f-0.336064f,
-    1.0f,-1.0f, 1.0f, 0.667979f, 1.0f-0.335851f,
-    1.0f, 1.0f, 1.0f, 0.668104f, 1.0f-0.000013f,
-    1.0f,-1.0f,-1.0f, 0.335973f, 1.0f-0.335903f,
-    1.0f, 1.0f,-1.0f, 0.667979f, 1.0f-0.335851f,
-    1.0f,-1.0f,-1.0f, 0.335973f, 1.0f-0.335903f,
-    1.0f, 1.0f, 1.0f, 0.668104f, 1.0f-0.000013f,
-    1.0f,-1.0f, 1.0f, 0.336098f, 1.0f-0.000071f,
-    1.0f, 1.0f, 1.0f, 0.000103f, 1.0f-0.336048f,
-    1.0f, 1.0f,-1.0f, 0.000004f, 1.0f-0.671870f,
-    -1.0f, 1.0f,-1.0f, 0.336024f, 1.0f-0.671877f,
-    1.0f, 1.0f, 1.0f, 0.000103f, 1.0f-0.336048f,
-    -1.0f, 1.0f,-1.0f, 0.336024f, 1.0f-0.671877f,
-    -1.0f, 1.0f, 1.0f, 0.335973f, 1.0f-0.335903f,
-    1.0f, 1.0f, 1.0f, 0.667969f, 1.0f-0.671889f,
-    -1.0f, 1.0f, 1.0f, 1.000004f, 1.0f-0.671847f,
-    1.0f,-1.0f, 1.0f, 0.667979f, 1.0f-0.335851f
+	-10.0f,-10.0f,-10.0f, 0.000059f, 10.0f-0.000004f,
+	-10.0f,-10.0f, 10.0f, 0.000103f, 10.0f-0.336048f,
+	-10.0f, 10.0f, 10.0f, 0.335973f, 10.0f-0.335903f,
+	10.0f, 10.0f,-10.0f, 10.000023f, 10.0f-0.000013f,
+	-10.0f,-10.0f,-10.0f, 0.667979f, 10.0f-0.335851f,
+	-10.0f, 10.0f,-10.0f, 0.999958f, 10.0f-0.336064f,
+	10.0f,-10.0f, 10.0f, 0.667979f, 10.0f-0.335851f,
+	-10.0f,-10.0f,-10.0f, 0.336024f, 10.0f-0.671877f,
+	10.0f,-10.0f,-10.0f, 0.667969f, 10.0f-0.671889f,
+	10.0f, 10.0f,-10.0f, 10.000023f, 10.0f-0.000013f,
+	10.0f,-10.0f,-10.0f, 0.668104f, 10.0f-0.000013f,
+	-10.0f,-10.0f,-10.0f, 0.667979f, 10.0f-0.335851f,
+	-10.0f,-10.0f,-10.0f, 0.000059f, 10.0f-0.000004f,
+	-10.0f, 10.0f, 10.0f, 0.335973f, 10.0f-0.335903f,
+	-10.0f, 10.0f,-10.0f, 0.336098f, 10.0f-0.000071f,
+	10.0f,-10.0f, 10.0f, 0.667979f, 10.0f-0.335851f,
+	-10.0f,-10.0f, 10.0f, 0.335973f, 10.0f-0.335903f,
+	-10.0f,-10.0f,-10.0f, 0.336024f, 10.0f-0.671877f,
+	-10.0f, 10.0f, 10.0f, 10.000004f, 10.0f-0.671847f,
+	-10.0f,-10.0f, 10.0f, 0.999958f, 10.0f-0.336064f,
+	10.0f,-10.0f, 10.0f, 0.667979f, 10.0f-0.335851f,
+	10.0f, 10.0f, 10.0f, 0.668104f, 10.0f-0.000013f,
+	10.0f,-10.0f,-10.0f, 0.335973f, 10.0f-0.335903f,
+	10.0f, 10.0f,-10.0f, 0.667979f, 10.0f-0.335851f,
+	10.0f,-10.0f,-10.0f, 0.335973f, 10.0f-0.335903f,
+	10.0f, 10.0f, 10.0f, 0.668104f, 10.0f-0.000013f,
+	10.0f,-10.0f, 10.0f, 0.336098f, 10.0f-0.000071f,
+	10.0f, 10.0f, 10.0f, 0.000103f, 10.0f-0.336048f,
+	10.0f, 10.0f,-10.0f, 0.000004f, 10.0f-0.671870f,
+	-10.0f, 10.0f,-10.0f, 0.336024f, 10.0f-0.671877f,
+	10.0f, 10.0f, 10.0f, 0.000103f, 10.0f-0.336048f,
+	-10.0f, 10.0f,-10.0f, 0.336024f, 10.0f-0.671877f,
+	-10.0f, 10.0f, 10.0f, 0.335973f, 10.0f-0.335903f,
+	10.0f, 10.0f, 10.0f, 0.667969f, 10.0f-0.671889f,
+	-10.0f, 10.0f, 10.0f, 10.000004f, 10.0f-0.671847f,
+	10.0f,-10.0f, 10.0f, 0.667979f, 10.0f-0.335851f
 };
 
 const char* cube_vtx_shader = "#version 460\n\
-    #extension GL_ARB_separate_shader_objects : enable\n\
+	#extension GL_ARB_separate_shader_objects : enable\n\
 	struct GXLight {\n\
 		vec4 Position;\n\
 		vec4 Direction;\n\
@@ -78,7 +78,7 @@ const char* cube_vtx_shader = "#version 460\n\
 		vec4 AngleAtten;\n\
 		vec4 DistAtten;\n\
 	};\n\
-    layout (std140, binding=0) uniform uSharedData {\n\
+	layout (std140, binding=0) uniform uSharedData {\n\
 		mat4 Proj;\n\
 		mat4 View;\n\
 		mat4 Model;\n\
@@ -87,34 +87,34 @@ const char* cube_vtx_shader = "#version 460\n\
 		GXLight Lights[8];\n\
 		mat4 Envelopes[512];\n\
 		mat4 TexMatrices[10];\n\
-    };\n\
-    uniform mat4 transform;\n\
-    \
-    layout(location = 0) in vec3 inPosition;\n\
-    layout(location = 1) in vec2 inTexCoord;\n\
-    \
-    layout(location = 0) out vec2 fragTexCoord;\n\
-    \
-    void main()\n\
-    {\
-        gl_Position = Proj * View * transform * vec4(inPosition, 1.0);\n\
-        fragTexCoord = inTexCoord;\n\
-    }\
+	};\n\
+	uniform mat4 transform;\n\
+	\
+	layout(location = 0) in vec3 inPosition;\n\
+	layout(location = 1) in vec2 inTexCoord;\n\
+	\
+	layout(location = 0) out vec2 fragTexCoord;\n\
+	\
+	void main()\n\
+	{\
+		gl_Position = Proj * View * transform * vec4(inPosition, 1.0);\n\
+		fragTexCoord = inTexCoord;\n\
+	}\
 ";
 
 const char* cube_frg_shader = "#version 460\n\
-    #extension GL_ARB_separate_shader_objects : enable\n\
-    \
-    uniform sampler2D texSampler;\n\
-    layout(location = 0) in vec2 fragTexCoord;\n\
-    layout(location = 0) out vec4 outColor;\n\
-    \
-    void main()\n\
-    {\n\
-        vec4 baseColor = texture(texSampler, vec2(fragTexCoord.y, fragTexCoord.x));\n\
-        outColor = baseColor;\n\
-        if(baseColor.a < 1.0 / 1.0f) discard;\n\
-    }\
+	#extension GL_ARB_separate_shader_objects : enable\n\
+	\
+	uniform sampler2D texSampler;\n\
+	layout(location = 0) in vec2 fragTexCoord;\n\
+	layout(location = 0) out vec4 outColor;\n\
+	\
+	void main()\n\
+	{\n\
+		vec4 baseColor = texture(texSampler, vec2(fragTexCoord.y, fragTexCoord.x));\n\
+		outColor = baseColor;\n\
+		if(baseColor.a < 1.0 / 1.0f) discard;\n\
+	}\
 ";
 
 // From: https://github.com/opengl-tutorials/ogl/blob/master/misc05_picking/misc05_picking_custom.cpp
@@ -296,12 +296,12 @@ void LCubeManager::render(glm::mat4* transform, bool wireframe=false){
 
 	if(wireframe) glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, mCubeTex);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, mCubeTex);
 
 	glBindVertexArray(mVao);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
-    glBindVertexArray(0);
+	glBindVertexArray(0);
 
 	if(wireframe) glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 }
@@ -314,95 +314,95 @@ void LCubeManager::init(){
 	uint8_t* data = stbi_load_from_memory(&cube_png[0], cube_png_size, &x, &y, &n, 4);
 	
 	glGenTextures(1, &mCubeTex);
-    glBindTexture(GL_TEXTURE_2D, mCubeTex);
+	glBindTexture(GL_TEXTURE_2D, mCubeTex);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    
-    glBindTexture(GL_TEXTURE_2D, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	
+	glBindTexture(GL_TEXTURE_2D, 0);
 	
 	stbi_image_free(data);
 	
-    glGenVertexArrays(1, &mVao);
-    glBindVertexArray(mVao);
+	glGenVertexArrays(1, &mVao);
+	glBindVertexArray(mVao);
 
-    glGenBuffers(1, &mVbo);
-    glBindBuffer(GL_ARRAY_BUFFER, mVbo);
+	glGenBuffers(1, &mVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, mVbo);
 
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(cube_vertex), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(cube_vertex), (void*)12);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(cube_vertex), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(cube_vertex), (void*)12);
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(s_cubeVertices), s_cubeVertices, GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(s_cubeVertices), s_cubeVertices, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+	glBindVertexArray(0);
 
-    char glErrorLogBuffer[4096];
-    GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-    GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+	char glErrorLogBuffer[4096];
+	GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+	GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
 
-    glShaderSource(vs, 1, &cube_vtx_shader, NULL);
-    glShaderSource(fs, 1, &cube_frg_shader, NULL);
+	glShaderSource(vs, 1, &cube_vtx_shader, NULL);
+	glShaderSource(fs, 1, &cube_frg_shader, NULL);
 
-    glCompileShader(vs);
+	glCompileShader(vs);
 
-    GLint status;
-    glGetShaderiv(vs, GL_COMPILE_STATUS, &status);
-    if(status == GL_FALSE){
-        GLint infoLogLength;
-        glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &infoLogLength);
+	GLint status;
+	glGetShaderiv(vs, GL_COMPILE_STATUS, &status);
+	if(status == GL_FALSE){
+		GLint infoLogLength;
+		glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &infoLogLength);
 
-        glGetShaderInfoLog(vs, infoLogLength, NULL, glErrorLogBuffer);
+		glGetShaderInfoLog(vs, infoLogLength, NULL, glErrorLogBuffer);
 
-        printf("Compile failure in vertex shader:\n%s\n", glErrorLogBuffer);
-    }
+		printf("Compile failure in vertex shader:\n%s\n", glErrorLogBuffer);
+	}
 
-    glCompileShader(fs);
+	glCompileShader(fs);
 
-    glGetShaderiv(fs, GL_COMPILE_STATUS, &status);
-    if(status == GL_FALSE){
-        GLint infoLogLength;
-        glGetShaderiv(fs, GL_INFO_LOG_LENGTH, &infoLogLength);
+	glGetShaderiv(fs, GL_COMPILE_STATUS, &status);
+	if(status == GL_FALSE){
+		GLint infoLogLength;
+		glGetShaderiv(fs, GL_INFO_LOG_LENGTH, &infoLogLength);
 
-        glGetShaderInfoLog(fs, infoLogLength, NULL, glErrorLogBuffer);
+		glGetShaderInfoLog(fs, infoLogLength, NULL, glErrorLogBuffer);
 
-        printf("Compile failure in fragment shader:\n%s\n", glErrorLogBuffer);
-    }
+		printf("Compile failure in fragment shader:\n%s\n", glErrorLogBuffer);
+	}
 
-    mCubeProgram = glCreateProgram();
+	mCubeProgram = glCreateProgram();
 
-    glAttachShader(mCubeProgram, vs);
-    glAttachShader(mCubeProgram, fs);
+	glAttachShader(mCubeProgram, vs);
+	glAttachShader(mCubeProgram, fs);
 
-    glLinkProgram(mCubeProgram);
+	glLinkProgram(mCubeProgram);
 
-    glGetProgramiv(mCubeProgram, GL_LINK_STATUS, &status); 
-    if(GL_FALSE == status) {
-        GLint logLen; 
-        glGetProgramiv(mCubeProgram, GL_INFO_LOG_LENGTH, &logLen); 
-        glGetProgramInfoLog(mCubeProgram, logLen, NULL, glErrorLogBuffer); 
-        printf("Cube Shader Program Linking Error:\n%s\n", glErrorLogBuffer);
-    } 
+	glGetProgramiv(mCubeProgram, GL_LINK_STATUS, &status); 
+	if(GL_FALSE == status) {
+		GLint logLen; 
+		glGetProgramiv(mCubeProgram, GL_INFO_LOG_LENGTH, &logLen); 
+		glGetProgramInfoLog(mCubeProgram, logLen, NULL, glErrorLogBuffer); 
+		printf("Cube Shader Program Linking Error:\n%s\n", glErrorLogBuffer);
+	} 
 
-    glDetachShader(mCubeProgram, vs);
-    glDetachShader(mCubeProgram, fs);
+	glDetachShader(mCubeProgram, vs);
+	glDetachShader(mCubeProgram, fs);
 
-    glDeleteShader(vs);
-    glDeleteShader(fs);
+	glDeleteShader(vs);
+	glDeleteShader(fs);
 
 }
 
 LCubeManager::~LCubeManager(){
 	glDeleteTextures(1, &mCubeTex);
-    glDeleteVertexArrays(1, &mVao);
-    glDeleteBuffers(1, &mVbo);
+	glDeleteVertexArrays(1, &mVao);
+	glDeleteBuffers(1, &mVbo);
 	glDeleteBuffers(1, &mIbo);
 }
 
@@ -619,13 +619,13 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 		}
 	}
 
-    glFrontFace(GL_CW);
+	glFrontFace(GL_CW);
 
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	for(std::weak_ptr<LDoorDOMNode> doorRef : mRoomDoors){
 		if (std::shared_ptr<LDoorDOMNode> door = doorRef.lock())

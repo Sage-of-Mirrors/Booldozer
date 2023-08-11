@@ -26,6 +26,7 @@ void DealWithGLErrors(GLenum source, GLenum type, GLuint id, GLenum severity, GL
 
 bool LBooldozerApp::Setup() {
 
+	/*
 	mDiscordHandlers.ready = Discord::HandleReady;
 	mDiscordHandlers.disconnected = Discord::HandleDisconnected;
 	mDiscordHandlers.errored = Discord::HandleError;
@@ -40,6 +41,7 @@ bool LBooldozerApp::Setup() {
 	Discord::RichPresence.largeImageKey = "weeg";
 	Discord::RichPresence.startTimestamp = 0;
 	Discord_UpdatePresence(&Discord::RichPresence);
+	*/
 
     GCResourceManager.Init();
     
@@ -122,8 +124,10 @@ bool LBooldozerApp::Setup() {
 
 bool LBooldozerApp::Teardown() {
 
+	/*
 	Discord_ClearPresence();
 	Discord_Shutdown();
+	*/
 
 	GCResourceManager.Cleanup();
 

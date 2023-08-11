@@ -35,11 +35,5 @@ add_executable(booldozer ${BOOLDOZER_SRC})
 target_include_directories(booldozer PUBLIC include lib/libflipper/include lib/libflipper/include/geometry lib/imgui lib/imgui/backends lib/fmt/include lib/glfw/include lib/glad/include lib/glm lib/J3DUltra/include)
 add_definitions(-DIMGUI_DEFINE_MATH_OPERATORS)
 
-
 find_package(ICU 61.0 COMPONENTS uc i18n REQUIRED)
-target_link_libraries(booldozer PUBLIC imgui glfw gctools ICU::uc ICU::i18n fmt j3dultra discord-rpc)
-
-
-#if(WIN32)
-#target_link_libraries(booldozer PUBLIC imgui glfw gctools fmt j3dultra /usr/x86_64-w64-mingw32/lib/libicuin.dll.a /usr/x86_64-w64-mingw32/lib/libicuuc.dll.a /usr/x86_64-w64-mingw32/lib/libicudt.dll.a /usr/x86_64-w64-mingw32/lib/libicuio.dll.a /usr/x86_64-w64-mingw32/lib/libicutu.dll.a /usr/x86_64-w64-mingw32/lib/libicutu.dll.a ssp)
-#endif(WIN32)
+target_link_libraries(booldozer PUBLIC imgui glfw gctools ICU::uc ICU::i18n fmt j3dultra)

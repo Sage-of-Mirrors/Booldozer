@@ -1,0 +1,9 @@
+{
+    "name" : "Booldozer",
+    "version-string" : "Booldozer-Win",
+    "dependencies": [
+        "icu",
+        "zlib",
+        "libpng"
+    ]
+}

@@ -1,4 +1,5 @@
 #pragma once
+/*
 #include <discord_rpc.h>
 
 // Invalidated Old ID
@@ -15,3 +16,4 @@ namespace Discord {
     
     extern DiscordRichPresence RichPresence;
 };
+*/

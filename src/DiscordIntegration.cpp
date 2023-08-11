@@ -1,5 +1,6 @@
-#include <DiscordIntegration.hpp>
 #include <cstdio>
+/*
+#include <DiscordIntegration.hpp>
 
 namespace Discord {
     DiscordRichPresence RichPresence;
@@ -22,3 +23,4 @@ namespace Discord {
 
     void HandleJoinRequest(const DiscordUser* request){}
 }
+*/

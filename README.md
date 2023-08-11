@@ -5,27 +5,35 @@
 
 Booldozer is a work-in-progress editor for the original [Luigi's Mansion on GameCube](https://en.wikipedia.org/wiki/Luigi%27s_Mansion), written by SpaceCats ([@kittensandals](https://twitter.com/kittensandals)) and Gamma ([@SageOfMirrors](https://twitter.com/SageOfMirrors)). It aims to cover as many aspects of modding the game as possible.
 
-### Features
-#### Map Editing
-![E-k8w2SWUAgQz2b](https://user-images.githubusercontent.com/10427486/133895701-32d46944-6717-4805-9828-ab7f1a69fd14.jpeg)
+![screenshot](preview.png)
 
-Create custom maps with Booldozer's various editing modes! Set the scene with Actor Mode, configure loot drops with Item Mode, and customize collision with Collision Mode.
+## Build Instructions
 
-#### Spawn Groups
-![Peek 2021-09-01 15-54](https://user-images.githubusercontent.com/10427486/131735867-3b93c4eb-bb5e-4ff5-94c3-5ec35e564255.gif)
+### Cloning the Repository
 
-Keeping track of create names manually is a thing of the past! Use Booldozer's Spawn Group Editor to make managing waves of enemies as easy as clicking and dragging.
+```
+git clone https://github.com/Sage-of-Mirrors/Booldozer.git
 
-#### Ghost Configs (PRM)
-![Screenshot_2021-09-01_15-52-16](https://user-images.githubusercontent.com/10427486/131735977-82385508-40a6-408b-8a82-74c3b2d059ac.png)
+cd Booldozer
 
-Make objects act the way you want with Booldozer's Ghost Config Editor! Change their attacks, their HP, and even what color they glow.
+git submodule update --init --recursive
+```
 
-### Roadmap/TODOs
-  - Modes
-    - Collision
-    - Event
-  - Complete this list
+### Linux
+
+Ensure all required packages are installed (Iconv, libpng, zlib)
+
+```
+cmake -S . -B build
+cd build
+make
+```
+
+### Windows
+
+Open the repository in Visual Studio as a CMake Project and compile like any other VS Project.
+
+**Must** be a version of VS that includes vcpkg.
 
 <p align="center">
 <img src=https://raw.githubusercontent.com/Sage-of-Mirrors/Booldozer/main/res/img/about.png width="60%" height="60%"></img>
