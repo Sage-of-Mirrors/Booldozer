@@ -23,6 +23,7 @@
 
 #include <J3D/J3DUniformBufferObject.hpp>
 #include <J3D/J3DModelLoader.hpp>
+#include <J3D/J3DRendering.hpp>
 
 
 struct cube_vertex {
@@ -604,6 +605,8 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 
 	J3DUniformBufferObject::SetProjAndViewMatrices(&proj, &view);
 
+	std::vector<std::shared_ptr<J3DModelInstance>> renderables;
+
 	for(std::weak_ptr<LRoomDOMNode> room : mCurrentRooms){
 		if(!room.expired() && Initialized)
 		{
@@ -613,7 +616,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 				mSkyBox->SetTranslation(roomLocked->GetPosition());
 				mSkyBox->SetRotation({0,0,0});
 				mSkyBox->SetScale({15,15,15});
-				mSkyBox->Render(0);
+				renderables.push_back(mSkyBox);
 				break;
 			}
 		}
@@ -723,6 +726,9 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 
 	mPointManager.Draw(&Camera);
 	mPathRenderer.Draw(&Camera);
+
+	// j3d
+	J3DRendering::Render(0, Camera.GetCenter(), view, proj, renderables);
 }
 
 bool LEditorScene::HasRoomLoaded(int32_t roomNumber){
