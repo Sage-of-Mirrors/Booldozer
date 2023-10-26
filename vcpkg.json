@@ -1,6 +1,6 @@
 {
-    "name" : "Booldozer",
-    "version-string" : "Booldozer-Win",
+    "name" : "booldozer",
+    "version-string" : "booldozer-beta",
     "dependencies": [
         "icu",
         "zlib",
