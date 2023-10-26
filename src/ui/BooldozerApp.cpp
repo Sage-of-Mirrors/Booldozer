@@ -60,9 +60,12 @@ bool LBooldozerApp::Setup() {
 	// Create GLFW window
 	mWindow = glfwCreateWindow(1280, 720, "Booldozer", nullptr, nullptr);
 	if (mWindow == nullptr) {
-		glfwTerminate();
+		const char* err;
+		glfwGetError(&err);
 
 		std::cout << "Failed to create GLFW window!" << std::endl;
+		std::cout << err << std::endl;
+		glfwTerminate();
 		return false;
 	}
 

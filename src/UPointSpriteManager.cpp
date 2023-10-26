@@ -25,6 +25,7 @@ const char* default_ps_frg_shader_source = "#version 330\n\
 uniform sampler2DArray spriteTexture;\n\
 flat in int tex_idx;\n\
 flat in int flip;\n\
+out vec4 outColor;\n\
 void main()\n\
 {\n\
     if(flip == 0){\n\

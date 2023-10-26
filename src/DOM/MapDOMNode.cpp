@@ -4,6 +4,7 @@
 #include "GenUtil.hpp"
 #include "ResUtil.hpp"
 #include "Options.hpp"
+#include <cstring>
 
 std::string const LEntityFileNames[LEntityType_Max] = {
 	"characterinfo",
@@ -36,6 +37,7 @@ std::string const LEntityFileNames[LEntityType_Max] = {
 LMapDOMNode::LMapDOMNode() : Super("map")
 {
 	mType = EDOMNodeType::Map;
+	memset(&mMapArchive, 0, sizeof(GCarchive));
 }
 
 LMapDOMNode::~LMapDOMNode(){

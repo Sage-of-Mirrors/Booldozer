@@ -132,11 +132,14 @@ bool LResUtility::LGCResourceManager::SaveArchiveCompressed(const char* path, GC
 GCarcfile* LResUtility::LGCResourceManager::GetFile(GCarchive* archive, std::filesystem::path filepath){
 	int dirID = 0;
 	for(auto component : filepath){
+		std::cout << "checking fs component " << component << std::endl;
 		for (GCarcfile* file = &archive->files[archive->dirs[dirID].fileoff]; file < &archive->files[archive->dirs[dirID].fileoff] + archive->dirs[dirID].filenum; file++){
 			if(strcmp(file->name, component.string().c_str()) == 0 && (file->attr & 0x02)){
+				std::cout << "Found subdir comp, id is " << file->size << std::endl;
 				dirID = file->size;
 				break;
 			} else if(strcmp(file->name, component.string().c_str()) == 0 && !(file->attr & 0x02)) {
+				std::cout << "Found File" << std::endl;
 				return file;
 			}
 		}
