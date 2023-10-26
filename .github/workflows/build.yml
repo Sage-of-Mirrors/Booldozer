@@ -71,12 +71,22 @@ jobs:
         run: |
           mkdir -p build/booldozer-build
           cp -r res build/booldozer-build/res
-          bash -s 'if [ -f build/booldozer ]; then cp build/booldozer buid/booldozer-build/booldozer; fi'
-          bash -s 'if [ -f build/booldozer.exe ]; then cp build/booldozer.exe buid/booldozer-build/booldozer.exe; fi'
-          bash -s 'if [ -f build/iconv-2.dll ]; then cp build/booldozer buid/booldozer-build/iconv-2.dll; fi'
-          
-      - name: Upload App
+      - name: Copy Executable Linux
+        if: runner.os == 'Linux'
+        run: |
+          cp build/booldozer buid/booldozer-build/booldozer
+      - name: Copy Executable Windows
+        if: runner.os == 'Windows'
+        run: |
+          cp build/booldozer.exe buid/booldozer-build/booldozer.exe
+          cp build/iconv-2.dll buid/booldozer-build/iconv-2.dll
+      - name: Upload App Windows
         uses: actions/upload-artifact@v3
         with:
-          name: booldozer
+          name: booldozer-windows
+          path: build/booldozer-build
+      - name: Upload App Linux
+        uses: actions/upload-artifact@v3
+        with:
+          name: booldozer-linux
           path: build/booldozer-build
