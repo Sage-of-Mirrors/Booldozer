@@ -85,10 +85,10 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: booldozer-windows
-          path: build/booldozer-build
+          path: booldozer-build
       - name: Upload App Linux
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v3
         with:
           name: booldozer-linux
-          path: build/booldozer-build
+          path: booldozer-build
