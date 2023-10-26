@@ -69,11 +69,11 @@ jobs:
           cmakeAppendedArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release'
       - name: Create App Dir
           run: |
-            mkdir -p build/booldozer-build
-            cp -r res build/booldozer-build/res
-            [ -f build/booldozer ] || cp build/booldozer buid/booldozer-build/booldozer
-            [ -f build/booldozer.exe ] || cp build/booldozer.exe buid/booldozer-build/booldozer.exe
-            [ -f build/iconv-2.dll ] || cp build/booldozer buid/booldozer-build/iconv-2.dll
+            mkdir -p build/booldozer-build && \
+            cp -r res build/booldozer-build/res && \
+            [[ -f build/booldozer ] || cp build/booldozer buid/booldozer-build/booldozer] && \
+            [[ -f build/booldozer.exe ] || cp build/booldozer.exe buid/booldozer-build/booldozer.exe] && \
+            [[ -f build/iconv-2.dll ] || cp build/booldozer buid/booldozer-build/iconv-2.dll]
           
       - name: Upload App
         uses: actions/upload-artifact@v3
