@@ -20,11 +20,6 @@ jobs:
             architecture: x64
             artifact: windows
             upload_path_suffix: '/*'
-          - name: Linux Build
-            os: ubuntu-20.04
-            architecture: x64
-            artifact: linux
-            upload_path_suffix: '/*'
     
     runs-on: ${{ matrix.os }}
     
