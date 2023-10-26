@@ -68,10 +68,11 @@ jobs:
           useVcpkgToolchainFile: true
           cmakeAppendedArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release'
       - name: Upload App Linux
-        uses: actions/upload-artifact@v3
         if: runner.os == 'Windows'
-        with:
-          name: booldozer.exe
+          uses: actions/upload-artifact@v3
+          with:
+            name: booldozer.exe
         if: runner.os == 'Linux'
-        with:
-          name: booldozer
+          uses: actions/upload-artifact@v3
+          with:
+            name: booldozer
