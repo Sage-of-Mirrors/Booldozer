@@ -553,7 +553,7 @@ void LEditorScene::UpdateRenderers(){
 							auto points = node->template GetChildrenOfType<LPathPointDOMNode>(EDOMNodeType::PathPoint);
 							
 							for(auto& point : points){
-								path.push_back(CPathPoint(point->GetPosition(), static_cast<LPathDOMNode*>(node.get())->mPathColor, 12800));
+								path.push_back({point->GetPosition(), static_cast<LPathDOMNode*>(node.get())->mPathColor, 12800});
 							}
 							
 							mPathRenderer.mPaths.push_back(path);
