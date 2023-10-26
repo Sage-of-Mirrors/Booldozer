@@ -67,8 +67,11 @@ jobs:
           buildDirectory: '${{ github.workspace }}/build'
           useVcpkgToolchainFile: true
           cmakeAppendedArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release'
-      - name: Upload App
+      - name: Upload App Linux
         uses: actions/upload-artifact@v3
+        if: runner.os == 'Windows'
         with:
-          name: booldozer-${{ matrix.artifact }}-${{ matrix.architecture }}
-          path: dist/release_archive_${{ steps.vars.outputs.full_version }}_${{ matrix.architecture }}${{ matrix.upload_path_suffix }}
+          name: booldozer.exe
+        if: runner.os == 'Linux'
+        with:
+          name: booldozer

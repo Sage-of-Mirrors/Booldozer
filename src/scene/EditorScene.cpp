@@ -512,7 +512,7 @@ void LEditorScene::UpdateRenderers(){
 					{
 					case EDOMNodeType::RoomData:
 						{
-							glm::vec4 color = (curRoom->GetRoomNumber() == mSelectedRoomNumber ? (glm::vec4){0.0f, 1.0f, 0.0f, 1.0f} : (glm::vec4){1.0f, 1.0f, 1.0f, 1.0f});
+							glm::vec4 color = (curRoom->GetRoomNumber() == mSelectedRoomNumber ? glm::vec4(0.0f, 1.0f, 0.0f, 1.0f) : glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
 							glm::vec3 min = static_cast<LRoomDataDOMNode*>(node.get())->GetMin();
 							glm::vec3 max = static_cast<LRoomDataDOMNode*>(node.get())->GetMax();
@@ -553,7 +553,7 @@ void LEditorScene::UpdateRenderers(){
 							auto points = node->template GetChildrenOfType<LPathPointDOMNode>(EDOMNodeType::PathPoint);
 							
 							for(auto& point : points){
-								path.push_back((CPathPoint){point->GetPosition(), static_cast<LPathDOMNode*>(node.get())->mPathColor, 12800});
+								path.push_back(CPathPoint(point->GetPosition(), static_cast<LPathDOMNode*>(node.get())->mPathColor, 12800));
 							}
 							
 							mPathRenderer.mPaths.push_back(path);
