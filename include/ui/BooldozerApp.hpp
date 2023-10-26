@@ -15,7 +15,7 @@ class LBooldozerApp
 	LEditorScene mEditorScene;
 	LEditorWindowMain mMainEditorWindow = LEditorWindowMain("Main Menu");
 
-	DiscordEventHandlers mDiscordHandlers = {0};
+	//DiscordEventHandlers mDiscordHandlers = {0};
 
 	LOptionsMenu mOptionsMenu;
 
