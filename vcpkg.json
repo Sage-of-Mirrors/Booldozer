@@ -2,8 +2,6 @@
     "name" : "booldozer",
     "version-string" : "booldozer-beta",
     "dependencies": [
-        "libiconv",
-        "zlib",
-        "libpng"
+        "libiconv"
     ]
 }
