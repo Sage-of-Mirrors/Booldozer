@@ -9,6 +9,31 @@ LGeneratorDOMNode::LGeneratorDOMNode(std::string name) : Super(name),
     mType = EDOMNodeType::Generator;
 }
 
+void LGeneratorDOMNode::CopyTo(LGeneratorDOMNode* other){
+    other->mName = mName;
+    other->mRoomNumber = mRoomNumber;
+	other->mGenType = mGenType;
+	other->mPathName = mPathName;
+	other->mCodeName = mCodeName;
+	other->mSpawnFlag = mSpawnFlag;
+	other->mDespawnFlag = mDespawnFlag;
+	other->mActorSpawnRate = mActorSpawnRate;
+	other->mActorsPerBurst = mActorsPerBurst;
+	other->mActorSpawnLimit = mActorSpawnLimit;
+	other->mArg0 = mArg0;
+	other->mArg1 = mArg1;
+	other->mArg2 = mArg2;
+	other->mArg3 = mArg3;
+	other->mArg4 = mArg4;
+	other->mArg5 = mArg5;
+	other->mArg6 = mArg6;
+	other->mArg7 = mArg7;
+	other->mArg8 = mArg8;
+	other->mStay = mStay;
+
+    other->mPosition = mPosition;
+}
+
 void LGeneratorDOMNode::RenderDetailsUI(float dt)
 {
     LUIUtility::RenderTransformUI(mTransform.get(), mPosition, mRotation, mScale);

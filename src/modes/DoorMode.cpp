@@ -1,4 +1,6 @@
 #include "modes/DoorMode.hpp"
+#include "imgui.h"
+#include "imgui_internal.h"
 
 LDoorMode::LDoorMode()
 {
@@ -27,7 +29,9 @@ void LDoorMode::RenderLeafContextMenu(std::shared_ptr<LDoorDOMNode> node)
 void LDoorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 {
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar;
-	ImGui::Begin("Door List", 0, window_flags);
+	ImGui::Begin("sceneHierarchy", 0, window_flags);
+	ImGui::Text("Doors");
+	ImGui::Separator();
 
 	auto doors = current_map->GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door);
 
@@ -37,7 +41,7 @@ void LDoorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 		newNode = std::make_shared<LDoorDOMNode>("new door");
 		newNode->AssignJmpIdAndIndex(doors);
 		current_map->AddChild(newNode);
-		mSelectionManager.AddToSelection(newNode);
+		//mSelectionManager.AddToSelection(newNode);
 	}
 
 	ImGui::Separator();
@@ -67,7 +71,7 @@ void LDoorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 
 void LDoorMode::RenderDetailsWindow()
 {
-	ImGui::Begin("Selected Object Details");
+	ImGui::Begin("detailWindow");
 
 	if (mSelectionManager.IsMultiSelection())
 		ImGui::Text("[Multiple Selection]");
@@ -79,14 +83,42 @@ void LDoorMode::RenderDetailsWindow()
 
 void LDoorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene)
 {
+	const ImGuiViewport* mainViewport = ImGui::GetMainViewport();
+	ImGuiDockNodeFlags dockFlags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_AutoHideTabBar | ImGuiDockNodeFlags_NoDockingInCentralNode;
+	mMainDockSpaceID = ImGui::DockSpaceOverViewport(mainViewport, dockFlags);
+	
+	if(!bIsDockingSetUp){
+		ImGui::DockBuilderRemoveNode(mMainDockSpaceID); // clear any previous layout
+		ImGui::DockBuilderAddNode(mMainDockSpaceID, dockFlags | ImGuiDockNodeFlags_DockSpace);
+		ImGui::DockBuilderSetNodeSize(mMainDockSpaceID, mainViewport->Size);
+
+
+		mDockNodeLeftID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Left, 0.25f, nullptr, &mMainDockSpaceID);
+		mDockNodeRightID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Right, 0.25f, nullptr, &mMainDockSpaceID);
+		mDockNodeDownLeftID = ImGui::DockBuilderSplitNode(mDockNodeLeftID, ImGuiDir_Down, 0.5f, nullptr, &mDockNodeUpLeftID);
+
+
+		ImGui::DockBuilderDockWindow("sceneHierarchy", mDockNodeUpLeftID);
+		ImGui::DockBuilderDockWindow("detailWindow", mDockNodeDownLeftID);
+		ImGui::DockBuilderDockWindow("toolWindow", mDockNodeRightID);
+
+		ImGui::DockBuilderFinish(mMainDockSpaceID);
+		bIsDockingSetUp = true;
+	}
+
+	ImGuiWindowClass mainWindowOverride;
+	mainWindowOverride.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
+	ImGui::SetNextWindowClass(&mainWindowOverride);
 	RenderSceneHierarchy(current_map);
+
+	ImGui::SetNextWindowClass(&mainWindowOverride);
+	RenderDetailsWindow();
 
 	// Render the nodes so that we're sure new nodes are initialized.
 	for (auto& node : current_map.get()->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)) {
 		node->RenderBG(0);
 	}
 
-	RenderDetailsWindow();
 
 	if (mSelectionManager.GetPrimarySelection() != nullptr)
 	{

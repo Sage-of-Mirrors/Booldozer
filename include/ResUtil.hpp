@@ -26,17 +26,21 @@ namespace LResUtility
 
 	std::filesystem::path GetStaticMapDataPath(std::string mapName);
 	std::filesystem::path GetMirrorDataPath(std::string mapName);
+	std::tuple<std::string, std::string, bool> GetActorModelFromName(std::string name);
 
 	class LGCResourceManager
 	{
 		bool mInitialized = false;
+		bool mLoadedGameArchive = false;
 		GCcontext mResManagerContext;
 		public:
 			GCarchive mGameArchive;
 			bool LoadArchive(const char* path, GCarchive* archive);
 			bool SaveArchiveCompressed(const char* path, GCarchive* archive);
 			bool ReplaceArchiveFileData(GCarcfile* file, uint8_t* new_data, size_t new_data_size);
+			GCarcfile* GetFile(GCarchive* archive, std::filesystem::path filepath);
 			void Init();
+			void Cleanup();
 	};
 
 	void LoadUserSettings();

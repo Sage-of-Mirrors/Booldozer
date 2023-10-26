@@ -12,10 +12,29 @@ std::string const LRoomEntityTreeNodeNames[LRoomEntityType_Max] = {
 	"Objects",
 	"Observers",
 	"Paths",
+	"Events",
+	"Keys",
 	"Characters (Blackout)",
 	"Enemies (Blackout)",
 	"Observers (Blackout)"
 };
+
+LRoomEntityType DOMToEntityType(EDOMNodeType type){
+	switch (type)
+	{
+	case EDOMNodeType::Furniture: return LRoomEntityType_Furniture;
+	case EDOMNodeType::Observer: return LRoomEntityType_Observers;
+	case EDOMNodeType::Object: return LRoomEntityType_Objects;
+	case EDOMNodeType::Enemy: return LRoomEntityType_Enemies;
+	case EDOMNodeType::Generator: return LRoomEntityType_Generators;
+	case EDOMNodeType::Path: return LRoomEntityType_Paths;
+	case EDOMNodeType::Character: return LRoomEntityType_Characters;
+	case EDOMNodeType::Event: return LRoomEntityType_Events;
+	case EDOMNodeType::Key: return LRoomEntityType_Keys;
+	
+	default: return LRoomEntityType_Max;
+	}
+}
 
 LRoomDOMNode::LRoomDOMNode(std::string name) : LBGRenderDOMNode(name)
 {
@@ -32,7 +51,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 	bool treeSelected = false;
 	bool treeOpened = LUIUtility::RenderNodeSelectableTreeNode(GetName(), GetIsSelected(), treeSelected);
 
-	/*if(ImGui::BeginDragDropTarget()){
+	if(ImGui::BeginDragDropTarget()){
 		LDOMNodeBase* dragDropNode = nullptr;
 
 		const ImGuiPayload* payload = ImGui::GetDragDropPayload();
@@ -45,17 +64,33 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 		// Skip if there's no pending drag and drop to handle
 		if (dragDropNode != nullptr)
 		{
+			std::shared_ptr<LEntityDOMNode> sharedNode = dragDropNode->GetSharedPtr<LEntityDOMNode>(EDOMNodeType::Entity);
+			if(!sharedNode->Parent.expired()){
+				std::shared_ptr<LRoomDOMNode> oldRoom = sharedNode->Parent.lock()->GetSharedPtr<LRoomDOMNode>(EDOMNodeType::Room);
 
-			switch (dragDropNode->GetNodeType())
-			{
-			case EDOMNodeType::Furniture:
-				mRoomEntities[LRoomEntityType_Furniture].push_back(std::make_shared<LFurnitureDOMNode>(**(LFurnitureDOMNode**)payload->Data));
-				break;
+				LRoomEntityType nodeType = DOMToEntityType(sharedNode->GetNodeType());
+				// Skip if source and destination groups are the same
+				if (nodeType != LRoomEntityType_Max && oldRoom.get() != this)
+				{
+					AddChild(sharedNode);
+					mRoomEntities[nodeType].push_back(sharedNode);
+
+					for (auto iter = oldRoom->mRoomEntities[nodeType].begin(); iter != oldRoom->mRoomEntities[nodeType].end(); ++iter)
+					{
+						if (*iter == sharedNode)
+						{
+							oldRoom->mRoomEntities[nodeType].erase(iter);
+							break;
+						}
+					}
+
+					oldRoom->RemoveChild(sharedNode);
+				}
 			}
 
 		}
 		ImGui::EndDragDropTarget();
-	}*/
+	}
 
 	if (treeOpened)
 	{
@@ -80,6 +115,43 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 			// Entity tree <i> start
 			if (ImGui::TreeNode(LRoomEntityTreeNodeNames[i].c_str()))
 			{
+				if(ImGui::Button("+"))
+				{
+					std::shared_ptr<LEntityDOMNode> newNode = nullptr;
+					switch (i)
+					{
+						case LRoomEntityType_Furniture: newNode = std::make_shared<LFurnitureDOMNode>("furniture"); break;
+						case LRoomEntityType_Observers: newNode = std::make_shared<LObserverDOMNode>("observer"); break;
+						case LRoomEntityType_Objects: newNode = std::make_shared<LObjectDOMNode>("object"); break;
+						case LRoomEntityType_Enemies: newNode = std::make_shared<LEnemyDOMNode>("enemy"); break;
+						case LRoomEntityType_Generators: newNode = std::make_shared<LGeneratorDOMNode>("generator"); break;
+						case LRoomEntityType_Paths: newNode = std::make_shared<LPathDOMNode>("path"); break;
+						case LRoomEntityType_Characters: newNode = std::make_shared<LCharacterDOMNode>("character"); break;
+						case LRoomEntityType_Events: newNode = std::make_shared<LEventDOMNode>("event"); break;
+						case LRoomEntityType_Keys: newNode = std::make_shared<LKeyDOMNode>("key01"); break;
+					}
+					if(newNode != nullptr){
+						newNode->SetRoomNumber(mRoomNumber);
+						AddChild(newNode);
+						mRoomEntities[i].push_back(newNode);
+					}
+				}
+				ImGui::SameLine();
+				if(ImGui::Button("-")){
+					if(mode_selection->IsSingleSelection()){
+						for (auto iter = mRoomEntities[i].begin(); iter != mRoomEntities[i].end(); ++iter)
+						{
+							if (*iter == mode_selection->GetPrimarySelection())
+							{
+								mRoomEntities[i].erase(iter);
+								break;
+							}
+						}
+						RemoveChild(mode_selection->GetPrimarySelection());
+						mode_selection->ClearSelection();
+					}
+				}
+
 				// Iterating all of the entities of type <i>
 				for (uint32_t j = 0; j < mRoomEntities[i].size(); j++)
 				{
@@ -109,6 +181,50 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 
 			// ImGui ID stack returns to <room name>
 			ImGui::PopID();
+		}
+
+		//Mirrors are technically map entities not room entities, but thats ok
+		if (ImGui::TreeNode("Mirrors"))
+		{
+			if(ImGui::Button("+"))
+			{
+				std::shared_ptr<LMirrorDOMNode> mirror = std::make_shared<LMirrorDOMNode>("Mirror");
+				AddChild(mirror);
+			}
+
+			ImGui::SameLine();
+			if(ImGui::Button("-")){
+				if(mode_selection->IsSingleSelection()){
+					//TODO: Remove from map as well
+					RemoveChild(mode_selection->GetPrimarySelection());
+					mode_selection->ClearSelection();
+				}
+			}
+
+			// ImGui ID stack is now at <room name>##<i>##<j>
+			ImGui::PushID("mirrors");
+
+			std::vector<std::shared_ptr<LMirrorDOMNode>> mirrors = GetChildrenOfType<LMirrorDOMNode>(EDOMNodeType::Mirror);
+
+			for(int i = 0; i < mirrors.size(); i++){
+				ImGui::PushID(i);
+				// This checkbox toggles rendering of the individual node that
+				// we're currently building the UI for.
+				LUIUtility::RenderCheckBox(mirrors[i].get());
+				ImGui::SameLine();
+
+				// Render the current node however it wants to be rendered
+				ImGui::Indent();
+				mirrors[i]->RenderHierarchyUI(mirrors[i], mode_selection);
+				ImGui::Unindent();
+
+				// ImGui ID stack returns to <room name>##<i>
+				ImGui::PopID();
+			}
+			ImGui::PopID();
+
+			// End entity tree <i>
+			ImGui::TreePop();
 		}
 
 		// End room tree
@@ -199,10 +315,10 @@ void LRoomDOMNode::RenderWaveHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEd
 
 void LRoomDOMNode::RenderDetailsUI(float dt)
 {
-	auto dataNode = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
+	std::shared_ptr<LRoomDataDOMNode> dataNode = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
 
 	// Integers
-	ImGui::InputInt("Lightning Frequency", &mThunder);
+	ImGui::InputInt("Lightning Direction", &mThunder);
 	LUIUtility::RenderTooltip("How frequently thunder and lightning occurs while in this room.");
 
 	ImGui::InputInt("Dust Intensity", &mDustLevel);
@@ -220,6 +336,15 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 	ImGui::InputInt("Sound Room Size", &mSoundRoomSize);
 	LUIUtility::RenderTooltip("???");
 
+	// Bounding Box
+	ImGui::Text("Bounding Box");
+	glm::vec3 min = dataNode->GetMin();
+	glm::vec3 max = dataNode->GetMax();
+	ImGui::InputFloat3("Min", &min[0]);
+	ImGui::InputFloat3("Max", &max[0]);
+	dataNode->SetMin(min);
+	dataNode->SetMax(max);
+
 	// Colors
 	ImGui::ColorEdit3("Darkened Color", dataNode->GetDarkColor());
 	ImGui::ColorEdit3("Lit Color", mLightColor);
@@ -232,12 +357,9 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 	ImGui::Separator();
 	ImGui::NewLine();
 
-	ImGui::InputInt("Camera Position Index", &mSoundEchoParameter);
-	LUIUtility::RenderTooltip("How much sound echoes within this room.");
-
 	LUIUtility::RenderNodeReferenceVector("Adjacent Rooms", EDOMNodeType::Room, Parent, dataNode->GetAdjacencyList());
 
-	dataNode->RenderTransformUI();
+	//dataNode->RenderTransformUI();
 
 	ImGui::NewLine();
 	ImGui::Separator();
@@ -250,6 +372,15 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 	if (ImGui::TreeNode("Treasure Chest Settings"))
 	{
 		chestData[0]->RenderDetailsUI(dt);
+		ImGui::TreePop();
+	}
+
+	if (ImGui::TreeNode("Advanced"))
+	{
+		int index = dataNode->GetRoomIndex();
+		int id = dataNode->GetRoomID();
+		ImGui::InputInt("Room Index", &index);
+		ImGui::InputInt("Room ID", &id);
 		ImGui::TreePop();
 	}
 }
@@ -309,12 +440,12 @@ bool LRoomDOMNode::CompleteLoad()
 	std::filesystem::path fullResPath = basePath / t.relative_path();
 
 	if (std::filesystem::exists(fullResPath))
-		std::cout << LGenUtility::Format(mName, " has resource at ", fullResPath) << std::endl;
+		//std::cout << fmt::format(mName, "{0} has resource at {1}", fullResPath) << std::endl;
 
 	// Load models here
 
-	auto isNotBlackoutFilter = [](auto node) { return std::static_pointer_cast<LBlackoutDOMNode>(node)->IsActiveDuringBlackout() == false; };
 	auto isBlackoutFilter = [](auto node) { return std::static_pointer_cast<LBlackoutDOMNode>(node)->IsActiveDuringBlackout() == true; };
+	auto isNotBlackoutFilter = [](auto node) { return std::static_pointer_cast<LBlackoutDOMNode>(node)->IsActiveDuringBlackout() == false; };
 
 	for (uint32_t i = 0; i < LRoomEntityType_Max; i++)
 	{
@@ -346,14 +477,20 @@ bool LRoomDOMNode::CompleteLoad()
 			case LRoomEntityType_Paths:
 				findType = EDOMNodeType::Path;
 				break;
+			case LRoomEntityType_Events:
+				findType = EDOMNodeType::Event;
+				break;
+			case LRoomEntityType_Keys:
+				findType = EDOMNodeType::Key;
+				break;
 			default:
 				break;
 		}
 
 		if (i == LRoomEntityType_Characters || i == LRoomEntityType_Enemies || i == LRoomEntityType_Observers)
-			mRoomEntities[i] = GetChildrenOfType<LEntityDOMNode>(findType, isNotBlackoutFilter);
+			mRoomEntities[i] = GetChildrenOfType<LEntityDOMNode>(findType, [](auto node) { return std::static_pointer_cast<LBlackoutDOMNode>(node)->IsActiveDuringBlackout() == false; });
 		else if (i == LRoomEntityType_BlackoutCharacters || i == LRoomEntityType_BlackoutEnemies || i == LRoomEntityType_BlackoutObservers)
-			mRoomEntities[i] = GetChildrenOfType<LEntityDOMNode>(findType, isBlackoutFilter);
+			mRoomEntities[i] = GetChildrenOfType<LEntityDOMNode>(findType, [](auto node) { return std::static_pointer_cast<LBlackoutDOMNode>(node)->IsActiveDuringBlackout() == true; });
 		else
 			mRoomEntities[i] = GetChildrenOfType<LEntityDOMNode>(findType);
 	}

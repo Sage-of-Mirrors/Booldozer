@@ -6,7 +6,10 @@
 
 #include "TextEditor.h"
 
+#ifndef IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_DEFINE_MATH_OPERATORS
+#endif
+
 #include "imgui.h" // for imGui::GetCurrentWindow()
 
 /*
@@ -1146,7 +1149,7 @@ void TextEditor::Render()
 			if (local.x >= mTextStart)
 			{
 				auto pos = ScreenPosToCoordinates(mpos);
-				printf("Coord(%d, %d)\n", pos.mLine, pos.mColumn);
+				//printf("Coord(%d, %d)\n", pos.mLine, pos.mColumn);
 				auto id = GetWordAt(pos);
 				if (!id.empty())
 				{

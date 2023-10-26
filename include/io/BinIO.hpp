@@ -2,7 +2,6 @@
 
 #include <map>
 #include <memory>
-#include "bgfx/bgfx.h"
 #include "../lib/bStream/bstream.h"
 
 enum class GXAttribute : int {
@@ -47,20 +46,28 @@ enum GXPrimitiveType {
 };
 
 class BinMaterial {
-	bgfx::TextureHandle mTexture;
+	uint32_t mTexture;
     uint8_t mWrap;
-	void LoadCMPRTex(bStream::CStream* stream, uint16_t w, uint16_t h, uint32_t* out);
 
 public:
-    void bind(bgfx::UniformHandle& textureUniform);
+
+	static void DecodeCMPR(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData);
+	static void DecodeRGB5A3(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData);
+	static void DecodeRGB565(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData);
+
+	static uint8_t* DecodeCMPRSubBlock(bStream::CStream* stream);
+	static uint32_t RGB565toRGBA8(uint16_t data);
+	static uint32_t RGB5A3toRGBA8(uint16_t data);
+
+    void Bind();
 	BinMaterial(bStream::CStream* stream, uint32_t textureOffset);
-	~BinMaterial(){}
+	~BinMaterial();
 };
 
 class BinSampler {
-	uint32_t mAmbientColor;
 
 public:
+	glm::vec4 mAmbientColor;
 	uint16_t mTextureID;
     BinSampler(bStream::CStream* stream);
 	BinSampler(){}
@@ -68,18 +75,22 @@ public:
 };
 
 class BinMesh {
-    bgfx::IndexBufferHandle ebo;
-    bgfx::VertexBufferHandle vbo;
+    uint32_t mVbo;
+	uint32_t mVao;
 
 public:
-    void bind();
+	uint32_t mVertexCount;
+
+    void Bind();
+
     BinMesh(bStream::CStream* stream, uint32_t offset, std::vector<glm::vec3>& vertexData, std::vector<glm::vec2>& texcoordData);
+	
     BinMesh(){}
     ~BinMesh();
 
 };
 
-class BGFXBin;
+class BinModel;
 
 class BinScenegraphNode {
     std::vector<std::pair<int16_t, int16_t>> meshes;
@@ -94,27 +105,39 @@ public:
 	float mBoundingSphereRadius;
 
     void AddMesh(int16_t material, int16_t mesh);
-    void Draw(glm::mat4 localTransform, glm::mat4* instance, BGFXBin* bin, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform, bool bIgnoreTransforms = false);
+    void Draw(glm::mat4 localTransform, glm::mat4* instance, BinModel* bin, bool bIgnoreTransforms = false);
     BinScenegraphNode();
     ~BinScenegraphNode();
 
 };
 
-class BGFXBin {
-    std::map<int16_t, BinMesh> mMeshes;
-    std::map<int16_t, BinSampler> mSamplers;
-	std::vector<BinMaterial> mMaterials;
+class BinModel {
+    std::map<int16_t, std::shared_ptr<BinMesh>> mMeshes;
+    std::map<int16_t, std::shared_ptr<BinSampler>> mSamplers;
+	std::vector<std::shared_ptr<BinMaterial>> mMaterials;
     std::shared_ptr<BinScenegraphNode> mRoot;
 
     std::shared_ptr<BinScenegraphNode> ParseSceneraph(bStream::CStream* stream, uint32_t* offsets, uint16_t index, std::vector<glm::vec3>& vertexData, std::vector<glm::vec2>& texcoordData, std::shared_ptr<BinScenegraphNode> parent = nullptr, std::shared_ptr<BinScenegraphNode> previous = nullptr);
 
 public:
-    static void InitBinVertex();
+
+	static void InitShaders();
+	static void DestroyShaders();
+
 	bool BindMesh(uint16_t id);
-	bool BindMaterial(uint16_t id, bgfx::UniformHandle& texUniform);
-    void Draw(glm::mat4* transform, bgfx::ProgramHandle& program, bgfx::UniformHandle& texUniform, bool bIgnoreTransforms = false);
+
+	bool BindMaterial(uint16_t id);
+
+    void Draw(glm::mat4* transform, bool bIgnoreTransforms = false);
+
 	void TranslateRoot(glm::vec3 translation);
+
 	float GetRootBoundingSphere() { return mRoot->mBoundingSphereRadius; }
-    BGFXBin(bStream::CStream* stream);
-    ~BGFXBin();
+
+	std::shared_ptr<BinMesh> GetMesh(uint32_t id) { return mMeshes.at(id); }
+	std::shared_ptr<BinSampler> GetSampler(uint32_t id) { return mSamplers.at(id); }
+
+    BinModel(bStream::CStream* stream);
+
+    ~BinModel();
 };

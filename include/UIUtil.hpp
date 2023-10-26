@@ -1,6 +1,6 @@
 #pragma once
 
-#include "imgui.h"
+#include <imgui.h>
 #include "DOM.hpp"
 #include "../lib/magic_enum/include/magic_enum.hpp"
 #include <type_traits>
@@ -148,7 +148,7 @@ namespace LUIUtility
 	{
 		bool changed = false;
 
-		ImGui::Text(name.c_str());
+		ImGui::Text("%s",name.c_str());
 		ImGui::SameLine();
 		if (ImGui::Button(" + "))
 		{

@@ -6,7 +6,7 @@
 
 #include <memory>
 
-extern std::map<std::string, std::string> InterpolationTypes = {
+std::map<std::string, std::string> InterpolationTypes = {
 	{ "(null)", "None" },
 	{ "Linear", "Linear" },
 	{ "Bezier", "Bezier" },
@@ -86,6 +86,7 @@ void LPathPointDOMNode::PreProcess()
 void LPathPointDOMNode::RenderDetailsUI(float dt)
 {
 	auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+	LUIUtility::RenderTransformUI(mTransform.get(), mPosition, mRotation, mScale);
 	LUIUtility::RenderNodeReferenceCombo<LRoomDOMNode>("Next Room", EDOMNodeType::Room, mapNode, mRoomRef);
 	LUIUtility::RenderTooltip("What room a Boo using this path to escape from Luigi should end up in.");
 
@@ -105,6 +106,10 @@ LPathDOMNode::LPathDOMNode(std::string name) : Super(name)
 
 void LPathDOMNode::RenderDetailsUI(float dt)
 {
+
+	LUIUtility::RenderTextInput("Path File", &mName);
+	ImGui::InputInt("Room No", &mRoomNumber);
+	
 	// Integers
 	ImGui::InputInt("ID", &mOrganizationNumber);
 	LUIUtility::RenderTooltip("An ID to organize paths by floor. Seems to be unused by the game?");
@@ -137,7 +142,8 @@ void LPathDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetString(entry_index, "next", mNextPathName);
 
 	JmpIO->SetSignedInt(entry_index, "no", mOrganizationNumber);
-	JmpIO->SetSignedInt(entry_index, "num_pnt", mNumPoints);
+	std::cout << Children.size() << std::endl;
+	JmpIO->SetSignedInt(entry_index, "num_pnt", (int32_t)Children.size());
 	JmpIO->SetSignedInt(entry_index, "room_no", mRoomNumber);
 	JmpIO->SetSignedInt(entry_index, "arg0", mArg0);
 
@@ -180,6 +186,10 @@ void LPathDOMNode::PostProcess()
 	}
 }
 
+
+void LPathDOMNode::RenderPath(CPathRenderer* renderer){
+}
+
 void LPathDOMNode::PreProcess()
 {
 	if (auto nextPathLocked = mNextPathRef.lock())
@@ -190,35 +200,37 @@ void LPathDOMNode::PreProcess()
 
 void LPathDOMNode::PostProcess(const GCarchive& mapArchive)
 {
-	bStream::CMemoryStream fileMemStream;
 
 	// Find the correct path file in the archive
-	for (uint32_t i = 0; i < mapArchive.filenum; i++)
-	{
-		if (strcmp(mapArchive.files[i].name, mName.c_str()) == 0)
-		{
-			fileMemStream = bStream::CMemoryStream(static_cast<uint8_t*>(mapArchive.files[i].data), mapArchive.files[i].size, bStream::Endianess::Big, bStream::OpenMode::In);
-			break;
-		}
-	}
 
-	// If the file wasn't found, emit an error and return
-	if (fileMemStream.getSize() == 0)
-	{
+	GCarcfile* pathFile = GCResourceManager.GetFile((GCarchive*)&mapArchive, std::filesystem::path("path") / mName);
+	
+	if(pathFile == nullptr){
 		std::cout << "Unable to load path file " << mName << " !" << std::endl;
 		return;
 	}
 
-	LJmpIO pathLoader = LJmpIO();
+	bStream::CMemoryStream fileMemStream(static_cast<uint8_t*>(pathFile->data), pathFile->size, bStream::Endianess::Big, bStream::OpenMode::In);
+
+	LJmpIO pathLoader;
 	pathLoader.Load(&fileMemStream);
+
+	float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+	float g = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+	float b = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+
+	mPathColor = {r, g, b, 1.0f};
 
 	for (size_t i = 0; i < mNumPoints; i++)
 	{
 		std::shared_ptr<LPathPointDOMNode> newPoint = std::make_shared<LPathPointDOMNode>("Path Point");
 		newPoint->Deserialize(&pathLoader, i);
+		
+
 		AddChild(newPoint);
 
 		newPoint->PostProcess();
+		mPathRenderable.push_back({newPoint->GetPosition(), mPathColor, 12800});
 	}
 
 	// Boo escape paths are defined outside of the rooms they're for; skip sorting them.
@@ -233,6 +245,7 @@ void LPathDOMNode::PostProcess(const GCarchive& mapArchive)
 		{
 			auto roomData = r->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
 
+			if(Children.empty() || Children[0].get() == nullptr || Children[0]->GetNodeType() != EDOMNodeType::PathPoint) continue;
 			if (roomData->CheckPointInBounds(std::static_pointer_cast<LPathPointDOMNode>(Children[0])->GetPosition()))
 			{
 				r->AddChild(GetSharedPtr<LPathDOMNode>(EDOMNodeType::Path));

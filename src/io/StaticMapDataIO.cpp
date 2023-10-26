@@ -170,7 +170,7 @@ bool LStaticMapDataIO::GetAdjacentRoomListData(const uint32_t& index, std::vecto
 
 		uint16_t temp = *static_cast<uint16_t*>(rawPtr);
 		if (temp == 0xFFFF)
-			break;
+			return true;
 
 		data.push_back(LGenUtility::SwapEndian(temp));
 
@@ -273,7 +273,7 @@ bool LStaticMapDataIO::RipStaticDataFromExecutable(const DOL& dol, std::filesyst
 	mData = new uint8_t[memStream.getSize()];
 	memcpy(mData, memStream.getBuffer(), memStream.getSize());
 
-	bStream::CFileStream f = bStream::CFileStream(dest_path.u8string(), bStream::Endianess::Big, bStream::OpenMode::Out);
+	bStream::CFileStream f = bStream::CFileStream(dest_path.string(), bStream::Endianess::Big, bStream::OpenMode::Out);
 	Save(f);
 
 	return true;
@@ -317,7 +317,7 @@ bool LStaticMapDataIO::SaveMapFile(std::filesystem::path dest_path, std::shared_
 	mData = new uint8_t[memStream.getSize()];
 	memcpy(mData, memStream.getBuffer(), memStream.getSize());
 
-	bStream::CFileStream f = bStream::CFileStream(dest_path.u8string(), bStream::Endianess::Big, bStream::OpenMode::Out);
+	bStream::CFileStream f = bStream::CFileStream(dest_path.string(), bStream::Endianess::Big, bStream::OpenMode::Out);
 	Save(f);
 
 	return true;
@@ -545,7 +545,7 @@ std::vector<LStaticRoomData> LStaticMapDataIO::GetRoomDataFromMap(std::shared_pt
 
 	for (auto rd : roomDatas)
 	{
-		LStaticRoomData staticRoom;
+		LStaticRoomData staticRoom {0};
 		rd->Save(staticRoom);
 		roomData.push_back(staticRoom);
 

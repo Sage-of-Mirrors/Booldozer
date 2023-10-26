@@ -6,9 +6,7 @@
 #include "DOM/ItemAppearDOMNode.hpp"
 #include "DOM/ItemFishingDOMNode.hpp"
 #include "GhostImg.h"
-#include "bgfx/bgfx.h"
 #include <memory>
-#include <glm/glm.hpp>
 #include <map>
 
 enum EAttackPattern {
@@ -82,13 +80,14 @@ struct LCTPrm {
 };
 
 class LPrmIO {
-    bool mConfigsLoaded;
+    bool mConfigsLoaded { false };
     int mSelectedConfig;
-    bgfx::TextureHandle mGhostImg;
+    uint32_t mGhostImg;
     std::weak_ptr<LMapDOMNode> mMap;
     std::vector<std::string> mLoadedConfigs;
     std::map<std::string, std::shared_ptr<LCTPrm>> mCtpParams;
 public:
+    bool mParamToolOpen { false };
     void LoadConfigs(std::shared_ptr<LMapDOMNode>& map);
     void SaveConfigsToFile();
     void Load(std::string name, bStream::CStream* stream);

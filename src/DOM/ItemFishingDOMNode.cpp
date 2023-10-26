@@ -18,7 +18,7 @@ void LItemFishingDOMNode::RenderDetailsUI(float dt)
     for (uint32_t i = 0; i < 60; i++)
     {
         ImGui::PushID(i);
-        LUIUtility::RenderNodeReferenceCombo<LItemInfoDOMNode>(LGenUtility::Format("Item Slot ", i), EDOMNodeType::Furniture, Parent, mItemInfoRefs[i]);
+        LUIUtility::RenderNodeReferenceCombo<LItemInfoDOMNode>(fmt::format("Item Slot {0}", i), EDOMNodeType::Furniture, Parent, mItemInfoRefs[i]);
         ImGui::PopID();
     }
 }
@@ -27,7 +27,7 @@ void LItemFishingDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 {
     for (uint32_t i = 0; i < 60; i++)
     {
-        JmpIO->SetString(entry_index, LGenUtility::Format("item", i), mItemNames[i]);
+        JmpIO->SetString(entry_index, fmt::format("item{0}", i), mItemNames[i]);
     }
 }
 
@@ -35,7 +35,7 @@ void LItemFishingDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 {
     for (uint32_t i = 0; i < 60; i++)
     {
-        mItemNames[i] = JmpIO->GetString(entry_index, LGenUtility::Format("item", i));
+        mItemNames[i] = JmpIO->GetString(entry_index, fmt::format("item{0}", i));
     }
 }
 

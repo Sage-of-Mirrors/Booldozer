@@ -3,7 +3,8 @@
 #include "UIUtil.hpp"
 #include "GenUtil.hpp"
 
-#include <imgui.h>
+#include "imgui.h"
+#include "imgui_internal.h"
 
 LPathMode::LPathMode()
 {
@@ -12,7 +13,9 @@ LPathMode::LPathMode()
 
 void LPathMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 {
-	ImGui::Begin("Scene Hierarchy");
+	ImGui::Begin("sceneHierarchy");
+	ImGui::Text("Rooms");
+	ImGui::Separator();
 
 	auto rooms = current_map->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
 	for (auto r : rooms)
@@ -42,7 +45,7 @@ void LPathMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 			for (size_t i = 0; i < paths.size(); i++)
 			{
 				auto path = paths[i];
-				std::string nodeName = LGenUtility::Format(path->GetName(), "###", i);
+				std::string nodeName = fmt::format("{0}###{1}", path->GetName(), i);
 
 				bool treeSelected = false;
 				bool treeOpened = LUIUtility::RenderNodeSelectableTreeNode(nodeName, path->GetIsSelected() && !bLastClickedWasPoint, treeSelected);
@@ -74,14 +77,14 @@ void LPathMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 					for (size_t j = 0; j < path->Children.size(); j++)
 					{
 						auto point = path->Children[j];
-						std::string ptName = LGenUtility::Format("point###", j);//LGenUtility::Format("Point ", j, ": (", point->X.Value, ", ", point->Y.Value, ", ", point->Z.Value, ")###", j);
+						std::string ptName = fmt::format("point###{0}", j);//fmt::format("Point ", j, ": (", point->X.Value, ", ", point->Y.Value, ", ", point->Z.Value, ")###", j);
 
 						if (LUIUtility::RenderNodeSelectable(point.get(), point->GetIsSelected() && bLastClickedWasPoint))
 						{
 							mPointSelection.AddToSelection(point);
 							bLastClickedWasPoint = true;
 						}
-						if (ImGui::BeginPopupContextItem(LGenUtility::Format("pointctx###", j).c_str()))
+						if (ImGui::BeginPopupContextItem(fmt::format("pointctx###{0}", j).c_str()))
 						{
 							// This point was removed, so skip everything else.
 							if (RenderPointContextMenu(std::static_pointer_cast<LPathDOMNode>(path), std::static_pointer_cast<LPathPointDOMNode>(point)))
@@ -106,7 +109,10 @@ void LPathMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 
 void LPathMode::RenderDetailsWindow()
 {
-	ImGui::Begin("Selected Object Details");
+	ImGui::Begin("detailWindow");
+
+	ImGui::Text("Point Settings");
+	ImGui::Separator();
 
 	// Show point details
 	if (bLastClickedWasPoint)
@@ -130,8 +136,38 @@ void LPathMode::RenderDetailsWindow()
 
 void LPathMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene)
 {
+	const ImGuiViewport* mainViewport = ImGui::GetMainViewport();
+
+	ImGuiDockNodeFlags dockFlags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_AutoHideTabBar | ImGuiDockNodeFlags_NoDockingInCentralNode;
+	mMainDockSpaceID = ImGui::DockSpaceOverViewport(mainViewport, dockFlags);
+	
+	if(!bIsDockingSetUp){
+		ImGui::DockBuilderRemoveNode(mMainDockSpaceID); // clear any previous layout
+		ImGui::DockBuilderAddNode(mMainDockSpaceID, dockFlags | ImGuiDockNodeFlags_DockSpace);
+		ImGui::DockBuilderSetNodeSize(mMainDockSpaceID, mainViewport->Size);
+
+
+		mDockNodeLeftID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Left, 0.25f, nullptr, &mMainDockSpaceID);
+		mDockNodeRightID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Right, 0.25f, nullptr, &mMainDockSpaceID);
+		mDockNodeDownLeftID = ImGui::DockBuilderSplitNode(mDockNodeLeftID, ImGuiDir_Down, 0.5f, nullptr, &mDockNodeUpLeftID);
+
+
+		ImGui::DockBuilderDockWindow("sceneHierarchy", mDockNodeUpLeftID);
+		ImGui::DockBuilderDockWindow("detailWindow", mDockNodeDownLeftID);
+		ImGui::DockBuilderDockWindow("toolWindow", mDockNodeRightID);
+
+		ImGui::DockBuilderFinish(mMainDockSpaceID);
+		bIsDockingSetUp = true;
+	}
+
+	ImGuiWindowClass mainWindowOverride;
+	mainWindowOverride.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
+	ImGui::SetNextWindowClass(&mainWindowOverride);
 	RenderSceneHierarchy(current_map);
+
+	ImGui::SetNextWindowClass(&mainWindowOverride);
 	RenderDetailsWindow();
+	
 
 	for (auto& node : current_map.get()->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)) {
 		node->RenderBG(0);

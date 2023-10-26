@@ -1,0 +1,120 @@
+{
+    "Gold Ghost" : ["obake01", "obake011"],
+    "Temper Terror" : ["obake01", "obake012"],
+    
+    "Purple Puncher" : ["obake02", "obake021"],
+    "Flash" : ["obake02", "obake022"],
+    
+    "Blue Twirler" : ["obake03", "obake031"],
+    "Blue Blaze" : ["obake03", "obake032"],
+    
+    "Red Grabbing Ghost" : ["topoo", "topoo1"],
+    "Mirror Ghost" : ["topoo", "topoo2"],
+    "Cinema Ghost" : ["topoo", "topoo3"],
+    "White Grabbing Ghost" : ["topoo", "topoo4"],
+    
+    "Red Ghost Guy (Solo)" : ["heypo", "heypo1"],
+    "Green Ghost Guy (Solo)" : ["heypo", "heypo2"],
+    "White Ghost Guy (Dancer)" : ["heypo", "heypo3"],
+    "Brown Ghost Guy (Dancer)" : ["heypo", "heypo4"],
+    "Orange Ghost Guy (Dancer)" : ["heypo", "heypo5"],
+    "Yellow Ghost Guy (Dancer)" : ["heypo", "heypo6"],
+    "Pink Ghost Guy (Dancer)" : ["heypo", "heypo7"],
+    "Purple Ghost Guy (Dancer)" : ["heypo", "heypo8"],
+    
+    "Standard Fake Door" : ["door", ""],
+    "Laundry Room Fake Door" : ["door3", ""],
+    "Attic Fake Door" : ["door2", ""],
+    
+    "Garbage Can Ghost" : ["banaoba",""],
+    
+    "Mr. Bones" : ["skul", ""],
+    
+    "Purple Bomber" : ["tenjyo", "tenjyo1"],
+    "Ceiling Surprise" : ["tenjyo", "tenjyo2"],
+    
+    "Bowling Ghost" : ["obake04", ""],
+    "Waiter" : ["waiter", ""],
+
+    "gtakara1" : ["takara1", "takara11"],
+    "rtakara1" : ["takara1", "takara12"],
+    "btakara1" : ["takara1", "takara13"],
+    "wtakara1" : ["takara1", "takara14"],
+    "ytakara1" : ["takara1", "takara15"],
+
+    "telesa" : ["telesa3", "", true],
+    "demotele" : ["telesa", ""],
+    "demotel2" : ["telesa", ""],
+    "bmtelesa" : ["telesa", ""],
+    "telesa1" : ["telesa2", ""],
+    "btelesa" : ["telesa2", ""],
+    "dltelesa" : ["ltelesa", ""],
+    "kptelesa" : ["ltelesa", ""],
+    "telball" : ["telbell", ""],
+    
+    "luige" : ["luige", "usual_bk"],
+    "Toad" : ["kinopio", ""],
+    "Green Toad" : ["kinopio", "kinopio2"],
+    "Telephone" : ["iphone", ""],
+    "Clockwork Room Elevators" : ["otobira", ""],
+
+    "doll1" : ["doll", "doll1"],
+    "doll2" : ["doll", "doll2"],
+    "doll3" : ["doll", "doll3"],
+
+    "hutubone" : ["tubone", ""],
+    "snowman" : ["yukiyama", ""],
+
+    "boy" : ["boy", "boy"],
+    "dboy" : ["boy", "boy"],
+    "boy2" : ["boy", "boy2"],
+    "dboy2" : ["boy", "boy2"],
+    
+    "dog01" : ["dog", ""],
+
+    "isu01" : ["isu", ""],
+    "isu02" : ["isu2", ""],
+
+    "ibox1" : ["ibox", "ibox1"],
+    "ibox2" : ["ibox", "ibox2"],
+    "ibox3" : ["ibox", "ibox3"],
+    "ibox4" : ["ibox", "ibox4"],
+    "ibox5" : ["ibox", "ibox5"],
+
+    "bone1" : ["bone", "", true],
+    "ebone" : ["bone", "", true],
+
+    "okeito" : ["okeito1", ""],
+    "keito1" : ["okeito1", "okeito11"],
+    "keito2" : ["okeito1", "okeito12"],
+    "keito3" : ["okeito1", "okeito13"],
+
+    "htama1" : ["htama", "htama1"],
+    "htama2" : ["htama", "htama2"],
+    "htama3" : ["htama", "htama3"],
+    "htama4" : ["htama", "htama4"],
+
+    "bbaby" : ["baby", ""],
+    "moku2" : ["moku", ""],
+    "ikuma1" : ["ikuma", ""],
+
+    
+    "kdust" : ["dust", ""],
+
+    "poo1" : ["poo", "poo1"],
+    "poo2" : ["poo", "poo2"],
+    "eskul" : ["skul", ""],
+
+    "bat1" : ["bat", "bat1"],
+    "bat2" : ["bat", "bat2"],
+
+    "rat1" : ["rat", "rat1"],
+    "rat2" : ["rat", "rat2"],
+    "rat3" : ["rat", "rat3"],
+
+    "mgyapoo1" : ["obake01", "obake011"],
+    "banana" : ["banana", "", true],
+    "key01" : ["ed07key", ""],
+    "vbody" : ["vbody", "", true],
+    "vhead" : ["vhead", "", true]
+}

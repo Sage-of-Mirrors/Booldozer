@@ -17,18 +17,18 @@ std::string LDoorDOMNode::GetName()
 {
 	std::string name = "";
 
-	name = LGenUtility::Format(name, "[", mJmpId, "] ");
+	name = fmt::format("{0} [{1}]", name, mJmpId);
 
 	switch (mOrientation)
 	{
 	case EDoorOrientation::Front_Facing:
-		name = LGenUtility::Format(name, u8"↕ ");
+		name = fmt::format("{0} {1}", name, "↕ ");
 		break;
 	case EDoorOrientation::Side_Facing:
-		name = LGenUtility::Format(name, u8"↔ ");
+		name = fmt::format("{0} {1}", name, "↔ ");
 		break;
 	case EDoorOrientation::No_Fade:
-		name = LGenUtility::Format(name, "No Fade ");
+		name = fmt::format("{0} {1}", name, "No Fade ");
 		break;
 	default:
 		break;
@@ -37,10 +37,10 @@ std::string LDoorDOMNode::GetName()
 	switch (mDoorType)
 	{
 	case EDoorType::Viewport:
-		name = LGenUtility::Format(name, "(VP) ");
+		name = fmt::format("{0} {1}", name, "(VP) ");
 		break;
 	case EDoorType::Window:
-		name = LGenUtility::Format(name, "(W) ");
+		name = fmt::format("{0} {1}", name, "(W) ");
 		break;
 	}
 
@@ -48,13 +48,13 @@ std::string LDoorDOMNode::GetName()
 	if (auto mapNodeLocked = mapNode.lock())
 	{
 		if (auto wsRoomLocked = mWestSouthRoom.lock())
-			name = LGenUtility::Format(name, wsRoomLocked->GetName());
+			name = fmt::format("{0} {1}", name, wsRoomLocked->GetName());
 		else
-			name = LGenUtility::Format(name, "<Invalid Room>");
+			name = fmt::format("{0} {1}", name, "<Invalid Room>");
 		if (auto enRoomLocked = mEastNorthRoom.lock())
-			name = LGenUtility::Format(name, "/", enRoomLocked->GetName());
+			name = fmt::format("{0} {1} {2}", name, "/", enRoomLocked->GetName());
 		else
-			name = LGenUtility::Format(name, "/" "<Invalid Room>");
+			name = fmt::format("{0} {1} {2}", name, "/", "<Invalid Room>");
 	}
 
 	return name;
@@ -105,9 +105,9 @@ bool LDoorDOMNode::Save(LStaticDoorData& dest)
 
 	// Scale is the diagonal of the transform matrix ([0][0] for X, [1][1] for Y, [2][2] for Z).
 	// Swap Z and X to account for BGFX's coordinate system.
-	dest.mViewportSize.x = (uint16_t)(*mTransform)[2][2];
-	dest.mViewportSize.y = (uint16_t)(*mTransform)[1][1];
-	dest.mViewportSize.z = (uint16_t)(*mTransform)[0][0];
+	dest.mViewportSize.x = (uint16_t)mScale.z;
+	dest.mViewportSize.y = (uint16_t)mScale.y;
+	dest.mViewportSize.z = (uint16_t)mScale.x;
 
 	dest.mNextEscape = mNextEscape;
 	dest.mCurrentEscape = mCurrentEscape;

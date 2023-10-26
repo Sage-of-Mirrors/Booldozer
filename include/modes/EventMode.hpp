@@ -8,14 +8,16 @@
 class LEventMode : public LEditorModeBase
 {
 	void RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map);
-	void RenderDetailsWindow();
+	void RenderDetailsWindow(LSceneCamera* camera);
 
 	TextEditor mEditor;
 	std::shared_ptr<LEventDataDOMNode> mSelected;
 
+	uint32_t mDockNodeBottom;
 
 public:
 	LEventMode();
+	~LEventMode();
 
 	void RenderLeafContextMenu(std::shared_ptr<LDoorDOMNode> node);
 

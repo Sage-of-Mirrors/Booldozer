@@ -6,31 +6,31 @@
 
 enum LEntityType
 {
-	LEntityType_Characters,
+	LEntityType_Characters, // broken!
 	LEntityType_Enemies,
 	LEntityType_Events,
 	LEntityType_Furniture,
 	LEntityType_Generators,
 	LEntityType_Groups,
-	LEntityType_ItemAppear,
-	LEntityType_ItemFishing,
-	LEntityType_ItemInfoTable,
-	LEntityType_ItemTable,
-	LEntityType_SpeedySpiritDrops,
-	LEntityType_Keys,
+	LEntityType_ItemAppear, // Works
+	LEntityType_ItemFishing, // Works
+	LEntityType_ItemInfoTable, // Works
+	LEntityType_ItemTable, // Works
+	LEntityType_SpeedySpiritDrops, // Works
+	LEntityType_Keys, // Works
 	LEntityType_Objects,
 	LEntityType_Observers,
 	LEntityType_Polygons,
 	LEntityType_Paths,
 	LEntityType_Rooms,
-	LEntityType_SoundGroups,
-	LEntityType_SoundPolygons,
+	LEntityType_SoundGroups, // 
+	LEntityType_SoundPolygons, // 
 	LEntityType_BlackoutCharacters,
 	LEntityType_BlackoutEnemies,
-	LEntityType_BlackoutKeys,
-	LEntityType_BlackoutObservers,
-	LEntityType_Boos,
-	LEntityType_TreasureTable,
+	LEntityType_BlackoutKeys, // Works
+	LEntityType_BlackoutObservers, //
+	LEntityType_Boos, // 
+	LEntityType_TreasureTable, // Works
 	LEntityType_Max,
 };
 

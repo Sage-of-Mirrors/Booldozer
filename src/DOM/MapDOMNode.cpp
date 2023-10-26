@@ -4,6 +4,7 @@
 #include "GenUtil.hpp"
 #include "ResUtil.hpp"
 #include "Options.hpp"
+#include <cstring>
 
 std::string const LEntityFileNames[LEntityType_Max] = {
 	"characterinfo",
@@ -36,10 +37,22 @@ std::string const LEntityFileNames[LEntityType_Max] = {
 LMapDOMNode::LMapDOMNode() : Super("map")
 {
 	mType = EDOMNodeType::Map;
+	memset(&mMapArchive, 0, sizeof(GCarchive));
+}
+
+LMapDOMNode::~LMapDOMNode(){
+	if(mMapArchive.filenum != 0){
+		gcFreeArchive(&mMapArchive);
+	}	
 }
 
 bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 {
+
+	if(mMapArchive.filenum != 0){
+		gcFreeArchive(&mMapArchive);
+	}
+
 	// Make sure file path is valid
 	if (!std::filesystem::exists(file_path))
 	{
@@ -50,6 +63,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	// Attempt to load archive
 	if (!GCResourceManager.LoadArchive(file_path.string().c_str(), &mMapArchive))
 	{
+		printf("Archive Load Failed\n");
 		return false;
 	}
 
@@ -57,31 +71,54 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	mName = std::string(file_path.stem().string().c_str());
 
 	std::filesystem::path eventPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Event";
-	if(std::filesystem::exists(eventPath)){
-		for (auto& archive : std::filesystem::directory_iterator(eventPath)){
+	if(std::filesystem::exists(eventPath))
+	{
+		for (auto& archive : std::filesystem::directory_iterator(eventPath))
+		{
+
 			GCarchive eventArc;
+
 			//Exclude cvs subdir
-			if(archive.is_regular_file() && GCResourceManager.LoadArchive(archive.path().generic_u8string().c_str(), &eventArc)){
+			if(archive.is_regular_file() && GCResourceManager.LoadArchive(archive.path().string().c_str(), &eventArc)){
 				//Name of the event file were loading, ex 'event48'
 				std::string eventName = archive.path().stem().string();
 				std::string csvName = eventName;
+
 				csvName.replace(0, 5, "message");
-				std::cout << csvName << std::endl;
 				std::shared_ptr<LEventDataDOMNode> eventData =  std::make_shared<LEventDataDOMNode>(eventName);
-				for (size_t i = 0; i < eventArc.filenum; i++){
-					if((eventName + ".txt").compare(eventArc.files[i].name) == 0){
+				eventData->SetEventArchivePath(archive.path().string());
+
+				for (size_t i = 0; i < eventArc.filenum; i++)
+				{
+					if((eventName + ".txt").compare(eventArc.files[i].name) == 0)
+					{
 						eventData->mEventScript = LGenUtility::SjisToUtf8(std::string((char*)eventArc.files[i].data));
 					}
-					else if((csvName + ".csv").compare(eventArc.files[i].name) == 0){
-						std::stringstream csv_data((char*)eventArc.files[i].data);
+					else if((csvName + ".csv").compare(eventArc.files[i].name) == 0)
+					{
 						std::string curline;
-						while (std::getline(csv_data, curline)){
+						std::stringstream lines(LGenUtility::SjisToUtf8(std::string((char*)eventArc.files[i].data)));
+						while (std::getline(lines, curline, '\n')){
 							eventData->mEventText.push_back(LGenUtility::SjisToUtf8(curline));
 						}
 						
+					} 
+					else if(std::string(eventArc.files[i].name).find("cmn") != std::string::npos)
+					{
+						bStream::CMemoryStream cmn((uint8_t*)eventArc.files[i].data, eventArc.files[i].size, bStream::Endianess::Big, bStream::OpenMode::In);
+						std::shared_ptr<LCameraAnimationDOMNode> camNode = std::make_shared<LCameraAnimationDOMNode>(std::string(eventArc.files[i].name));
+
+						std::cout << "Loading Anim " << eventArc.files[i].name << " in event " << eventName << "..." << std::endl;
+						camNode->Load(&cmn);
+						std::cout << "Finished" << std::endl;
+
+						eventData->AddChild(camNode);
 					}
+
 				}
 				
+				
+				gcFreeArchive(&eventArc);
 				AddChild(eventData);
 			}
 		}
@@ -92,18 +129,19 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	if (!std::filesystem::exists(roomsMap))
 	{
 		DOL dol;
-		dol.LoadDOLFile(std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol");
+		dol.LoadDOLFile(std::filesystem::path(OPTIONS.mRootPath) / "files" / "sys" / "main.dol");
 
+		std::cout << "Ripping static data for map " << mName << std::endl;
 		if (!mStaticMapIO.RipStaticDataFromExecutable(dol, roomsMap, mName, "GLME01"))
 		{
-			std::cout << LGenUtility::Format("Failed to rip static map data to ", roomsMap) << std::endl;
+			std::cout << fmt::format("Failed to rip static map data to {0}", roomsMap.string()) << std::endl;
 			return false;
 		}
 	}
 
 	if (!ReadStaticData(roomsMap))
 	{
-		std::cout << LGenUtility::Format("Failed to open static data from ", roomsMap) << std::endl;
+		std::cout << fmt::format("Failed to open static data from {0}", roomsMap.string()) << std::endl;
 		return false;
 	}
 
@@ -128,12 +166,12 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	}
 
 	// Grab the friendly room names for this map
-	nlohmann::json roomNames = LResUtility::GetNameMap(LGenUtility::Format(mName, "_rooms"));
+	nlohmann::json roomNames = LResUtility::GetNameMap(fmt::format("{0}_rooms", mName));
 
 	// Use the static room data to know how many rooms to load
 	for (size_t i = 0; i < mStaticMapIO.GetRoomCount(); i++)
 	{
-		std::string roomName = LGenUtility::Format("room_", std::setfill('0'), std::setw(2), i);
+		std::string roomName = fmt::format("room_{:02}", i);
 		if (roomNames.find(roomName) != roomNames.end())
 			roomName = roomNames[roomName];
 
@@ -197,18 +235,35 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	// Get the path the mirrors file should be at.
 	std::filesystem::path mirrorsPath = LResUtility::GetMirrorDataPath(mName);
 	// If the file doesn't exist, and we're in the main mansion (map2), try to load the JSON template.
-	if (!std::filesystem::exists(mirrorsPath) && mName == "map2")
+	if (!std::filesystem::exists(mirrorsPath))
 	{
-		nlohmann::ordered_json mansionMirrorTemplate = LResUtility::GetMirrorTemplate("mirrors_map2");
-
-		if (!mansionMirrorTemplate.empty())
+		if (mName == "map2")
 		{
-			for (auto j : mansionMirrorTemplate)
+			nlohmann::ordered_json mansionMirrorTemplate = LResUtility::GetMirrorTemplate("mirrors_map2");
+
+			if (!mansionMirrorTemplate.empty())
 			{
-				std::shared_ptr<LMirrorDOMNode> newNode = std::make_shared<LMirrorDOMNode>("Mirror");
-				newNode->Load(j);
-				AddChild(newNode);
+				for (auto j : mansionMirrorTemplate)
+				{
+					std::shared_ptr<LMirrorDOMNode> newNode = std::make_shared<LMirrorDOMNode>("Mirror");
+					newNode->Load(j);
+					AddChild(newNode);
+				}
 			}
+		}
+	}
+	else
+	{
+		bStream::CFileStream mirrorFile = bStream::CFileStream(mirrorsPath.string(), bStream::Big);
+		
+		uint32_t mirrorCount = mirrorFile.readUInt32();
+		mirrorFile.skip(4);
+
+		for (int i = 0; i < mirrorCount; i++)
+		{
+			std::shared_ptr<LMirrorDOMNode> newNode = std::make_shared<LMirrorDOMNode>("Mirror");
+			newNode->Load(&mirrorFile);
+			AddChild(newNode);
 		}
 	}
 
@@ -236,7 +291,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 bool LMapDOMNode::ReadStaticData(std::filesystem::path filePath)
 {
-	bStream::CFileStream mapFileReader = bStream::CFileStream(filePath.u8string(), bStream::Endianess::Big, bStream::OpenMode::In);
+	bStream::CFileStream mapFileReader = bStream::CFileStream(filePath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
 	size_t mapFileSize = mapFileReader.getSize();
 
 	uint8_t* mapBuf = new uint8_t[mapFileSize];
@@ -256,14 +311,14 @@ bool LMapDOMNode::LoadStaticData(std::vector<std::shared_ptr<LRoomDOMNode>> room
 		LStaticDoorData d;
 		mStaticMapIO.GetDoorData(i, d);
 
-		std::shared_ptr<LDoorDOMNode> doorNode = std::make_shared<LDoorDOMNode>(LGenUtility::Format("Door ", i));
+		std::shared_ptr<LDoorDOMNode> doorNode = std::make_shared<LDoorDOMNode>(fmt::format("Door {0}", i));
 		doorNode->Load(d);
 		AddChild(doorNode);
 	}
 
 	for (size_t i = 0; i < rooms.size(); i++)
 	{
-		std::shared_ptr<LRoomDataDOMNode> roomData = std::make_shared<LRoomDataDOMNode>(LGenUtility::Format("room data ", i));
+		std::shared_ptr<LRoomDataDOMNode> roomData = std::make_shared<LRoomDataDOMNode>(fmt::format("room data {0}", i));
 		roomData->Load(i, mStaticMapIO, rooms, GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door));
 
 		rooms[i]->AddChild(roomData);
@@ -318,6 +373,42 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 		}
 	}
 
+	for (auto pathNode : GetChildrenOfType<LPathDOMNode>(EDOMNodeType::Path))
+	{
+		nlohmann::json jmpTemplate = LResUtility::DeserializeJSON(RES_BASE_PATH / "jmp_templates" / "path.json");
+
+		if (jmpTemplate.find("fields") == jmpTemplate.end())
+		{
+			std::cout << fmt::format("Failed to read JSON at {0}", (RES_BASE_PATH / "jmp_templates" / "path.json").string());
+			return false;
+		}
+
+		LJmpIO pathJmp;
+		pathJmp.Load(jmpTemplate, pathNode->GetNumPoints());
+
+		size_t pathSize = pathJmp.CalculateNewFileSize(pathNode->GetNumPoints());
+
+		bStream::CMemoryStream pathFile = bStream::CMemoryStream(pathSize, bStream::Endianess::Big, bStream::OpenMode::Out);
+		pathNode->PreProcess(pathJmp, pathFile);
+
+		for (uint32_t i = 0; i < mMapArchive.filenum; i++)
+		{
+			if (strcmp(mMapArchive.files[i].name, pathNode->GetName().data()) == 0)
+			{
+
+				if (!GCResourceManager.ReplaceArchiveFileData(&mMapArchive.files[i], pathFile.getBuffer(), pathSize))
+				{
+					std::cout << "Error replacing file " << mMapArchive.files[i].name << std::endl;
+					return false;
+				}
+
+				break;
+			}
+		}
+
+	}
+
+
 	if (!GCResourceManager.SaveArchiveCompressed(file_path.string().c_str(), &mMapArchive))
 	{
 		std::cout << "Error saving archive " << file_path << std::endl;
@@ -326,6 +417,10 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 
 
 	mStaticMapIO.SaveMapFile(LResUtility::GetStaticMapDataPath(mName), GetSharedPtr<LMapDOMNode>(EDOMNodeType::Map));
+
+	SaveMirrorData();
+
+	return true;
 }
 
 bool LMapDOMNode::SaveMapToFiles(std::filesystem::path folder_path)
@@ -379,7 +474,7 @@ bool LMapDOMNode::SaveMapToFiles(std::filesystem::path folder_path)
 
 		if (jmpTemplate.find("fields") == jmpTemplate.end())
 		{
-			std::cout << LGenUtility::Format("Failed to read JSON at ", RES_BASE_PATH / "jmp_templates" / "path.json");
+			std::cout << fmt::format("Failed to read JSON at {0}", (RES_BASE_PATH / "jmp_templates" / "path.json").string());
 			return false;
 		}
 
@@ -400,6 +495,39 @@ bool LMapDOMNode::SaveMapToFiles(std::filesystem::path folder_path)
 
 	mStaticMapIO.SaveMapFile(LResUtility::GetStaticMapDataPath(mName), GetSharedPtr<LMapDOMNode>(EDOMNodeType::Map));
 
+	SaveMirrorData();
+
+	return true;
+}
+
+bool LMapDOMNode::SaveMirrorData()
+{
+	std::filesystem::path mirrorsPath = LResUtility::GetMirrorDataPath(mName);
+
+	std::vector<std::shared_ptr<LMirrorDOMNode>> MirrorNodes = GetChildrenOfType<LMirrorDOMNode>(EDOMNodeType::Mirror);
+
+	if (MirrorNodes.size() == 0)
+	{
+		if (std::filesystem::exists(mirrorsPath))
+		{
+			std::filesystem::remove(mirrorsPath);
+		}
+
+		return true;
+	}
+
+	bStream::CMemoryStream memStream = bStream::CMemoryStream(8 + (MirrorNodes.size() * 0x38), bStream::Big, bStream::Out);
+	memStream.writeUInt32(MirrorNodes.size());
+	memStream.writeUInt32(0);
+
+	for (int i = 0; i < MirrorNodes.size(); i++)
+	{
+		MirrorNodes[i]->Save(&memStream);
+	}
+
+	bStream::CFileStream fileStream = bStream::CFileStream(mirrorsPath.string(), bStream::Big, bStream::Out);
+	fileStream.writeBytes((char*)memStream.getBuffer(), memStream.getSize());
+
 	return true;
 }
 
@@ -414,37 +542,37 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 		switch (type)
 		{
 			case LEntityType_Furniture:
-				newNode = std::make_shared<LFurnitureDOMNode>(LGenUtility::Format("Furniture ", i));
+				newNode = std::make_shared<LFurnitureDOMNode>(fmt::format("Furniture {0}", i));
 				break;
 			case LEntityType_Observers:
-				newNode = std::make_shared<LObserverDOMNode>(LGenUtility::Format("Observer ", i));
+				newNode = std::make_shared<LObserverDOMNode>(fmt::format("Observer {0}", i));
 				break;
 			case LEntityType_Enemies:
-				newNode = std::make_shared<LEnemyDOMNode>(LGenUtility::Format("Enemy ", i));
+				newNode = std::make_shared<LEnemyDOMNode>(fmt::format("Enemy {0}", i));
 				break;
 			case LEntityType_Events:
-				newNode = std::make_shared<LEventDOMNode>(LGenUtility::Format("Event ", i));
+				newNode = std::make_shared<LEventDOMNode>(fmt::format("Event {0}", i));
 				break;
 			case LEntityType_Characters:
-				newNode = std::make_shared<LCharacterDOMNode>(LGenUtility::Format("Character ", i));
+				newNode = std::make_shared<LCharacterDOMNode>(fmt::format("Character {0}", i));
 				break;
 			case LEntityType_ItemInfoTable:
-				newNode = std::make_shared<LItemInfoDOMNode>(LGenUtility::Format("Item Info ", i));
+				newNode = std::make_shared<LItemInfoDOMNode>(fmt::format("Item Info {0}", i));
 				break;
 			case LEntityType_ItemAppear:
-				newNode = std::make_shared<LItemAppearDOMNode>(LGenUtility::Format("Item Drop Group ", i));
+				newNode = std::make_shared<LItemAppearDOMNode>(fmt::format("Item Drop Group {0}", i));
 				break;
 			case LEntityType_ItemFishing:
-				newNode = std::make_shared<LItemFishingDOMNode>(LGenUtility::Format("Capture Item Group ", i));
+				newNode = std::make_shared<LItemFishingDOMNode>(fmt::format("Capture Item Group {0}", i));
 				break;
 			case LEntityType_TreasureTable:
-				newNode = std::make_shared<LTreasureTableDOMNode>(LGenUtility::Format("Treasure Table ", i));
+				newNode = std::make_shared<LTreasureTableDOMNode>(fmt::format("Treasure Table {0}", i));
 				break;
 			case LEntityType_Generators:
 				newNode = std::make_shared<LGeneratorDOMNode>("generator");
 				break;
 			case LEntityType_Objects:
-				newNode = std::make_shared<LObjectDOMNode>(LGenUtility::Format("Object ", i));
+				newNode = std::make_shared<LObjectDOMNode>(fmt::format("Object {0}", i));
 				break;
 			case LEntityType_Keys:
 				newNode = std::make_shared<LKeyDOMNode>("key01");
@@ -487,6 +615,7 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 			}
 
 			std::shared_ptr<LRoomDOMNode> entityRoom = GetRoomByNumber(newNode->GetRoomNumber());
+
 			if (entityRoom != nullptr)
 				entityRoom->AddChild(newNode);
 		}

@@ -2,6 +2,7 @@
 
 #include "EntityDOMNode.hpp"
 #include "io/JmpIO.hpp"
+#include "UPathRenderer.hpp"
 
 struct GCarchive;
 class LRoomDOMNode;
@@ -83,15 +84,22 @@ class LPathDOMNode : public LEntityDOMNode
 
 	std::weak_ptr<LPathDOMNode> mNextPathRef;
 
+
 public:
 	typedef LEntityDOMNode Super;
 
 	LPathDOMNode(std::string name);
 	~LPathDOMNode() { std::cout << "Path destroyed!" << std::endl; }
+	
+	glm::vec4 mPathColor;
 
 	size_t GetNumPoints() { return Children.size(); }
 
 	virtual void RenderDetailsUI(float dt) override;
+	
+	std::vector<CPathPoint> mPathRenderable;
+
+	void RenderPath(CPathRenderer* Renderer);
 
 	// Writes the data this JMP node into the given LJmpIO instance at the specified entry.
 	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const override;

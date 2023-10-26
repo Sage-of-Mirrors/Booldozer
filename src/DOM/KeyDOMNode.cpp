@@ -110,12 +110,31 @@ void LKeyDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 
 void LKeyDOMNode::PostProcess()
 {
-    // On the off chance that the parent is invalid, don't try to do anything.
-    if (Parent.expired())
-        return;
+	auto mapNode = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+	if (auto mapNodeLocked = mapNode.lock())
+	{
+		auto rooms = mapNodeLocked->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
+		std::shared_ptr<LRoomDOMNode> containingRoom = nullptr;
 
-    // Grab a temporary shared_ptr for the parent.
-    auto parentShared = Parent.lock();
+		for (auto r : rooms)
+		{
+			auto roomData = r->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
+
+			if (roomData->CheckPointInBounds(mPosition))
+			{
+				containingRoom = r;
+				break;
+			}
+		}
+
+		if (containingRoom != nullptr)
+		{
+			std::cout << fmt::format("Key going to {0}", containingRoom->GetName()) << std::endl;
+			containingRoom->AddChild(GetSharedPtr<LKeyDOMNode>(EDOMNodeType::Key));
+			mapNodeLocked->RemoveChild(GetSharedPtr<LKeyDOMNode>(EDOMNodeType::Key));
+		}
+	}
+
 }
 
 void LKeyDOMNode::PreProcess()

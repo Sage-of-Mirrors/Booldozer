@@ -23,6 +23,8 @@ enum LRoomEntityType : uint32_t
 	LRoomEntityType_Objects,
 	LRoomEntityType_Observers,
 	LRoomEntityType_Paths,
+	LRoomEntityType_Events,
+	LRoomEntityType_Keys,
 	LRoomEntityType_BlackoutCharacters,
 	LRoomEntityType_BlackoutEnemies,
 	LRoomEntityType_BlackoutObservers,
@@ -94,6 +96,8 @@ class LRoomDOMNode : public LBGRenderDOMNode, public ISerializable
 		true,
 		true,
 		true,
+		true,
+		true,
 		true
 	};
 
@@ -149,6 +153,8 @@ public:
 
 	int32_t GetRoomIndex() { return GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0]->GetRoomIndex(); }
 	int32_t GetRoomID() { return GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0]->GetRoomID(); }
+	
+	bool GetSkyboxEnabled() { return mShouldRenderSkybox; }
 
 	LAlternateResource GetAlternateResource() const { return mAlternateResource; }
 

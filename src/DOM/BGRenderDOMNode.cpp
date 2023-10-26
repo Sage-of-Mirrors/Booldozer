@@ -1,11 +1,15 @@
 #include "DOM/BGRenderDOMNode.hpp"
-#include "bigg.hpp"
+//#include "bigg.hpp"
 #include <glm/gtx/matrix_decompose.hpp>
 
 LBGRenderDOMNode::LBGRenderDOMNode(std::string name) : LUIRenderDOMNode(name),
 	mPosition(glm::vec3(0, 0, 0)), mScale(glm::vec3(1, 1, 1)), mRotation(glm::vec3(0, 0, 0))
 {
 	mType = EDOMNodeType::BGRender;
+}
+
+void LBGRenderDOMNode::Manipulate(){
+	
 }
 
 void LBGRenderDOMNode::RenderBG(float dt)
@@ -31,6 +35,6 @@ void LBGRenderDOMNode::RenderBG(float dt)
 		glm::vec4 persp;
 		glm::decompose(*mTransform.get(), mScale, rotQuat, mPosition, skew, persp);
 
-		mRotation = glm::eulerAngles(rotQuat);
+		mRotation = glm::degrees(glm::eulerAngles(rotQuat));
 	}
 }

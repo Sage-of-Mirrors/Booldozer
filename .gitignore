@@ -352,11 +352,25 @@ build/
 # Booldozer-specific
 **/patch_diffs/
 
+
+# Booldozer stuff
 booldozer
-cmake_install.cmake
-CMakeCache.txt
-imgui.ini
-Makefile
-CMakeFiles/
-.vscode/
+booldozer.exe
 user_settings.json
+
+#cmake stuff
+CMakeFiles/
+CMakeCache.txt
+*.cmake
+Makefile
+
+#submodules
+lib/*
+
+#vscode stuff
+.vscode
+
+src/DiscordIntegration.cpp
+include/DiscordIntegration.hpp
+
+*.ini

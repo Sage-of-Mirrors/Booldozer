@@ -71,7 +71,11 @@ public:
 
 	virtual std::string GetName() override;
 
+	std::string GetNameSimple() { return mName; }
+
 	virtual void RenderDetailsUI(float dt) override;
+
+	void CopyTo(LEnemyDOMNode* other);
 
 	// Writes the data this JMP node into the given LJmpIO instance at the specified entry.
 	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const override;

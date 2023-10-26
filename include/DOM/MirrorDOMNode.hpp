@@ -3,6 +3,12 @@
 #include "BGRenderDOMNode.hpp"
 #include <nlohmann/json.hpp>
 
+namespace bStream
+{
+	class CFileStream;
+	class CMemoryStream;
+}
+
 class LMirrorDOMNode : public LBGRenderDOMNode
 {
 	
@@ -25,10 +31,8 @@ public:
 	virtual std::string GetName() override;
 	virtual void RenderDetailsUI(float dt) override;
 
-	/*
-	bool Load(const LStaticDoorData& source);
-	bool Save(LStaticDoorData& dest);
-	*/
+	bool Load(bStream::CFileStream* stream);
+	bool Save(bStream::CMemoryStream* stream);
 	
 	bool Load(const nlohmann::ordered_json& jsonEntry);
 

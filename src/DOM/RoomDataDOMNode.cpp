@@ -16,7 +16,7 @@ void LRoomDataDOMNode::RenderDetailsUI(float dt)
 bool LRoomDataDOMNode::Load(const uint32_t& index, const LStaticMapDataIO& source, const std::vector<std::shared_ptr<LRoomDOMNode>>& mapRooms, const std::vector<std::shared_ptr<LDoorDOMNode>>& mapDoors)
 {
 	// Room data
-	LStaticRoomData roomData;
+	LStaticRoomData roomData {0};
 	source.GetRoomData(index, roomData);
 
 	mRoomIndex = roomData.mCameraPositionIndex;
@@ -27,6 +27,8 @@ bool LRoomDataDOMNode::Load(const uint32_t& index, const LStaticMapDataIO& sourc
 	mCameraBehavior = roomData.mCameraBehavior;
 
 	DeconstructBoundingBox(roomData.mBoundingBoxMin, roomData.mBoundingBoxMax);
+	bbmin = {roomData.mBoundingBoxMin.z, roomData.mBoundingBoxMin.y, roomData.mBoundingBoxMin.x};
+	bbmax = {roomData.mBoundingBoxMax.z, roomData.mBoundingBoxMax.y, roomData.mBoundingBoxMax.x};
 
 	mUnknown1 = roomData.mUnknown1;
 	mUnknown2 = roomData.mUnknown2;
@@ -58,23 +60,20 @@ bool LRoomDataDOMNode::Load(const uint32_t& index, const LStaticMapDataIO& sourc
 
 bool LRoomDataDOMNode::Save(LStaticRoomData& dest)
 {
-	dest.mCameraPositionIndex = mRoomIndex;
+	dest.mCameraPositionIndex = (uint8_t)mRoomIndex;
 	dest.mFloor = mFloor;
 	dest.mDoorZone = mDoorZone;
-	dest.mRoomID = mRoomID;
+	dest.mRoomID = (uint8_t)mRoomID;
 
-	dest.mCameraBehavior = mCameraBehavior;
+	dest.mCameraBehavior = (uint32_t)mCameraBehavior;
 
-	glm::vec3 bmin, bmax;
-	ConstructBoundingBox(bmin, bmax);
+	dest.mBoundingBoxMin.x = bbmin.z;
+	dest.mBoundingBoxMin.y = bbmin.y;
+	dest.mBoundingBoxMin.z = bbmin.x;
 
-	dest.mBoundingBoxMin.x = bmin.z;
-	dest.mBoundingBoxMin.y = bmin.y;
-	dest.mBoundingBoxMin.z = bmin.x;
-
-	dest.mBoundingBoxMax.x = bmax.z;
-	dest.mBoundingBoxMax.y = bmax.y;
-	dest.mBoundingBoxMax.z = bmax.x;
+	dest.mBoundingBoxMax.x = bbmax.z;
+	dest.mBoundingBoxMax.y = bbmax.y;
+	dest.mBoundingBoxMax.z = bbmax.x;
 
 	dest.mUnknown1 = mUnknown1;
 	dest.mUnknown2 = mUnknown2;
@@ -114,12 +113,12 @@ void LRoomDataDOMNode::ConstructBoundingBox(glm::vec3& min, glm::vec3& max)
 
 bool LRoomDataDOMNode::CheckPointInBounds(const glm::vec3& point)
 {
-	glm::vec3 min, max;
-	ConstructBoundingBox(min, max);
+	//glm::vec3 min, max;
+	//ConstructBoundingBox(min, max);
 
-	bool xBounds = (point.x >= min.x) && (point.x < max.x);
-	bool yBounds = (point.y >= min.y) && (point.y < max.y);
-	bool zBounds = (point.z >= min.z) && (point.z < max.z);
+	bool xBounds = (point.x >= bbmin.x) && (point.x < bbmax.x);
+	bool yBounds = (point.y >= bbmin.y) && (point.y < bbmax.y);
+	bool zBounds = (point.z >= bbmin.z) && (point.z < bbmax.z);
 
 	return xBounds && yBounds && zBounds;
 }

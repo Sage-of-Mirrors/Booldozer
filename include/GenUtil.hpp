@@ -36,17 +36,7 @@ namespace LGenUtility
         index = VectorIndexOf(vec, elem);
         return index != -1;
     }
-
-    // Returns a string with the given formatting.
-    template<typename ... T>
-    std::string Format(T && ... x)
-    {
-        std::stringstream buff;
-        (buff << ... << x);
-
-        return buff.str();
-    }
-
+    
     // Returns an endian-swapped version of the given value.
     // Copied from https://stackoverflow.com/a/4956493
     template <typename T>

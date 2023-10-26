@@ -4,6 +4,7 @@
 std::map<std::string, std::string> ObserverNames = {
 	{ "observer", "Logic" },
 	{ "kinopio", "Toad" },
+	{ "kinopio2", "Green Toad" },
 	{ "soundobj", "Sound Effect Player" },
 	{ "otobira", "Clockwork Room Elevators" },
 	{ "iphone", "Telephone" }
@@ -25,6 +26,8 @@ LObserverDOMNode::LObserverDOMNode(std::string name, bool isBlackoutObserver) : 
 void LObserverDOMNode::RenderDetailsUI(float dt)
 {
 	LUIUtility::RenderTransformUI(mTransform.get(), mPosition, mRotation, mScale);
+
+	ImGui::InputInt("Room Number", &mRoomNumber);
 
 	LUIUtility::RenderComboBox("Observer Type", ObserverNames, mName);
 	LUIUtility::RenderTooltip("What kind of observer this actor is.");

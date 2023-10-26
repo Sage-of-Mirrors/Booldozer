@@ -16,6 +16,14 @@ protected:
 	// The object that manages this mode's undo/redo history.
 	LEditorHistory mHistoryManager;
 
+	bool bIsDockingSetUp { false };
+
+	uint32_t mMainDockSpaceID { 0 };
+	uint32_t mDockNodeLeftID { 0 };
+	uint32_t mDockNodeRightID { 0 };
+	uint32_t mDockNodeUpLeftID { 0 };
+	uint32_t mDockNodeDownLeftID { 0 };
+
 public:
 
 	// The Gizmo's current operation mode (translate, rotate, scale)

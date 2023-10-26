@@ -1,9 +1,21 @@
 #define BSTREAM_IMPLEMENTATION
 #include "../lib/bStream/bstream.h"
-#include "ui/BooldozerMainWindow.hpp"
+
+#include "ui/BooldozerApp.hpp"
 
 int main(int argc, char** argv)
 {
-  LBooldozerMainWindow app;
-  return app.run(argc, argv, bgfx::RendererType::OpenGL);
+  LBooldozerApp app;
+
+  if (!app.Setup()) {
+	  std::cout << "Failed to set up Booldozer! Please contact Gamma and/or SpaceCats." << std::endl;
+	  return 0;
+  }
+
+  app.Run();
+
+  if (!app.Teardown()) {
+	  std::cout << "Something went wrong during teardown, please contact Gamma and/or SpaceCats!" << std::endl;
+	  return 0;
+  }
 }

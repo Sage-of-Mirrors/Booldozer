@@ -1,0 +1,299 @@
+#include "ui/BooldozerApp.hpp"
+#include "ui/LInput.hpp"
+#include "TimeUtil.hpp"
+#include "UIUtil.hpp"
+
+
+#include "glad/glad.h"
+#include <GLFW/glfw3.h>
+#include "imgui.h"
+#include "imgui_impl_opengl3.h"
+#include "imgui_impl_glfw.h"
+#include <iostream>
+
+#include <DiscordIntegration.hpp>
+
+constexpr int GL_VERSION_MAJOR = 4;
+constexpr int GL_VERSION_MINOR = 6;
+constexpr int GL_PROFILE = GLFW_OPENGL_CORE_PROFILE;
+constexpr bool GL_IS_DEBUG_CONTEXT = true;
+
+LBooldozerApp::LBooldozerApp() : mWindow(nullptr) {}
+
+void DealWithGLErrors(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
+	std::cout << "GL CALLBACK: " << message << std::endl;
+}
+
+bool LBooldozerApp::Setup() {
+
+	/*
+	mDiscordHandlers.ready = Discord::HandleReady;
+	mDiscordHandlers.disconnected = Discord::HandleDisconnected;
+	mDiscordHandlers.errored = Discord::HandleError;
+	mDiscordHandlers.joinGame = Discord::HandleJoin;
+	mDiscordHandlers.spectateGame = Discord::HandleSpectate;
+	mDiscordHandlers.joinRequest = Discord::HandleJoinRequest;
+
+	Discord_Initialize(AppID, &mDiscordHandlers, 1, NULL);
+
+	Discord::RichPresence.state = "Editing Map";
+	Discord::RichPresence.details = "No Room Selected";
+	Discord::RichPresence.largeImageKey = "weeg";
+	Discord::RichPresence.startTimestamp = 0;
+	Discord_UpdatePresence(&Discord::RichPresence);
+	*/
+
+    GCResourceManager.Init();
+    
+	// Init GLFW
+	if (!glfwInit()) {
+		std::cout << "Failed to init GLFW!" << std::endl;
+		return false;
+	}
+
+	// Set some GLFW info
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, GL_VERSION_MAJOR);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, GL_VERSION_MINOR);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GL_PROFILE);
+	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_IS_DEBUG_CONTEXT);
+
+	// Create GLFW window
+	mWindow = glfwCreateWindow(1280, 720, "Booldozer", nullptr, nullptr);
+	if (mWindow == nullptr) {
+		const char* err;
+		glfwGetError(&err);
+
+		std::cout << "Failed to create GLFW window!" << std::endl;
+		std::cout << err << std::endl;
+		glfwTerminate();
+		return false;
+	}
+
+	// Set up input callbacks
+	glfwSetKeyCallback(mWindow, LInput::GLFWKeyCallback);
+	glfwSetCursorPosCallback(mWindow, LInput::GLFWMousePositionCallback);
+	glfwSetMouseButtonCallback(mWindow, LInput::GLFWMouseButtonCallback);
+	glfwSetScrollCallback(mWindow, LInput::GLFWMouseScrollCallback);
+
+	// Set up GLAD
+	glfwMakeContextCurrent(mWindow);
+	gladLoadGL();
+	glClearColor(0.5f, 1.0f, 0.5f, 1.0f);
+	glfwSwapInterval(0);
+
+	// Set up GL debug error handling.
+	glEnable(GL_DEBUG_OUTPUT);
+	glDebugMessageCallback(DealWithGLErrors, nullptr);
+
+	// Init imgui
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+	ImGui::StyleColorsDark();
+	ImGui_ImplGlfw_InitForOpenGL(mWindow, true);
+	ImGui_ImplOpenGL3_Init("#version 150");
+
+	unsigned char* data;
+	int width, height;
+	ImWchar ranges[] = { 0x1, 0xFFFF, 0 };
+
+	// Load font for Latin characters from file if it exists, or use imgui's default if not found.
+	std::filesystem::path fontPath = std::filesystem::path("./res/font/Input-Regular-Mono.ttf");
+	if (std::filesystem::exists(fontPath))
+	{
+		io.Fonts->AddFontFromFileTTF(fontPath.string().c_str(), 18.f, 0, ranges);
+	}
+	else
+		io.Fonts->AddFontDefault();
+
+	// Load font for Japanese characters from file, if it exists.
+	// Imgui has the handy feature that it can use specific font files for specific character ranges.
+	ImFontConfig config;
+	config.MergeMode = true;
+
+	fontPath = std::filesystem::path("./res/font/NotoSansJP-Regular.otf");
+	if (std::filesystem::exists(fontPath))
+		io.Fonts->AddFontFromFileTTF(fontPath.string().c_str(), 20.f, &config, io.Fonts->GetGlyphRangesJapanese());
+
+	io.Fonts->GetTexDataAsRGBA32(&data, &width, &height);
+	//imguiFontTexture = bgfx::createTexture2D((uint16_t)width, (uint16_t)height, false, 1, bgfx::TextureFormat::BGRA8, 0, bgfx::copy(data, width * height * 4));
+	//imguiFontUniform = bgfx::createUniform("s_tex", bgfx::UniformType::Sampler);
+
+	mEditorScene.init();
+
+	return true;
+}
+
+bool LBooldozerApp::Teardown() {
+
+	/*
+	Discord_ClearPresence();
+	Discord_Shutdown();
+	*/
+
+	GCResourceManager.Cleanup();
+
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+
+	glfwDestroyWindow(mWindow);
+	glfwTerminate();
+
+	return true;
+}
+
+void LBooldozerApp::Run() {
+	Clock::time_point lastFrame, thisFrame;
+
+	while (true) {
+		lastFrame = thisFrame;
+		thisFrame = LTimeUtility::GetTime();
+
+		if (!Execute(LTimeUtility::GetDeltaTime(lastFrame, thisFrame)))
+			break;
+	}
+}
+
+bool LBooldozerApp::Execute(float deltaTime) {
+	// Try to make sure we return an error if anything's fucky
+	if (mWindow == nullptr || glfwWindowShouldClose(mWindow))
+		return false;
+
+	mEditorScene.update(mWindow, deltaTime, mEditorContext.GetSelectionManager());
+
+	// Begin actual rendering
+	glfwMakeContextCurrent(mWindow);
+	glfwPollEvents();
+
+	LInput::UpdateInputState();
+
+	// The context renders both the ImGui elements and the background elements.
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+
+	// Update buffer size
+	glfwGetFramebufferSize(mWindow, &mWidth, &mHeight);
+	glViewport(0, 0, mWidth, mHeight);
+
+	// Clear buffers
+	glClearColor(0.100f, 0.261f, 0.402f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	Render(deltaTime);
+
+	// Render imgui
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+	// Swap buffers
+	glfwSwapBuffers(mWindow);
+
+	return true;
+}
+
+void LBooldozerApp::Render(float deltaTime) {
+    RenderUI(deltaTime);
+
+	mEditorContext.Render(deltaTime, &mEditorScene);
+    mOptionsMenu.RenderOptionsPopup();
+}
+
+void LBooldozerApp::RenderUI(float deltaTime) {
+    // Mode combo
+
+    bool openOptionsMenu = false;
+
+    // Menu bar
+    if (ImGui::BeginMainMenuBar())
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("Open Map..."))
+                mEditorContext.onOpenMapCB();
+            if (ImGui::MenuItem("Open Room(s)..."))
+                mEditorContext.onOpenRoomsCB();
+
+            ImGui::Separator();
+
+			if (ImGui::MenuItem("Save Map Archive..."))
+                mEditorContext.onSaveMapArchiveCB();
+            
+			if (ImGui::MenuItem("Save Map..."))
+                mEditorContext.onSaveMapCB();
+			
+
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Edit"))
+        {
+			if(ImGui::MenuItem("Actors")){
+				mEditorContext.CurrentMode = EEditorMode::Actor_Mode;
+				mEditorContext.ChangeMode();
+			}
+			if(ImGui::MenuItem("Doors")){
+				mEditorContext.CurrentMode = EEditorMode::Door_Mode;
+				mEditorContext.ChangeMode();
+			}
+			if(ImGui::MenuItem("Items")){
+				mEditorContext.CurrentMode = EEditorMode::Item_Mode;
+				mEditorContext.ChangeMode();
+			}
+			if(ImGui::MenuItem("Waves")){
+				mEditorContext.CurrentMode = EEditorMode::Enemy_Mode;
+				mEditorContext.ChangeMode();
+			}
+
+			if(ImGui::MenuItem("Paths")){
+				mEditorContext.CurrentMode = EEditorMode::Path_Mode;
+				mEditorContext.ChangeMode();
+			}
+
+			if(ImGui::MenuItem("Events")){
+				mEditorContext.CurrentMode = EEditorMode::Event_Mode;
+				mEditorContext.ChangeMode();
+			}
+
+			if(ImGui::MenuItem("Boos")){
+				mEditorContext.CurrentMode = EEditorMode::Boo_Mode;
+				mEditorContext.ChangeMode();
+			}
+
+
+			ImGui::Separator();
+            if (ImGui::MenuItem("Options"))
+                openOptionsMenu = true;
+
+
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Tools"))
+        {
+			if	(ImGui::MenuItem("Ghost Config Editor"))
+				mEditorContext.mGhostConfigs.mParamToolOpen = true; //bad
+            if (ImGui::MenuItem("Playtest"))
+                mEditorContext.onPlaytestCB();
+
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Help"))
+        {
+            ImGui::Text("Help Stuff");
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMainMenuBar();
+    }
+
+
+    if (openOptionsMenu)
+    {
+        mOptionsMenu.OpenMenu();
+    }
+
+    ImGuizmo::BeginFrame();
+	ImGuizmo::SetDrawlist(ImGui::GetBackgroundDrawList()); 
+    ImGuizmo::SetRect(0, 0, (float)mWidth, (float)mHeight);
+}

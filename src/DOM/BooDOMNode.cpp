@@ -12,7 +12,10 @@ LBooDOMNode::LBooDOMNode(std::string name) : Super(name),
 void LBooDOMNode::RenderDetailsUI(float dt)
 {
     // Integers
-    ImGui::InputInt("Initial Room", &mInitialRoom);
+    if(ImGui::InputInt("Initial Room", &mInitialRoom)){
+        mName = fmt::format("Boo {}", mInitialRoom);
+    }
+    
     LUIUtility::RenderTooltip("The room that this Boo spawns in.");
 
     ImGui::InputInt("Next Room Wait", &mNextRoomWait);
@@ -77,6 +80,9 @@ void LBooDOMNode::PostProcess()
 
     // Grab a temporary shared_ptr for the parent.
     auto parentShared = Parent.lock();
+
+    mName = fmt::format("Boo {}", mInitialRoom);
+
 }
 
 void LBooDOMNode::PreProcess()
