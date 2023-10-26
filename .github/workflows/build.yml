@@ -81,11 +81,13 @@ jobs:
           cp build/booldozer.exe buid/booldozer-build/booldozer.exe
           cp build/iconv-2.dll buid/booldozer-build/iconv-2.dll
       - name: Upload App Windows
+        if: runner.os == 'Windows'
         uses: actions/upload-artifact@v3
         with:
           name: booldozer-windows
           path: build/booldozer-build
       - name: Upload App Linux
+        if: runner.os == 'Linux'
         uses: actions/upload-artifact@v3
         with:
           name: booldozer-linux
