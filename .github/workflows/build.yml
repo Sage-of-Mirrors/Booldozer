@@ -69,13 +69,13 @@ jobs:
           cmakeAppendedArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release'
       - name: Upload App Linux
         if: runner.os == 'Linux'
-          uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3
           with:
             name: booldozer
             path: build
       - name: Upload App Windows
         if: runner.os == 'Windows'
-          uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3
           with:
             name: booldozer.exe
             path: build
