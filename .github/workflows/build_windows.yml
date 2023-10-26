@@ -39,9 +39,9 @@ jobs:
         run: |
           sudo apt update
           sudo apt install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
-      - name: Add msbuild to PATH
+      - name: try to get msvc compilation working
         if: runner.os == 'Windows'
-        uses: microsoft/setup-msbuild@v1.0.1
+        uses: ilammy/msvc-dev-cmd@v1
       - name: Setup cmake
         uses: lukka/get-cmake@latest
       - name: Setup vcpkg
