@@ -1,0 +1,67 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - name: Windows Build
+            os: windows-latest
+            architecture: x64
+            artifact: windows
+            upload_path_suffix: '/*'
+          - name: Linux Build
+            os: ubuntu-20.04
+            architecture: x64
+            artifact: linux
+            upload_path_suffix: '/*'
+    
+    runs-on: ${{ matrix.os }}
+    
+    defaults:
+      run:
+        shell: bash
+    
+    env:
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Setup cmake
+        uses: lukka/get-cmake@latest
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11.1
+        with:
+          vcpkgGitCommitId: 'ad46340bfce415333d6a2139592c22a499fb0df0'
+          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+          vcpkgJsonGlob: '**/vcpkg.json'
+      - name: Integrate vcpkg
+        if: runner.os == 'Windows'
+        run: |
+          vcpkg integrate install
+      - name: Run CMake
+        uses: lukka/run-cmake@v3
+        with:
+          cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+          cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
+          buildDirectory: '${{ github.workspace }}/build'
+          useVcpkgToolchainFile: true
+          cmakeAppendedArgs: '-G Ninja'
+          buildWithCMakeArgs: --config Release
+      - name: Upload Python App
+        uses: actions/upload-artifact@v3
+        with:
+          name: booldozer-${{ matrix.artifact }}-${{ matrix.architecture }}
+          path: dist/release_archive_${{ steps.vars.outputs.full_version }}_${{ matrix.architecture }}${{ matrix.upload_path_suffix }}
