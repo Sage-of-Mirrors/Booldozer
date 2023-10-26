@@ -71,9 +71,9 @@ jobs:
         run: |
           mkdir -p build/booldozer-build
           cp -r res build/booldozer-build/res
-          -s 'if [ -f build/booldozer ]; then cp build/booldozer buid/booldozer-build/booldozer; fi'
-          -s 'if [ -f build/booldozer.exe ]; then cp build/booldozer.exe buid/booldozer-build/booldozer.exe; fi'
-          -s 'if [ -f build/iconv-2.dll ]; then cp build/booldozer buid/booldozer-build/iconv-2.dll; fi'
+          bash -s 'if [ -f build/booldozer ]; then cp build/booldozer buid/booldozer-build/booldozer; fi'
+          bash -s 'if [ -f build/booldozer.exe ]; then cp build/booldozer.exe buid/booldozer-build/booldozer.exe; fi'
+          bash -s 'if [ -f build/iconv-2.dll ]; then cp build/booldozer buid/booldozer-build/iconv-2.dll; fi'
           
       - name: Upload App
         uses: actions/upload-artifact@v3
