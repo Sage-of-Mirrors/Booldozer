@@ -20,6 +20,11 @@ jobs:
             architecture: x64
             artifact: windows
             upload_path_suffix: '/*'
+          - name: Linux Build
+            os: ubuntu-20.04
+            architecture: x64
+            artifact: linux
+            upload_path_suffix: '/*'
     
     runs-on: ${{ matrix.os }}
     
@@ -39,7 +44,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
-      - name: try to get msvc compilation working
+      - name: Set up MSVC for Windows
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
       - name: Setup cmake
@@ -61,8 +66,7 @@ jobs:
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
           buildDirectory: '${{ github.workspace }}/build'
           useVcpkgToolchainFile: true
-          cmakeAppendedArgs: '-G Ninja'
-          buildWithCMakeArgs: --config Release
+          cmakeAppendedArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release'
       - name: Upload App
         uses: actions/upload-artifact@v3
         with:

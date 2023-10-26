@@ -4,7 +4,6 @@
 #include "scene/EditorScene.hpp"
 #include "ui/BooldozerEditor.hpp"
 #include "Options.hpp"
-#include <discord_rpc.h>
 
 // Main window's UI.
 class LBooldozerApp
