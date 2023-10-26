@@ -698,11 +698,11 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 					switch (node->GetNodeType())
 					{
 					case EDOMNodeType::Furniture:
-						if(mRoomFurniture.count(static_pointer_cast<LFurnitureDOMNode>(node)->GetModelName()) == 0)
+						if(mRoomFurniture.count(std::static_pointer_cast<LFurnitureDOMNode>(node)->GetModelName()) == 0)
 						{
 							mCubeManager.render(node->GetMat());
 						} else {
-							mRoomFurniture[static_pointer_cast<LFurnitureDOMNode>(node)->GetModelName()]->Draw(node->GetMat());
+							mRoomFurniture[std::static_pointer_cast<LFurnitureDOMNode>(node)->GetModelName()]->Draw(node->GetMat());
 						}
 					case EDOMNodeType::Character:
 					case EDOMNodeType::Enemy:
