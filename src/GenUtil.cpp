@@ -1,28 +1,48 @@
-#include <unicode/unistr.h>
-#include <unicode/ustring.h>
-#include <unicode/ucnv.h>
-
+#include <iconv.h>
 #include "GenUtil.hpp"
 
-// The following was copied from https://gist.github.com/kilfu0701/e279e35372066ae1832850c438d5611e
 std::string LGenUtility::Utf8ToSjis(const std::string& value)
 {
-    icu::UnicodeString src(value.c_str(), "utf8");
-    int length = src.extract(0, src.length(), NULL, "shift_jis");
+	iconv_t conv = iconv_open("SHIFT_JISX0213", "UTF-8");
+	if (conv == (iconv_t)(-1)) {
+		throw std::runtime_error("Error opening iconv for UTF-8 to Shift-JIS conversion");
+	}
 
-    std::vector<char> result(length + 1);
-    src.extract(0, src.length(), &result[0], "shift_jis");
+	size_t inbytesleft = value.size();
+	char *inbuf        = const_cast<char *>(value.data());
 
-    return std::string(result.begin(), result.end() - 1);
+	size_t outbytesleft = value.size() * 2;
+	std::string sjis(outbytesleft, '\0');
+	char *outbuf = &sjis[0];
+
+	if (iconv(conv, &inbuf, &inbytesleft, &outbuf, &outbytesleft) == (size_t)(-1)) {
+		throw std::runtime_error("Error converting from UTF-8 to Shift-JIS");
+	}
+
+	sjis.resize(sjis.size() - outbytesleft);
+	iconv_close(conv);
+	return sjis;
 }
 
 std::string LGenUtility::SjisToUtf8(const std::string& value)
 {
-    icu::UnicodeString src(value.c_str(), "shift_jis");
-    int length = src.extract(0, src.length(), NULL, "utf8");
+	iconv_t conv = iconv_open("UTF-8", "SHIFT_JISX0213");
+	if (conv == (iconv_t)(-1)) {
+		throw std::runtime_error("Error opening iconv for Shift-JIS to UTF-8 conversion");
+	}
 
-    std::vector<char> result(length + 1);
-    src.extract(0, src.length(), &result[0], "utf8");
+	size_t inbytesleft = value.size();
+	char *inbuf        = const_cast<char *>(value.data());
 
-    return std::string(result.begin(), result.end() - 1);
+	size_t outbytesleft = value.size() * 3;
+	std::string utf8(outbytesleft, '\0');
+	char *outbuf = &utf8[0];
+
+	if (iconv(conv, &inbuf, &inbytesleft, &outbuf, &outbytesleft) == (size_t)(-1)) {
+		throw std::runtime_error("Error converting from Shift-JIS to UTF-8");
+	}
+
+	utf8.resize(utf8.size() - outbytesleft);
+	iconv_close(conv);
+	return utf8;
 }

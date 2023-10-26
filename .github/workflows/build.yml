@@ -60,7 +60,7 @@ jobs:
           useVcpkgToolchainFile: true
           cmakeAppendedArgs: '-G Ninja'
           buildWithCMakeArgs: --config Release
-      - name: Upload Python App
+      - name: Upload App
         uses: actions/upload-artifact@v3
         with:
           name: booldozer-${{ matrix.artifact }}-${{ matrix.architecture }}
