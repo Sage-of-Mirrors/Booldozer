@@ -50,6 +50,7 @@ jobs:
       - name: Setup cmake
         uses: lukka/get-cmake@latest
       - name: Setup vcpkg
+        if: runner.os == 'Windows'
         uses: lukka/run-vcpkg@v11.1
         with:
           vcpkgGitCommitId: 'ad46340bfce415333d6a2139592c22a499fb0df0'
