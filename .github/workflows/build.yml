@@ -80,7 +80,7 @@ jobs:
           mkdir booldozer-build
           cp -r res booldozer-build/res
           cp build/booldozer.exe booldozer-build/booldozer.exe
-          cp build/iconv-2.dll booldozer-build/iconv-2.dll
+          cp build/uc* booldozer-build
       - name: Upload App Windows
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v3
