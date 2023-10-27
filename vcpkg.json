@@ -2,6 +2,6 @@
     "name" : "booldozer",
     "version-string" : "booldozer-beta",
     "dependencies": [
-        "libiconv"
+        "icu"
     ]
 }
