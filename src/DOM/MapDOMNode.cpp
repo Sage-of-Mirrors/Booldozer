@@ -129,7 +129,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	if (!std::filesystem::exists(roomsMap))
 	{
 		DOL dol;
-		dol.LoadDOLFile(std::filesystem::path(OPTIONS.mRootPath) / "files" / "sys" / "main.dol");
+		dol.LoadDOLFile(std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol");
 
 		std::cout << "Ripping static data for map " << mName << std::endl;
 		if (!mStaticMapIO.RipStaticDataFromExecutable(dol, roomsMap, mName, "GLME01"))
