@@ -287,6 +287,6 @@ void LEnemyDOMNode::PreProcess()
         if (index == -1)
             mItemTableIndex = 0;
         else
-            mItemTableIndex = index;
+            mItemTableIndex = static_cast<int32_t>(index);
     }
 }

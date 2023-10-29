@@ -54,7 +54,10 @@ bool LResUtility::LGCResourceManager::LoadArchive(const char* path, GCarchive* a
 		return false;
 	}
 
-	fread(file, 1, size, f);
+	if(fread(file, 1, size, f) == 0){
+		printf("Error reading data from file \"%s\"\n", path);
+	}
+	
 	fclose(f);
 
 	// If the file starts with 'Yay0', it's Yay0 compressed.

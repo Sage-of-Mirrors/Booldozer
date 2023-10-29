@@ -185,7 +185,12 @@ void LPathMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* r
 		glm::mat4* m = ((LBGRenderDOMNode*)(mPointSelection.GetPrimarySelection().get()))->GetMat();
 		glm::mat4 view = renderer_scene->getCameraView();
 		glm::mat4 proj = renderer_scene->getCameraProj();
-		ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::WORLD, &(*m)[0][0], NULL, NULL);
+
+		bool moved = ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::WORLD, &(*m)[0][0], NULL, NULL);
+
+		if(mPointSelection.GetPrimarySelection()->GetNodeType() == EDOMNodeType::PathPoint && moved){
+			renderer_scene->UpdateRenderers();
+		}
 	}
 }
 

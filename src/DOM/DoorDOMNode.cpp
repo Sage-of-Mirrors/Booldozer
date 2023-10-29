@@ -139,7 +139,7 @@ void LDoorDOMNode::PreProcess()
 
 void LDoorDOMNode::AssignJmpIdAndIndex(std::vector<std::shared_ptr<LDoorDOMNode>> doors)
 {
-	mDoorEntryNumber = doors.size() + 1;
+	mDoorEntryNumber = static_cast<int32_t>(doors.size()) + 1;
 	mJmpId = -1;
 
 	int32_t highestSeen = -1;

@@ -179,9 +179,9 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 		// roominfo might not have this room defined in it, so only try to read if the index is within the bounds.
 		if (i < JmpIOManagers[LEntityType_Rooms].GetEntryCount())
-			newRoom->Deserialize(&JmpIOManagers[LEntityType_Rooms], i);
+			newRoom->Deserialize(&JmpIOManagers[LEntityType_Rooms], static_cast<uint32_t>(i));
 		else
-			newRoom->SetRoomNumber(i);
+			newRoom->SetRoomNumber(static_cast<int32_t>(i));
 
 		AddChild(newRoom);
 	}
@@ -259,7 +259,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		uint32_t mirrorCount = mirrorFile.readUInt32();
 		mirrorFile.skip(4);
 
-		for (int i = 0; i < mirrorCount; i++)
+		for (uint32_t i = 0; i < mirrorCount; i++)
 		{
 			std::shared_ptr<LMirrorDOMNode> newNode = std::make_shared<LMirrorDOMNode>("Mirror");
 			newNode->Load(&mirrorFile);
@@ -306,7 +306,7 @@ bool LMapDOMNode::ReadStaticData(std::filesystem::path filePath)
 
 bool LMapDOMNode::LoadStaticData(std::vector<std::shared_ptr<LRoomDOMNode>> rooms)
 {
-	for (size_t i = 0; i < mStaticMapIO.GetDoorCount(); i++)
+	for (uint32_t i = 0; i < mStaticMapIO.GetDoorCount(); i++)
 	{
 		LStaticDoorData d;
 		mStaticMapIO.GetDoorData(i, d);
@@ -316,7 +316,7 @@ bool LMapDOMNode::LoadStaticData(std::vector<std::shared_ptr<LRoomDOMNode>> room
 		AddChild(doorNode);
 	}
 
-	for (size_t i = 0; i < rooms.size(); i++)
+	for (uint32_t i = 0; i < rooms.size(); i++)
 	{
 		std::shared_ptr<LRoomDataDOMNode> roomData = std::make_shared<LRoomDataDOMNode>(fmt::format("room data {0}", i));
 		roomData->Load(i, mStaticMapIO, rooms, GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door));
