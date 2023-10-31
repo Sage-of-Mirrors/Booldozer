@@ -5,7 +5,7 @@
 #include "../lib/magic_enum/include/magic_enum.hpp"
 #include <type_traits>
 #include <algorithm>
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 
 namespace LUIUtility
 {

@@ -14,7 +14,7 @@
 
 #include <filesystem>
 #include <memory>
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 
 enum class EEditorMode : uint32_t
 {

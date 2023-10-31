@@ -1,7 +1,7 @@
 #pragma once
 
 #include "BGRenderDOMNode.hpp"
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 
 namespace bStream
 {

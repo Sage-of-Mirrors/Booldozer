@@ -3,7 +3,7 @@
 #include "GenUtil.hpp"
 #include "constants.hpp"
 
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 #include "../lib/libgctools/include/archive.h"
 #include "../lib/libgctools/include/compression.h"
 

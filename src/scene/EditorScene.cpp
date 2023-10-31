@@ -290,13 +290,12 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 		}
 	}
 
-	uint32_t id = 2;
 	for(std::weak_ptr<LRoomDOMNode> roomRef : mCurrentRooms){
 
 		glm::mat4 identity = glm::identity<glm::mat4>();
 		for (std::shared_ptr<BinModel> room : mRoomModels)
 		{
-			room->Draw(&identity, 1);
+			room->Draw(&identity, -1);
 		}
 		
 		std::shared_ptr<LRoomDOMNode> curRoom;

@@ -5,7 +5,7 @@
 #include "DOM/FurnitureDOMNode.hpp"
 #include "DOM/ItemAppearDOMNode.hpp"
 #include <sstream>
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 
 LEnemyDOMNode::LEnemyDOMNode(std::string name) : LEnemyDOMNode(name, false)
 {

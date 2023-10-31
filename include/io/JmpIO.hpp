@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../lib/bStream/bstream.h"
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 #include "GenUtil.hpp"
 #include <memory>
 #include <vector>
