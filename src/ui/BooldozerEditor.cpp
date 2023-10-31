@@ -175,7 +175,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 	ImGui::Image(reinterpret_cast<void*>(static_cast<uintptr_t>(mViewTex)), winSize, {0.0f, 1.0f}, {1.0f, 0.0f});
 
-	if(ImGui::IsItemClicked() && mLoadedMap != nullptr){
+	if(ImGui::IsItemClicked() && mLoadedMap != nullptr && !ImGuizmo::IsOver()){
 		int32_t id;
 		ImVec2 mousePos = ImGui::GetMousePos();
 
@@ -196,6 +196,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 	ImGuizmo::SetDrawlist(ImGui::GetWindowDrawList());
     ImGuizmo::SetRect(cursorPos.x, cursorPos.y, winSize.x, winSize.y);
+
 	mCurrentMode->RenderGizmo(renderer_scene);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

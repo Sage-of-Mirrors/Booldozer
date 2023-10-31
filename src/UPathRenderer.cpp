@@ -8,32 +8,39 @@ const char* default_path_vtx_shader_source = "#version 330\n\
 layout (location = 0) in vec3 position;\n\
 layout (location = 1) in vec4 color;\n\
 layout (location = 2) in int size;\n\
+layout (location = 3) in int id;\n\
 out vec4 line_color;\n\
+flat out int pickID;\n\
 uniform mat4 gpu_ModelViewProjectionMatrix;\n\
 void main()\n\
 {\n\
     gl_Position = gpu_ModelViewProjectionMatrix * vec4(position, 1.0);\n\
     gl_PointSize = min(size, size / gl_Position.w);\n\
     line_color = color;\n\
+    pickID = id;\n\
 }\
 ";
 
 const char* default_path_frg_shader_source = "#version 330\n\
 uniform sampler2D spriteTexture;\n\
 in vec4 line_color;\n\
+flat in int pickID;\n\
 uniform bool pointMode;\n\
+out vec4 outColor;\n\
+out int outPick;\n\
 void main()\n\
 {\n\
     if(pointMode){\n\
         vec2 p = gl_PointCoord * 2.0 - vec2(1.0);\n\
-        float r = sqrt(dot(p,p));\n\
-        if(dot(p,p) > r || dot(p,p) < r*0.75){\n\
-            discard;\n\
+        float r = sqrt(dot(p,p)) * 0.5;\n\
+        outPick = pickID; \n\
+        if(dot(p,p) < r){\n\
+            outColor = vec4(1.0,1.0,1.0,1.0);\n\
         } else {\n\
-            gl_FragColor = vec4(1.0,1.0,1.0,1.0);\n\
+            discard;\n\
         }\n\
     } else {\n\
-        gl_FragColor = line_color;\n\
+        outColor = line_color;\n\
     }\n\
 }\
 ";
@@ -111,6 +118,8 @@ void CPathRenderer::Init() {
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_TRUE, sizeof(CPathPoint), (void*)offsetof(CPathPoint, Color));
     glEnableVertexAttribArray(2);
     glVertexAttribIPointer(2, 1, GL_UNSIGNED_INT, sizeof(CPathPoint), (void*)offsetof(CPathPoint, SpriteSize));
+    glEnableVertexAttribArray(3);
+    glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(CPathPoint), (void*)offsetof(CPathPoint, ID));
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);

@@ -125,30 +125,31 @@ void LEditorScene::UpdateRenderers(){
 					{
 					case EDOMNodeType::RoomData:
 						{
+							int32_t pickID = curRoom->GetID(); 
 							glm::vec4 color = (curRoom->GetRoomNumber() == mSelectedRoomNumber ? glm::vec4(0.0f, 1.0f, 0.0f, 1.0f) : glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
 							glm::vec3 min = static_cast<LRoomDataDOMNode*>(node.get())->GetMin();
 							glm::vec3 max = static_cast<LRoomDataDOMNode*>(node.get())->GetMax();
 							std::vector<CPathPoint> bounds_bottom = {
-								{min, color, 51200},
-								{{min.x, min.y, max.z}, color, 51200},
-								{{max.x, min.y, max.z}, color, 51200},
-								{{max.x, min.y, min.z}, color, 51200},
-								{min, color, 51200},
+								{min, color, 51200, pickID},
+								{{min.x, min.y, max.z}, color, 51200, pickID},
+								{{max.x, min.y, max.z}, color, 51200, pickID},
+								{{max.x, min.y, min.z}, color, 51200, pickID},
+								{min, color, 51200, pickID},
 							};
 
 							std::vector<CPathPoint> bounds_top = {
-								{max, color, 51200},
-								{{max.x, max.y, min.z}, color, 51200},
-								{{min.x, max.y, min.z}, color, 51200},
-								{{min.x, max.y, max.z}, color, 51200},
-								{max, color, 51200},
+								{max, color, 51200, pickID},
+								{{max.x, max.y, min.z}, color, 51200, pickID},
+								{{min.x, max.y, min.z}, color, 51200, pickID},
+								{{min.x, max.y, max.z}, color, 51200, pickID},
+								{max, color, 51200, pickID},
 							};
 
-							std::vector<CPathPoint> bounds_edge1 = {{min, color, 51200}, {{min.x, max.y, min.z}, color, 51200}};
-							std::vector<CPathPoint> bounds_edge2 = {{{max.x, min.y, min.z}, color, 51200}, {{max.x, max.y, min.z}, color, 51200}};
-							std::vector<CPathPoint> bounds_edge3 = {{{min.x, min.y, max.z}, color, 51200}, {{min.x, max.y, max.z}, color, 51200}};
-							std::vector<CPathPoint> bounds_edge4 = {{max, color, 51200}, {{max.x, min.y, max.z}, color, 51200}};
+							std::vector<CPathPoint> bounds_edge1 = {{min, color, 51200, pickID}, {{min.x, max.y, min.z}, color, 51200, pickID}};
+							std::vector<CPathPoint> bounds_edge2 = {{{max.x, min.y, min.z}, color, 51200, pickID}, {{max.x, max.y, min.z}, color, 51200, pickID}};
+							std::vector<CPathPoint> bounds_edge3 = {{{min.x, min.y, max.z}, color, 51200, pickID}, {{min.x, max.y, max.z}, color, 51200, pickID}};
+							std::vector<CPathPoint> bounds_edge4 = {{max, color, 51200, pickID}, {{max.x, min.y, max.z}, color, 51200, pickID}};
 
 							mPathRenderer.mPaths.push_back(bounds_bottom);
 							mPathRenderer.mPaths.push_back(bounds_top);
@@ -166,7 +167,7 @@ void LEditorScene::UpdateRenderers(){
 							auto points = node->template GetChildrenOfType<LPathPointDOMNode>(EDOMNodeType::PathPoint);
 							
 							for(auto& point : points){
-								path.push_back({point->GetPosition(), static_cast<LPathDOMNode*>(node.get())->mPathColor, 12800});
+								path.push_back({point->GetPosition(), static_cast<LPathDOMNode*>(node.get())->mPathColor, 12800, point->GetID()});
 							}
 							
 							mPathRenderer.mPaths.push_back(path);

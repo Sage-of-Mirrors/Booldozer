@@ -10,6 +10,7 @@ typedef struct {
     glm::vec3 Position;
     glm::vec4 Color;
     uint32_t SpriteSize;
+    int32_t ID;
 } CPathPoint;
 
 class CPathRenderer {
