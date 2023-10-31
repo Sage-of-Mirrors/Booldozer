@@ -38,6 +38,7 @@ class LBooldozerEditor
 /*=== Editor modes ===*/
 	// The mode that is currently executing.
 	LEditorModeBase* mCurrentMode;
+
 	// The mode responsible for general actor editing.
 	LActorMode mActorMode;
 	LEnemyMode mEnemyMode;
@@ -47,6 +48,21 @@ class LBooldozerEditor
 	LEventMode mEventMode;
 	LBooMode mBooMode;
 
+	// UI Windows
+	bool bInitialized { false };
+
+	uint32_t mMainDockSpaceID { 0 };
+	uint32_t mDockNodeLeftID { 0 };
+	uint32_t mDockNodeRightID { 0 };
+	uint32_t mDockNodeUpLeftID { 0 };
+	uint32_t mDockNodeDownLeftID { 0 };
+
+	// Rendering surface
+	uint32_t mFbo, mRbo, mViewTex, mPickTex;
+
+	float mPrevWinWidth { -1.0f };
+	float mPrevWinHeight { -1.0f };
+
 	void OpenMap(std::string file_path);
 	void SaveMapToFiles(std::string folder_path);
 	void SaveMapToArchive(std::string file_path);
@@ -55,6 +71,7 @@ class LBooldozerEditor
 
 public:
 	LBooldozerEditor();
+	~LBooldozerEditor();
 	
 	// Param files for this root
 	LPrmIO mGhostConfigs;

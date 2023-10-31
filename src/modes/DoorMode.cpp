@@ -83,29 +83,6 @@ void LDoorMode::RenderDetailsWindow()
 
 void LDoorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene)
 {
-	const ImGuiViewport* mainViewport = ImGui::GetMainViewport();
-	ImGuiDockNodeFlags dockFlags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_AutoHideTabBar | ImGuiDockNodeFlags_NoDockingInCentralNode;
-	mMainDockSpaceID = ImGui::DockSpaceOverViewport(mainViewport, dockFlags);
-	
-	if(!bIsDockingSetUp){
-		ImGui::DockBuilderRemoveNode(mMainDockSpaceID); // clear any previous layout
-		ImGui::DockBuilderAddNode(mMainDockSpaceID, dockFlags | ImGuiDockNodeFlags_DockSpace);
-		ImGui::DockBuilderSetNodeSize(mMainDockSpaceID, mainViewport->Size);
-
-
-		mDockNodeLeftID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Left, 0.25f, nullptr, &mMainDockSpaceID);
-		mDockNodeRightID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Right, 0.25f, nullptr, &mMainDockSpaceID);
-		mDockNodeDownLeftID = ImGui::DockBuilderSplitNode(mDockNodeLeftID, ImGuiDir_Down, 0.5f, nullptr, &mDockNodeUpLeftID);
-
-
-		ImGui::DockBuilderDockWindow("sceneHierarchy", mDockNodeUpLeftID);
-		ImGui::DockBuilderDockWindow("detailWindow", mDockNodeDownLeftID);
-		ImGui::DockBuilderDockWindow("toolWindow", mDockNodeRightID);
-
-		ImGui::DockBuilderFinish(mMainDockSpaceID);
-		bIsDockingSetUp = true;
-	}
-
 	ImGuiWindowClass mainWindowOverride;
 	mainWindowOverride.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
 	ImGui::SetNextWindowClass(&mainWindowOverride);
@@ -114,12 +91,13 @@ void LDoorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* r
 	ImGui::SetNextWindowClass(&mainWindowOverride);
 	RenderDetailsWindow();
 
-	// Render the nodes so that we're sure new nodes are initialized.
-	for (auto& node : current_map.get()->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)) {
+	for(auto& node : current_map.get()->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)){
 		node->RenderBG(0);
 	}
 
+}
 
+void LDoorMode::RenderGizmo(LEditorScene* renderer_scene){
 	if (mSelectionManager.GetPrimarySelection() != nullptr)
 	{
 		glm::mat4* m = ((LBGRenderDOMNode*)(mSelectionManager.GetPrimarySelection().get()))->GetMat();

@@ -56,6 +56,8 @@ protected:
 	EDOMNodeType mType;
 	std::string mName;
 
+	int32_t mNodeID { -1 };
+
 	template<typename T>
 	void GatherChildrenOfType(std::vector<std::shared_ptr<T>>& list, EDOMNodeType type)
 	{
@@ -86,7 +88,7 @@ protected:
 	}
 
 public:
-	LDOMNodeBase(std::string name) { mName = name; SetIsSelected(false); SetIsRendered(true); SetIsInitialized(false); }
+	LDOMNodeBase(std::string name);
 
 	std::weak_ptr<LDOMNodeBase> Parent;
 	std::vector<std::shared_ptr<LDOMNodeBase>> Children;
@@ -97,6 +99,8 @@ public:
 	bool GetIsInitialized() { return (mNodeState & EDOMNodeState_Initialized) != 0; }
 	bool GetIsRendered() { return (mNodeState & EDOMNodeState_Rendered) != 0; }
 	bool GetIsSelected() { return (mNodeState & EDOMNodeState_Selected) != 0; }
+
+	int32_t GetID() { return mNodeID; }
 
 	void SetIsInitialized(bool initialized)
 	{

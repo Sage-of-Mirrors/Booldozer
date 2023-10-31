@@ -18,40 +18,38 @@ LSceneCamera::LSceneCamera() :
 
 void LSceneCamera::Update(GLFWwindow* window, float dt)
 {
-	if (!mAllowUpdates || ImGui::GetIO().WantCaptureKeyboard || ImGui::GetIO().WantCaptureMouse)
+	if (!mAllowUpdates)
 		return;
 
 	glm::vec3 moveDir = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	// Decide which direction to move
 	if(mCamMode == ECamMode::FLY){
-		if (LInput::GetKey(GLFW_KEY_W))
+		if (ImGui::IsKeyDown(ImGuiKey_W))
 			moveDir -= mForward;
-		if (LInput::GetKey(GLFW_KEY_S))
+		if (ImGui::IsKeyDown(ImGuiKey_S))
 			moveDir += mForward;
-		if (LInput::GetKey(GLFW_KEY_D))
+		if (ImGui::IsKeyDown(ImGuiKey_D))
 			moveDir += mRight;
-		if (LInput::GetKey(GLFW_KEY_A))
+		if (ImGui::IsKeyDown(ImGuiKey_A))
 			moveDir -= mRight;
 	}
 	else if(mCamMode == ECamMode::ORBIT) {
-		if (LInput::GetKey(GLFW_KEY_W))
+		if (ImGui::IsKeyDown(ImGuiKey_W))
 			moveDir += glm::normalize(mCenter - mEye);
-		if (LInput::GetKey(GLFW_KEY_S))
+		if (ImGui::IsKeyDown(ImGuiKey_S))
 			moveDir -= glm::normalize(mCenter - mEye);
-		if (LInput::GetKey(GLFW_KEY_D))
+		if (ImGui::IsKeyDown(ImGuiKey_D))
 			moveDir += glm::normalize(glm::cross(mCenter - mEye, UNIT_Y));
-		if (LInput::GetKey(GLFW_KEY_A))
+		if (ImGui::IsKeyDown(ImGuiKey_A))
 			moveDir -= glm::normalize(glm::cross(mCenter - mEye, UNIT_Y));
-		if (LInput::GetKey(GLFW_KEY_E))
+		if (ImGui::IsKeyDown(ImGuiKey_Q))
 			moveDir += mUp;
-		if (LInput::GetKey(GLFW_KEY_Q))
+		if (ImGui::IsKeyDown(ImGuiKey_E))
 			moveDir -= mUp;
 	}
 
-	mMoveSpeed += LInput::GetMouseScrollDelta() * 100 * dt;
-	mMoveSpeed = std::clamp(mMoveSpeed, 100.f, 50000.f);
-	float actualMoveSpeed = LInput::GetKey(GLFW_KEY_LEFT_SHIFT) ? mMoveSpeed * 3.f : mMoveSpeed;
+	float actualMoveSpeed = ImGui::IsKeyDown(ImGuiKey_LeftShift) ? mMoveSpeed * 3.f : mMoveSpeed;
 
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 	{

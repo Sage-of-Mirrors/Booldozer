@@ -16,20 +16,14 @@ protected:
 	// The object that manages this mode's undo/redo history.
 	LEditorHistory mHistoryManager;
 
-	bool bIsDockingSetUp { false };
-
-	uint32_t mMainDockSpaceID { 0 };
-	uint32_t mDockNodeLeftID { 0 };
-	uint32_t mDockNodeRightID { 0 };
-	uint32_t mDockNodeUpLeftID { 0 };
-	uint32_t mDockNodeDownLeftID { 0 };
-
 public:
 
 	// The Gizmo's current operation mode (translate, rotate, scale)
 	ImGuizmo::OPERATION mGizmoMode { ImGuizmo::OPERATION::TRANSLATE };
 	
 	virtual void Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene) = 0;
+
+	virtual void RenderGizmo(LEditorScene* renderer_scene) = 0;
 
 	// Called when this mode becomes the active (currently interactable) mode.
 	virtual void OnBecomeActive() = 0;

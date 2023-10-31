@@ -14,8 +14,6 @@
 #include "io/BinIO.hpp"
 #include <io/MdlIO.hpp>
 
-#include "cube_tex.h"
-
 #include "DOM/EventDOMNode.hpp"
 #include "DOM/GeneratorDOMNode.hpp"
 #include "DOM/PathDOMNode.hpp"
@@ -24,389 +22,6 @@
 #include <J3D/J3DUniformBufferObject.hpp>
 #include <J3D/J3DModelLoader.hpp>
 #include <J3D/J3DRendering.hpp>
-
-
-struct cube_vertex {
-	float x, y, z, u, v;
-};
-
-//hardcoded cube rendering data
-static const GLfloat s_cubeVertices[] = {
-	-10.0f,-10.0f,-10.0f, 0.000059f, 10.0f-0.000004f,
-	-10.0f,-10.0f, 10.0f, 0.000103f, 10.0f-0.336048f,
-	-10.0f, 10.0f, 10.0f, 0.335973f, 10.0f-0.335903f,
-	10.0f, 10.0f,-10.0f, 10.000023f, 10.0f-0.000013f,
-	-10.0f,-10.0f,-10.0f, 0.667979f, 10.0f-0.335851f,
-	-10.0f, 10.0f,-10.0f, 0.999958f, 10.0f-0.336064f,
-	10.0f,-10.0f, 10.0f, 0.667979f, 10.0f-0.335851f,
-	-10.0f,-10.0f,-10.0f, 0.336024f, 10.0f-0.671877f,
-	10.0f,-10.0f,-10.0f, 0.667969f, 10.0f-0.671889f,
-	10.0f, 10.0f,-10.0f, 10.000023f, 10.0f-0.000013f,
-	10.0f,-10.0f,-10.0f, 0.668104f, 10.0f-0.000013f,
-	-10.0f,-10.0f,-10.0f, 0.667979f, 10.0f-0.335851f,
-	-10.0f,-10.0f,-10.0f, 0.000059f, 10.0f-0.000004f,
-	-10.0f, 10.0f, 10.0f, 0.335973f, 10.0f-0.335903f,
-	-10.0f, 10.0f,-10.0f, 0.336098f, 10.0f-0.000071f,
-	10.0f,-10.0f, 10.0f, 0.667979f, 10.0f-0.335851f,
-	-10.0f,-10.0f, 10.0f, 0.335973f, 10.0f-0.335903f,
-	-10.0f,-10.0f,-10.0f, 0.336024f, 10.0f-0.671877f,
-	-10.0f, 10.0f, 10.0f, 10.000004f, 10.0f-0.671847f,
-	-10.0f,-10.0f, 10.0f, 0.999958f, 10.0f-0.336064f,
-	10.0f,-10.0f, 10.0f, 0.667979f, 10.0f-0.335851f,
-	10.0f, 10.0f, 10.0f, 0.668104f, 10.0f-0.000013f,
-	10.0f,-10.0f,-10.0f, 0.335973f, 10.0f-0.335903f,
-	10.0f, 10.0f,-10.0f, 0.667979f, 10.0f-0.335851f,
-	10.0f,-10.0f,-10.0f, 0.335973f, 10.0f-0.335903f,
-	10.0f, 10.0f, 10.0f, 0.668104f, 10.0f-0.000013f,
-	10.0f,-10.0f, 10.0f, 0.336098f, 10.0f-0.000071f,
-	10.0f, 10.0f, 10.0f, 0.000103f, 10.0f-0.336048f,
-	10.0f, 10.0f,-10.0f, 0.000004f, 10.0f-0.671870f,
-	-10.0f, 10.0f,-10.0f, 0.336024f, 10.0f-0.671877f,
-	10.0f, 10.0f, 10.0f, 0.000103f, 10.0f-0.336048f,
-	-10.0f, 10.0f,-10.0f, 0.336024f, 10.0f-0.671877f,
-	-10.0f, 10.0f, 10.0f, 0.335973f, 10.0f-0.335903f,
-	10.0f, 10.0f, 10.0f, 0.667969f, 10.0f-0.671889f,
-	-10.0f, 10.0f, 10.0f, 10.000004f, 10.0f-0.671847f,
-	10.0f,-10.0f, 10.0f, 0.667979f, 10.0f-0.335851f
-};
-
-const char* cube_vtx_shader = "#version 460\n\
-	#extension GL_ARB_separate_shader_objects : enable\n\
-	struct GXLight {\n\
-		vec4 Position;\n\
-		vec4 Direction;\n\
-		vec4 Color;\n\
-		vec4 AngleAtten;\n\
-		vec4 DistAtten;\n\
-	};\n\
-	layout (std140, binding=0) uniform uSharedData {\n\
-		mat4 Proj;\n\
-		mat4 View;\n\
-		mat4 Model;\n\
-		vec4 TevColor[4];\n\
-		vec4 KonstColor[4];\n\
-		GXLight Lights[8];\n\
-		mat4 Envelopes[512];\n\
-		mat4 TexMatrices[10];\n\
-	};\n\
-	uniform mat4 transform;\n\
-	\
-	layout(location = 0) in vec3 inPosition;\n\
-	layout(location = 1) in vec2 inTexCoord;\n\
-	\
-	layout(location = 0) out vec2 fragTexCoord;\n\
-	\
-	void main()\n\
-	{\
-		gl_Position = Proj * View * transform * vec4(inPosition, 1.0);\n\
-		fragTexCoord = inTexCoord;\n\
-	}\
-";
-
-const char* cube_frg_shader = "#version 460\n\
-	#extension GL_ARB_separate_shader_objects : enable\n\
-	\
-	uniform sampler2D texSampler;\n\
-	layout(location = 0) in vec2 fragTexCoord;\n\
-	layout(location = 0) out vec4 outColor;\n\
-	\
-	void main()\n\
-	{\n\
-		vec4 baseColor = texture(texSampler, vec2(fragTexCoord.y, fragTexCoord.x));\n\
-		outColor = baseColor;\n\
-		if(baseColor.a < 1.0 / 1.0f) discard;\n\
-	}\
-";
-
-// From: https://github.com/opengl-tutorials/ogl/blob/master/misc05_picking/misc05_picking_custom.cpp
-
-void ScreenPosToWorldRay(
-	int mouseX, int mouseY,             // Mouse position, in pixels, from bottom-left corner of the window
-	int screenWidth, int screenHeight,  // Window size, in pixels
-	glm::mat4 ViewMatrix,               // Camera position and orientation
-	glm::mat4 ProjectionMatrix,         // Camera parameters (ratio, field of view, near and far planes)
-	glm::vec3& out_origin,              // Ouput : Origin of the ray. /!\ Starts at the near plane, so if you want the ray to start at the camera's position instead, ignore this.
-	glm::vec3& out_direction            // Ouput : Direction, in world space, of the ray that goes "through" the mouse.
-){
-
-	// The ray Start and End positions, in Normalized Device Coordinates (Have you read Tutorial 4 ?)
-	glm::vec4 lRayStart_NDC(
-		((float)mouseX/(float)screenWidth  - 0.5f) * 2.0f, // [0,1024] -> [-1,1]
-		((float)mouseY/(float)screenHeight - 0.5f) * 2.0f, // [0, 768] -> [-1,1]
-		-1.0, // The near plane maps to Z=-1 in Normalized Device Coordinates
-		1.0f
-	);
-	glm::vec4 lRayEnd_NDC(
-		((float)mouseX/(float)screenWidth  - 0.5f) * 2.0f,
-		((float)mouseY/(float)screenHeight - 0.5f) * 2.0f,
-		0.0,
-		1.0f
-	);
-
-
-	// The Projection matrix goes from Camera Space to NDC.
-	// So inverse(ProjectionMatrix) goes from NDC to Camera Space.
-	glm::mat4 InverseProjectionMatrix = glm::inverse(ProjectionMatrix);
-	
-	// The View Matrix goes from World Space to Camera Space.
-	// So inverse(ViewMatrix) goes from Camera Space to World Space.
-	glm::mat4 InverseViewMatrix = glm::inverse(ViewMatrix);
-	
-	glm::vec4 lRayStart_camera = InverseProjectionMatrix * lRayStart_NDC;    lRayStart_camera/=lRayStart_camera.w;
-	glm::vec4 lRayStart_world  = InverseViewMatrix       * lRayStart_camera; lRayStart_world /=lRayStart_world .w;
-	glm::vec4 lRayEnd_camera   = InverseProjectionMatrix * lRayEnd_NDC;      lRayEnd_camera  /=lRayEnd_camera  .w;
-	glm::vec4 lRayEnd_world    = InverseViewMatrix       * lRayEnd_camera;   lRayEnd_world   /=lRayEnd_world   .w;
-
-
-	// Faster way (just one inverse)
-	//glm::mat4 M = glm::inverse(ProjectionMatrix * ViewMatrix);
-	//glm::vec4 lRayStart_world = M * lRayStart_NDC; lRayStart_world/=lRayStart_world.w;
-	//glm::vec4 lRayEnd_world   = M * lRayEnd_NDC  ; lRayEnd_world  /=lRayEnd_world.w;
-
-
-	glm::vec3 lRayDir_world(lRayEnd_world - lRayStart_world);
-	lRayDir_world = glm::normalize(lRayDir_world);
-
-
-	out_origin = glm::vec3(lRayStart_world);
-	out_direction = glm::normalize(lRayDir_world);
-}
-
-
-bool TestRayOBBIntersection(
-	glm::vec3 ray_origin,        // Ray origin, in world space
-	glm::vec3 ray_direction,     // Ray direction (NOT target position!), in world space. Must be normalize()'d.
-	glm::vec3 aabb_min,          // Minimum X,Y,Z coords of the mesh when not transformed at all.
-	glm::vec3 aabb_max,          // Maximum X,Y,Z coords. Often aabb_min*-1 if your mesh is centered, but it's not always the case.
-	glm::mat4 ModelMatrix,       // Transformation applied to the mesh (which will thus be also applied to its bounding box)
-	float& intersection_distance // Output : distance between ray_origin and the intersection with the OBB
-){
-	
-	// Intersection method from Real-Time Rendering and Essential Mathematics for Games
-	
-	float tMin = 0.0f;
-	float tMax = 100000.0f;
-
-	glm::vec3 OBBposition_worldspace(ModelMatrix[3].x, ModelMatrix[3].y, ModelMatrix[3].z);
-
-	glm::vec3 delta = OBBposition_worldspace - ray_origin;
-
-	// Test intersection with the 2 planes perpendicular to the OBB's X axis
-	{
-		glm::vec3 xaxis(ModelMatrix[0].x, ModelMatrix[0].y, ModelMatrix[0].z);
-		float e = glm::dot(xaxis, delta);
-		float f = glm::dot(ray_direction, xaxis);
-
-		if ( fabs(f) > 0.001f ){ // Standard case
-
-			float t1 = (e+aabb_min.x)/f; // Intersection with the "left" plane
-			float t2 = (e+aabb_max.x)/f; // Intersection with the "right" plane
-			// t1 and t2 now contain distances betwen ray origin and ray-plane intersections
-
-			// We want t1 to represent the nearest intersection, 
-			// so if it's not the case, invert t1 and t2
-			if (t1>t2){
-				float w=t1;t1=t2;t2=w; // swap t1 and t2
-			}
-
-			// tMax is the nearest "far" intersection (amongst the X,Y and Z planes pairs)
-			if ( t2 < tMax )
-				tMax = t2;
-			// tMin is the farthest "near" intersection (amongst the X,Y and Z planes pairs)
-			if ( t1 > tMin )
-				tMin = t1;
-
-			// And here's the trick :
-			// If "far" is closer than "near", then there is NO intersection.
-			// See the images in the tutorials for the visual explanation.
-			if (tMax < tMin )
-				return false;
-
-		}else{ // Rare case : the ray is almost parallel to the planes, so they don't have any "intersection"
-			if(-e+aabb_min.x > 0.0f || -e+aabb_max.x < 0.0f)
-				return false;
-		}
-	}
-
-
-	// Test intersection with the 2 planes perpendicular to the OBB's Y axis
-	// Exactly the same thing than above.
-	{
-		glm::vec3 yaxis(ModelMatrix[1].x, ModelMatrix[1].y, ModelMatrix[1].z);
-		float e = glm::dot(yaxis, delta);
-		float f = glm::dot(ray_direction, yaxis);
-
-		if ( fabs(f) > 0.001f ){
-
-			float t1 = (e+aabb_min.y)/f;
-			float t2 = (e+aabb_max.y)/f;
-
-			if (t1>t2){float w=t1;t1=t2;t2=w;}
-
-			if ( t2 < tMax )
-				tMax = t2;
-			if ( t1 > tMin )
-				tMin = t1;
-			if (tMin > tMax)
-				return false;
-
-		}else{
-			if(-e+aabb_min.y > 0.0f || -e+aabb_max.y < 0.0f)
-				return false;
-		}
-	}
-
-
-	// Test intersection with the 2 planes perpendicular to the OBB's Z axis
-	// Exactly the same thing than above.
-	{
-		glm::vec3 zaxis(ModelMatrix[2].x, ModelMatrix[2].y, ModelMatrix[2].z);
-		float e = glm::dot(zaxis, delta);
-		float f = glm::dot(ray_direction, zaxis);
-
-		if ( fabs(f) > 0.001f ){
-
-			float t1 = (e+aabb_min.z)/f;
-			float t2 = (e+aabb_max.z)/f;
-
-			if (t1>t2){float w=t1;t1=t2;t2=w;}
-
-			if ( t2 < tMax )
-				tMax = t2;
-			if ( t1 > tMin )
-				tMin = t1;
-			if (tMin > tMax)
-				return false;
-
-		}else{
-			if(-e+aabb_min.z > 0.0f || -e+aabb_max.z < 0.0f)
-				return false;
-		}
-	}
-
-	intersection_distance = tMin;
-	return true;
-
-}
-
-
-void LCubeManager::render(glm::mat4* transform, bool wireframe=false){
-	glUseProgram(mCubeProgram);
-
-	glUniformMatrix4fv(glGetUniformLocation(mCubeProgram, "transform"), 1, 0, &(*transform)[0][0]);
-
-	if(wireframe) glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, mCubeTex);
-
-	glBindVertexArray(mVao);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-	glBindVertexArray(0);
-
-	if(wireframe) glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-}
-
-LCubeManager::LCubeManager(){
-}
-
-void LCubeManager::init(){
-	int x, y, n;
-	uint8_t* data = stbi_load_from_memory(&cube_png[0], cube_png_size, &x, &y, &n, 4);
-	
-	glGenTextures(1, &mCubeTex);
-	glBindTexture(GL_TEXTURE_2D, mCubeTex);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-	
-	glBindTexture(GL_TEXTURE_2D, 0);
-	
-	stbi_image_free(data);
-	
-	glGenVertexArrays(1, &mVao);
-	glBindVertexArray(mVao);
-
-	glGenBuffers(1, &mVbo);
-	glBindBuffer(GL_ARRAY_BUFFER, mVbo);
-
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(cube_vertex), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(cube_vertex), (void*)12);
-
-	glBufferData(GL_ARRAY_BUFFER, sizeof(s_cubeVertices), s_cubeVertices, GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-
-	char glErrorLogBuffer[4096];
-	GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-	GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-
-	glShaderSource(vs, 1, &cube_vtx_shader, NULL);
-	glShaderSource(fs, 1, &cube_frg_shader, NULL);
-
-	glCompileShader(vs);
-
-	GLint status;
-	glGetShaderiv(vs, GL_COMPILE_STATUS, &status);
-	if(status == GL_FALSE){
-		GLint infoLogLength;
-		glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &infoLogLength);
-
-		glGetShaderInfoLog(vs, infoLogLength, NULL, glErrorLogBuffer);
-
-		printf("Compile failure in vertex shader:\n%s\n", glErrorLogBuffer);
-	}
-
-	glCompileShader(fs);
-
-	glGetShaderiv(fs, GL_COMPILE_STATUS, &status);
-	if(status == GL_FALSE){
-		GLint infoLogLength;
-		glGetShaderiv(fs, GL_INFO_LOG_LENGTH, &infoLogLength);
-
-		glGetShaderInfoLog(fs, infoLogLength, NULL, glErrorLogBuffer);
-
-		printf("Compile failure in fragment shader:\n%s\n", glErrorLogBuffer);
-	}
-
-	mCubeProgram = glCreateProgram();
-
-	glAttachShader(mCubeProgram, vs);
-	glAttachShader(mCubeProgram, fs);
-
-	glLinkProgram(mCubeProgram);
-
-	glGetProgramiv(mCubeProgram, GL_LINK_STATUS, &status); 
-	if(GL_FALSE == status) {
-		GLint logLen; 
-		glGetProgramiv(mCubeProgram, GL_INFO_LOG_LENGTH, &logLen); 
-		glGetProgramInfoLog(mCubeProgram, logLen, NULL, glErrorLogBuffer); 
-		printf("Cube Shader Program Linking Error:\n%s\n", glErrorLogBuffer);
-	} 
-
-	glDetachShader(mCubeProgram, vs);
-	glDetachShader(mCubeProgram, fs);
-
-	glDeleteShader(vs);
-	glDeleteShader(fs);
-
-}
-
-LCubeManager::~LCubeManager(){
-	glDeleteTextures(1, &mCubeTex);
-	glDeleteVertexArrays(1, &mVao);
-	glDeleteBuffers(1, &mVbo);
-	glDeleteBuffers(1, &mIbo);
-}
-
 
 LEditorScene::LEditorScene() : Initialized(false) {}
 
@@ -417,7 +32,6 @@ LEditorScene::~LEditorScene(){
 
 void LEditorScene::init(){
 	Initialized = true;
-	mCubeManager.init();
 
 	mPathRenderer.Init();
 	mPointManager.Init(512, 9);
@@ -459,9 +73,8 @@ void LEditorScene::init(){
 	if(GCResourceManager.mGameArchive.filenum != 0){
 		GCarcfile* coinModelFile = GCResourceManager.GetFile(&GCResourceManager.mGameArchive, std::filesystem::path("kt_static") / "coin.bmd");
 		if(coinModelFile != nullptr){
-			//bStream::CMemoryStream modelData((uint8_t*)coinModelFile->data, coinModelFile->size, bStream::Endianess::Big, bStream::OpenMode::In);
-			//mCoinModel = Loader.Load(&modelData, 0);
-			//mCoin = mCoinModel->GetInstance();
+			bStream::CMemoryStream modelData((uint8_t*)coinModelFile->data, coinModelFile->size, bStream::Endianess::Big, bStream::OpenMode::In);
+			mCoinModel = Loader.Load(&modelData, 0);
 		} else {
 			std::cout << "Couldn't find coin" << std::endl;
 		}
@@ -561,21 +174,21 @@ void LEditorScene::UpdateRenderers(){
 						break;
 					case EDOMNodeType::Generator:
 						if (node->GetName() == "elice"){
-							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 0, false, false});
+							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 0, false, node->GetID()});
 						} else if(node->GetName() == "elfire"){
-							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 1, false, false});
+							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 1, false, node->GetID()});
 						} else if(node->GetName() == "elwater") {
-							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 2, false, false});
+							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 2, false, node->GetID()});
 						}
 						break;
 					case EDOMNodeType::Event:
-						mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 3, false, false});
+						mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 3, false, node->GetID()});
 						break;
 					case EDOMNodeType::Observer:
 						if(node->GetName() == "Sound Effect Player"){
-							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 6, false, false});
+							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 6, false, node->GetID()});
 						} else {
-							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 4, false, false});
+							mPointManager.mBillboards.push_back({node->GetPosition(), 51200, 4, false, node->GetID()});
 						}
 						break;
 					//case EDOMNodeType::Object:
@@ -650,16 +263,16 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 			// The Square Mansion Door model is fucked, so this is a hack to make sure it shows up (mostly) correctly in the editor.
 			bool bIgnoreTransforms = doorType == EDoorModel::Square_Mansion_Door;
 			if (bIgnoreTransforms)
-				doorMat = glm::translate(doorMat, glm::vec3(0, 0, 100));
+				doorMat = glm::translate(doorMat, glm::vec3(0, 0, 1000));
 
 			// Double doors need to be rendered twice, with the two halves moved accordingly.
 			if (doorType == EDoorModel::Parlor_Double_Door || doorType == EDoorModel::Hearts_Double_Door)
 			{
-				glm::vec3 doubleDoorOffset = glm::vec3(0, 0, 100);
+				glm::vec3 doubleDoorOffset = glm::vec3(0, 0, 1000);
 
 				// Offset the first door (right/forward) and render it.
 				doorMat = glm::translate(doorMat, doubleDoorOffset);
-				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat);
+				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, door->GetID());
 
 				// Now offset the second door (left/backward) and rotate it 180 degrees.
 				doubleDoorOffset *= 2;
@@ -667,22 +280,23 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 				doorMat = glm::rotate(doorMat, glm::radians(180.f), glm::vec3(0, 1, 0));
 
 				// Render second door.
-				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat);
+				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, door->GetID());
 			}
 			// Single door can just be rendered without hassle.
 			else
 			{
-				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, bIgnoreTransforms);
+				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, door->GetID(), bIgnoreTransforms);
 			}
 		}
 	}
 
+	uint32_t id = 2;
 	for(std::weak_ptr<LRoomDOMNode> roomRef : mCurrentRooms){
 
 		glm::mat4 identity = glm::identity<glm::mat4>();
 		for (std::shared_ptr<BinModel> room : mRoomModels)
 		{
-			room->Draw(&identity);
+			room->Draw(&identity, 1);
 		}
 		
 		std::shared_ptr<LRoomDOMNode> curRoom;
@@ -700,10 +314,17 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 					case EDOMNodeType::Furniture:
 						if(mRoomFurniture.count(std::static_pointer_cast<LFurnitureDOMNode>(node)->GetModelName()) == 0)
 						{
-							mCubeManager.render(node->GetMat());
+							//render some other way
 						} else {
-							mRoomFurniture[std::static_pointer_cast<LFurnitureDOMNode>(node)->GetModelName()]->Draw(node->GetMat());
+							mRoomFurniture[std::static_pointer_cast<LFurnitureDOMNode>(node)->GetModelName()]->Draw(node->GetMat(), node->GetID());
 						}
+					case EDOMNodeType::Object:
+						if(node->GetName() == "coin"){
+							auto coin = mCoinModel->GetInstance();
+							coin->SetTransform(*node->GetMat());
+							renderables.push_back(coin);
+						}
+						break;
 					case EDOMNodeType::Character:
 					case EDOMNodeType::Enemy:
 					case EDOMNodeType::Observer:
@@ -711,9 +332,9 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 					case EDOMNodeType::Key:
 						if(mActorModels.contains(node->GetName())){
 							if(mMaterialAnimations.contains(node->GetName())){
-								mActorModels[node->GetName()]->Draw(node->GetMat(), mMaterialAnimations[node->GetName()].get());
+								mActorModels[node->GetName()]->Draw(node->GetMat(), node->GetID(), mMaterialAnimations[node->GetName()].get());
 							} else {
-								mActorModels[node->GetName()]->Draw(node->GetMat(), nullptr);
+								mActorModels[node->GetName()]->Draw(node->GetMat(), node->GetID(), nullptr);
 							}
 						}
 						break;
@@ -893,14 +514,6 @@ void LEditorScene::update(GLFWwindow* window, float dt, LEditorSelection* select
 
 	Camera.Update(window, dt);
 
-	int w, h;
-	int vx, vy;
-	double x, y;
-	glfwGetCursorPos(window, &x, &y);
-
-	glfwGetWindowSize(window, &w, &h);
-	glfwGetWindowPos(window, &vx, &vy);
-
 	// Easter egg where luigi occasionally blinks
 	if(mActorModels.count("luige") > 0){
 		if(mMaterialAnimations["luige"]->GetFrame() < mMaterialAnimations["luige"]->GetFrameCount()-1){
@@ -910,38 +523,4 @@ void LEditorScene::update(GLFWwindow* window, float dt, LEditorSelection* select
 		}
 	}
 
-	if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS && !ImGuizmo::IsUsing()){
-		bool foundObject = false;
-		glm::vec3 pos, dir;
-		ScreenPosToWorldRay(x, y, w, h, Camera.GetViewMatrix(), Camera.GetProjectionMatrix(), pos, dir);
-
-		for(std::weak_ptr<LRoomDOMNode> roomRef : mCurrentRooms){			
-			std::shared_ptr<LRoomDOMNode> curRoom;
-			if((curRoom = roomRef.lock()) && Initialized)
-			{
-				curRoom->ForEachChildOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender, [&](auto node){
-						if(!node->GetIsRendered() && !foundObject) return;
-						
-						switch (node->GetNodeType())
-						{
-						case EDOMNodeType::Character:
-						case EDOMNodeType::Enemy:
-						case EDOMNodeType::Observer:
-						case EDOMNodeType::Generator:
-						case EDOMNodeType::Key:
-							if(mActorModels.contains(node->GetName())){
-								float dist;
-								if(TestRayOBBIntersection(pos, dir, mActorModels[node->GetName()]->bbMin, mActorModels[node->GetName()]->bbMax, *node->GetMat(), dist)){
-									selection->AddToSelection(node);
-									foundObject = true;
-								}
-							}
-							break;
-						}
-				});
-
-			}
-		}
-
-	}
 }

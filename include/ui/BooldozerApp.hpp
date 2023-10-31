@@ -1,6 +1,5 @@
 #pragma once
 
-#include "ui/EditorWindowMain.hpp"
 #include "scene/EditorScene.hpp"
 #include "ui/BooldozerEditor.hpp"
 #include "Options.hpp"
@@ -13,7 +12,6 @@ class LBooldozerApp
 
 	LBooldozerEditor mEditorContext;
 	LEditorScene mEditorScene;
-	LEditorWindowMain mMainEditorWindow = LEditorWindowMain("Main Menu");
 
 	//DiscordEventHandlers mDiscordHandlers = {0};
 

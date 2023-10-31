@@ -267,14 +267,17 @@ const char* default_frg_shader_source = "#version 460\n\
     \
     uniform sampler2D texSampler;\n\
     uniform vec4 binMatColor;\n\
+    uniform int pickID;\n\
     layout(location = 0) in vec2 fragTexCoord;\n\
     \
     layout(location = 0) out vec4 outColor;\n\
+    layout(location = 1) out int outPick;\n\
     \
     void main()\n\
     {\n\
         vec4 baseColor = texture(texSampler, vec2(fragTexCoord.y, fragTexCoord.x));\n\
         outColor = baseColor * binMatColor;//vec4(1.0, 1.0, 1.0, 1.0);\n\
+        outPick = pickID;\n\
         if(baseColor.a < 1.0 / 255.0) discard;\n\
     }\
 ";
@@ -722,7 +725,7 @@ void BinModel::TranslateRoot(glm::vec3 translation){
     mRoot->transform = glm::translate(mRoot->transform, translation);
 }
 
-void BinModel::Draw(glm::mat4* transform, bool bIgnoreTransforms){
+void BinModel::Draw(glm::mat4* transform, int32_t id, bool bIgnoreTransforms){
     glFrontFace(GL_CW);
 
     glEnable(GL_DEPTH_TEST);
@@ -730,7 +733,9 @@ void BinModel::Draw(glm::mat4* transform, bool bIgnoreTransforms){
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
     glUseProgram(mProgramID);
+    glUniform1i(glGetUniformLocation(mProgramID, "pickID"), id);
     mRoot->Draw(glm::identity<glm::mat4>(), transform, this, bIgnoreTransforms);
 }
 

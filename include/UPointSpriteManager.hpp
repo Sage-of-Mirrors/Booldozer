@@ -11,7 +11,7 @@ typedef struct {
     int32_t SpriteSize;
     int32_t Texture;
     int32_t SizeFixed;
-    int32_t Flip;
+    int32_t ID;
 } CPointSprite;
 
 class CPointSpriteManager {

@@ -128,7 +128,7 @@ public:
 
 	bool BindMaterial(uint16_t id);
 
-    void Draw(glm::mat4* transform, bool bIgnoreTransforms = false);
+    void Draw(glm::mat4* transform, int32_t id, bool bIgnoreTransforms = false);
 
 	void TranslateRoot(glm::vec3 translation);
 

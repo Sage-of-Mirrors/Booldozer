@@ -40,29 +40,6 @@ void LEnemyMode::RenderDetailsWindow()
 
 void LEnemyMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene)
 {
-	
-	const ImGuiViewport* mainViewport = ImGui::GetMainViewport();
-	ImGuiDockNodeFlags dockFlags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_AutoHideTabBar | ImGuiDockNodeFlags_NoDockingInCentralNode;
-	mMainDockSpaceID = ImGui::DockSpaceOverViewport(mainViewport, dockFlags);
-	
-	if(!bIsDockingSetUp){
-		ImGui::DockBuilderRemoveNode(mMainDockSpaceID); // clear any previous layout
-		ImGui::DockBuilderAddNode(mMainDockSpaceID, dockFlags | ImGuiDockNodeFlags_DockSpace);
-		ImGui::DockBuilderSetNodeSize(mMainDockSpaceID, mainViewport->Size);
-
-
-		mDockNodeLeftID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Left, 0.25f, nullptr, &mMainDockSpaceID);
-		mDockNodeRightID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Right, 0.25f, nullptr, &mMainDockSpaceID);
-		mDockNodeDownLeftID = ImGui::DockBuilderSplitNode(mDockNodeLeftID, ImGuiDir_Down, 0.5f, nullptr, &mDockNodeUpLeftID);
-
-
-		ImGui::DockBuilderDockWindow("sceneHierarchy", mDockNodeUpLeftID);
-		ImGui::DockBuilderDockWindow("detailWindow", mDockNodeDownLeftID);
-		ImGui::DockBuilderDockWindow("toolWindow", mDockNodeRightID);
-
-		ImGui::DockBuilderFinish(mMainDockSpaceID);
-		bIsDockingSetUp = true;
-	}
 
 	ImGuiWindowClass mainWindowOverride;
 	mainWindowOverride.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
@@ -72,20 +49,19 @@ void LEnemyMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 	ImGui::SetNextWindowClass(&mainWindowOverride);
 	RenderDetailsWindow();
 
-	for (auto& node : current_map.get()->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)) {
-		if (!node->IsNodeType(EDOMNodeType::Enemy) && !node->IsNodeType(EDOMNodeType::Observer))
-			continue;
-
+	for(auto& node : current_map.get()->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)){
 		node->RenderBG(0);
 	}
 
+}
+
+void LEnemyMode::RenderGizmo(LEditorScene* renderer_scene){
 	if (mSelectionManager.GetPrimarySelection() != nullptr) {
 		glm::mat4* m = ((LBGRenderDOMNode*)(mSelectionManager.GetPrimarySelection().get()))->GetMat();
 		glm::mat4 view = renderer_scene->getCameraView();
 		glm::mat4 proj = renderer_scene->getCameraProj();
 		ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::LOCAL, &(*m)[0][0], NULL, NULL);
 	}
-
 }
 
 void LEnemyMode::OnBecomeActive()

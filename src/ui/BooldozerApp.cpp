@@ -21,7 +21,7 @@ constexpr bool GL_IS_DEBUG_CONTEXT = true;
 LBooldozerApp::LBooldozerApp() : mWindow(nullptr) {}
 
 void DealWithGLErrors(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
-	std::cout << "GL CALLBACK: " << message << std::endl;
+	//std::cout << "GL CALLBACK: " << message << std::endl;
 }
 
 bool LBooldozerApp::Setup() {
@@ -78,7 +78,6 @@ bool LBooldozerApp::Setup() {
 	// Set up GLAD
 	glfwMakeContextCurrent(mWindow);
 	gladLoadGL();
-	glClearColor(0.5f, 1.0f, 0.5f, 1.0f);
 	glfwSwapInterval(0);
 
 	// Set up GL debug error handling.
@@ -180,7 +179,7 @@ bool LBooldozerApp::Execute(float deltaTime) {
 
 	// Clear buffers
 	glClearColor(0.100f, 0.261f, 0.402f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_DEPTH_BUFFER_BIT);
 
 	Render(deltaTime);
 
@@ -294,6 +293,4 @@ void LBooldozerApp::RenderUI(float deltaTime) {
     }
 
     ImGuizmo::BeginFrame();
-	ImGuizmo::SetDrawlist(ImGui::GetBackgroundDrawList()); 
-    ImGuizmo::SetRect(0, 0, (float)mWidth, (float)mHeight);
 }

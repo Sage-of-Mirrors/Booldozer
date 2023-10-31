@@ -239,16 +239,20 @@ namespace MDL {
         \
         uniform sampler2D texSampler;\n\
         //uniform vec4 diffuseColor;\n\
+        uniform int pickID;\n\
         \
         layout(location = 0) in vec2 fragTexCoord;\n\
         layout(location = 1) in vec4 fragColor;\n\
         \
         layout(location = 0) out vec4 outColor;\n\
+        layout(location = 1) out int outPick;\n\
         \
         void main()\n\
         {\n\
             vec4 baseColor = texture(texSampler, vec2(fragTexCoord.x, fragTexCoord.y));\n\
             outColor = baseColor;//* diffuseColor * fragColor; //vec4(1.0, 1.0, 1.0, 1.0);\n\
+            outPick = pickID;\n\
+            if(baseColor.a < 1.0 / 255.0) discard;\n\
         }\
     ";
     
@@ -597,10 +601,11 @@ namespace MDL {
     }
 
 
-    void Model::Draw(glm::mat4* transform, TXP::Animation* materialAnimtion){
+    void Model::Draw(glm::mat4* transform, int32_t id, TXP::Animation* materialAnimtion){
         
         glUseProgram(mProgram);
         glUniformMatrix4fv(glGetUniformLocation(mProgram, "transform"), 1, 0, &(*transform)[0][0]);
+        glUniform1i(glGetUniformLocation(mProgram, "pickID"), id);
 
         for (DrawElement element : mDrawElements){
             if(mShapes[element.ShapeIndex].VertexCount == 0) continue;

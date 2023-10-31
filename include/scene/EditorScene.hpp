@@ -26,26 +26,13 @@
 #include "UPathRenderer.hpp"
 #include "UPointSpriteManager.hpp"
 
-class LCubeManager {
-private:
-    uint32_t mVao, mVbo, mIbo, mCubeProgram, mCubeTex;
-
-public:
-
-    void init();
-    void render(glm::mat4* transform, bool wireframe);
-
-    LCubeManager();
-    ~LCubeManager();
-
-};
-
-
 class LEditorScene {
     bool Initialized;
     glm::mat4 gridMatrix;
 
-    LCubeManager mCubeManager;
+    uint32_t mFbo, mRbo, mViewTex, mPickTex;
+    uint32_t mPrevWidth, mPrevHeight;
+
     CPointSpriteManager mPointManager;
     CPathRenderer mPathRenderer;
     
@@ -67,7 +54,6 @@ class LEditorScene {
 
 public:
     LSceneCamera Camera;
-    std::vector<LSceneCamera*> mViewports;
     
     glm::mat4 getCameraView();
     glm::mat4 getCameraProj();

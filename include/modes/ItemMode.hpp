@@ -34,6 +34,7 @@ public:
 	LItemMode();
 
 	virtual void Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene) override;
+	virtual void RenderGizmo(LEditorScene* renderer_scene) override;
 
 	// Called when this mode becomes the active (currently interactable) mode.
 	virtual void OnBecomeActive() override;

@@ -8,32 +8,30 @@ const char* default_ps_vtx_shader_source = "#version 330\n\
 layout (location = 0) in vec3 position;\n\
 layout (location = 1) in int tex;\n\
 layout (location = 2) in int size;\n\
-layout (location = 3) in int flip_tex;\n\
+layout (location = 3) in int ps_id;\n\
 flat out int tex_idx;\n\
-flat out int flip;\n\
+flat out int id;\n\
 uniform mat4 gpu_ModelViewProjectionMatrix;\n\
 void main()\n\
 {\n\
     gl_Position = gpu_ModelViewProjectionMatrix * vec4(position, 1.0);\n\
     gl_PointSize = min(size, size / gl_Position.w);\n\
     tex_idx = tex;\n\
-    flip = flip_tex;\n\
+    id = ps_id;\n\
 }\
 ";
 
 const char* default_ps_frg_shader_source = "#version 330\n\
 uniform sampler2DArray spriteTexture;\n\
 flat in int tex_idx;\n\
-flat in int flip;\n\
+flat in int id;\n\
 out vec4 outColor;\n\
+out int outPick;\n\
 void main()\n\
 {\n\
-    if(flip == 0){\n\
-        gl_FragColor = texture(spriteTexture, vec3(gl_PointCoord, tex_idx));\n\
-    } else {\n\
-        gl_FragColor = texture(spriteTexture, vec3(-gl_PointCoord.x, gl_PointCoord.y, tex_idx));\n\
-    }\n\
-    if(gl_FragColor.a < 1.0 / 255.0) discard;\n\
+    outColor = texture(spriteTexture, vec3(gl_PointCoord, tex_idx));\n\
+    outPick = id;\n\
+    if(outColor.a < 1.0 / 255.0) discard;\n\
 }\
 ";
 
@@ -125,7 +123,7 @@ void CPointSpriteManager::Init(int BillboardResolution, int BillboardImageCount)
     glEnableVertexAttribArray(2);
     glVertexAttribIPointer(2, 1, GL_UNSIGNED_INT, sizeof(CPointSprite), (void*)offsetof(CPointSprite, SpriteSize));
     glEnableVertexAttribArray(3);
-    glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(CPointSprite), (void*)offsetof(CPointSprite, Flip));
+    glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(CPointSprite), (void*)offsetof(CPointSprite, ID));
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);

@@ -4,7 +4,6 @@
 #include "EntityDOMNode.hpp"
 #include "RoomDataDOMNode.hpp"
 #include "io/JmpIO.hpp"
-#include "Model.hpp"
 #include "../lib/libgctools/include/archive.h"
 #include "glm/glm.hpp"
 #include <memory>
