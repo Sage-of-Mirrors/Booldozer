@@ -211,7 +211,7 @@ namespace MDL {
     public:
         glm::vec3 bbMax {0, 0, 0}, bbMin {0, 0, 0};
 
-        void Draw(glm::mat4* transform, int32_t id, TXP::Animation* materialAnimtion);
+        void Draw(glm::mat4* transform, int32_t id, bool selected, TXP::Animation* materialAnimtion);
 
         void Load(bStream::CStream* stream);
         

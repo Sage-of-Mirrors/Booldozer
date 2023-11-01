@@ -269,11 +269,11 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 			// Double doors need to be rendered twice, with the two halves moved accordingly.
 			if (doorType == EDoorModel::Parlor_Double_Door || doorType == EDoorModel::Hearts_Double_Door)
 			{
-				glm::vec3 doubleDoorOffset = glm::vec3(0, 0, 1000);
+				glm::vec3 doubleDoorOffset = glm::vec3(0, 0, 100);
 
 				// Offset the first door (right/forward) and render it.
 				doorMat = glm::translate(doorMat, doubleDoorOffset);
-				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, door->GetID());
+				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, door->GetID(), door->GetIsSelected(), false);
 
 				// Now offset the second door (left/backward) and rotate it 180 degrees.
 				doubleDoorOffset *= 2;
@@ -281,12 +281,12 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 				doorMat = glm::rotate(doorMat, glm::radians(180.f), glm::vec3(0, 1, 0));
 
 				// Render second door.
-				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, door->GetID());
+				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, door->GetID(), door->GetIsSelected(), false);
 			}
 			// Single door can just be rendered without hassle.
 			else
 			{
-				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, door->GetID(), bIgnoreTransforms);
+				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, door->GetID(), door->GetIsSelected(), bIgnoreTransforms);
 			}
 		}
 	}
@@ -296,7 +296,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 		glm::mat4 identity = glm::identity<glm::mat4>();
 		for (std::shared_ptr<BinModel> room : mRoomModels)
 		{
-			room->Draw(&identity, -1);
+			room->Draw(&identity, -1, false);
 		}
 		
 		std::shared_ptr<LRoomDOMNode> curRoom;
@@ -316,7 +316,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 						{
 							//render some other way
 						} else {
-							mRoomFurniture[std::static_pointer_cast<LFurnitureDOMNode>(node)->GetModelName()]->Draw(node->GetMat(), node->GetID());
+							mRoomFurniture[std::static_pointer_cast<LFurnitureDOMNode>(node)->GetModelName()]->Draw(node->GetMat(), node->GetID(), node->GetIsSelected());
 						}
 					case EDOMNodeType::Object:
 						if(node->GetName() == "coin"){
@@ -332,9 +332,9 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 					case EDOMNodeType::Key:
 						if(mActorModels.contains(node->GetName())){
 							if(mMaterialAnimations.contains(node->GetName())){
-								mActorModels[node->GetName()]->Draw(node->GetMat(), node->GetID(), mMaterialAnimations[node->GetName()].get());
+								mActorModels[node->GetName()]->Draw(node->GetMat(), node->GetID(), node->GetIsSelected(), mMaterialAnimations[node->GetName()].get());
 							} else {
-								mActorModels[node->GetName()]->Draw(node->GetMat(), node->GetID(), nullptr);
+								mActorModels[node->GetName()]->Draw(node->GetMat(), node->GetID(), node->GetIsSelected(), nullptr);
 							}
 						}
 						break;
