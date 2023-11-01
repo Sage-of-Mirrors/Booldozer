@@ -164,7 +164,6 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 	}
 
 	if(mSelectionManager.GetPrimarySelection() != nullptr){
-		
 		if(mPreviousSelection == nullptr || mPreviousSelection != mSelectionManager.GetPrimarySelection()){
 			mPreviousSelection = mSelectionManager.GetPrimarySelection();
 			if(!mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).expired() && !renderer_scene->HasRoomLoaded(mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock()->GetRoomNumber())){
@@ -176,10 +175,20 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 		glm::mat4 view = renderer_scene->getCameraView();
 		glm::mat4 proj = renderer_scene->getCameraProj();
 		
-		if(mSelectionManager.GetPrimarySelection().get()->GetNodeType() != EDOMNodeType::Room){
+		if(mSelectionManager.GetPrimarySelection()->GetNodeType() != EDOMNodeType::Room){
 			glm::mat4* m = static_cast<LBGRenderDOMNode*>(mSelectionManager.GetPrimarySelection().get())->GetMat();
-			if(ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::LOCAL, &(*m)[0][0], NULL, NULL)){
-				renderer_scene->UpdateRenderers();
+			glm::mat4 delta(1.0);
+			if(ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::LOCAL, &(*m)[0][0], &delta[0][0], NULL)){
+				for(auto node : mSelectionManager.GetSelection()){
+					if(node != mSelectionManager.GetPrimarySelection()){
+						(*dynamic_pointer_cast<LBGRenderDOMNode>(node)->GetMat()) = (*dynamic_pointer_cast<LBGRenderDOMNode>(node)->GetMat()) * delta;
+					}
+					EDOMNodeType type = node->GetNodeType();
+					if(type == EDOMNodeType::PathPoint || type == EDOMNodeType::Event  || type == EDOMNodeType::Observer || type == EDOMNodeType::Object){
+						renderer_scene->UpdateRenderers();
+						break;
+					}
+				}
 			}
 		} else {
 			std::shared_ptr<LRoomDataDOMNode> data = mSelectionManager.GetPrimarySelection()->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();

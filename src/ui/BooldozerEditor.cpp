@@ -185,8 +185,6 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 		std::cout << "Read clicked id from " << mousePos.x - cursorPos.x << " " << mousePos.y - cursorPos.y << " as " << id << std::endl;
 
-		if(ImGui::IsKeyDown(ImGuiKey_LeftShift)) GetSelectionManager()->ClearSelection();
-
 		for(auto node : mLoadedMap->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)){
 			if(node->GetID() == id){
 				GetSelectionManager()->AddToSelection(node);

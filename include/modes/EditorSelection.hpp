@@ -21,7 +21,10 @@ public:
 	std::vector<std::shared_ptr<LDOMNodeBase>> GetSelection() { return mCurrentSelection; }
 
 	// Removes all currently selected nodes.
-	void ClearSelection() { mCurrentSelection.clear(); }
+	void ClearSelection() {
+		for(auto node : mCurrentSelection) node->SetIsSelected(false);
+		mCurrentSelection.clear(); 
+	}
 
 	// Returns whether there are currently 0 nodes selected.
 	bool IsEmpty() { return mCurrentSelection.size() == 0; }

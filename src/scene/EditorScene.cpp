@@ -111,7 +111,7 @@ glm::mat4 LEditorScene::getCameraProj(){
 }
 
 void LEditorScene::UpdateRenderers(){
-	std::cout << "calling update renderers. this should only happen a few times!" << std::endl;
+	//std::cout << "calling update renderers. this should only happen a few times!" << std::endl;
 	mPathRenderer.mPaths.clear();
 	mPointManager.mBillboards.clear();
 	for(auto room : mCurrentRooms){
