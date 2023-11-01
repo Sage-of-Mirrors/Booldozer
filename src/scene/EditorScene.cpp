@@ -264,7 +264,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 			// The Square Mansion Door model is fucked, so this is a hack to make sure it shows up (mostly) correctly in the editor.
 			bool bIgnoreTransforms = doorType == EDoorModel::Square_Mansion_Door;
 			if (bIgnoreTransforms)
-				doorMat = glm::translate(doorMat, glm::vec3(0, 0, 1000));
+				doorMat = glm::translate(doorMat, glm::vec3(0, 0, 100));
 
 			// Double doors need to be rendered twice, with the two halves moved accordingly.
 			if (doorType == EDoorModel::Parlor_Double_Door || doorType == EDoorModel::Hearts_Double_Door)
