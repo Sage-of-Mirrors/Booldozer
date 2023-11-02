@@ -47,7 +47,7 @@ void LDoorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 	ImGui::Separator();
 
 	window_flags = ImGuiWindowFlags_HorizontalScrollbar;
-	ImGui::BeginChild("ChildL", ImVec2(ImGui::GetWindowContentRegionWidth(), ImGui::GetWindowHeight() - 75.f), false, window_flags);
+	ImGui::BeginChild("ChildL", ImVec2(ImGui::GetWindowContentRegionMax().x, ImGui::GetWindowHeight() - 75.f), false, window_flags);
 
 	for (uint32_t i = 0; i < doors.size(); i++)
 	{

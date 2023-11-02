@@ -78,7 +78,8 @@ bool LBooldozerApp::Setup() {
 	// Set up GLAD
 	glfwMakeContextCurrent(mWindow);
 	gladLoadGL();
-	glfwSwapInterval(0);
+	
+	glfwSwapInterval(1);
 
 	// Set up GL debug error handling.
 	glEnable(GL_DEBUG_OUTPUT);

@@ -44,7 +44,8 @@ enum class EDOMNodeType
 	PathPoint,
 	EventData,
 	Mirror,
-	CameraAnim
+	CameraAnim,
+	MapCollision
 };
 
 // Base class for all DOM (Document Object Model) nodes.

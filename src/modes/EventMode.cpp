@@ -25,7 +25,7 @@ void LEventMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 	auto events = current_map->GetChildrenOfType<LEventDataDOMNode>(EDOMNodeType::EventData);
 
 	window_flags = ImGuiWindowFlags_HorizontalScrollbar;
-	ImGui::BeginChild("ChildL", ImVec2(ImGui::GetWindowContentRegionWidth(), ImGui::GetWindowHeight() - 75.f), false, window_flags);
+	ImGui::BeginChild("ChildL", ImVec2(ImGui::GetWindowContentRegionMax().x, ImGui::GetWindowHeight() - 75.f), false, window_flags);
 
 	for (uint32_t i = 0; i < events.size(); i++)
 	{

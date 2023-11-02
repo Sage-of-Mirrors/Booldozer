@@ -98,13 +98,13 @@ void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 	ImGui::Text("Current Room");
 	mRoomChanged = LUIUtility::RenderNodeReferenceCombo("##selectedRoom", EDOMNodeType::Room, current_map, mManualRoomSelect);
 
-	auto rooms = current_map->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
-	for (uint32_t i = 0; i < rooms.size(); i++)
-	{
+	uint32_t i = 0;
+	current_map->ForEachChildOfType<LRoomDOMNode>(EDOMNodeType::Room, [i, this](std::shared_ptr<LRoomDOMNode> room) mutable {
 		ImGui::PushID(i);
-		rooms[i]->RenderHierarchyUI(rooms[i], &mSelectionManager);
+		room->RenderHierarchyUI(room, &mSelectionManager);
 		ImGui::PopID();
-	}
+		i++;
+	});
 
 	ImGui::End();
 }
@@ -178,7 +178,7 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 		if(mSelectionManager.GetPrimarySelection()->GetNodeType() != EDOMNodeType::Room){
 			glm::mat4* m = static_cast<LBGRenderDOMNode*>(mSelectionManager.GetPrimarySelection().get())->GetMat();
 			glm::mat4 delta(1.0);
-			if(ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::LOCAL, &(*m)[0][0], &delta[0][0], NULL)){
+			if(ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::WORLD, &(*m)[0][0], &delta[0][0], NULL)){
 				for(auto node : mSelectionManager.GetSelection()){
 					if(node != mSelectionManager.GetPrimarySelection()){
 						(*dynamic_pointer_cast<LBGRenderDOMNode>(node)->GetMat()) = (*dynamic_pointer_cast<LBGRenderDOMNode>(node)->GetMat()) * delta;

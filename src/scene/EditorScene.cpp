@@ -220,6 +220,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 	J3DUniformBufferObject::SetProjAndViewMatrices(&proj, &view);
 
 	std::vector<std::shared_ptr<J3DModelInstance>> renderables;
+	renderables.reserve(50);
 
 	for(std::weak_ptr<LRoomDOMNode> room : mCurrentRooms){
 		if(!room.expired() && Initialized)
@@ -507,20 +508,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 
 void LEditorScene::update(GLFWwindow* window, float dt, LEditorSelection* selection)
 {
-	if(Camera.mCamMode == ECamMode::ORBIT){
-		//oh god no
-		Camera.SetCenter(mCurrentRooms[0].lock().get()->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0].get()->GetPosition());
-	}
-
 	Camera.Update(window, dt);
 
 	// Easter egg where luigi occasionally blinks
-	if(mActorModels.count("luige") > 0){
-		if(mMaterialAnimations["luige"]->GetFrame() < mMaterialAnimations["luige"]->GetFrameCount()-1){
-			mMaterialAnimations["luige"]->Update(dt);
-		} else {
-			if(rand() % 5000 == 1) mMaterialAnimations["luige"]->SetFrame(0);
-		}
-	}
-
 }

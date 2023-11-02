@@ -132,6 +132,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	glBindFramebuffer(GL_FRAMEBUFFER, mFbo);
 
 	if(winSize.x != mPrevWinWidth || winSize.y != mPrevWinHeight){
+		std::cout << "Regenerating textures..." << std::endl;
 		glDeleteTextures(1, &mViewTex);
 		glDeleteTextures(1, &mPickTex);
 		glDeleteRenderbuffers(1, &mRbo);
@@ -161,15 +162,20 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		glDrawBuffers(2, attachments);
 
 		assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-		glViewport(0, 0, (uint32_t)winSize.x, (uint32_t)winSize.y);
 	}
+	
+	glViewport(0, 0, (uint32_t)winSize.x, (uint32_t)winSize.y);
+	
+	mPrevWinWidth = winSize.x;
+	mPrevWinHeight = winSize.y;
 
 	glClearColor(0.100f, 0.261f, 0.402f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	int32_t unused = -1;
-	glClearTexImage(mPickTex, 0, GL_RED_INTEGER, GL_INT, &unused);
 
+	glClearTexImage(mPickTex, 0, GL_RED_INTEGER, GL_INT, &unused);
+	
 	renderer_scene->RenderSubmit((uint32_t)winSize.x,  (uint32_t)winSize.y);
 
 

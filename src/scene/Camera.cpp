@@ -101,13 +101,3 @@ void LSceneCamera::Rotate(float deltaTime, glm::vec2 mouseDelta)
 	mRight = glm::normalize(glm::cross(mForward, UNIT_Y));
 	mUp = glm::normalize(glm::cross(mRight, mForward));
 }
-
-std::pair<glm::vec3, glm::vec3> LSceneCamera::Raycast(double mouseX, double mouseY, glm::vec4 viewport){
-	auto near = glm::unProject(glm::vec3(mouseX, viewport.w - mouseY, 0.0f), GetViewMatrix(), GetProjectionMatrix(), viewport);
-	auto far = glm::unProject(glm::vec3(mouseX, viewport.w - mouseY, 1.0f), GetViewMatrix(), GetProjectionMatrix(), viewport);
-
-	auto dir = far - near;
-	dir = glm::normalize(dir);
-
-	return std::pair(near, dir);
-}

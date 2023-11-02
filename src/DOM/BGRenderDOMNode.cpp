@@ -28,13 +28,5 @@ void LBGRenderDOMNode::RenderBG(float dt)
 
 	if (GetIsInitialized() && GetIsSelected())
 	{
-		// We don't care about skew or perspective, but we need some place for them to go
-		// to use glm:decompose().
-		glm::quat rotQuat;
-		glm::vec3 skew;
-		glm::vec4 persp;
-		glm::decompose(*mTransform.get(), mScale, rotQuat, mPosition, skew, persp);
-
-		mRotation = glm::degrees(glm::eulerAngles(rotQuat));
 	}
 }
