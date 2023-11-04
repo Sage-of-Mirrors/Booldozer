@@ -40,7 +40,6 @@ class LMapCollisionDOMNode : public LBGRenderDOMNode
 {
 private:
 	int W1 { 1 }, W2 { 1 };
-	std::shared_ptr<LCollisionGridCell> mSelectedCell { nullptr };
 
 
 	std::vector<glm::vec3> mNormalData;
@@ -54,9 +53,11 @@ public:
 	std::vector<glm::vec3> mPositionData;
 	std::vector<std::shared_ptr<LTriangleGroup>> mTriangleGroups;
 
-	bool mGridRender { false };
+	bool mDirty { false };
+	bool mGridRender { true };
 	int mGridYLevel { 0 };
 	uint32_t mGridDimension[3];
+	std::shared_ptr<LCollisionGridCell> mSelectedCell { nullptr };
 	glm::vec3 mGridScale, mMinBounds, mAxisLengths;
 	std::vector<std::shared_ptr<LCollisionGridCell>> mGrid;
 

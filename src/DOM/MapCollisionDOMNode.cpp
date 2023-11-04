@@ -17,11 +17,11 @@ std::string LMapCollisionDOMNode::GetName()
 
 void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 {
-
+	mDirty = false;
 	if(ImGui::TreeNode("Groups")){
 		ImGui::Separator();
 		for(auto group : mTriangleGroups){
-			ImGui::Checkbox(fmt::format("##enabledNode{}", group->name).data(), &group->render);
+			if(ImGui::Checkbox(fmt::format("##enabledNode{}", group->name).data(), &group->render)) mDirty = true;
 			ImGui::SameLine();
 			if(ImGui::TreeNode(group->name.data())){
 				for(auto triangle : group->triangles){
@@ -42,8 +42,8 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 		ImGui::InputInt("Y Level", &mGridYLevel);
 		if(mGridYLevel >= mGridDimension[1]) mGridYLevel = 0;
 		if(ImGui::BeginTable("##ColGridTable", mGridDimension[2])){
-			for(int x = 0; x <  mGridDimension[0]; x++){
-				for(int z = 0; z < mGridDimension[2]; z++){
+			for(int z = 0; z <  mGridDimension[2]; z++){
+				for(int x = 0; x < mGridDimension[0]; x++){
 					uint32_t index = x + (mGridYLevel * mGridDimension[0]) + (z * mGridDimension[0] * mGridDimension[1]);
 
 					std::shared_ptr<LCollisionGridCell> cell = mGrid[index];
@@ -54,6 +54,7 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 					}
 					if(ImGui::Button(fmt::format("##{},{},{}", x, mGridYLevel, z).c_str(), ImVec2(-FLT_MIN, 0.0f))){
 						mSelectedCell = cell;
+						mDirty = true;
 					}
 					
 					if(cell->allTriangles.lock() == mTriangleGroups.front()){
