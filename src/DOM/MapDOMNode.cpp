@@ -191,6 +191,30 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	// Complete loading the basic map data
 	LoadStaticData(rooms);
 
+	// Load Collision
+
+	std::shared_ptr<LMapCollisionDOMNode> collision = std::make_shared<LMapCollisionDOMNode>("Collision");
+
+	uint8_t* collisionData = nullptr;
+	size_t collisionSize = 0;
+	for (uint32_t i = 0; i < mMapArchive.filenum; i++)
+	{
+		if (strcmp(mMapArchive.files[i].name, "col.mp") == 0)
+		{
+			collisionData = (uint8_t*)mMapArchive.files[i].data;
+			collisionSize = (size_t)mMapArchive.files[i].size;
+			break;
+		}
+	}
+
+	if (collisionData != nullptr)
+	{
+		bStream::CMemoryStream collisionMemStream(collisionData, collisionSize, bStream::Endianess::Big, bStream::OpenMode::In);
+		collision->Load(&collisionMemStream);
+		AddChild(collision);
+	}
+
+
 	// Now load the entity data from the map's archive.
 	for (int32_t entityType = 0; entityType < LEntityType_Max; entityType++)
 	{

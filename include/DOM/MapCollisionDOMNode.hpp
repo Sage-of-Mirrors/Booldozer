@@ -2,6 +2,8 @@
 
 #include "BGRenderDOMNode.hpp"
 #include <json.hpp>
+#include <vector>
+#include <memory>
 
 namespace bStream
 {
@@ -10,6 +12,7 @@ namespace bStream
 }
 
 struct LCollisionTriangle {
+	std::string name;
 	int16_t positionIdx[3];
 	int16_t normalIdx;
 	int16_t edgeTanIdx[3];
@@ -19,18 +22,42 @@ struct LCollisionTriangle {
 	int16_t friction;
 };
 
+struct LTriangleGroup {
+	std::string name;
+	uint32_t startOffset;
+	uint32_t endOffset;
+	bool render { false };
+	std::vector<std::weak_ptr<LCollisionTriangle>> triangles;
+};
+
+struct LCollisionGridCell {
+	std::weak_ptr<LTriangleGroup> allTriangles;
+	std::weak_ptr<LTriangleGroup> floorTriangles;
+};
+
+
 class LMapCollisionDOMNode : public LBGRenderDOMNode
 {
 private:
+	int W1 { 1 }, W2 { 1 };
+	std::shared_ptr<LCollisionGridCell> mSelectedCell { nullptr };
 
-	glm::vec3 gridScale, minBounds, axisLengths;
 
-	std::vector<glm::vec3> positionData;
-	std::vector<glm::vec3> normalData;
+	std::vector<glm::vec3> mNormalData;
 
-	std::vector<LCollisionTriangle> triangles;
+	std::vector<std::shared_ptr<LCollisionTriangle>> mTriangles;
+
+
 public:
 	typedef LBGRenderDOMNode Super;
+
+	std::vector<glm::vec3> mPositionData;
+	std::vector<std::shared_ptr<LTriangleGroup>> mTriangleGroups;
+
+	int mGridYLevel { 0 };
+	uint32_t mGridDimension[3];
+	glm::vec3 mGridScale, mMinBounds, mAxisLengths;
+	std::vector<std::shared_ptr<LCollisionGridCell>> mGrid;
 
 	LMapCollisionDOMNode(std::string name);
 

@@ -106,6 +106,14 @@ void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 		i++;
 	});
 
+	std::vector<std::shared_ptr<LMapCollisionDOMNode>> collision = current_map->GetChildrenOfType<LMapCollisionDOMNode>(EDOMNodeType::MapCollision);
+
+	if(!collision.empty()){
+		ImGui::PushID(i);
+		collision[0]->RenderHierarchyUI(collision[0], &mSelectionManager);
+		ImGui::PopID();
+	}
+
 	ImGui::End();
 }
 

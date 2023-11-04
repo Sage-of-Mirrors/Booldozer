@@ -28,3 +28,4 @@
 #include "DOM/PathDOMNode.hpp"
 #include "DOM/MirrorDOMNode.hpp"
 #include "DOM/CameraAnimationDOMNode.hpp"
+#include "DOM/MapCollisionDOMNode.hpp"
