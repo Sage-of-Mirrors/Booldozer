@@ -265,16 +265,19 @@ void LEditorScene::UpdateRenderers(){
 				}
 		}
 	
+		// More Stupid Code. Why?
 		glm::vec4 triColor = glm::vec4(0.0, 1.0, 1.0, 1.0);
-		for(auto triangleRef : col->mTriangleGroups){
-			if(auto triangle = triangleRef.lock()){
-				std::vector<CPathPoint> renderTri = {
-					{ col->mPositionData[triangle->positionIdx[0]], triColor, 7000, -1 },
-					{ col->mPositionData[triangle->positionIdx[1]], triColor, 7000, -1 },
-					{ col->mPositionData[triangle->positionIdx[2]], triColor, 7000, -1 },
-					{ col->mPositionData[triangle->positionIdx[0]], triColor, 7000, -1 },
-				};
-				mPathRenderer.mPaths.push_back(renderTri);
+		for(auto group : col->mTriangleGroups){
+			for(auto triangleRef : group->triangles){
+				if(auto triangle = triangleRef.lock()){
+					std::vector<CPathPoint> renderTri = {
+						{ col->mPositionData[triangle->positionIdx[0]], triColor, 7000, -1 },
+						{ col->mPositionData[triangle->positionIdx[1]], triColor, 7000, -1 },
+						{ col->mPositionData[triangle->positionIdx[2]], triColor, 7000, -1 },
+						{ col->mPositionData[triangle->positionIdx[0]], triColor, 7000, -1 },
+					};
+					mPathRenderer.mPaths.push_back(renderTri);
+				}
 			}
 		}
 	}
