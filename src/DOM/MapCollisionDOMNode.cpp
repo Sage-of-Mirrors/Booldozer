@@ -38,6 +38,7 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 	ImGui::Separator();
 
 	if(ImGui::TreeNode("Collision Grid")){
+		ImGui::Checkbox("Render Walkable Grid", &mGridRender);
 		ImGui::InputInt("Y Level", &mGridYLevel);
 		if(mGridYLevel >= mGridDimension[1]) mGridYLevel = 0;
 		if(ImGui::BeginTable("##ColGridTable", mGridDimension[2])){

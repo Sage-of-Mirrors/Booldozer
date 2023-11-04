@@ -54,6 +54,7 @@ public:
 	std::vector<glm::vec3> mPositionData;
 	std::vector<std::shared_ptr<LTriangleGroup>> mTriangleGroups;
 
+	bool mGridRender { false };
 	int mGridYLevel { 0 };
 	uint32_t mGridDimension[3];
 	glm::vec3 mGridScale, mMinBounds, mAxisLengths;

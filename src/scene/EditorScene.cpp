@@ -209,16 +209,14 @@ void LEditorScene::UpdateRenderers(){
 		std::shared_ptr<LMapDOMNode> mapNode = firstRoom->GetParentOfType<LMapDOMNode>(EDOMNodeType::Map).lock();
 		std::shared_ptr<LMapCollisionDOMNode> col = mapNode->GetChildrenOfType<LMapCollisionDOMNode>(EDOMNodeType::MapCollision)[0];
 
-		for(int z = 0; z < col->mGridDimension[2]; z++){
+		if(col->mGridRender){
+			for(int z = 0; z < col->mGridDimension[2]; z++){
 				for(int x = 0; x <  col->mGridDimension[0]; x++){
 					bool red = col->mGrid[x + (col->mGridYLevel * col->mGridDimension[0]) + (z * col->mGridDimension[0] * col->mGridDimension[1])]->floorTriangles.lock()->triangles.size() == 0;
-
 					if(red) continue;
-
 					glm::vec4 color = (red ? glm::vec4(1.0f, 0.0f, 0.0f, 1.0f) : glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
 					glm::vec3 min = glm::vec3((x * col->mGridScale.x) + col->mMinBounds.x, (col->mGridYLevel * col->mGridScale.y) + col->mMinBounds.y, (z * col->mGridScale.z) + col->mMinBounds.z);
 					glm::vec3 max = glm::vec3(((x + 1) * col->mGridScale.x) + col->mMinBounds.x, ((col->mGridYLevel + 1) * col->mGridScale.y) + col->mMinBounds.y, ((z + 1) * col->mGridScale.z) + col->mMinBounds.z);
-
 					std::vector<CPathPoint> bounds_bottom = {
 						{min, color, 12800, -1},
 						{{min.x, min.y, max.z}, color, 12800, -1},
@@ -226,7 +224,6 @@ void LEditorScene::UpdateRenderers(){
 						{{max.x, min.y, min.z}, color, 12800, -1},
 						{min, color, 12800, -1},
 					};
-
 					std::vector<CPathPoint> bounds_top = {
 						{max, color, 12800, -1},
 						{{max.x, max.y, min.z}, color, 12800, -1},
@@ -234,19 +231,16 @@ void LEditorScene::UpdateRenderers(){
 						{{min.x, max.y, max.z}, color, 12800, -1},
 						{max, color, 12800, -1},
 					};
-
 					std::vector<CPathPoint> bounds_edge1 = {{min, color, 12800, -1}, {{min.x, max.y, min.z}, color, 12800, -1}};
 					std::vector<CPathPoint> bounds_edge2 = {{{max.x, min.y, min.z}, color, 12800, -1}, {{max.x, max.y, min.z}, color, 12800, -1}};
 					std::vector<CPathPoint> bounds_edge3 = {{{min.x, min.y, max.z}, color, 12800, -1}, {{min.x, max.y, max.z}, color, 12800, -1}};
 					std::vector<CPathPoint> bounds_edge4 = {{max, color, 12800, -1}, {{max.x, min.y, max.z}, color, 12800, -1}};
-
 					mPathRenderer.mPaths.push_back(bounds_bottom);
 					mPathRenderer.mPaths.push_back(bounds_top);
 					mPathRenderer.mPaths.push_back(bounds_edge1);
 					mPathRenderer.mPaths.push_back(bounds_edge2);
 					mPathRenderer.mPaths.push_back(bounds_edge3);
 					mPathRenderer.mPaths.push_back(bounds_edge4);
-
 					// do something _really_ stupid
 					glm::vec4 triColor = glm::vec4(0.0, 0.0, 1.0, 1.0);
 					for(auto triangleRef : col->mGrid[x + (col->mGridYLevel * col->mGridDimension[0]) + (z * col->mGridDimension[0] * col->mGridDimension[1])]->floorTriangles.lock()->triangles){
@@ -257,17 +251,17 @@ void LEditorScene::UpdateRenderers(){
 								{ col->mPositionData[triangle->positionIdx[2]], triColor, 7000, -1 },
 								{ col->mPositionData[triangle->positionIdx[0]], triColor, 7000, -1 },
 							};
-
 							mPathRenderer.mPaths.push_back(renderTri);
-
 						}
 					}
 				}
+			}
 		}
 	
 		// More Stupid Code. Why?
 		glm::vec4 triColor = glm::vec4(0.0, 1.0, 1.0, 1.0);
 		for(auto group : col->mTriangleGroups){
+			if(!group->render) continue;
 			for(auto triangleRef : group->triangles){
 				if(auto triangle = triangleRef.lock()){
 					std::vector<CPathPoint> renderTri = {
