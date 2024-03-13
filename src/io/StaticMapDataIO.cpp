@@ -631,7 +631,7 @@ void LStaticMapDataIO::WriteResStrings(bStream::CMemoryStream& stream, const std
 	// Now write the strings
 	for (const std::string& str : resStrings)
 	{
-		stream.writeBytes((char*)str.c_str(), RES_STRING_SIZE);
+		stream.writeBytes((uint8_t*)str.c_str(), RES_STRING_SIZE);
 	}
 
 	paddedSize = LGenUtility::PadToBoundary(stream.tell(), 16);
@@ -705,12 +705,12 @@ void LStaticMapDataIO::WriteAltResData(bStream::CMemoryStream& stream, std::vect
 
 		SwapStaticAltResDataEndianness(altResData[i]);
 
-		stream.writeBytes((char*)&altResData[i], sizeof(LStaticAltRoomResourceData));
+		stream.writeBytes((uint8_t*)&altResData[i], sizeof(LStaticAltRoomResourceData));
 	}
 
 	// Now write the strings
 	for (std::string str : altResPaths)
-		stream.writeBytes(str.data(), RES_STRING_SIZE);
+		stream.writeBytes((uint8_t*)str.data(), RES_STRING_SIZE);
 
 	size_t paddedSize = LGenUtility::PadToBoundary(stream.tell(), 16);
 	stream.Reserve(paddedSize);
@@ -733,7 +733,7 @@ void LStaticMapDataIO::WriteDoorData(bStream::CMemoryStream& stream, const std::
 	for (LStaticDoorData d : doors)
 	{
 		SwapStaticDoorDataEndianness(d);
-		stream.writeBytes((char*)&d, sizeof(LStaticDoorData));
+		stream.writeBytes((uint8_t*)&d, sizeof(LStaticDoorData));
 	}
 
 	// There's an empty door entry to mark the end of the list
@@ -766,7 +766,7 @@ void LStaticMapDataIO::WriteRoomAndDoorListData(bStream::CMemoryStream& stream, 
 
 		SwapStaticRoomDataEndianness(rooms[i]);
 
-		stream.writeBytes((char*)&rooms[i], sizeof(LStaticRoomData));
+		stream.writeBytes((uint8_t*)&rooms[i], sizeof(LStaticRoomData));
 	}
 
 	size_t paddedSize = LGenUtility::PadToBoundary(stream.tell(), 16);
@@ -814,7 +814,7 @@ bool LStaticMapDataIO::Save(bStream::CFileStream& stream)
 	for (size_t i = 0; i < headerDiff; i++)
 		stream.writeInt8(0);
 	
-	stream.writeBytes((char*)mData, mFileSize - FILE_HEADER_SIZE);
+	stream.writeBytes(mData, mFileSize - FILE_HEADER_SIZE);
 
 	return true;
 }

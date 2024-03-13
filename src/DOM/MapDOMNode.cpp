@@ -1,5 +1,4 @@
 #include "DOM.hpp"
-#include "../lib/libgctools/include/compression.h"
 #include <fstream>
 #include "GenUtil.hpp"
 #include "ResUtil.hpp"
@@ -37,21 +36,15 @@ std::string const LEntityFileNames[LEntityType_Max] = {
 LMapDOMNode::LMapDOMNode() : Super("map")
 {
 	mType = EDOMNodeType::Map;
-	memset(&mMapArchive, 0, sizeof(GCarchive));
 }
 
-LMapDOMNode::~LMapDOMNode(){
-	if(mMapArchive.filenum != 0){
-		gcFreeArchive(&mMapArchive);
-	}	
-}
+LMapDOMNode::~LMapDOMNode(){}
+
 
 bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 {
 
-	if(mMapArchive.filenum != 0){
-		gcFreeArchive(&mMapArchive);
-	}
+	mMapArchive = Archive::Rarc::Create();
 
 	// Make sure file path is valid
 	if (!std::filesystem::exists(file_path))
@@ -60,15 +53,16 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		return false;
 	}
 
+	bStream::CFileStream mMapArchiveStream(file_path.string(), bStream::Endianess::Big, bStream::OpenMode::In);
 	// Attempt to load archive
-	if (!GCResourceManager.LoadArchive(file_path.string().c_str(), &mMapArchive))
+	if (!mMapArchive->Load(&mMapArchiveStream))
 	{
 		printf("Archive Load Failed\n");
 		return false;
 	}
 
 	// We'll call ourselves whatever the root directory of the archive is
-	mName = std::string(file_path.stem().string().c_str());
+	mName = file_path.stem().string();
 
 	std::filesystem::path eventPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Event";
 	if(std::filesystem::exists(eventPath))
@@ -76,49 +70,22 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		for (auto& archive : std::filesystem::directory_iterator(eventPath))
 		{
 
-			GCarchive eventArc;
+			std::shared_ptr<Archive::Rarc> eventArc = Archive::Rarc::Create();
 
 			//Exclude cvs subdir
-			if(archive.is_regular_file() && GCResourceManager.LoadArchive(archive.path().string().c_str(), &eventArc)){
+			if(archive.is_regular_file()){
+				bStream::CFileStream eventStream(archive.path(), bStream::Endianess::Big, bStream::OpenMode::In);
+				if(!eventArc->Load(&eventStream)) continue;
+
 				//Name of the event file were loading, ex 'event48'
 				std::string eventName = archive.path().stem().string();
 				std::string csvName = eventName;
 
 				csvName.replace(0, 5, "message");
 				std::shared_ptr<LEventDataDOMNode> eventData =  std::make_shared<LEventDataDOMNode>(eventName);
-				eventData->SetEventArchivePath(archive.path().string());
-
-				for (size_t i = 0; i < eventArc.filenum; i++)
-				{
-					if((eventName + ".txt").compare(eventArc.files[i].name) == 0)
-					{
-						eventData->mEventScript = LGenUtility::SjisToUtf8(std::string((char*)eventArc.files[i].data));
-					}
-					else if((csvName + ".csv").compare(eventArc.files[i].name) == 0)
-					{
-						std::string curline;
-						std::stringstream lines(LGenUtility::SjisToUtf8(std::string((char*)eventArc.files[i].data)));
-						while (std::getline(lines, curline, '\n')){
-							eventData->mEventText.push_back(LGenUtility::SjisToUtf8(curline));
-						}
-						
-					} 
-					else if(std::string(eventArc.files[i].name).find("cmn") != std::string::npos)
-					{
-						bStream::CMemoryStream cmn((uint8_t*)eventArc.files[i].data, eventArc.files[i].size, bStream::Endianess::Big, bStream::OpenMode::In);
-						std::shared_ptr<LCameraAnimationDOMNode> camNode = std::make_shared<LCameraAnimationDOMNode>(std::string(eventArc.files[i].name));
-
-						std::cout << "Loading Anim " << eventArc.files[i].name << " in event " << eventName << "..." << std::endl;
-						camNode->Load(&cmn);
-						std::cout << "Finished" << std::endl;
-
-						eventData->AddChild(camNode);
-					}
-
-				}
 				
+				eventData->LoadEventArchive(eventArc, archive.path(), eventName, csvName);
 				
-				gcFreeArchive(&eventArc);
 				AddChild(eventData);
 			}
 		}
@@ -146,22 +113,12 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	}
 
 	// Attempt to load roominfo data. Doesn't necessarily exist!
-	uint8_t* roominfoData = nullptr;
-	size_t roomInfoSize = 0;
-	for (uint32_t i = 0; i < mMapArchive.filenum; i++)
-	{
-		if (strcmp(mMapArchive.files[i].name, "roominfo") == 0)
-		{
-			roominfoData = (uint8_t*)mMapArchive.files[i].data;
-			roomInfoSize = (size_t)mMapArchive.files[i].size;
-			break;
-		}
-	}
+	std::shared_ptr<Archive::File> roomInfoFile = mMapArchive->GetFile("/jmp/roominfo");
 
-	if (roominfoData != nullptr)
+	if (roomInfoFile != nullptr)
 	{
 		// Prep the roominfo data to be read from
-		bStream::CMemoryStream roomMemStream(roominfoData, roomInfoSize, bStream::Endianess::Big, bStream::OpenMode::In);
+		bStream::CMemoryStream roomMemStream(roomInfoFile->GetData(), roomInfoFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 		JmpIOManagers[LEntityType_Rooms].Load(&roomMemStream);
 	}
 
@@ -195,21 +152,11 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 	std::shared_ptr<LMapCollisionDOMNode> collision = std::make_shared<LMapCollisionDOMNode>("Collision");
 
-	uint8_t* collisionData = nullptr;
-	size_t collisionSize = 0;
-	for (uint32_t i = 0; i < mMapArchive.filenum; i++)
-	{
-		if (strcmp(mMapArchive.files[i].name, "col.mp") == 0)
-		{
-			collisionData = (uint8_t*)mMapArchive.files[i].data;
-			collisionSize = (size_t)mMapArchive.files[i].size;
-			break;
-		}
-	}
+	std::shared_ptr<Archive::File> collisionFile = mMapArchive->GetFile("col.mp");
 
-	if (collisionData != nullptr)
+	if (collisionFile != nullptr)
 	{
-		bStream::CMemoryStream collisionMemStream(collisionData, collisionSize, bStream::Endianess::Big, bStream::OpenMode::In);
+		bStream::CMemoryStream collisionMemStream(collisionFile->GetData(), collisionFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 		collision->Load(&collisionMemStream);
 		AddChild(collision);
 	}
@@ -222,27 +169,17 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		if (entityType == LEntityType_Rooms)
 			continue;
 
-		uint8_t* fileData = nullptr;
-		size_t fileSize = 0;
-		for (uint32_t i = 0; i < mMapArchive.filenum; i++)
-		{
-			if (strcmp(mMapArchive.files[i].name, LEntityFileNames[entityType].c_str()) == 0)
-			{
-				fileData = (uint8_t*)mMapArchive.files[i].data;
-				fileSize = mMapArchive.files[i].size;
-				break;
-			}
-		}
+		std::shared_ptr<Archive::File> jmpFile = mMapArchive->GetFile(std::filesystem::path("jmp") / LEntityFileNames[entityType]);
 
 		// This JMP file doesn't exist in the arc we loaded.
-		if (fileData == nullptr)
+		if (jmpFile == nullptr)
 			continue;
 
 		// Some JMP files have strings that aren't 32 bytes, so this is a way to handle that.
 		if (entityType == LEntityType_ItemInfoTable || entityType == LEntityType_ItemAppear || entityType == LEntityType_ItemFishing || entityType == LEntityType_TreasureTable)
 			JmpIOManagers[entityType].SetStringSize(16);
 
-		bStream::CMemoryStream fileReader = bStream::CMemoryStream(fileData, fileSize, bStream::Endianess::Big, bStream::OpenMode::In);
+		bStream::CMemoryStream fileReader = bStream::CMemoryStream(jmpFile->GetData(), jmpFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 		if (!JmpIOManagers[entityType].Load(&fileReader))
 		{
 			printf("Error loading JMP data from \"%s\"\n", LEntityFileNames[entityType].c_str());
@@ -381,20 +318,15 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 
 		JmpIOManagers[entityType].Save(entitiesOfType, memWriter);
 
-		for (uint32_t i = 0; i < mMapArchive.filenum; i++)
-		{
-			if (strcmp(mMapArchive.files[i].name, LEntityFileNames[entityType].c_str()) == 0)
-			{
-
-				if (!GCResourceManager.ReplaceArchiveFileData(&mMapArchive.files[i], memWriter.getBuffer(), newFileSize))
-				{
-					std::cout << "Error replacing file " << mMapArchive.files[i].name << std::endl;
-					return false;
-				}
-
-				break;
-			}
+		std::shared_ptr<Archive::File> jmpFile = mMapArchive->GetFile(std::filesystem::path("jmp") / LEntityFileNames[entityType]);
+		
+		if(jmpFile == nullptr){
+			jmpFile = Archive::File::Create(); // [v]: if this jmp file doesnt exist, make it
+			jmpFile->SetName(LEntityFileNames[entityType]);
+			mMapArchive->GetFolder("jmp")->AddFile(jmpFile);
 		}
+		
+		jmpFile->SetData(memWriter.getBuffer(), newFileSize);
 	}
 
 	for (auto pathNode : GetChildrenOfType<LPathDOMNode>(EDOMNodeType::Path))
@@ -412,32 +344,24 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 
 		size_t pathSize = pathJmp.CalculateNewFileSize(pathNode->GetNumPoints());
 
-		bStream::CMemoryStream pathFile = bStream::CMemoryStream(pathSize, bStream::Endianess::Big, bStream::OpenMode::Out);
-		pathNode->PreProcess(pathJmp, pathFile);
+		bStream::CMemoryStream pathJmpFile = bStream::CMemoryStream(pathSize, bStream::Endianess::Big, bStream::OpenMode::Out);
+		pathNode->PreProcess(pathJmp, pathJmpFile);
 
-		for (uint32_t i = 0; i < mMapArchive.filenum; i++)
-		{
-			if (strcmp(mMapArchive.files[i].name, pathNode->GetName().data()) == 0)
-			{
+		std::shared_ptr<Archive::File> pathFile = mMapArchive->GetFile(std::filesystem::path("path") / pathNode->GetName());
 
-				if (!GCResourceManager.ReplaceArchiveFileData(&mMapArchive.files[i], pathFile.getBuffer(), pathSize))
-				{
-					std::cout << "Error replacing file " << mMapArchive.files[i].name << std::endl;
-					return false;
-				}
+		if(pathFile == nullptr){
+			pathFile = Archive::File::Create();
+			pathFile->SetName(pathNode->GetName());
 
-				break;
-			}
+			mMapArchive->GetFolder("path")->AddFile(pathFile);
 		}
 
+		pathFile->SetData(pathJmpFile.getBuffer(), pathJmpFile.getSize());
+
 	}
 
 
-	if (!GCResourceManager.SaveArchiveCompressed(file_path.string().c_str(), &mMapArchive))
-	{
-		std::cout << "Error saving archive " << file_path << std::endl;
-		return false;
-	}
+	mMapArchive->SaveToFile(file_path, Compression::Format::YAY0);
 
 
 	mStaticMapIO.SaveMapFile(LResUtility::GetStaticMapDataPath(mName), GetSharedPtr<LMapDOMNode>(EDOMNodeType::Map));
@@ -550,7 +474,7 @@ bool LMapDOMNode::SaveMirrorData()
 	}
 
 	bStream::CFileStream fileStream = bStream::CFileStream(mirrorsPath.string(), bStream::Big, bStream::Out);
-	fileStream.writeBytes((char*)memStream.getBuffer(), memStream.getSize());
+	fileStream.writeBytes(memStream.getBuffer(), memStream.getSize());
 
 	return true;
 }

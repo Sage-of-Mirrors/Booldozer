@@ -4,8 +4,7 @@
 #include "constants.hpp"
 
 #include <json.hpp>
-#include "../lib/libgctools/include/archive.h"
-#include "../lib/libgctools/include/compression.h"
+#include <Archive.hpp>
 
 #include <iostream>
 #include <fstream>
@@ -32,13 +31,8 @@ namespace LResUtility
 	{
 		bool mInitialized = false;
 		bool mLoadedGameArchive = false;
-		GCcontext mResManagerContext;
 		public:
-			GCarchive mGameArchive;
-			bool LoadArchive(const char* path, GCarchive* archive);
-			bool SaveArchiveCompressed(const char* path, GCarchive* archive);
-			bool ReplaceArchiveFileData(GCarcfile* file, uint8_t* new_data, size_t new_data_size);
-			GCarcfile* GetFile(GCarchive* archive, std::filesystem::path filepath);
+			std::shared_ptr<Archive::Rarc> mGameArchive;
 			void Init();
 			void Cleanup();
 	};

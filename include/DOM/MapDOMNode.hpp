@@ -4,9 +4,9 @@
 #include "EntityDOMNode.hpp"
 #include "io/JmpIO.hpp"
 #include "io/StaticMapDataIO.hpp"
-#include "../lib/libgctools/include/archive.h"
 #include "ResUtil.hpp"
 
+#include <Archive.hpp>
 #include <filesystem>
 
 extern std::string const LEntityFileNames[];
@@ -16,7 +16,7 @@ class LRoomDOMNode;
 // DOM node representing an entire map, including rooms and objects.
 class LMapDOMNode : public LDOMNodeBase
 {
-	GCarchive mMapArchive;
+	std::shared_ptr<Archive::Rarc> mMapArchive;
 	LJmpIO JmpIOManagers[LEntityType_Max];
 	LStaticMapDataIO mStaticMapIO;
 

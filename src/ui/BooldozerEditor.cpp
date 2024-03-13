@@ -1,6 +1,5 @@
 #include "ui/BooldozerEditor.hpp"
 #include <io/JmpIO.hpp>
-#include <../lib/libgctools/include/compression.h>
 #include <../lib/bStream/bstream.h>
 #include <iostream>
 #include <vector>

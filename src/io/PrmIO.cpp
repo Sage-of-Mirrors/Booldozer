@@ -65,20 +65,15 @@ void LPrmIO::LoadConfigs(std::shared_ptr<LMapDOMNode>& map)
 
     mMap = map;
 
-	for (size_t f = 0; f < GCResourceManager.mGameArchive.dirnum; f++)
-	{
-		if(std::string(GCResourceManager.mGameArchive.dirs[f].name) == "ctp"){
-			for (size_t i = GCResourceManager.mGameArchive.dirs[f].fileoff; i < GCResourceManager.mGameArchive.dirs[f].fileoff + GCResourceManager.mGameArchive.dirs[f].filenum; i++)
-			{
-                auto name = std::filesystem::path(GCResourceManager.mGameArchive.files[i].name).filename().stem();
-                if(name == "." || name == "..") continue;
-                bStream::CMemoryStream prm((uint8_t*)GCResourceManager.mGameArchive.files[i].data, GCResourceManager.mGameArchive.files[i].size, bStream::Endianess::Big, bStream::OpenMode::In);
-                Load(name.string(), &prm);
-                mLoadedConfigs.push_back(name.string());
-			}
-			
-		}
-	}
+    std::shared_ptr<Archive::Folder> ctpFolder = GCResourceManager.mGameArchive->GetFolder("/param/ctp");
+
+    for(auto paramFile : ctpFolder->GetFiles()){
+        auto name = std::filesystem::path(paramFile->GetName()).filename().stem();
+        bStream::CMemoryStream prm(paramFile->GetData(), paramFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+        Load(name.string(), &prm);
+        mLoadedConfigs.push_back(name.string());
+
+    }
     
     mConfigsLoaded = true;
 }

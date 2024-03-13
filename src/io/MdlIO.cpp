@@ -215,6 +215,11 @@ namespace MDL {
             GXLight Lights[8];\n\
             mat4 Envelopes[512];\n\
             mat4 TexMatrices[10];\n\
+            mat4 IndTexMatrices[10];\n\
+            uint BillboardType;\n\
+            uint ModelId;\n\
+            uint MaterialId;\n\
+            vec4 HighlightColor;\n\
         };\n\
         uniform mat4 transform;\n\
         \

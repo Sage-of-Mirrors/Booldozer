@@ -1,30 +1,38 @@
 #pragma once
 
 //#include "io/CmnIo.hpp"
+#include <Archive.hpp>
 #include "BGRenderDOMNode.hpp"
 #include "TextEditor.h"
 
+class LEventMode;
+
 class LEventDataDOMNode : public LBGRenderDOMNode {
 private:
-    //TODO: Load camera animations here
-    //std::vector<LCamAnim> mCameraAnimations;
 
-	std::string mEventArchivePath;
-public:
-	typedef LBGRenderDOMNode Super;
+	friend LEventMode;
 
-    //These should be private with getters and setters.
+	std::filesystem::path mEventPath;
 
+	std::string mEventScriptPath, mEventMessagePath;
+
+	std::shared_ptr<Archive::Rarc> mEventArchive;
+	
 	//Data from event's txt file.
 	std::string mEventScript;
     
 	//Lines of text from event's csv file
 	std::vector<std::string> mEventText;
+public:
+	typedef LBGRenderDOMNode Super;
+
+    //These should be private with getters and setters.
+
 
 	LEventDataDOMNode(std::string name);
 
-	void SetEventArchivePath(std::string path){ mEventArchivePath = path; }
-	std::string GetEventArchivePath(){ return mEventArchivePath; }
+	void LoadEventArchive(std::shared_ptr<Archive::Rarc> arc, std::filesystem::path eventPath, std::string eventScriptName, std::string eventCsvName);
+	void SaveEventArchive();
 
     void RenderDetailsUI(float dt, TextEditor* editor);
 	void RenderHierarchyUI(std::shared_ptr<LEventDataDOMNode> self, LEditorSelection* mode_selection);

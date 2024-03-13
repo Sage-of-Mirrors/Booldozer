@@ -3,8 +3,8 @@
 #include "EntityDOMNode.hpp"
 #include "io/JmpIO.hpp"
 #include "UPathRenderer.hpp"
+#include <Archive.hpp>
 
-struct GCarchive;
 class LRoomDOMNode;
 
 extern std::map<std::string, std::string> InterpolationTypes;
@@ -109,7 +109,7 @@ public:
 	virtual void PostProcess() override;
 	virtual void PreProcess() override;
 
-	void PostProcess(const GCarchive& mapArc);
+	void PostProcess(std::shared_ptr<Archive::Rarc> mapArchive);
 	void PreProcess(LJmpIO& pathJmp, bStream::CMemoryStream& pathStream);
 
 /*=== Type operations ===*/

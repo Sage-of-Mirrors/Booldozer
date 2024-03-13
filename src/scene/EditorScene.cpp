@@ -20,9 +20,9 @@
 #include "DOM/EnemyDOMNode.hpp"
 #include "DOM/MapCollisionDOMNode.hpp"
 
-#include <J3D/J3DUniformBufferObject.hpp>
+#include <J3D/Material/J3DUniformBufferObject.hpp>
 #include <J3D/J3DModelLoader.hpp>
-#include <J3D/J3DRendering.hpp>
+#include <J3D/Rendering/J3DRendering.hpp>
 
 LEditorScene::LEditorScene() : Initialized(false) {}
 
@@ -33,6 +33,8 @@ LEditorScene::~LEditorScene(){
 
 void LEditorScene::init(){
 	Initialized = true;
+
+	J3DUniformBufferObject::CreateUBO();
 
 	mPathRenderer.Init();
 	mPointManager.Init(512, 9);
@@ -52,53 +54,41 @@ void LEditorScene::init(){
 
 	mDoorModels.reserve(14);
 
-	for (size_t f = 0; f < GCResourceManager.mGameArchive.dirnum; f++)
-	{
-		if(std::string(GCResourceManager.mGameArchive.dirs[f].name) == "door"){
-			for (size_t i = GCResourceManager.mGameArchive.dirs[f].fileoff; i < GCResourceManager.mGameArchive.dirs[f].fileoff + GCResourceManager.mGameArchive.dirs[f].filenum; i++)
-			{
-				bStream::CMemoryStream bin_data((uint8_t*)GCResourceManager.mGameArchive.files[i].data, GCResourceManager.mGameArchive.files[i].size, bStream::Endianess::Big, bStream::OpenMode::In);
-				if(std::filesystem::path(GCResourceManager.mGameArchive.files[i].name).extension() == ".bin"){
-					auto doorModel = std::make_shared<BinModel>(&bin_data);
-					mDoorModels.push_back(doorModel);
-				}
-			}
+	for(int door_id = 0; door_id < 14; door_id++){
+		std::shared_ptr<Archive::File> doorModelFile = GCResourceManager.mGameArchive->GetFile(std::filesystem::path(fmt::format("iwamoto/door/door_{:02}.bin", door_id)));
+		if(doorModelFile != nullptr){
+			bStream::CMemoryStream bin_data(doorModelFile->GetData(), doorModelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 			
+			auto doorModel = std::make_shared<BinModel>(&bin_data);
+			mDoorModels.push_back(doorModel);
 		}
 	}
 	
 	J3DModelLoader Loader;
 	
-	GCarchive vrballArchive;
+	//std::shared_ptr<Archive::File> modelFile = GCResourceManager.mGameArchive->GetFile(std::filesystem::path("kt_static") / "coin.bmd");
 
-	if(GCResourceManager.mGameArchive.filenum != 0){
-		GCarcfile* coinModelFile = GCResourceManager.GetFile(&GCResourceManager.mGameArchive, std::filesystem::path("kt_static") / "coin.bmd");
-		if(coinModelFile != nullptr){
-			bStream::CMemoryStream modelData((uint8_t*)coinModelFile->data, coinModelFile->size, bStream::Endianess::Big, bStream::OpenMode::In);
-			mCoinModel = Loader.Load(&modelData, 0);
-		} else {
-			std::cout << "Couldn't find coin" << std::endl;
-		}
-	}
+	//if(modelFile != nullptr){
+	//	bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+	//	mCoinModel = Loader.Load(&modelData, 0);
+	//}
 
 	if((std::filesystem::exists(std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp"))){
 
-		if(!GCResourceManager.LoadArchive((std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp").string().c_str(), &vrballArchive)){
-			std::cout << "skybox problem oop" << std::endl;
+		std::shared_ptr<Archive::Rarc> skyboxArchive = Archive::Rarc::Create();
+
+		bStream::CFileStream skyboxArchiveFile(std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp");
+
+		if(!skyboxArchive->Load(&skyboxArchiveFile)){
+			return;
 		}
-
-		if(vrballArchive.filenum != 0){
-			GCarcfile* skyboxModel = GCResourceManager.GetFile(&vrballArchive, std::filesystem::path("vrball01.bmd"));
-
-			if(skyboxModel != nullptr){
-				bStream::CMemoryStream modelData((uint8_t*)skyboxModel->data, skyboxModel->size, bStream::Endianess::Big, bStream::OpenMode::In);
-				mSkyboxModel = Loader.Load(&modelData, 0);
-				mSkyBox = mSkyboxModel->GetInstance();
-			} else {
-				std::cout << "Couldn't find skybox" << std::endl;
-			}
-
-			gcFreeArchive(&vrballArchive);
+		
+		std::shared_ptr<Archive::File> skyboxModelFile = skyboxArchive->GetFile("vrball01.bmd");
+		
+		if(skyboxModelFile != nullptr){
+			bStream::CMemoryStream modelData(skyboxModelFile->GetData(), skyboxModelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+			mSkyboxModel = Loader.Load(&modelData, 0);
+			mSkyBox = mSkyboxModel->CreateInstance();
 		}
 	}
 }
@@ -296,7 +286,10 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 	glm::mat4 view = Camera.GetViewMatrix();
 	glm::mat4 proj = Camera.GetProjectionMatrix();
 
-	J3DUniformBufferObject::SetProjAndViewMatrices(&proj, &view);
+	J3DUniformBufferObject::SetProjAndViewMatrices(proj, view);
+
+	// This causes the UBO to be doubole submitted, needs to be fixed. Perhaps BMD Rendering first?
+	J3DUniformBufferObject::SubmitUBO();
 
 	std::vector<std::shared_ptr<J3DModelInstance>> renderables;
 	renderables.reserve(50);
@@ -411,9 +404,9 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 						}
 					case EDOMNodeType::Object:
 						if(node->GetName() == "coin"){
-							auto coin = mCoinModel->GetInstance();
-							coin->SetTransform(*node->GetMat());
-							renderables.push_back(coin);
+							//auto coin = mCoinModel->CreateInstance();
+							//coin->SetTransform(*node->GetMat());
+							//renderables.push_back(coin);
 						}
 						break;
 					case EDOMNodeType::Character:
@@ -439,8 +432,9 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 	mPointManager.Draw(&Camera);
 	mPathRenderer.Draw(&Camera);
 
-	// j3d
-	J3DRendering::Render(0, Camera.GetCenter(), view, proj, renderables);
+	auto packets = J3D::Rendering::SortPackets(renderables, Camera.GetCenter());
+
+	J3D::Rendering::Render(0, view, proj, packets);
 }
 
 bool LEditorScene::HasRoomLoaded(int32_t roomNumber){
@@ -492,60 +486,52 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 						std::string actorName = std::get<0>(actorRef);
 						std::string txpName = std::get<1>(actorRef);
 
-						GCarchive modelArchive;
-						if(!GCResourceManager.LoadArchive(modelPath.string().data(), &modelArchive)){
+						std::shared_ptr<Archive::Rarc> modelArchive = Archive::Rarc::Create();
+						bStream::CFileStream modelArchiveStream(modelPath, bStream::Endianess::Big, bStream::OpenMode::In);
+						if(!modelArchive->Load(&modelArchiveStream)){
 							std::cout << "Unable to load model archive " << modelPath.string() << std::endl;
 							return;
 						}
 
 						if(mActorModels.count(name) == 0){
-							GCarcfile* modelFile = GCResourceManager.GetFile(&modelArchive, std::filesystem::path("model") / (actorName + ".mdl"));
+
+							std::shared_ptr<Archive::File> modelFile = modelArchive->GetFile(std::filesystem::path("model") / (actorName + ".mdl"));
 
 							if(modelFile == nullptr){
 								std::cout << "Couldn't find model/" << actorName << ".mdl in archive" << std::endl;
 							} else {
-								bStream::CMemoryStream modelData((uint8_t*)modelFile->data, modelFile->size, bStream::Endianess::Big, bStream::OpenMode::In);
+								bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 								mActorModels[name] = std::make_unique<MDL::Model>();
 								mActorModels[name]->Load(&modelData);
 							}
 						}
 
 						if(mMaterialAnimations.count(name) == 0 && txpName != ""){
-							GCarcfile* txpFile = GCResourceManager.GetFile(&modelArchive, std::filesystem::path("txp") / (txpName + ".txp"));
+							
+							std::shared_ptr<Archive::File> txpFile = modelArchive->GetFile(std::filesystem::path("txp") / (txpName + ".txp"));
+
 							if(txpFile == nullptr){
 								std::cout << "Couldn't find txp/" << txpName << ".txp in archive" << std::endl;
 							} else {
 								std::cout << "Loading txp " << txpName << std::endl;
-								bStream::CMemoryStream txpData((uint8_t*)txpFile->data, txpFile->size, bStream::Endianess::Big, bStream::OpenMode::In);
+								bStream::CMemoryStream txpData(txpFile->GetData(), txpFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 								mMaterialAnimations[name] = std::make_unique<TXP::Animation>();
 								mMaterialAnimations[name]->Load(&txpData);
 							}
 						}
 					} else {
-						// look in the game archive
-						//todo: load archive from memstream
-						GCarcfile* gameArchiveModelFile = GCResourceManager.GetFile(&GCResourceManager.mGameArchive, std::filesystem::path("model") / (std::get<0>(actorRef) + ".arc"));
+						std::filesystem::path fullModelPath = std::filesystem::path("model") / (std::get<0>(actorRef) + ".arc") / "model" / (std::get<0>(actorRef) + ".mdl");
 						
-						if(gameArchiveModelFile != nullptr){
-							GCarchive modelArchive;
-							gcInitArchive(&modelArchive, gameArchiveModelFile->ctx);
-							
-							if(gcLoadArchive(&modelArchive, gameArchiveModelFile->data, gameArchiveModelFile->size) == GC_ERROR_SUCCESS){
-								GCarcfile* modelFile = GCResourceManager.GetFile(&modelArchive, std::filesystem::path("model") / (std::get<0>(actorRef) + ".mdl"));
-
-								if(modelFile == nullptr){
-									std::cout << "Couldn't find " << std::get<0>(actorRef) << ".mdl in game archive" << std::endl;
-								} else {
-									std::cout << "loading model from game archive..." << std::endl;
-									bStream::CMemoryStream modelData((uint8_t*)modelFile->data, modelFile->size, bStream::Endianess::Big, bStream::OpenMode::In);
-									mActorModels[name] = std::make_unique<MDL::Model>();
-									mActorModels[name]->Load(&modelData);
-								}
-								gcFreeArchive(&modelArchive);
-							}
+						std::shared_ptr<Archive::File> modelFile = GCResourceManager.mGameArchive->GetFile(fullModelPath);
+						
+						if(modelFile == nullptr){
+							std::cout << "Couldn't find " << std::get<0>(actorRef) << ".mdl in game archive" << std::endl;
 						} else {
-							std::cout << "Couldn't find model/" << std::get<0>(actorRef) << ".arc in game archive" << std::endl;
-						}
+							std::cout << "loading model from game archive..." << std::endl;
+							bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+							mActorModels[name] = std::make_unique<MDL::Model>();
+							mActorModels[name]->Load(&modelData);
+						}		
 					}
 				}
 			});
@@ -558,32 +544,29 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 			
 			if(resPath.extension() == ".arc")
 			{
-				GCarchive roomArc;
-				if(!GCResourceManager.LoadArchive(resPath.string().data(), &roomArc)){
+				std::shared_ptr<Archive::Rarc> roomArc = Archive::Rarc::Create();
+				bStream::CFileStream roomArchiveStream(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
+				if(!roomArc->Load(&roomArchiveStream)){
 					std::cout << "Unable to load room archive " << resPath << std::endl;
 					continue;
 				}
 
-				for(int file = 0; file < roomArc.filenum; file++)
-				{
-					std::filesystem::path curPath = std::filesystem::path(roomArc.files[file].name);
-					if(curPath.extension() == ".bin")
+				for(auto file : roomArc->GetRoot()->GetFiles()){
+					bStream::CMemoryStream bin(file->GetData(), file->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+					
+					std::string modelName = file->GetName();
+					auto modelNameExtIter = modelName.find(".bin");
+					if(modelNameExtIter == std::string::npos) continue;
+
+					if (modelName != "room.bin")
 					{
-						bStream::CMemoryStream bin((uint8_t*)roomArc.files[file].data, roomArc.files[file].size, bStream::Endianess::Big, bStream::OpenMode::In);
-						std::cout << "loading " << curPath.filename() << std::endl;
-						if (curPath.filename().stem() != "room")
-						{
-							mRoomFurniture[curPath.filename().stem().string()] = std::make_shared<BinModel>(&bin);
-							std::cout << "completed loading " << curPath.filename() << std::endl;
-						} else {
-							mRoomModels.push_back(std::make_shared<BinModel>(&bin));
-							std::cout << "completed loading room model" << std::endl;
-						}
-						
-					}
+						mRoomFurniture[modelName.substr(0, modelNameExtIter)] = std::make_shared<BinModel>(&bin);
+						std::cout << "completed loading " << modelName.substr(0, modelNameExtIter) << std::endl;
+					} else {
+						mRoomModels.push_back(std::make_shared<BinModel>(&bin));
+						std::cout << "completed loading room model" << std::endl;
+					}					
 				}
-				std::cout << "all models locked and loaded" << std::endl;
-				gcFreeArchive(&roomArc);
 			} else {
 				//If this is happening the map only has room models, no furniture.
 				bStream::CFileStream bin(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);

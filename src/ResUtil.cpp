@@ -8,147 +8,19 @@ std::map<std::string, nlohmann::ordered_json> LResUtility::NameMaps = {};
 
 void LResUtility::LGCResourceManager::Init()
 {
-	GCerror err;
-	if ((err = gcInitContext(&mResManagerContext)) != GC_ERROR_SUCCESS)
-	{
-		printf("Error initing arc loader context: %s\n", gcGetErrorMessage(err));
-	}
-
 	mInitialized = true;
+	mGameArchive = Archive::Rarc::Create();
 
 	std::filesystem::path gameArcPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Game" / "game_usa.szp";
-	if(!GCResourceManager.LoadArchive(gameArcPath.string().data(), &mGameArchive)){
+	bStream::CFileStream gameArchiveFileStream(gameArcPath, bStream::Endianess::Big, bStream::OpenMode::In);
+	if(!mGameArchive->Load(&gameArchiveFileStream)){
 		std::cout << "Unable to load game archive " << gameArcPath.string() << std::endl;
 	} else {
 		mLoadedGameArchive = true;
 	}
 }
 
-void LResUtility::LGCResourceManager::Cleanup(){
-	if(mLoadedGameArchive){
-		gcFreeArchive(&mGameArchive);
-	}
-}
-
-bool LResUtility::LGCResourceManager::LoadArchive(const char* path, GCarchive* archive)
-{
-	if(!mInitialized) return false;
-	
-	GCerror err;
-
-	FILE* f = fopen(path, "rb");
-	if (f == nullptr)
-	{
-		printf("Error opening file \"%s\"\n", path);
-		return false;
-	}
-
-	fseek(f, 0L, SEEK_END);
-	GCsize size = (GCsize)ftell(f);
-	rewind(f);
-
-	void* file = malloc(size);
-	if (file == nullptr)
-	{
-		printf("Error allocating buffer for file \"%s\"\n", path);
-		return false;
-	}
-
-	if(fread(file, 1, size, f) == 0){
-		printf("Error reading data from file \"%s\"\n", path);
-	}
-	
-	fclose(f);
-
-	// If the file starts with 'Yay0', it's Yay0 compressed.
-	if (*((uint32_t*)file) == 0x30796159)
-	{
-		GCsize compressedSize = gcDecompressedSize(&mResManagerContext, (GCuint8*)file, 0);
-
-		void* decompBuffer = malloc(compressedSize);
-		gcYay0Decompress(&mResManagerContext, (GCuint8*)file, (GCuint8*)decompBuffer, compressedSize, 0);
-
-		free(file);
-		file = decompBuffer;
-	}
-	// Likewise, if the file starts with 'Yaz0' it's Yaz0 compressed.
-	else if (*((uint32_t*)file) == 0x307A6159)
-	{
-		GCsize compressedSize = gcDecompressedSize(&mResManagerContext, (GCuint8*)file, 0);
-
-		void* decompBuffer = malloc(compressedSize);
-		gcYaz0Decompress(&mResManagerContext, (GCuint8*)file, (GCuint8*)decompBuffer, compressedSize, 0);
-
-		free(file);
-		file = decompBuffer;
-	}
-
-	gcInitArchive(archive, &mResManagerContext);
-	if ((err = gcLoadArchive(archive, file, size)) != GC_ERROR_SUCCESS) {
-		printf("Error Loading Archive: %s\n", gcGetErrorMessage(err));
-		return false;
-	}
-
-	return true;
-}
-
-bool LResUtility::LGCResourceManager::ReplaceArchiveFileData(GCarcfile* file, uint8_t* new_data, size_t new_data_size){
-	if(!mInitialized) return false;
-	
-	// free existing file
-	gcFreeMem(&mResManagerContext, file->data);
-
-	//allocate size of new file
-	file->data = gcAllocMem(&mResManagerContext, new_data_size);
-		
-	//copy new jmp to file buffer for arc
-	memcpy(file->data, new_data, new_data_size);
-
-	//set size properly
-	file->size = new_data_size;
-
-	return true;
-}
-
-bool LResUtility::LGCResourceManager::SaveArchiveCompressed(const char* path, GCarchive* archive)
-{
-	if(!mInitialized) return false;
-
-	GCsize outSize = gcSaveArchive(archive, NULL);
-	GCuint8* archiveOut = new GCuint8[outSize];
-	GCuint8* archiveCmp = new GCuint8[outSize];
-
-	gcSaveArchive(archive, archiveOut);
-	GCsize cmpSize = gcYay0Compress(&mResManagerContext, archiveOut, archiveCmp, outSize);
-	
-	std::ofstream fileStream;
-	fileStream.open(path, std::ios::binary | std::ios::out);
-	fileStream.write((const char*)archiveCmp, cmpSize);
-	fileStream.close();
-
-	delete[] archiveOut;
-	delete[] archiveCmp;
-
-	return true;
-}
-
-GCarcfile* LResUtility::LGCResourceManager::GetFile(GCarchive* archive, std::filesystem::path filepath){
-	int dirID = 0;
-	for(auto component : filepath){
-		std::cout << "checking fs component " << component << std::endl;
-		for (GCarcfile* file = &archive->files[archive->dirs[dirID].fileoff]; file < &archive->files[archive->dirs[dirID].fileoff] + archive->dirs[dirID].filenum; file++){
-			if(strcmp(file->name, component.string().c_str()) == 0 && (file->attr & 0x02)){
-				std::cout << "Found subdir comp, id is " << file->size << std::endl;
-				dirID = file->size;
-				break;
-			} else if(strcmp(file->name, component.string().c_str()) == 0 && !(file->attr & 0x02)) {
-				std::cout << "Found File" << std::endl;
-				return file;
-			}
-		}
-	}
-	return nullptr;
-}
+void LResUtility::LGCResourceManager::Cleanup(){}
 
 nlohmann::ordered_json LResUtility::DeserializeJSON(std::filesystem::path file_path)
 {

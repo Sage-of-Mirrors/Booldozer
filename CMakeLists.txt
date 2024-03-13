@@ -3,6 +3,7 @@ project(booldozer)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+add_compile_definitions(-DGLM_ENABLE_EXPERIMENTAL -DIMGUI_DEFINE_MATH_OPERATORS)
 add_subdirectory(lib)
 
 file(GLOB BOOLDOZER_SRC 
@@ -30,8 +31,7 @@ file(GLOB BOOLDOZER_SRC
 
 
 add_executable(booldozer ${BOOLDOZER_SRC})
-target_include_directories(booldozer PUBLIC include lib/libflipper/include lib/libflipper/include/geometry lib/imgui lib/imgui/backends lib/fmt/include lib/glfw/include lib/glad/include lib/glm lib/J3DUltra/include)
-add_definitions(-DIMGUI_DEFINE_MATH_OPERATORS)
+target_include_directories(booldozer PUBLIC include lib/libflipper/include lib/libflipper/include/geometry lib/imgui lib/imgui/backends lib/fmt/include lib/glfw/include lib/glad/include lib/glm lib/J3DUltra/include lib/gctoolsplusplus/include)
 
 find_package(ICU 61.0 COMPONENTS uc i18n REQUIRED)
-target_link_libraries(booldozer PUBLIC imgui glfw gctools ICU::uc ICU::i18n fmt j3dultra)
+target_link_libraries(booldozer PUBLIC imgui glfw gctools++ ICU::uc ICU::i18n fmt j3dultra)

@@ -5,7 +5,7 @@
 #include <glad/glad.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
-#include <J3D/J3DTexture.hpp>
+#include <J3D/Texture/J3DTexture.hpp>
 #include <GXGeometryEnums.hpp>
 
 /*
@@ -247,6 +247,11 @@ const char* default_vtx_shader_source = "#version 460\n\
 		GXLight Lights[8];\n\
 		mat4 Envelopes[512];\n\
 		mat4 TexMatrices[10];\n\
+        mat4 IndTexMatrices[10];\n\
+        uint BillboardType;\n\
+        uint ModelId;\n\
+        uint MaterialId;\n\
+        vec4 HighlightColor;\n\
     };\n\
     uniform mat4 transform;\n\
     \

@@ -2,7 +2,7 @@
 
 #include <imgui.h>
 #include "DOM.hpp"
-#include "../lib/magic_enum/include/magic_enum.hpp"
+#include <magic_enum.hpp>
 #include <type_traits>
 #include <algorithm>
 #include <json.hpp>

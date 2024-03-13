@@ -5,6 +5,7 @@
 #include "misc/cpp/imgui_stdlib.h"
 #include "fmt/core.h"
 #include "UIUtil.hpp"
+#include "GenUtil.hpp"
 
 LEventDataDOMNode::LEventDataDOMNode(std::string name) : Super(name)
 {
@@ -53,4 +54,50 @@ void LEventDataDOMNode::RenderDetailsUI(float dt, TextEditor* editor)
         }
     }
     ImGui::EndTabBar();
+}
+
+void LEventDataDOMNode::LoadEventArchive(std::shared_ptr<Archive::Rarc> arc, std::filesystem::path eventPath, std::string eventScriptName, std::string eventCsvName){
+    mEventArchive = arc;
+
+    mEventPath = eventPath;
+    mEventMessagePath = eventCsvName;
+    mEventScriptPath = eventScriptName;
+
+    std::shared_ptr<Archive::File> msgFile = mEventArchive->GetFile(std::filesystem::path("message") / std::string(eventCsvName + ".csv"));
+    std::shared_ptr<Archive::File> txtFile = mEventArchive->GetFile(std::filesystem::path("text") / std::string(eventScriptName + ".txt"));
+
+    if(msgFile != nullptr){
+        mEventText = {};
+
+        std::stringstream msgFileFull = std::stringstream(LGenUtility::SjisToUtf8(std::string((char*)msgFile->GetData(), msgFile->GetSize())));
+        std::string msg = "";
+        while(!std::getline(msgFileFull, msg).eof()){
+            mEventText.push_back(msg);
+        }
+    }
+
+    if(txtFile != nullptr){
+        mEventScript = LGenUtility::SjisToUtf8(std::string((char*)txtFile->GetData(), txtFile->GetSize()));
+    }
+
+}
+
+void LEventDataDOMNode::SaveEventArchive(){
+    std::shared_ptr<Archive::File> msgFile = mEventArchive->GetFile(std::filesystem::path("message") / std::string(mEventMessagePath + ".csv"));
+    std::shared_ptr<Archive::File> txtFile = mEventArchive->GetFile(std::filesystem::path("text") / std::string(mEventScriptPath + ".txt"));
+
+    if(msgFile != nullptr){
+        std::string writeStr = "";
+        for (auto msg : mEventText){
+            writeStr.append(LGenUtility::Utf8ToSjis(msg)+"\n");
+        }
+        msgFile->SetData((uint8_t*)writeStr.data(), writeStr.size());
+    }
+
+    if(txtFile != nullptr){
+        std::string writeStr = LGenUtility::Utf8ToSjis(mEventScript);
+        txtFile->SetData((uint8_t*)writeStr.data(), writeStr.size());
+    }
+
+    mEventArchive->SaveToFile(mEventPath, Compression::Format::YAY0);
 }

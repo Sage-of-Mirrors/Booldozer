@@ -365,7 +365,7 @@ bool LJmpIO::Save(std::vector<std::shared_ptr<LEntityDOMNode>> entities, bStream
 						char buffer[32] = {'\0'};
 						std::string str = std::get<std::string>(mData.at(i).at(f.Hash));
 						strncpy(buffer, str.c_str(), str.size() > mStringSize ? mStringSize : str.size());
-						WriteStream.writeBytes(buffer, mStringSize);
+						WriteStream.writeBytes((uint8_t*)buffer, mStringSize);
 					}
 					break;
 			}
@@ -373,7 +373,7 @@ bool LJmpIO::Save(std::vector<std::shared_ptr<LEntityDOMNode>> entities, bStream
 	}
 
 	stream.seek(mEntryStartOffset);
-	stream.writeBytes((char*)tempBuffer, fileSize);
+	stream.writeBytes(tempBuffer, fileSize);
 
 	delete[] tempBuffer;
 

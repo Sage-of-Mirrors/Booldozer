@@ -2,7 +2,6 @@
 #include "DOM/RoomDOMNode.hpp"
 #include "UIUtil.hpp"
 #include "GenUtil.hpp"
-#include "../lib/libgctools/include/archive.h"
 
 #include <memory>
 
@@ -198,19 +197,20 @@ void LPathDOMNode::PreProcess()
 		mNextPathName = "(null)";
 }
 
-void LPathDOMNode::PostProcess(const GCarchive& mapArchive)
+void LPathDOMNode::PostProcess(std::shared_ptr<Archive::Rarc> mapArchive)
 {
 
 	// Find the correct path file in the archive
 
-	GCarcfile* pathFile = GCResourceManager.GetFile((GCarchive*)&mapArchive, std::filesystem::path("path") / mName);
+	std::shared_ptr<Archive::File> pathFile = mapArchive->GetFile(std::filesystem::path("path") / mName);
+
 	
 	if(pathFile == nullptr){
 		std::cout << "Unable to load path file " << mName << " !" << std::endl;
 		return;
 	}
 
-	bStream::CMemoryStream fileMemStream(static_cast<uint8_t*>(pathFile->data), pathFile->size, bStream::Endianess::Big, bStream::OpenMode::In);
+	bStream::CMemoryStream fileMemStream(pathFile->GetData(), pathFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 
 	LJmpIO pathLoader;
 	pathLoader.Load(&fileMemStream);

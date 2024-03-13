@@ -364,9 +364,6 @@ CMakeCache.txt
 *.cmake
 Makefile
 
-#submodules
-lib/*
-
 #vscode stuff
 .vscode
 
