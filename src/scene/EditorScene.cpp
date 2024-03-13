@@ -487,7 +487,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 						std::string txpName = std::get<1>(actorRef);
 
 						std::shared_ptr<Archive::Rarc> modelArchive = Archive::Rarc::Create();
-						bStream::CFileStream modelArchiveStream(modelPath, bStream::Endianess::Big, bStream::OpenMode::In);
+						bStream::CFileStream modelArchiveStream(modelPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
 						if(!modelArchive->Load(&modelArchiveStream)){
 							std::cout << "Unable to load model archive " << modelPath.string() << std::endl;
 							return;
