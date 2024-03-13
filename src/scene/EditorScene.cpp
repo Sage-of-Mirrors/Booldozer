@@ -77,7 +77,7 @@ void LEditorScene::init(){
 
 		std::shared_ptr<Archive::Rarc> skyboxArchive = Archive::Rarc::Create();
 
-		bStream::CFileStream skyboxArchiveFile(std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp");
+		bStream::CFileStream skyboxArchiveFile((std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp").string());
 
 		if(!skyboxArchive->Load(&skyboxArchiveFile)){
 			return;
