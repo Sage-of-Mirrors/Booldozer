@@ -74,7 +74,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 			//Exclude cvs subdir
 			if(archive.is_regular_file()){
-				bStream::CFileStream eventStream(archive.path(), bStream::Endianess::Big, bStream::OpenMode::In);
+				bStream::CFileStream eventStream(archive.path().string(), bStream::Endianess::Big, bStream::OpenMode::In);
 				if(!eventArc->Load(&eventStream)) continue;
 
 				//Name of the event file were loading, ex 'event48'
