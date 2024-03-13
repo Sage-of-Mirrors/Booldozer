@@ -371,3 +371,4 @@ src/DiscordIntegration.cpp
 include/DiscordIntegration.hpp
 
 *.ini
+*.a
