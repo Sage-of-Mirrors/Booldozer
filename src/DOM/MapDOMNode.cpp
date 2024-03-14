@@ -323,7 +323,14 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 		if(jmpFile == nullptr){
 			jmpFile = Archive::File::Create(); // [v]: if this jmp file doesnt exist, make it
 			jmpFile->SetName(LEntityFileNames[entityType]);
-			mMapArchive->GetFolder("jmp")->AddFile(jmpFile);
+			if(mMapArchive->GetFolder("jmp")){
+				mMapArchive->GetFolder("jmp")->AddFile(jmpFile);
+			} else {
+				auto jmpFolder = Archive::Folder::Create(mMapArchive);
+				jmpFolder->SetName("jmp");
+				jmpFolder->AddFile(jmpFile);
+				mMapArchive->GetRoot()->AddSubdirectory(jmpFolder);
+			}
 		}
 		
 		jmpFile->SetData(memWriter.getBuffer(), newFileSize);
