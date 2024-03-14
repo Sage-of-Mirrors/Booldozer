@@ -55,6 +55,8 @@ void LEventMode::RenderDetailsWindow(LSceneCamera* camera)
 			std::shared_ptr<LEventDataDOMNode> selection = std::static_pointer_cast<LEventDataDOMNode>(mSelectionManager.GetPrimarySelection());
 
 			if(ImGui::Button("Save Event")){
+				std::cout << "Saving Event Archive" << std::endl;
+				selection->mEventScript = mEditor.GetText();
 				selection->SaveEventArchive();
 			}
 

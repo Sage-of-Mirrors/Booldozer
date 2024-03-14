@@ -86,18 +86,45 @@ void LEventDataDOMNode::SaveEventArchive(){
     std::shared_ptr<Archive::File> msgFile = mEventArchive->GetFile(std::filesystem::path("message") / std::string(mEventMessagePath + ".csv"));
     std::shared_ptr<Archive::File> txtFile = mEventArchive->GetFile(std::filesystem::path("text") / std::string(mEventScriptPath + ".txt"));
 
+    std::string msgFileData = "";
+    for (auto msg : mEventText){
+        msgFileData.append(LGenUtility::Utf8ToSjis(msg)+"\n");
+    }
+    
+    std::string txtFileData = LGenUtility::Utf8ToSjis(mEventScript);
+    
     if(msgFile != nullptr){
-        std::string writeStr = "";
-        for (auto msg : mEventText){
-            writeStr.append(LGenUtility::Utf8ToSjis(msg)+"\n");
+        msgFile->SetData((uint8_t*)msgFileData.data(), msgFileData.size());
+    } else {
+        msgFile = Archive::File::Create();
+        msgFile->SetName(std::string(mEventMessagePath + ".csv"));
+        msgFile->SetData((uint8_t*)msgFileData.data(), msgFileData.size());
+        if(mEventArchive->GetFolder("message") != nullptr){
+           mEventArchive->GetFolder("message")->AddFile(msgFile);
+        } else {
+            std::shared_ptr<Archive::Folder> msgDir = Archive::Folder::Create(mEventArchive);
+            msgDir->SetName("message");
+            msgDir->AddFile(msgFile);
+            mEventArchive->GetRoot()->AddSubdirectory(msgDir);
         }
-        msgFile->SetData((uint8_t*)writeStr.data(), writeStr.size());
     }
 
     if(txtFile != nullptr){
-        std::string writeStr = LGenUtility::Utf8ToSjis(mEventScript);
-        txtFile->SetData((uint8_t*)writeStr.data(), writeStr.size());
+        txtFile->SetData((uint8_t*)txtFileData.data(), txtFileData.size());
+    } else {
+        txtFile = Archive::File::Create();
+        txtFile->SetName(std::string(mEventScriptPath + ".txt"));
+        txtFile->SetData((uint8_t*)txtFileData.data(), txtFileData.size());
+        if(mEventArchive->GetFolder("text") != nullptr){
+           mEventArchive->GetFolder("text")->AddFile(txtFile);
+        } else {
+            std::shared_ptr<Archive::Folder> txtDir = Archive::Folder::Create(mEventArchive);
+            txtDir->SetName("text");
+            txtDir->AddFile(txtFile);
+            mEventArchive->GetRoot()->AddSubdirectory(txtDir);
+        }
     }
 
+    std::cout << "Writing event to " << mEventPath << std::endl;
     mEventArchive->SaveToFile(mEventPath, Compression::Format::YAY0);
 }
