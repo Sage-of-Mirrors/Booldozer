@@ -678,7 +678,7 @@ void LRoomDOMNode::PreProcess(){
 		float x = 0.0f, y = 0.0f, z = 0.0f;
 		
 		{
-			bStream::CFileStream stream(resPath, bStream::Endianess::Big, bStream::OpenMode::In);
+			bStream::CFileStream stream(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
 			
 			binFileSize = stream.getSize();
 			binFile = new uint8_t[binFileSize];
@@ -711,7 +711,7 @@ void LRoomDOMNode::PreProcess(){
 		std::shared_ptr<Archive::Rarc> roomResource = Archive::Rarc::Create();
 		
 		{
-			bStream::CFileStream stream(resPath, bStream::Endianess::Big, bStream::OpenMode::In);
+			bStream::CFileStream stream(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
 			roomResource->Load(&stream);
 		}
 
