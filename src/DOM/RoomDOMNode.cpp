@@ -131,7 +131,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 				delete[] modelData;
 
 				ActiveRoomArchive->GetRoot()->AddFile(newFile);
-				ActiveRoomArchive->SaveToFile(resPath);
+				ActiveRoomArchive->SaveToFile(resPath.string());
 			}
 		}
 		ImGui::OpenPopup("##roomResources");
@@ -695,7 +695,7 @@ void LRoomDOMNode::PreProcess(){
 		}
 
 		{
-			bStream::CFileStream binWriteStream(resPath, bStream::Endianess::Big, bStream::OpenMode::Out);
+			bStream::CFileStream binWriteStream(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::Out);
 			binWriteStream.writeBytes(binFile, binFileSize);
 			binWriteStream.seek(offset);
 			binWriteStream.writeFloat(mRoomModelDelta.x + x);
