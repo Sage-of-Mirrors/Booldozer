@@ -34,6 +34,7 @@ public:
 	~LMapDOMNode();
 
 	bool LoadMap(std::filesystem::path file_path);
+	bool AppendMap(std::shared_ptr<LMapDOMNode> map);
 	bool SaveMapToFiles(std::filesystem::path folder_path);
 	bool SaveMapToArchive(std::filesystem::path file_path);
 	std::shared_ptr<LRoomDOMNode> GetRoomByNumber(int32_t number);

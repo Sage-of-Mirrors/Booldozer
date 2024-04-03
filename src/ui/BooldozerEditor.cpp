@@ -97,6 +97,12 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		LResUtility::SaveUserSettings();
 	}
 
+	if (LUIUtility::RenderFileDialog("AppendMapDlg", path))
+	{
+		GetSelectionManager()->ClearSelection();
+		AppendMap(path);
+	}
+
 	if (LUIUtility::RenderFileDialog("SaveMapArchiveDlg", path))
 	{
 		SaveMapToArchive(path);
@@ -180,6 +186,8 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 	ImGui::Image(reinterpret_cast<void*>(static_cast<uintptr_t>(mViewTex)), winSize, {0.0f, 1.0f}, {1.0f, 0.0f});
 
+	renderer_scene->SetActive(ImGui::IsItemHovered());
+
 	if(ImGui::IsItemClicked() && mLoadedMap != nullptr && !ImGuizmo::IsOver()){
 		int32_t id;
 		ImVec2 mousePos = ImGui::GetMousePos();
@@ -238,6 +246,29 @@ void LBooldozerEditor::OpenMap(std::string file_path)
 	mGhostConfigs.LoadConfigs(mLoadedMap);
 }
 
+void LBooldozerEditor::AppendMap(std::string map_path){
+	if (OPTIONS.mRootPath == "")
+	{
+		ImGui::OpenPopup("Root Not Set");
+		return;
+	}
+
+	auto appendMap = std::make_shared<LMapDOMNode>();
+	appendMap->LoadMap(std::filesystem::path(map_path));
+	if(appendMap == nullptr || appendMap->Children.empty()){
+		if (ImGui::BeginPopupModal("Map failed to load", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			ImGui::Text("No idea why, sorry boss.");
+			ImGui::Separator();
+
+			if (ImGui::Button("OK", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+			ImGui::EndPopup();
+		}
+	}
+
+	mLoadedMap->AppendMap(appendMap);
+}
+
 void LBooldozerEditor::SaveMapToArchive(std::string file_path){
 	if (OPTIONS.mRootPath == "")
 	{
@@ -251,6 +282,11 @@ void LBooldozerEditor::SaveMapToArchive(std::string file_path){
 void LBooldozerEditor::onOpenMapCB()
 {
 	ImGuiFileDialog::Instance()->OpenDialog("OpenMapDlg", "Open map archive", "Archives (*.arc *.szs *.szp){.arc,.szs,.szp}", OPTIONS.mLastOpenedMap);
+}
+
+void LBooldozerEditor::onAppendMapCB()
+{
+	ImGuiFileDialog::Instance()->OpenDialog("AppendMapDlg", "Open map archive", "Archives (*.arc *.szs *.szp){.arc,.szs,.szp}", OPTIONS.mLastOpenedMap);
 }
 
 void LBooldozerEditor::onOpenRoomsCB()

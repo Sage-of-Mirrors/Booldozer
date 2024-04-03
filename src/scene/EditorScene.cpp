@@ -198,63 +198,12 @@ void LEditorScene::UpdateRenderers(){
 	if(auto firstRoom = mCurrentRooms[0].lock()){
 		std::shared_ptr<LMapDOMNode> mapNode = firstRoom->GetParentOfType<LMapDOMNode>(EDOMNodeType::Map).lock();
 		std::shared_ptr<LMapCollisionDOMNode> col = mapNode->GetChildrenOfType<LMapCollisionDOMNode>(EDOMNodeType::MapCollision)[0];
-
-		if(col->mGridRender){
-			for(int z = 0; z < col->mGridDimension[2]; z++){
-				for(int y = 0; y < col->mGridDimension[1]; y++){
-					for(int x = 0; x <  col->mGridDimension[0]; x++){
-
-						auto curCell = col->mGrid[x + (y * col->mGridDimension[0]) + (z * col->mGridDimension[0] * col->mGridDimension[1])];
-						if(curCell != col->mSelectedCell) continue;
-
-						glm::vec4 color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
-						glm::vec3 min = glm::vec3((x * col->mGridScale.x) + col->mMinBounds.x, (y * col->mGridScale.y) + col->mMinBounds.y, (z * col->mGridScale.z) + col->mMinBounds.z);
-						glm::vec3 max = glm::vec3(((x + 1) * col->mGridScale.x) + col->mMinBounds.x, ((y + 1) * col->mGridScale.y) + col->mMinBounds.y, ((z + 1) * col->mGridScale.z) + col->mMinBounds.z);
-						std::vector<CPathPoint> bounds_bottom = {
-							{min, color, 12800, -1},
-							{{min.x, min.y, max.z}, color, 12800, -1},
-							{{max.x, min.y, max.z}, color, 12800, -1},
-							{{max.x, min.y, min.z}, color, 12800, -1},
-							{min, color, 12800, -1},
-						};
-						std::vector<CPathPoint> bounds_top = {
-							{max, color, 12800, -1},
-							{{max.x, max.y, min.z}, color, 12800, -1},
-							{{min.x, max.y, min.z}, color, 12800, -1},
-							{{min.x, max.y, max.z}, color, 12800, -1},
-							{max, color, 12800, -1},
-						};
-						std::vector<CPathPoint> bounds_edge1 = {{min, color, 12800, -1}, {{min.x, max.y, min.z}, color, 12800, -1}};
-						std::vector<CPathPoint> bounds_edge2 = {{{max.x, min.y, min.z}, color, 12800, -1}, {{max.x, max.y, min.z}, color, 12800, -1}};
-						std::vector<CPathPoint> bounds_edge3 = {{{min.x, min.y, max.z}, color, 12800, -1}, {{min.x, max.y, max.z}, color, 12800, -1}};
-						std::vector<CPathPoint> bounds_edge4 = {{max, color, 12800, -1}, {{max.x, min.y, max.z}, color, 12800, -1}};
-						mPathRenderer.mPaths.push_back(bounds_bottom);
-						mPathRenderer.mPaths.push_back(bounds_top);
-						mPathRenderer.mPaths.push_back(bounds_edge1);
-						mPathRenderer.mPaths.push_back(bounds_edge2);
-						mPathRenderer.mPaths.push_back(bounds_edge3);
-						mPathRenderer.mPaths.push_back(bounds_edge4);
-						// do something _really_ stupid
-						glm::vec4 triColor = glm::vec4(0.0, 0.0, 1.0, 1.0);
-						for(auto triangleRef : col->mGrid[x + (col->mGridYLevel * col->mGridDimension[0]) + (z * col->mGridDimension[0] * col->mGridDimension[1])]->floorTriangles.lock()->triangles){
-							if(auto triangle = triangleRef.lock()){
-								std::vector<CPathPoint> renderTri = {
-									{ col->mPositionData[triangle->positionIdx[0]], triColor, 7000, -1 },
-									{ col->mPositionData[triangle->positionIdx[1]], triColor, 7000, -1 },
-									{ col->mPositionData[triangle->positionIdx[2]], triColor, 7000, -1 },
-									{ col->mPositionData[triangle->positionIdx[0]], triColor, 7000, -1 },
-								};
-								mPathRenderer.mPaths.push_back(renderTri);
-							}
-						}
-					}
-				}
-			}
-		}
 	
 		// More Stupid Code. Why?
-		glm::vec4 triColor = glm::vec4(0.0, 1.0, 1.0, 1.0);
+		/*
 		for(auto group : col->mTriangleGroups){
+			uint32_t color = ~rand() & 0xFFFFFF;
+			glm::vec4 triColor = glm::vec4((float)(color >> 16 & 0xFF) / 255.0f, (float)(color >> 8 & 0xFF) / 255.0f, (float)(color & 0xFF) / 255.0f, 1.0f);
 			if(!group->render) continue;
 			for(auto triangleRef : group->triangles){
 				if(auto triangle = triangleRef.lock()){
@@ -267,7 +216,7 @@ void LEditorScene::UpdateRenderers(){
 					mPathRenderer.mPaths.push_back(renderTri);
 				}
 			}
-		}
+		}*/
 	}
 
 
@@ -377,17 +326,25 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 
 	for(std::weak_ptr<LRoomDOMNode> roomRef : mCurrentRooms){
 
-		glm::mat4 identity = glm::identity<glm::mat4>();
-		for (std::shared_ptr<BinModel> room : mRoomModels)
-		{
-			room->Draw(&identity, -1, false);
-		}
+		//for (std::shared_ptr<BinModel> room : mRoomModels)
+		//{
+		//	room->Draw(&identity, -1, false);
+		//}
 		
 		std::shared_ptr<LRoomDOMNode> curRoom;
 
 		if((curRoom = roomRef.lock()) && Initialized)
 		{
+			// this sucks
+			auto roomData = curRoom->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+			
+			if(mRoomModels.contains(roomData->GetResourcePath())){
+				glm::mat4 identity = glm::identity<glm::mat4>();
+				identity = glm::translate(identity, curRoom->GetRoomModelDelta());
+				mRoomModels.at(roomData->GetResourcePath())->Draw(&identity, curRoom->GetID(), false);
+			}
 
+			// is okay
 			curRoom->ForEachChildOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender, [&](auto node){
 					if(!node->GetIsRendered()) return;
 					
@@ -563,14 +520,14 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 						mRoomFurniture[modelName.substr(0, modelNameExtIter)] = std::make_shared<BinModel>(&bin);
 						std::cout << "completed loading " << modelName.substr(0, modelNameExtIter) << std::endl;
 					} else {
-						mRoomModels.push_back(std::make_shared<BinModel>(&bin));
+						mRoomModels.insert({curRoomData->GetResourcePath(), std::make_shared<BinModel>(&bin)});
 						std::cout << "completed loading room model" << std::endl;
 					}					
 				}
 			} else {
 				//If this is happening the map only has room models, no furniture.
 				bStream::CFileStream bin(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
-				mRoomModels.push_back(std::make_shared<BinModel>(&bin));
+				mRoomModels.insert({curRoomData->GetResourcePath(), std::make_shared<BinModel>(&bin)});
 			}
 		}
 
@@ -581,7 +538,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 
 void LEditorScene::update(GLFWwindow* window, float dt, LEditorSelection* selection)
 {
-	Camera.Update(window, dt);
+	if(mActive) Camera.Update(window, dt);
 
 	// Easter egg where luigi occasionally blinks
 }

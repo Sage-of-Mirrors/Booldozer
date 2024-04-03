@@ -22,63 +22,29 @@ void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 	bool roomsUpdated = false;
 
 	if(ImGui::Button("+")){
-
-		// This should probably pop open a modal but doing so from here is ass.
-
-		// First find a hole in the room indices if it exists
-		std::vector<std::shared_ptr<LRoomDOMNode>> rooms = current_map->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
-
-		int32_t newRoomIdx, newRoomId;
-		newRoomIdx = newRoomId = rooms.size();
-	
-		std::sort(rooms.begin(), rooms.end(), [&](std::shared_ptr<LRoomDOMNode> l, std::shared_ptr<LRoomDOMNode> r){
-			return l->GetRoomIndex() < r->GetRoomIndex();
-		});
-
-		for(int i = 1; i < rooms.size(); i++){
-			if(rooms[i]->GetRoomIndex() - rooms[i-1]->GetRoomIndex() > 1){
-				newRoomIdx = rooms[i-1]->GetRoomIndex() + 1;
-			}
-		}
-
-		// Now find hole in Room IDs if it exists. The fact that these do not line up entirely is a real pain and also I don't know why? 
-		std::sort(rooms.begin(), rooms.end(), [&](std::shared_ptr<LRoomDOMNode> l, std::shared_ptr<LRoomDOMNode> r){
-			return l->GetRoomID() < r->GetRoomID();
-		});
-
-		for(int i = 1; i < rooms.size(); i++){
-			if(rooms[i]->GetRoomID() - rooms[i-1]->GetRoomID() > 1){
-				newRoomId = rooms[i-1]->GetRoomIndex() + 1;
-			}
-		}
-
-		std::shared_ptr<LRoomDOMNode> newRoom = std::make_shared<LRoomDOMNode>(fmt::format("room_{:02}", newRoomIdx));
-		std::shared_ptr<LRoomDataDOMNode> newRoomData = std::make_shared<LRoomDataDOMNode>(fmt::format("room_{:02}_data", newRoomIdx));
-		std::shared_ptr<LTreasureTableDOMNode> roomChest = std::make_shared<LTreasureTableDOMNode>("chest");
+		// Show new room modal!
+		auto rooms = current_map->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
+		std::shared_ptr<LRoomDOMNode> newRoom = std::make_shared<LRoomDOMNode>(fmt::format("Room {}", rooms.size() + 1));
+		std::shared_ptr<LRoomDataDOMNode> newRoomData = std::make_shared<LRoomDataDOMNode>(fmt::format("Room {}", rooms.size() + 1));
 		
-		newRoom->SetRoomNumber(newRoomId);
-		newRoomData->SetRoomID(newRoomId);
-
-		newRoomData->SetRoomIndex(newRoomIdx);
-		//Hardcode part of the res path for now. Map should probably have some way to get resource path.
-		newRoomData->SetRoomResourcePath(fmt::format("/Iwamoto/{1}/room_{0:02}.arc", newRoomIdx, current_map->GetName()));
-
-		//TODO: add default room archive?
-
-		newRoom->AddChild(roomChest);
+		newRoomData->SetRoomID(rooms.size()+1);
+		newRoomData->SetRoomIndex(rooms.size()+1);
 		newRoom->AddChild(newRoomData);
-		current_map->AddChild(newRoom);
 
-		//Add a flag to regenerate path rendering
-		roomsUpdated = true;
+		newRoom->SetRoomNumber(rooms.size()+1);
+
+		current_map->AddChild(newRoom);
 	}
 
 	ImGui::SameLine();
 	
 	if(ImGui::Button("-")){
-		if(mSelectionManager.GetPrimarySelection().get()->GetNodeType() == EDOMNodeType::Room){
-			current_map->RemoveChild(mSelectionManager.GetPrimarySelection());
+		if(mSelectionManager.GetPrimarySelection()->GetNodeType() == EDOMNodeType::Room){
+			auto room = mSelectionManager.GetPrimarySelection();
 			mSelectionManager.ClearSelection();
+			current_map->RemoveChild(room);
+			ImGui::End();
+			return;
 		}
 		roomsUpdated = true;
 	}
@@ -201,22 +167,49 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 		} else {
 			std::shared_ptr<LRoomDataDOMNode> data = mSelectionManager.GetPrimarySelection()->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
 
-
 			glm::mat4 mat = glm::identity<glm::mat4>();
+			glm::mat4 deltaMat = glm::identity<glm::mat4>();
 			
-			if(ImGui::IsKeyDown(ImGuiKey_LeftCtrl)){
-				mat = glm::translate(mat, data->GetMax());
-			} else {
+			if(ImGui::IsKeyDown(ImGuiKey_LeftAlt)){
 				mat = glm::translate(mat, data->GetMin());
 			}
+			else if(ImGui::IsKeyDown(ImGuiKey_LeftCtrl)){
+				mat = glm::translate(mat, data->GetMax());
+			} else {
+				glm::vec3 max = data->GetMax();
+				glm::vec3 min = data->GetMin();
+				mat = glm::translate(mat, {(max.x + min.x) / 2, (max.y + min.y) / 2, (max.z + min.z) / 2});
+			}
 
-			if(ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::LOCAL, &(mat)[0][0], NULL, NULL)){
+			if(ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::LOCAL, &(mat)[0][0], &(deltaMat)[0][0], NULL)){
 				renderer_scene->UpdateRenderers();
-
-				if(ImGui::IsKeyDown(ImGuiKey_LeftCtrl)){
+				
+				if(ImGui::IsKeyDown(ImGuiKey_LeftAlt)){
+					data->SetMin(mat[3]);
+				}
+				else if(ImGui::IsKeyDown(ImGuiKey_LeftCtrl)){
 					data->SetMax(mat[3]);
 				} else {
-					data->SetMin(mat[3]);
+					// add delta to max and min
+					data->SetMax(data->GetMax() + glm::vec3(deltaMat[3]));
+					data->SetMin(data->GetMin() + glm::vec3(deltaMat[3]));
+					std::shared_ptr<LRoomDOMNode> roomNode = dynamic_pointer_cast<LRoomDOMNode>(mSelectionManager.GetPrimarySelection());
+					roomNode->SetRoomModelDelta(roomNode->GetRoomModelDelta() + glm::vec3(deltaMat[3]));
+					// add delta to all child transforms
+					for(auto child : mSelectionManager.GetPrimarySelection()->GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Entity)){
+						child->SetPosition(child->GetPosition() + glm::vec3(deltaMat[3]));
+						
+						glm::mat4 m = glm::identity<glm::mat4>();
+
+						m = glm::translate(m, child->GetPosition());
+						m = glm::rotate(m, glm::radians(child->GetRotation().x), glm::vec3(1, 0, 0));
+						m = glm::rotate(m, glm::radians(-child->GetRotation().y), glm::vec3(0, 1, 0));
+						m = glm::rotate(m, glm::radians(child->GetRotation().z), glm::vec3(0, 0, 1));
+						m = glm::scale(m, child->GetScale());
+
+						*child->GetMat() = m;
+
+					}
 				}
 			}
 

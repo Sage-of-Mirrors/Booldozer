@@ -11,6 +11,8 @@
 #include "imgui_impl_glfw.h"
 #include <iostream>
 
+#include <IconsForkAwesome.h>
+
 #include <DiscordIntegration.hpp>
 
 constexpr int GL_VERSION_MAJOR = 4;
@@ -93,32 +95,20 @@ bool LBooldozerApp::Setup() {
 	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(mWindow, true);
 	ImGui_ImplOpenGL3_Init("#version 150");
-
-	unsigned char* data;
-	int width, height;
-	ImWchar ranges[] = { 0x1, 0xFFFF, 0 };
-
-	// Load font for Latin characters from file if it exists, or use imgui's default if not found.
-	std::filesystem::path fontPath = std::filesystem::path("./res/font/Input-Regular-Mono.ttf");
-	if (std::filesystem::exists(fontPath))
-	{
-		io.Fonts->AddFontFromFileTTF(fontPath.string().c_str(), 18.f, 0, ranges);
+	
+	
+	if(std::filesystem::exists((std::filesystem::current_path() / "res" / "font" / "NotoSansJP-Regular.otf"))){
+		io.Fonts->AddFontFromFileTTF((std::filesystem::current_path() / "res" / "font" / "NotoSansJP-Regular.otf").string().c_str(), 16.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 	}
-	else
-		io.Fonts->AddFontDefault();
 
-	// Load font for Japanese characters from file, if it exists.
-	// Imgui has the handy feature that it can use specific font files for specific character ranges.
-	ImFontConfig config;
-	config.MergeMode = true;
-
-	fontPath = std::filesystem::path("./res/font/NotoSansJP-Regular.otf");
-	if (std::filesystem::exists(fontPath))
-		io.Fonts->AddFontFromFileTTF(fontPath.string().c_str(), 20.f, &config, io.Fonts->GetGlyphRangesJapanese());
-
-	io.Fonts->GetTexDataAsRGBA32(&data, &width, &height);
-	//imguiFontTexture = bgfx::createTexture2D((uint16_t)width, (uint16_t)height, false, 1, bgfx::TextureFormat::BGRA8, 0, bgfx::copy(data, width * height * 4));
-	//imguiFontUniform = bgfx::createUniform("s_tex", bgfx::UniformType::Sampler);
+	if(std::filesystem::exists((std::filesystem::current_path() / "res" / "font" / "forkawesome.ttf"))){
+		static const ImWchar icons_ranges[] = { ICON_MIN_FK, ICON_MAX_16_FK, 0 };
+		ImFontConfig icons_config; 
+		icons_config.MergeMode = true; 
+		icons_config.PixelSnapH = true; 
+		icons_config.GlyphMinAdvanceX = 14.0f;
+		io.Fonts->AddFontFromFileTTF((std::filesystem::current_path() / "res" / "font" / "forkawesome.ttf").string().c_str(), icons_config.GlyphMinAdvanceX, &icons_config, icons_ranges );
+	}
 
 	mEditorScene.init();
 
@@ -213,8 +203,8 @@ void LBooldozerApp::RenderUI(float deltaTime) {
         {
             if (ImGui::MenuItem("Open Map..."))
                 mEditorContext.onOpenMapCB();
-            if (ImGui::MenuItem("Open Room(s)..."))
-                mEditorContext.onOpenRoomsCB();
+            if (ImGui::MenuItem("Append Map..."))
+                mEditorContext.onAppendMapCB();
 
             ImGui::Separator();
 

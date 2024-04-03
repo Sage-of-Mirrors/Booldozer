@@ -59,7 +59,7 @@ public:
 	uint32_t mGridDimension[3];
 	std::shared_ptr<LCollisionGridCell> mSelectedCell { nullptr };
 	glm::vec3 mGridScale, mMinBounds, mAxisLengths;
-	std::vector<std::shared_ptr<LCollisionGridCell>> mGrid;
+	std::vector<std::vector<std::vector<std::shared_ptr<LCollisionGridCell>>>> mGrid;
 
 	LMapCollisionDOMNode(std::string name);
 

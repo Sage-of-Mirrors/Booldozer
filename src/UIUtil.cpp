@@ -2,21 +2,37 @@
 #include <glm/gtx/matrix_decompose.hpp>
 #include "GenUtil.hpp"
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
+#include <IconsForkAwesome.h>
 
 bool LUIUtility::RenderCheckBox(std::string name, bool* c)
 {
-    if (ImGui::Checkbox(name.c_str(), c))
-        return true;
+	if(*c){
+		ImGui::Text(ICON_FK_EYE);
+	} else {
+		ImGui::Text(ICON_FK_EYE_SLASH);
+	}
 
-    return false;
+	if(ImGui::IsItemClicked()){
+		*c = !(*c);
+		return true;
+	}
+
+	return false;
 }
 
 void LUIUtility::RenderCheckBox(LDOMNodeBase* node)
 {
     bool c = node->GetIsRendered();
 
-    if (ImGui::Checkbox("##is_rendered", &c))
-        node->SetIsRendered(c);
+	if(c){
+		ImGui::Text(ICON_FK_EYE);
+	} else {
+		ImGui::Text(ICON_FK_EYE_SLASH);
+	}
+
+	if(ImGui::IsItemClicked()){
+		node->SetIsRendered(!c);
+	}
 }
 
 bool LUIUtility::RenderNodeSelectable(LDOMNodeBase* node, const bool& highlight)

@@ -64,6 +64,7 @@ class LBooldozerEditor
 	float mPrevWinHeight { -1.0f };
 
 	void OpenMap(std::string file_path);
+	void AppendMap(std::string map_path);
 	void SaveMapToFiles(std::string folder_path);
 	void SaveMapToArchive(std::string file_path);
 
@@ -82,6 +83,9 @@ public:
 
 	// Callback for when the user requests to open a map folder.
 	void onOpenMapCB();
+
+	void onAppendMapCB();
+
 	// Callback for when the user requests to open one or more room arcs.
 	void onOpenRoomsCB();
 

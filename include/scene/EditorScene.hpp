@@ -40,7 +40,7 @@ class LEditorScene {
     std::vector<std::weak_ptr<LRoomDOMNode>> mCurrentRooms;
     
     std::vector<std::shared_ptr<BinModel>> mDoorModels;
-    std::vector<std::shared_ptr<BinModel>> mRoomModels;
+    std::map<std::string, std::shared_ptr<BinModel>> mRoomModels;
     std::map<std::string, std::shared_ptr<BinModel>> mRoomFurniture;
 
 
@@ -52,11 +52,15 @@ class LEditorScene {
 
     uint32_t mSelectedRoomNumber;
 
+    bool mActive { false };
+
 public:
     LSceneCamera Camera;
     
     glm::mat4 getCameraView();
     glm::mat4 getCameraProj();
+
+    void SetActive(bool active) { mActive = active; }
 
     void SetRoom(std::shared_ptr<LRoomDOMNode> room);
     bool HasRoomLoaded(int32_t roomNumber);

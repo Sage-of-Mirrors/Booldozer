@@ -40,6 +40,29 @@ LMapDOMNode::LMapDOMNode() : Super("map")
 
 LMapDOMNode::~LMapDOMNode(){}
 
+bool LMapDOMNode::AppendMap(std::shared_ptr<LMapDOMNode> map){
+	auto curMapRooms = GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
+
+	auto rooms = map->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
+	for(auto node : rooms){
+		node->SetRoomNumber(node->GetRoomNumber() + curMapRooms.size());
+		auto roomData = node->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+		
+		roomData->SetRoomID(roomData->GetRoomID() + curMapRooms.size());
+		roomData->SetRoomIndex(roomData->GetRoomIndex() + curMapRooms.size());
+
+		auto entities = node->GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Entity);
+		for(auto node : entities){
+			uint32_t roomNo = node->GetRoomNumber();
+			node->SetRoomNumber(roomNo + curMapRooms.size());
+			std::cout << "New Room # is " << node->GetRoomNumber() << " old Room # is " << roomNo << std::endl;
+		}
+		AddChild(node);
+	}
+
+
+	return true;
+}
 
 bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 {

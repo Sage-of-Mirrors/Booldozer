@@ -125,6 +125,8 @@ class LRoomDOMNode : public LBGRenderDOMNode, public ISerializable
 	// ??
 	int32_t mSoundRoomSize { 0 };
 
+	glm::vec3 mRoomModelDelta { 0, 0, 0 };
+
 /*=== map.dat properties ===*/
 	// Name of the resource file, either a raw BIN or an archive.
 	std::string mResourceName;
@@ -153,8 +155,11 @@ public:
 	int32_t GetRoomID() { return GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0]->GetRoomID(); }
 	
 	bool GetSkyboxEnabled() { return mShouldRenderSkybox; }
-
+	
 	LAlternateResource GetAlternateResource() const { return mAlternateResource; }
+	
+	glm::vec3 GetRoomModelDelta() { return mRoomModelDelta; }
+	void SetRoomModelDelta(glm::vec3 v) { mRoomModelDelta = v; }
 
 	virtual void RenderDetailsUI(float dt) override;
 	virtual void RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection) override;
@@ -166,7 +171,7 @@ public:
 	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const override;
 
 	virtual void PostProcess() override { };
-	virtual void PreProcess() override { };
+	virtual void PreProcess() override;
 
 	// Loads the BIN models from the given archive, distributes them to entities that need them, and does various other room-specific loading stuff.
 	bool CompleteLoad();
