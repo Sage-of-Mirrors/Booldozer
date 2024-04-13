@@ -59,38 +59,38 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 	bool treeOpened = LUIUtility::RenderNodeSelectableTreeNode(GetName(), GetIsSelected(), treeSelected);
 
 	bool openRoomRes = false;
-	if(ImGui::BeginPopupModal("##roomResources", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
-		if(ActiveRoomArchive != nullptr){
-			// show resources in room archive, allow add/delete of models
-			// notify when archive size is > 430kb!
-			std::shared_ptr<Archive::File> toDelete = nullptr;
-			ImGui::Text("Room Resource Files");
-			ImGui::SameLine();
-			ImGui::Text(ICON_FK_PLUS_CIRCLE);
-			if(ImGui::IsItemClicked()) ImGuiFileDialog::Instance()->OpenModal("addModelToRoomArchiveDialog", "Select Model", "Bin Model (*.bin){.bin}", OPTIONS.mRootPath);
-			ImGui::Separator();
-
-			for(auto file : ActiveRoomArchive->GetRoot()->GetFiles()){
-				ImGui::Text(file->GetName().c_str());
-				ImGui::SameLine();
-				ImGui::Text(ICON_FK_MINUS_CIRCLE);
-				if(ImGui::IsItemClicked()) {
-					toDelete = file;
-				}
-			}
-			if(toDelete != nullptr) ActiveRoomArchive->GetRoot()->DeleteFile(toDelete);
-
-			if(ImGui::Button("Done")){
-				auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
-				ActiveRoomArchive->SaveToFile(std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path());
-				ActiveRoomArchive = nullptr;
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::EndPopup();
-		}
-	} 
-	
 	if(GetIsSelected()){
+		if(ImGui::BeginPopupModal("##roomResources", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+			if(ActiveRoomArchive != nullptr){
+				// show resources in room archive, allow add/delete of models
+				// notify when archive size is > 430kb!
+				std::shared_ptr<Archive::File> toDelete = nullptr;
+				ImGui::Text("Room Resource Files");
+				ImGui::SameLine();
+				ImGui::Text(ICON_FK_PLUS_CIRCLE);
+				if(ImGui::IsItemClicked()) ImGuiFileDialog::Instance()->OpenModal("addModelToRoomArchiveDialog", "Select Model", "Bin Model (*.bin){.bin}", OPTIONS.mRootPath);
+				ImGui::Separator();
+
+				for(auto file : ActiveRoomArchive->GetRoot()->GetFiles()){
+					ImGui::Text(file->GetName().c_str());
+					ImGui::SameLine();
+					ImGui::Text(ICON_FK_MINUS_CIRCLE);
+					if(ImGui::IsItemClicked()) {
+						toDelete = file;
+					}
+				}
+				if(toDelete != nullptr) ActiveRoomArchive->GetRoot()->DeleteFile(toDelete);
+
+				if(ImGui::Button("Done")){
+					auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+					ActiveRoomArchive->SaveToFile(std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path());
+					ActiveRoomArchive = nullptr;
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::EndPopup();
+			}
+		} 
+	
 		if(ImGui::BeginPopupContextItem()){
 			if(ImGui::Selectable("Resources")){
 				openRoomRes = true;
@@ -106,35 +106,35 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 			}
 			ImGui::EndPopup();
 		}
-	}
 	
-	if(openRoomRes) ImGui::OpenPopup("##roomResources");
+		if(openRoomRes) ImGui::OpenPopup("##roomResources");
 
-	std::string modelPath;
-	if(LUIUtility::RenderFileDialog("addModelToRoomArchiveDialog", modelPath)){
-		auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+		std::string modelPath;
+		if(LUIUtility::RenderFileDialog("addModelToRoomArchiveDialog", modelPath)){
+			auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
 
-		std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
-		std::cout << "Loading arc " << resPath.string() << std::endl;
-		if(std::filesystem::exists(resPath) && resPath.extension().string() == ".arc"){
-			if(ActiveRoomArchive != nullptr){
-				bStream::CFileStream modelFile(modelPath, bStream::Endianess::Big, bStream::OpenMode::In);
-				std::shared_ptr<Archive::File> newFile = Archive::File::Create();
-					
-				uint8_t* modelData = new uint8_t[modelFile.getSize()]{};
-				modelFile.readBytesTo(modelData, modelFile.getSize());
+			std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
+			std::cout << "Loading arc " << resPath.string() << std::endl;
+			if(std::filesystem::exists(resPath) && resPath.extension().string() == ".arc"){
+				if(ActiveRoomArchive != nullptr){
+					bStream::CFileStream modelFile(modelPath, bStream::Endianess::Big, bStream::OpenMode::In);
+					std::shared_ptr<Archive::File> newFile = Archive::File::Create();
+						
+					uint8_t* modelData = new uint8_t[modelFile.getSize()]{};
+					modelFile.readBytesTo(modelData, modelFile.getSize());
 
-				std::cout << "Adding model " << std::filesystem::path(modelPath).filename().string() << " to archive" << resPath.string() << std::endl;
-				newFile->SetName(std::filesystem::path(modelPath).filename().string());
-				newFile->SetData(modelData, modelFile.getSize());
+					std::cout << "Adding model " << std::filesystem::path(modelPath).filename().string() << " to archive" << resPath.string() << std::endl;
+					newFile->SetName(std::filesystem::path(modelPath).filename().string());
+					newFile->SetData(modelData, modelFile.getSize());
 
-				delete[] modelData;
+					delete[] modelData;
 
-				ActiveRoomArchive->GetRoot()->AddFile(newFile);
-				ActiveRoomArchive->SaveToFile(resPath.string());
+					ActiveRoomArchive->GetRoot()->AddFile(newFile);
+					ActiveRoomArchive->SaveToFile(resPath.string());
+				}
 			}
+			ImGui::OpenPopup("##roomResources");
 		}
-		ImGui::OpenPopup("##roomResources");
 	}
 	
 	if(ImGui::BeginDragDropTarget()){
