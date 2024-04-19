@@ -130,7 +130,7 @@ void LFurnitureDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetString(entry_index, "access_name", mAccessName);
 
 	JmpIO->SetFloat(entry_index, "pos_x", mPosition.z);
-	JmpIO->SetFloat(entry_index, "pos_y", mPosition.y);
+	JmpIO->SetFloat(entry_index, "pos_y", -mPosition.y);
 	JmpIO->SetFloat(entry_index, "pos_z", mPosition.x);
 
 	JmpIO->SetFloat(entry_index, "dir_x", mRotation.z);
