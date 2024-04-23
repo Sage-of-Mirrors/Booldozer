@@ -12,6 +12,7 @@ class LBooldozerApp
 
 	LBooldozerEditor mEditorContext;
 	LEditorScene mEditorScene;
+	static LEditorScene* GetEditorScene();
 
 	//DiscordEventHandlers mDiscordHandlers = {0};
 

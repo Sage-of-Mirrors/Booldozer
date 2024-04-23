@@ -2,6 +2,8 @@
 
 #include "EditorModeBase.hpp"
 
+extern bool isRoomDirty;
+
 class LActorMode : public LEditorModeBase
 {
 

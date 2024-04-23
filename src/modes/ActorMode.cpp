@@ -6,6 +6,8 @@
 
 //#include <DiscordIntegration.hpp>
 
+bool isRoomDirty = false;
+
 LActorMode::LActorMode()
 {
 	mRoomChanged = false;
@@ -114,7 +116,7 @@ void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 		node->RenderBG(0);
 	}
 
-	if(mRoomChanged){
+	if(mRoomChanged || isRoomDirty){
 		if(std::shared_ptr<LRoomDOMNode> room = mManualRoomSelect.lock()){
 			/*
 			std::string room_name = fmt::format("Editing {}", room->GetName());
@@ -123,6 +125,7 @@ void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 			Discord_UpdatePresence(&Discord::RichPresence);
 			*/
 			renderer_scene->SetRoom(room);
+			isRoomDirty = false;
 		}
 	}
 

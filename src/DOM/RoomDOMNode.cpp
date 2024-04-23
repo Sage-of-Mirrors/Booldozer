@@ -8,6 +8,7 @@
 #include "UIUtil.hpp"
 #include "Options.hpp"
 #include "IconsForkAwesome.h"
+#include "modes/ActorMode.hpp"
 
 static std::shared_ptr<Archive::Rarc> ActiveRoomArchive = nullptr;
 
@@ -86,6 +87,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 					ActiveRoomArchive->SaveToFile(std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path());
 					ActiveRoomArchive = nullptr;
 					ImGui::CloseCurrentPopup();
+					isRoomDirty = true;
 				}
 				ImGui::EndPopup();
 			}
