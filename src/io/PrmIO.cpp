@@ -65,14 +65,18 @@ void LPrmIO::LoadConfigs(std::shared_ptr<LMapDOMNode>& map)
 
     mMap = map;
 
-    std::shared_ptr<Archive::Folder> ctpFolder = GCResourceManager.mGameArchive->GetFolder("/param/ctp");
+    if(GCResourceManager.mGameArchive != nullptr){
+        std::shared_ptr<Archive::Folder> ctpFolder = GCResourceManager.mGameArchive->GetFolder("/param/ctp");
 
-    for(auto paramFile : ctpFolder->GetFiles()){
-        auto name = std::filesystem::path(paramFile->GetName()).filename().stem();
-        bStream::CMemoryStream prm(paramFile->GetData(), paramFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
-        Load(name.string(), &prm);
-        mLoadedConfigs.push_back(name.string());
+        if(ctpFolder != nullptr){
+            for(auto paramFile : ctpFolder->GetFiles()){
+                auto name = std::filesystem::path(paramFile->GetName()).filename().stem();
+                bStream::CMemoryStream prm(paramFile->GetData(), paramFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+                Load(name.string(), &prm);
+                mLoadedConfigs.push_back(name.string());
 
+            }
+        }
     }
     
     mConfigsLoaded = true;

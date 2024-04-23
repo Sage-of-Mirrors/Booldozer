@@ -32,7 +32,7 @@ namespace LResUtility
 		bool mInitialized = false;
 		bool mLoadedGameArchive = false;
 		public:
-			std::shared_ptr<Archive::Rarc> mGameArchive;
+			std::shared_ptr<Archive::Rarc> mGameArchive { nullptr };
 			void Init();
 			void Cleanup();
 	};

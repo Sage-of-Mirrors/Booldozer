@@ -55,6 +55,7 @@ void LEditorScene::init(){
 	mDoorModels.reserve(14);
 
 	for(int door_id = 0; door_id < 14; door_id++){
+		if(GCResourceManager.mGameArchive == nullptr) continue; // should be done better
 		std::shared_ptr<Archive::File> doorModelFile = GCResourceManager.mGameArchive->GetFile(std::filesystem::path(fmt::format("iwamoto/door/door_{:02}.bin", door_id)));
 		if(doorModelFile != nullptr){
 			bStream::CMemoryStream bin_data(doorModelFile->GetData(), doorModelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
@@ -479,16 +480,18 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 					} else {
 						std::filesystem::path fullModelPath = std::filesystem::path("model") / (std::get<0>(actorRef) + ".arc") / "model" / (std::get<0>(actorRef) + ".mdl");
 						
-						std::shared_ptr<Archive::File> modelFile = GCResourceManager.mGameArchive->GetFile(fullModelPath);
-						
-						if(modelFile == nullptr){
-							std::cout << "Couldn't find " << std::get<0>(actorRef) << ".mdl in game archive" << std::endl;
-						} else {
-							std::cout << "loading model from game archive..." << std::endl;
-							bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
-							mActorModels[name] = std::make_unique<MDL::Model>();
-							mActorModels[name]->Load(&modelData);
-						}		
+						if(GCResourceManager.mGameArchive != nullptr){
+							std::shared_ptr<Archive::File> modelFile = GCResourceManager.mGameArchive->GetFile(fullModelPath);
+							
+							if(modelFile == nullptr){
+								std::cout << "Couldn't find " << std::get<0>(actorRef) << ".mdl in game archive" << std::endl;
+							} else {
+								std::cout << "loading model from game archive..." << std::endl;
+								bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+								mActorModels[name] = std::make_unique<MDL::Model>();
+								mActorModels[name]->Load(&modelData);
+							}
+						}
 					}
 				}
 			});

@@ -57,8 +57,10 @@ void LOptionsMenu::RenderOptionsPopup()
 			ImGuiFileDialog::Instance()->OpenModal("SetGameRoot", "Choose Game Root", nullptr, mTempOptions.mRootPath);
 
 		// Render folder dialog if open
-		if (LUIUtility::RenderFileDialog("SetGameRoot", path))
+		if (LUIUtility::RenderFileDialog("SetGameRoot", path)){
 			mTempOptions.mRootPath = path;
+			GCResourceManager.Init(); // reinit resource manager to reload game archive
+		}
 
 		// Tooltip
 		LUIUtility::RenderTooltip("This is the copy of the game that you are currently editing. All models, events, etc. will be loaded from here.");
