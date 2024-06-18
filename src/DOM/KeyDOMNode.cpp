@@ -129,7 +129,7 @@ void LKeyDOMNode::PostProcess()
 
 		if (containingRoom != nullptr)
 		{
-			std::cout << fmt::format("Key going to {0}", containingRoom->GetName()) << std::endl;
+			std::cout << fmt::format("[KeyDOMNode]: Key going to {0}", containingRoom->GetName()) << std::endl;
 			containingRoom->AddChild(GetSharedPtr<LKeyDOMNode>(EDOMNodeType::Key));
 			mapNodeLocked->RemoveChild(GetSharedPtr<LKeyDOMNode>(EDOMNodeType::Key));
 		}

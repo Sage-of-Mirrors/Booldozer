@@ -18,6 +18,17 @@ std::string LMapCollisionDOMNode::GetName()
 void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 {
 	mDirty = false;
+
+	if(ImGui::InputInt("Z Slice", &mGridZLevel)){
+		mDirty = true;
+	}
+	
+	if(ImGui::InputInt("Y Slice", &mGridYLevel)){
+		mDirty = true;
+	}
+	
+	mGridZLevel %= mGridDimension[2];
+	mGridYLevel %= mGridDimension[1];
 }
 
 bool LMapCollisionDOMNode::Load(bStream::CMemoryStream* stream)
@@ -76,55 +87,84 @@ bool LMapCollisionDOMNode::Load(bStream::CMemoryStream* stream)
 		mTriangles.push_back(triangle);
 	}
 
-	uint32_t xCellCount = (uint32_t)(glm::round(mAxisLengths.x / mGridScale.x));
-	uint32_t yCellCount = (uint32_t)(glm::round(mAxisLengths.y / mGridScale.y));
-	uint32_t zCellCount = (uint32_t)(glm::round(mAxisLengths.z / mGridScale.z));
+	uint32_t xCellCount = (uint32_t)(glm::floor(mAxisLengths.x / mGridScale.x)) + 1;
+	uint32_t yCellCount = (uint32_t)(glm::floor(mAxisLengths.y / mGridScale.y)) + 1;
+	uint32_t zCellCount = (uint32_t)(glm::floor(mAxisLengths.z / mGridScale.z)) + 1;
 
 	mGridDimension[0] = xCellCount;
 	mGridDimension[1] = yCellCount;
 	mGridDimension[2] = zCellCount;
 
+	stream->seek(triangleGroupOffset);
+	while(stream->tell() < gridIndexOffset){
+		std::shared_ptr<LTriangleGroup> allGroup = std::make_shared<LTriangleGroup>();
+
+		allGroup->startOffset = stream->tell();
+
+		uint16_t idx = stream->readUInt16();
+		while(idx != 0xFFFF && stream->tell() < gridIndexOffset && idx < mTriangles.size()){
+			allGroup->triangles.push_back(mTriangles.at(idx));
+			idx = stream->readUInt16();
+		}
+
+		allGroup->endOffset = stream->tell();
+
+		allGroup->render = true;
+		mTriangleGroups.push_back(allGroup);
+	}
+
+	uint32_t cellCount = (endOffset - gridIndexOffset) / 8;
+	for(int i = 0; i < cellCount; i++){
+		mGrid.push_back(std::make_shared<LCollisionGridCell>());
+	}
+
+	for(int z = 0; z < zCellCount; z++){
+		for(int y = 0; y < yCellCount; y++){
+			for(int x = 0; x < xCellCount; x++){
+				int32_t allGroupOffset = stream->readInt32();
+				int32_t floorGroupOffset = stream->readInt32();
+
+				auto gridCell = mGrid[x + (y * xCellCount) + (z * xCellCount * yCellCount)];
+
+				int curIdxCount = 0;
+				for(auto group : mTriangleGroups){
+					if(allGroupOffset > curIdxCount && allGroupOffset < curIdxCount + group->triangles.size()){
+						gridCell->allTriangles = group;
+					}
+					if(floorGroupOffset > curIdxCount && floorGroupOffset < curIdxCount + group->triangles.size()){
+						gridCell->floorTriangles = group;
+					}
+					curIdxCount += group->triangles.size();
+				}
+				
+			}
+		}
+	}
+
 	//std::cout << "Reading Grid at " << std::hex << gridIndexOffset << std::endl; 
 	stream->seek(gridIndexOffset);
+	/*
 	for (int z = 0; z < zCellCount; z++){
 		std::vector<std::vector<std::shared_ptr<LCollisionGridCell>>> yAxis;
 		for (int y = 0; y < yCellCount; y++){
 			std::vector<std::shared_ptr<LCollisionGridCell>> xAxis;
 			for (int x = 0; x < xCellCount; x++){
-				std::shared_ptr<LCollisionGridCell> gridCell = std::make_shared<LCollisionGridCell>();
+				uint32_t allGroupOffset = stream->readInt32();
+				uint32_t floorGroupOffset = stream->readInt32();
 
-				std::shared_ptr<LTriangleGroup> allGroup = std::make_shared<LTriangleGroup>();
-				std::shared_ptr<LTriangleGroup> floorGroup = std::make_shared<LTriangleGroup>();
+				auto gridCell = std::make_shared<LCollisionGridCell>();
 
-				allGroup->render = true;
-				floorGroup->render = false;
-
-				uint32_t allGroupIdx = stream->readUInt32();
-				uint32_t floorGroupIdx = stream->readUInt32();
-
-				size_t gridPos = stream->tell();
-
-				stream->seek(triangleGroupOffset + (allGroupIdx * 2));
-				uint16_t triangleIdx = stream->readUInt16();
-				while(triangleIdx != 0xFFFF){
-					allGroup->triangles.push_back(mTriangles.at(triangleIdx));
-					triangleIdx = stream->readUInt16();
+				int curIdxCount = 0;
+				for(auto group : mTriangleGroups){
+					if(allGroupOffset > curIdxCount && allGroupOffset < curIdxCount + group->triangles.size()){
+						gridCell->allTriangles = group;
+					}
+					if(floorGroupOffset > curIdxCount && floorGroupOffset < curIdxCount + group->triangles.size()){
+						gridCell->floorTriangles = group;
+					}
+					curIdxCount += group->triangles.size();
 				}
 
-				stream->seek(triangleGroupOffset + (floorGroupIdx * 2));
-				triangleIdx = stream->readUInt16();
-				while(triangleIdx != 0xFFFF){
-					floorGroup->triangles.push_back(mTriangles.at(triangleIdx));
-					triangleIdx = stream->readUInt16();
-				}
-
-				stream->seek(gridPos);
-
-				mTriangleGroups.push_back(allGroup);
-				mTriangleGroups.push_back(floorGroup);
-
-				gridCell->allTriangles = allGroup;
-				gridCell->floorTriangles = floorGroup;
 
 				xAxis.push_back(gridCell);
 			}
@@ -132,8 +172,9 @@ bool LMapCollisionDOMNode::Load(bStream::CMemoryStream* stream)
 		}
 		mGrid.push_back(yAxis);
 	}
+	*/
 
-	std::cout << "Finished reading Collision File" << std::endl;
+	std::cout << "[CollisionDOMNode]: Finished reading Collision File" << std::endl;
 
 	return false;
 }

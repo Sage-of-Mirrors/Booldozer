@@ -7,6 +7,8 @@ constexpr size_t DOL_SECTION_COUNT = 18;
 
 class DOL
 {
+	bool mPatched { false };
+	std::string mChecksum { "" };
 	uint32_t mTextDataOffsets[DOL_SECTION_COUNT];
 	uint32_t mTextDataRAMAddresses[DOL_SECTION_COUNT];
 

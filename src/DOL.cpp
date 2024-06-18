@@ -1,6 +1,7 @@
 #include "DOL.hpp"
 #include "GenUtil.hpp"
-
+#include "Options.hpp"
+#include "picosha2.h"
 #include <iostream>
 
 DOL::DOL()
@@ -22,8 +23,29 @@ bool DOL::LoadDOLFile(std::filesystem::path dolPath)
 	if (dolPath.empty() || !std::filesystem::exists(dolPath))
 		return false;
 
+
+	// SHA256 the DOL so we can see if its clean or needs to be patched
+	std::ifstream f(dolPath.string(), std::ios::binary);
+	std::vector<unsigned char> s(picosha2::k_digest_size);
+	picosha2::hash256(f, s.begin(), s.end());
+
+	mChecksum = picosha2::hash256_hex_string(s);
+
+	// 0699f1c279ea4a505d3f7cdfb73d79c07e153d02da8571b7bc5f500349c32499 <- Clean patched!
+
+	std::cout << "[DOL]: SHA256 of executable is " << mChecksum << std::endl;
+	if(mChecksum == "4e233ab2509e055894dbfef9cf4c5c07668b312ee2c2c44362b7d952308ce95a"){
+		std::cout << "[DOL]: Executable is clean" << std::endl;
+		mPatched = false;
+		OPTIONS.mIsDOLPatched = false;
+	} else {
+		mPatched = true;
+		OPTIONS.mIsDOLPatched = true;
+	}
+
 	// Open DOL file and ensure it's valid
 	mFileStream = new bStream::CFileStream(dolPath.string(), bStream::Endianess::Big);
+
 	if (!mFileStream || !mFileStream->getStream().is_open())
 		return false;
 

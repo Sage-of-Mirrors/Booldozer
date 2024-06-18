@@ -109,10 +109,10 @@ void LDoorMode::RenderGizmo(LEditorScene* renderer_scene){
 
 void LDoorMode::OnBecomeActive()
 {
-	printf("Door mode switching in!\n");
+	std::cout << "[Booldozer]: Door mode switching in" << std::endl;
 }
 
 void LDoorMode::OnBecomeInactive()
 {
-	printf("Door mode switching out!\n");
+	std::cout << "[Booldozer]: Door mode switching out" << std::endl;
 }

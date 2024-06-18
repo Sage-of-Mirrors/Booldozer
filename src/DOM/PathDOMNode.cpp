@@ -141,7 +141,6 @@ void LPathDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetString(entry_index, "next", mNextPathName);
 
 	JmpIO->SetSignedInt(entry_index, "no", mOrganizationNumber);
-	std::cout << Children.size() << std::endl;
 	JmpIO->SetSignedInt(entry_index, "num_pnt", (int32_t)Children.size());
 	JmpIO->SetSignedInt(entry_index, "room_no", mRoomNumber);
 	JmpIO->SetSignedInt(entry_index, "arg0", mArg0);
@@ -206,7 +205,7 @@ void LPathDOMNode::PostProcess(std::shared_ptr<Archive::Rarc> mapArchive)
 
 	
 	if(pathFile == nullptr){
-		std::cout << "Unable to load path file " << mName << " !" << std::endl;
+		std::cout << "[PathDOMNode]: Unable to load path file " << mName << " !" << std::endl;
 		return;
 	}
 

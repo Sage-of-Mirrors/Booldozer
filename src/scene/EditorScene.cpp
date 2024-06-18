@@ -201,8 +201,30 @@ void LEditorScene::UpdateRenderers(){
 		std::shared_ptr<LMapCollisionDOMNode> col = mapNode->GetChildrenOfType<LMapCollisionDOMNode>(EDOMNodeType::MapCollision)[0];
 	
 		// More Stupid Code. Why?
-		/*
-		for(auto group : col->mTriangleGroups){
+
+		//for(int z = 0; z < col->mGridDimension[2]; z++){
+		//	for(int y = 0; y < col->mGridDimension[1]; y++){
+				for(int x = 0; x < col->mGridDimension[0]; x++){
+					auto gridCell = col->mGrid[x + (col->mGridYLevel * col->mGridDimension[0]) + (col->mGridZLevel * col->mGridDimension[0] * col->mGridDimension[1])];
+					uint32_t color = ~rand() & 0xFFFFFF;
+					glm::vec4 triColor = glm::vec4((float)(color >> 16 & 0xFF) / 255.0f, (float)(color >> 8 & 0xFF) / 255.0f, (float)(color & 0xFF) / 255.0f, 1.0f);
+					if(!gridCell->allTriangles.lock()) continue;
+					for(auto triangleRef : gridCell->allTriangles.lock()->triangles){
+						if(auto triangle = triangleRef.lock()){
+							std::vector<CPathPoint> renderTri = {
+								{ col->mPositionData[triangle->positionIdx[0]], triColor, 7000, -1 },
+								{ col->mPositionData[triangle->positionIdx[1]], triColor, 7000, -1 },
+								{ col->mPositionData[triangle->positionIdx[2]], triColor, 7000, -1 },
+								{ col->mPositionData[triangle->positionIdx[0]], triColor, 7000, -1 },
+							};
+							mPathRenderer.mPaths.push_back(renderTri);
+						}
+					}
+				}			
+		//	}
+		//}
+
+		/*for(auto group : col->mTriangleGroups){
 			uint32_t color = ~rand() & 0xFFFFFF;
 			glm::vec4 triColor = glm::vec4((float)(color >> 16 & 0xFF) / 255.0f, (float)(color >> 8 & 0xFF) / 255.0f, (float)(color & 0xFF) / 255.0f, 1.0f);
 			if(!group->render) continue;
@@ -447,7 +469,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 						std::shared_ptr<Archive::Rarc> modelArchive = Archive::Rarc::Create();
 						bStream::CFileStream modelArchiveStream(modelPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
 						if(!modelArchive->Load(&modelArchiveStream)){
-							std::cout << "Unable to load model archive " << modelPath.string() << std::endl;
+							std::cout << "[Editor Scene]: Unable to load model archive " << modelPath.string() << std::endl;
 							return;
 						}
 
@@ -456,7 +478,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 							std::shared_ptr<Archive::File> modelFile = modelArchive->GetFile(std::filesystem::path("model") / (actorName + ".mdl"));
 
 							if(modelFile == nullptr){
-								std::cout << "Couldn't find model/" << actorName << ".mdl in archive" << std::endl;
+								std::cout << "[Editor Scene]: Couldn't find model/" << actorName << ".mdl in archive" << std::endl;
 							} else {
 								bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 								mActorModels[name] = std::make_unique<MDL::Model>();
@@ -469,9 +491,9 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 							std::shared_ptr<Archive::File> txpFile = modelArchive->GetFile(std::filesystem::path("txp") / (txpName + ".txp"));
 
 							if(txpFile == nullptr){
-								std::cout << "Couldn't find txp/" << txpName << ".txp in archive" << std::endl;
+								std::cout << "[Editor Scene]: Couldn't find txp/" << txpName << ".txp in archive" << std::endl;
 							} else {
-								std::cout << "Loading txp " << txpName << std::endl;
+								std::cout << "[Editor Scene]: Loading txp " << txpName << std::endl;
 								bStream::CMemoryStream txpData(txpFile->GetData(), txpFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 								mMaterialAnimations[name] = std::make_unique<TXP::Animation>();
 								mMaterialAnimations[name]->Load(&txpData);
@@ -484,9 +506,8 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 							std::shared_ptr<Archive::File> modelFile = GCResourceManager.mGameArchive->GetFile(fullModelPath);
 							
 							if(modelFile == nullptr){
-								std::cout << "Couldn't find " << std::get<0>(actorRef) << ".mdl in game archive" << std::endl;
+								std::cout << "[Editor Scene]: Couldn't find " << std::get<0>(actorRef) << ".mdl in game archive" << std::endl;
 							} else {
-								std::cout << "loading model from game archive..." << std::endl;
 								bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 								mActorModels[name] = std::make_unique<MDL::Model>();
 								mActorModels[name]->Load(&modelData);
@@ -507,7 +528,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 				std::shared_ptr<Archive::Rarc> roomArc = Archive::Rarc::Create();
 				bStream::CFileStream roomArchiveStream(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
 				if(!roomArc->Load(&roomArchiveStream)){
-					std::cout << "Unable to load room archive " << resPath << std::endl;
+					std::cout << "[Editor Scene]: Unable to load room archive " << resPath << std::endl;
 					continue;
 				}
 
@@ -521,10 +542,10 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 					if (modelName != "room.bin")
 					{
 						mRoomFurniture[modelName.substr(0, modelNameExtIter)] = std::make_shared<BinModel>(&bin);
-						std::cout << "completed loading " << modelName.substr(0, modelNameExtIter) << std::endl;
+						std::cout << "[Editor Scene]: completed loading " << modelName.substr(0, modelNameExtIter) << std::endl;
 					} else {
 						mRoomModels.insert({curRoomData->GetResourcePath(), std::make_shared<BinModel>(&bin)});
-						std::cout << "completed loading room model" << std::endl;
+						std::cout << "[Editor Scene]: completed loading room model" << std::endl;
 					}					
 				}
 			} else {

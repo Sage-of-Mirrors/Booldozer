@@ -125,6 +125,6 @@ void LEventDataDOMNode::SaveEventArchive(){
         }
     }
 
-    std::cout << "Writing event to " << mEventPath << std::endl;
+    std::cout << "[EventDOMNode]: Writing event to " << mEventPath << std::endl;
     mEventArchive->SaveToFile(mEventPath, Compression::Format::YAY0);
 }

@@ -66,10 +66,10 @@ void LEnemyMode::RenderGizmo(LEditorScene* renderer_scene){
 
 void LEnemyMode::OnBecomeActive()
 {
-	printf("Enemy mode switching in!\n");
+	std::cout << "[Booldozer]: Enemy mode switching in" << std::endl;
 }
 
 void LEnemyMode::OnBecomeInactive()
 {
-	printf("Enemy mode switching out!\n");
+	std::cout << "[Booldozer]: Enemy mode switching out" << std::endl;
 }

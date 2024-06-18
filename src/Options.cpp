@@ -30,6 +30,10 @@ void LUserOptions::FromJson(const nlohmann::json& j, LUserOptions& options)
 	j.at("is_dol_patched").get_to(options.mIsDOLPatched);
 	j.at("last_opened_map").get_to(options.mLastOpenedMap);
 	j.at("last_saved_directory").get_to(options.mLastSavedDirectory);
+
+	DOL dol;
+	dol.LoadDOLFile(std::filesystem::path(options.mRootPath) / "sys" / "main.dol");
+
 }
 
 void LOptionsMenu::OpenMenu()
@@ -87,6 +91,13 @@ void LOptionsMenu::RenderOptionsPopup()
 		// Save button
 		if (ImGui::Button("Save", ImVec2(120, 0)))
 		{
+			if(OPTIONS.mRootPath != mTempOptions.mRootPath){
+				DOL dol;
+				dol.LoadDOLFile(std::filesystem::path(mTempOptions.mRootPath) / "sys" / "main.dol");
+				if(!OPTIONS.mIsDOLPatched){
+					ImGui::OpenPopup("Unpatched DOL");
+				}
+			}
 			OPTIONS = mTempOptions;
 			LResUtility::SaveUserSettings();
 

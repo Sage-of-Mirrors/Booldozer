@@ -55,7 +55,7 @@ bool LMapDOMNode::AppendMap(std::shared_ptr<LMapDOMNode> map){
 		for(auto node : entities){
 			uint32_t roomNo = node->GetRoomNumber();
 			node->SetRoomNumber(roomNo + curMapRooms.size());
-			std::cout << "New Room # is " << node->GetRoomNumber() << " old Room # is " << roomNo << std::endl;
+			std::cout << "[MapDOMNode]: New Room # is " << node->GetRoomNumber() << " old Room # is " << roomNo << std::endl;
 		}
 		AddChild(node);
 	}
@@ -72,7 +72,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	// Make sure file path is valid
 	if (!std::filesystem::exists(file_path))
 	{
-		printf("File \"%s\" does not exist\n", file_path.string().c_str());
+		std::cout << fmt::format("[MapDOMNode]: File \"{}\" does not exist", file_path.string().c_str()) << std::endl;
 		return false;
 	}
 
@@ -80,7 +80,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	// Attempt to load archive
 	if (!mMapArchive->Load(&mMapArchiveStream))
 	{
-		printf("Archive Load Failed\n");
+		std::cout << "[MapDOMNode]: Unable to load archive " << file_path.string() << std::endl;
 		return false;
 	}
 
@@ -119,19 +119,28 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	if (!std::filesystem::exists(roomsMap))
 	{
 		DOL dol;
-		dol.LoadDOLFile(std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol");
-
-		std::cout << "Ripping static data for map " << mName << std::endl;
-		if (!mStaticMapIO.RipStaticDataFromExecutable(dol, roomsMap, mName, "GLME01"))
+		if(dol.LoadDOLFile(std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol"))
 		{
-			std::cout << fmt::format("Failed to rip static map data to {0}", roomsMap.string()) << std::endl;
-			return false;
+			std::cout << "[MapDOMNode]: Trying to rip static data for map " << mName << std::endl;
+			if (!OPTIONS.mIsDOLPatched && !mStaticMapIO.RipStaticDataFromExecutable(dol, roomsMap, mName, "GLME01"))
+			{
+				std::cout << fmt::format("[MapDOMNode]: Failed to rip static map data to {0}", roomsMap.string()) << std::endl;
+				return false;
+			} else if(OPTIONS.mIsDOLPatched && std::filesystem::exists(std::filesystem::path(OPTIONS.mRootPath) / "sys" / ".main_dol_backup") && dol.LoadDOLFile(std::filesystem::path(OPTIONS.mRootPath) / "sys" / ".main_dol_backup")){
+				if(!mStaticMapIO.RipStaticDataFromExecutable(dol, roomsMap, mName, "GLME01"))
+				{
+					std::cout << fmt::format("[MapDOMNode]: Failed to rip static map data to {0}", roomsMap.string()) << std::endl;
+					return false;
+				}
+			} else {
+				std::cout << "[MapDOMNode]: DOL checksum doesn't match clean executable and no .main_dol_backup present - not ripping rooms" << std::endl;
+			}
 		}
 	}
 
 	if (!ReadStaticData(roomsMap))
 	{
-		std::cout << fmt::format("Failed to open static data from {0}", roomsMap.string()) << std::endl;
+		std::cout << fmt::format("[MapDOMNode]: Failed to open static data from {0}", roomsMap.string()) << std::endl;
 		return false;
 	}
 
@@ -205,13 +214,13 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		bStream::CMemoryStream fileReader = bStream::CMemoryStream(jmpFile->GetData(), jmpFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 		if (!JmpIOManagers[entityType].Load(&fileReader))
 		{
-			printf("Error loading JMP data from \"%s\"\n", LEntityFileNames[entityType].c_str());
+			std::cout << fmt::format("[MapDOMNode]: Error loading JMP data from \"{}\"", LEntityFileNames[entityType].c_str()) << std::endl;
 			continue;
 		}
 
 		if (!LoadEntityNodes(&JmpIOManagers[entityType], (LEntityType)entityType))
 		{
-			printf("Error loading entities from \"%s\"\n", LEntityFileNames[entityType].c_str());
+			std::cout << fmt::format("[MapDOMNode]: Error loading entities from \"{}\"", LEntityFileNames[entityType].c_str()) << std::endl;
 			continue;
 		}
 	}
@@ -365,7 +374,7 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 
 		if (jmpTemplate.find("fields") == jmpTemplate.end())
 		{
-			std::cout << fmt::format("Failed to read JSON at {0}", (RES_BASE_PATH / "jmp_templates" / "path.json").string());
+			std::cout << fmt::format("[MapDOMNode]: Failed to read JSON at {0}", (RES_BASE_PATH / "jmp_templates" / "path.json").string());
 			return false;
 		}
 
@@ -452,7 +461,7 @@ bool LMapDOMNode::SaveMapToFiles(std::filesystem::path folder_path)
 
 		if (jmpTemplate.find("fields") == jmpTemplate.end())
 		{
-			std::cout << fmt::format("Failed to read JSON at {0}", (RES_BASE_PATH / "jmp_templates" / "path.json").string());
+			std::cout << fmt::format("[MapDOMNode]: Failed to read JSON at {0}", (RES_BASE_PATH / "jmp_templates" / "path.json").string());
 			return false;
 		}
 

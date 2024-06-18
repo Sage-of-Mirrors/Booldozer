@@ -245,12 +245,12 @@ void LPathMode::RenderRoomContextMenu(std::shared_ptr<LRoomDOMNode> room)
 
 void LPathMode::OnBecomeActive()
 {
-	std::cout << "Path mode switching in!" << std::endl;
+	std::cout << "[Booldozer]: Path mode switching in!" << std::endl;
 }
 
 void LPathMode::OnBecomeInactive()
 {
-	std::cout << "Path mode switching out!" << std::endl;
+	std::cout << "[Booldozer]: Path mode switching out!" << std::endl;
 }
 
 LPathDOMNode* LPathMode::GetPathDragDropNode()

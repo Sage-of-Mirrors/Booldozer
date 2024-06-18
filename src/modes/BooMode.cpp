@@ -62,10 +62,10 @@ void LBooMode::RenderGizmo(LEditorScene* renderer_scene){
 
 void LBooMode::OnBecomeActive()
 {
-	printf("Boo mode switching in!\n");
+	std::cout << "[Booldozer]: Boo mode switching in!\n" << std::endl;
 }
 
 void LBooMode::OnBecomeInactive()
 {
-	printf("Boo mode switching out!\n");
+	std::cout << "[Booldozer]: Boo mode switching out!\n" << std::endl;
 }

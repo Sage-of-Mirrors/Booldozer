@@ -55,7 +55,7 @@ void LEventMode::RenderDetailsWindow(LSceneCamera* camera)
 			std::shared_ptr<LEventDataDOMNode> selection = std::static_pointer_cast<LEventDataDOMNode>(mSelectionManager.GetPrimarySelection());
 
 			if(ImGui::Button("Save Event")){
-				std::cout << "Saving Event Archive" << std::endl;
+				std::cout << "[EventMode]: Saving Event Archive" << std::endl;
 				selection->mEventScript = mEditor.GetText();
 				selection->SaveEventArchive();
 			}
@@ -102,11 +102,11 @@ void LEventMode::RenderGizmo(LEditorScene* renderer_scene){
 
 void LEventMode::OnBecomeActive()
 {
-	printf("Event mode switching in.\n");
+	std::cout << "[Booldozer]: Event mode switching in" << std::endl;
 	
 }
 
 void LEventMode::OnBecomeInactive()
 {
-	printf("Event mode switching out!\n");
+	std::cout << "[Booldozer]: Event mode switching out" << std::endl;
 }

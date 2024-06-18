@@ -340,7 +340,7 @@ std::vector<BinVertex> ReadGXPrimitives(bStream::CStream* stream, std::vector<gl
         for (auto& vtx : primVertices)
         {
             if(vtx.first > vertices.size() || vtx.second > texcoords.size()){
-                std::cout << "Error Loading Model! Primitives are wrong? Vertex " << vtx.first << " out of range " << vertices.size() << " or TexCoord " << vtx.second << " out of range " << texcoords.size() << std::endl;
+                std::cout << "[Bin Loader]: Error Loading Model! Primitives are wrong? Vertex " << vtx.first << " out of range " << vertices.size() << " or TexCoord " << vtx.second << " out of range " << texcoords.size() << std::endl;
                 return vd_out;
             }
         }
@@ -760,8 +760,7 @@ void BinModel::DestroyShaders(){
 
 
 void BinModel::InitShaders(){
-    std::cout << "Compiling shaders for bin?" << std::endl; 
-    	//Compile Shaders
+    //Compile Shaders
     char glErrorLogBuffer[4096];
     GLuint vs = glCreateShader(GL_VERTEX_SHADER);
     GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
@@ -779,7 +778,7 @@ void BinModel::InitShaders(){
 
         glGetShaderInfoLog(vs, infoLogLength, NULL, glErrorLogBuffer);
 
-        printf("Compile failure in vertex shader:\n%s\n", glErrorLogBuffer);
+        printf("[Bin Loader]: Compile failure in vertex shader:\n%s\n", glErrorLogBuffer);
     }
 
     glCompileShader(fs);
@@ -791,7 +790,7 @@ void BinModel::InitShaders(){
 
         glGetShaderInfoLog(fs, infoLogLength, NULL, glErrorLogBuffer);
 
-        printf("Compile failure in fragment shader:\n%s\n", glErrorLogBuffer);
+        printf("[Bin Loader]: Compile failure in fragment shader:\n%s\n", glErrorLogBuffer);
     }
 
     mProgramID = glCreateProgram();
@@ -806,7 +805,7 @@ void BinModel::InitShaders(){
         GLint logLen; 
         glGetProgramiv(mProgramID, GL_INFO_LOG_LENGTH, &logLen); 
         glGetProgramInfoLog(mProgramID, logLen, NULL, glErrorLogBuffer); 
-        printf("Shader Program Linking Error:\n%s\n", glErrorLogBuffer);
+        printf("[Bin Loader]: Shader Program Linking Error:\n%s\n", glErrorLogBuffer);
     } 
 
     glDetachShader(mProgramID, vs);

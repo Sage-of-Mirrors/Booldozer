@@ -101,7 +101,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 				ActiveRoomArchive = Archive::Rarc::Create();
 				bStream::CFileStream arcFile(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
 				if(!ActiveRoomArchive->Load(&arcFile)){
-					std::cout << "failed to load room arc " << resPath.string() << std::endl;
+					std::cout << "[RoomDOMNode]: Failed to load room archive " << resPath.string() << std::endl;
 					ActiveRoomArchive = nullptr;
 				}
 				//ImGuiFileDialog::Instance()->OpenDialog("addModelToRoomArchiveDialog", "Select Model", "Bin Model (*.bin){.bin}", OPTIONS.mRootPath);
@@ -116,7 +116,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 			auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
 
 			std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
-			std::cout << "Loading arc " << resPath.string() << std::endl;
+			std::cout << "[RoomDOMNode]: Loading arc " << resPath.string() << std::endl;
 			if(std::filesystem::exists(resPath) && resPath.extension().string() == ".arc"){
 				if(ActiveRoomArchive != nullptr){
 					bStream::CFileStream modelFile(modelPath, bStream::Endianess::Big, bStream::OpenMode::In);
@@ -125,7 +125,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 					uint8_t* modelData = new uint8_t[modelFile.getSize()]{};
 					modelFile.readBytesTo(modelData, modelFile.getSize());
 
-					std::cout << "Adding model " << std::filesystem::path(modelPath).filename().string() << " to archive" << resPath.string() << std::endl;
+					std::cout << "[RoomDOMNode]: Adding model " << std::filesystem::path(modelPath).filename().string() << " to archive" << resPath.string() << std::endl;
 					newFile->SetName(std::filesystem::path(modelPath).filename().string());
 					newFile->SetData(modelData, modelFile.getSize());
 
@@ -375,7 +375,7 @@ void LRoomDOMNode::RenderWaveHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEd
 							Groups[i].EntityNodes.push_back(sharedNode);
 							sharedNode->SetCreateName(Groups[i].CreateName);
 
-							std::cout << "Moved " << dragDropNode->GetName() << " from group " << originGroup->CreateName << " to group " << sharedNode->GetCreateName() << std::endl;
+							std::cout << "[RoomDOMNode]: Moved " << dragDropNode->GetName() << " from group " << originGroup->CreateName << " to group " << sharedNode->GetCreateName() << std::endl;
 						}
 					}
 
@@ -724,7 +724,6 @@ void LRoomDOMNode::PreProcess(){
 
 			binWriteStream.seek(12 + (0x04 * 12));
 			uint32_t offset = binWriteStream.readUInt32() + 0x08 + (0x0C * 2) + 0x04;
-			std::cout << "root transform offset " << std::hex << offset << std::endl;
 
 			float x = 0.0f, y = 0.0f, z = 0.0f;
 			binWriteStream.seek(offset);

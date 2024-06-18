@@ -222,10 +222,10 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 
 void LActorMode::OnBecomeActive()
 {
-	printf("Actor mode switching in!\n");
+	std::cout << "[Booldozer]: Actor mode switching in!\n" << std::endl;
 }
 
 void LActorMode::OnBecomeInactive()
 {
-	printf("Actor mode switching out!\n");
+	std::cout << "[Booldozer]: Actor mode switching out!\n" << std::endl;
 }

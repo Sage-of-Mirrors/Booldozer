@@ -2,6 +2,7 @@
     "name" : "booldozer",
     "version-string" : "booldozer-beta",
     "dependencies": [
-        "icu"
+        "icu",
+        "bzip2"
     ]
 }

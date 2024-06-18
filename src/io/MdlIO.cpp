@@ -174,7 +174,7 @@ namespace MDL {
                 }
             }
         default:
-            std::cout << "No Decoder for 0x" << (int)Format << std::endl;
+            std::cout << "[MDL Loader]: No Decoder for 0x" << (int)Format << std::endl;
             break;
         }
 
@@ -283,7 +283,7 @@ namespace MDL {
             GLint infoLogLength;
             glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &infoLogLength);
             glGetShaderInfoLog(vs, infoLogLength, NULL, glErrorLogBuffer);
-            printf("Compile failure in mdl vertex shader:\n%s\n", glErrorLogBuffer);
+            printf("[MDL Loader]: Compile failure in mdl vertex shader:\n%s\n", glErrorLogBuffer);
         }
         glCompileShader(fs);
         glGetShaderiv(fs, GL_COMPILE_STATUS, &status);
@@ -291,7 +291,7 @@ namespace MDL {
             GLint infoLogLength;
             glGetShaderiv(fs, GL_INFO_LOG_LENGTH, &infoLogLength);
             glGetShaderInfoLog(fs, infoLogLength, NULL, glErrorLogBuffer);
-            printf("Compile failure in mdl fragment shader:\n%s\n", glErrorLogBuffer);
+            printf("[MDL Loader]: Compile failure in mdl fragment shader:\n%s\n", glErrorLogBuffer);
         }
         mProgram = glCreateProgram();
         glAttachShader(mProgram, vs);
@@ -302,7 +302,7 @@ namespace MDL {
             GLint logLen; 
             glGetProgramiv(mProgram, GL_INFO_LOG_LENGTH, &logLen); 
             glGetProgramInfoLog(mProgram, logLen, NULL, glErrorLogBuffer); 
-            printf("Shader Program Linking Error:\n%s\n", glErrorLogBuffer);
+            printf("[MDL Loader]: Shader Program Linking Error:\n%s\n", glErrorLogBuffer);
         } 
         glDetachShader(mProgram, vs);
         glDetachShader(mProgram, fs);
@@ -313,7 +313,7 @@ namespace MDL {
     void Model::Load(bStream::CStream* stream){
         stream->readBytesTo((uint8_t*)&mHeader, sizeof(mHeader));
 
-        std::cout << "Reading Model Start" << std::endl;
+        std::cout << "[MDL Loader]: Reading Model Start" << std::endl;
 
         mTexturesHeaders = ReadSection<TextureHeader>(stream, mHeader.TextureOffsetArray, mHeader.TextureCount);
         mSamplers = ReadSection<Sampler>(stream, mHeader.SamplerOffset, mHeader.SamplerCount);
@@ -348,7 +348,6 @@ namespace MDL {
         }
 
         stream->seek(LGenUtility::SwapEndian<uint32_t>(mHeader.ColorsOffset));
-        std::cout << LGenUtility::SwapEndian<uint16_t>(mHeader.ColorCount) << std::endl;
         for (size_t i = 0; i < LGenUtility::SwapEndian<uint16_t>(mHeader.ColorCount); i++){
             mColors.push_back({stream->readUInt8() / 255.0f, stream->readUInt8() / 255.0f, stream->readUInt8() / 255.0f, stream->readUInt8() / 255.0f});
         }
@@ -573,7 +572,7 @@ namespace MDL {
                         break;
 
                     default:
-                        std::cout << "Oops unimplemented primitive " << fmt::format("{0}", opcode) << " type in mdl" << std::endl; 
+                        std::cout << "[MDL Loader]: Unimplemented primitive " << fmt::format("{0}", opcode) << std::endl; 
                         break;
                     }
                 }
@@ -604,9 +603,6 @@ namespace MDL {
             mShapes[drawElement.ShapeIndex].VertexCount = triangulatedPrimitives.size();
 
         }
-
-
-        std::cout << "Reading Model End" << std::endl;
 
     }
 

@@ -14,7 +14,7 @@ void LResUtility::LGCResourceManager::Init()
 	std::filesystem::path gameArcPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Game" / "game_usa.szp";
 	bStream::CFileStream gameArchiveFileStream(gameArcPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
 	if(!mGameArchive->Load(&gameArchiveFileStream)){
-		std::cout << "Unable to load Game Archive " << gameArcPath.string() << std::endl;
+		std::cout << "[ResUtil]: Unable to load Game Archive " << gameArcPath.string() << std::endl;
 		mLoadedGameArchive = false;
 	} else {
 		mLoadedGameArchive = true;
@@ -29,7 +29,7 @@ nlohmann::ordered_json LResUtility::DeserializeJSON(std::filesystem::path file_p
 
 	if (file_path.empty() || !std::filesystem::exists(file_path))
 	{
-		std::cout << fmt::format("Unable to load JSON file from {0}", file_path.string()) << std::endl;
+		std::cout << fmt::format("[ResUtil]: Unable to load JSON file from {0}", file_path.string()) << std::endl;
 		return j;
 	}
 
@@ -70,13 +70,13 @@ uint32_t LResUtility::GetStaticMapDataOffset(std::string mapName, std::string re
 
 	if (deserializedJson.find(mapName) == deserializedJson.end())
 	{
-		std::cout << fmt::format("Map {0} not found in static room data at {1}\n", mapName, fullPath.string());
+		std::cout << fmt::format("[ResUtil]: Map {0} not found in static room data at {1}\n", mapName, fullPath.string());
 		return 0;
 	}
 
 	if (deserializedJson[mapName].find(region) == deserializedJson[mapName].end())
 	{
-		std::cout << fmt::format("Map {0} does not have static room data for region {1}\n", mapName, region);
+		std::cout << fmt::format("[ResUtil]: Map {0} does not have static room data for region {1}\n", mapName, region);
 		return 0;
 	}
 
@@ -106,7 +106,7 @@ std::tuple<std::string, std::string, bool> LResUtility::GetActorModelFromName(st
 
 	if (deserializedJson.find(name) == deserializedJson.end())
 	{
-		std::cout << fmt::format("Actor {0} not found in actor data\n", name);
+		std::cout << fmt::format("[ResUtil]: Actor {0} not found in actor data\n", name);
 		return {name, "", false};
 	}
 
@@ -140,5 +140,5 @@ void LResUtility::SaveUserSettings()
 	if (destFile.is_open())
 		destFile << serialize;
 	else
-		std::cout << fmt::format("Error saving user settings to {0}", fullPath.string());
+		std::cout << fmt::format("[ResUtil]: Error saving user settings to {0}", fullPath.string());
 }

@@ -91,8 +91,6 @@ void LCharacterDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetFloat(entry_index, "dir_y", mRotation.y);
 	JmpIO->SetFloat(entry_index, "dir_z", mRotation.x);
 
-
-	std::cout << "Writing character " << mName << " as in room " << mRoomNumber << std::endl;
 	JmpIO->SetSignedInt(entry_index, "room_no", mRoomNumber);
 
 	JmpIO->SetSignedInt(entry_index, "appear_flag", mSpawnFlag);

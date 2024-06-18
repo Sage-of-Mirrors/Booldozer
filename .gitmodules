@@ -23,3 +23,6 @@
 [submodule "lib/ImGuiFileDialog"]
 	path = lib/ImGuiFileDialog
 	url = https://github.com/aiekick/ImGuiFileDialog.git
+[submodule "lib/bsdifflib"]
+	path = lib/bsdifflib
+	url = https://github.com/petervas/bsdifflib.git

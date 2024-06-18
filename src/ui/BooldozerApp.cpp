@@ -13,8 +13,6 @@
 
 #include <IconsForkAwesome.h>
 
-#include <DiscordIntegration.hpp>
-
 constexpr int GL_VERSION_MAJOR = 4;
 constexpr int GL_VERSION_MINOR = 6;
 constexpr int GL_PROFILE = GLFW_OPENGL_CORE_PROFILE;
@@ -27,29 +25,11 @@ void DealWithGLErrors(GLenum source, GLenum type, GLuint id, GLenum severity, GL
 }
 
 bool LBooldozerApp::Setup() {
-
-	/*
-	mDiscordHandlers.ready = Discord::HandleReady;
-	mDiscordHandlers.disconnected = Discord::HandleDisconnected;
-	mDiscordHandlers.errored = Discord::HandleError;
-	mDiscordHandlers.joinGame = Discord::HandleJoin;
-	mDiscordHandlers.spectateGame = Discord::HandleSpectate;
-	mDiscordHandlers.joinRequest = Discord::HandleJoinRequest;
-
-	Discord_Initialize(AppID, &mDiscordHandlers, 1, NULL);
-
-	Discord::RichPresence.state = "Editing Map";
-	Discord::RichPresence.details = "No Room Selected";
-	Discord::RichPresence.largeImageKey = "weeg";
-	Discord::RichPresence.startTimestamp = 0;
-	Discord_UpdatePresence(&Discord::RichPresence);
-	*/
-
     GCResourceManager.Init();
     
 	// Init GLFW
 	if (!glfwInit()) {
-		std::cout << "Failed to init GLFW!" << std::endl;
+		std::cout << "[Booldozer]: Failed to init GLFW!" << std::endl;
 		return false;
 	}
 
@@ -65,8 +45,8 @@ bool LBooldozerApp::Setup() {
 		const char* err;
 		glfwGetError(&err);
 
-		std::cout << "Failed to create GLFW window!" << std::endl;
-		std::cout << err << std::endl;
+		std::cout << "[Booldozer]: Failed to create GLFW window!" << std::endl;
+		std::cout << "[Booldozer]: " << err << std::endl;
 		glfwTerminate();
 		return false;
 	}

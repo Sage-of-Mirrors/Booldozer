@@ -65,7 +65,7 @@ void CPathRenderer::Init() {
 	
 	        glGetShaderInfoLog(vs, infoLogLength, NULL, glErrorLogBuffer);
 	
-	        printf("Compile failure in vertex shader:\n%s\n", glErrorLogBuffer);
+	        printf("[Path Renderer]: Compile failure in vertex shader:\n%s\n", glErrorLogBuffer);
 	    }
 	
 	    glCompileShader(fs);
@@ -77,7 +77,7 @@ void CPathRenderer::Init() {
 	
 	        glGetShaderInfoLog(fs, infoLogLength, NULL, glErrorLogBuffer);
 	
-	        printf("Compile failure in fragment shader:\n%s\n", glErrorLogBuffer);
+	        printf("[Path Renderer]: Compile failure in fragment shader:\n%s\n", glErrorLogBuffer);
 	    }
 	
 	    mShaderID = glCreateProgram();
@@ -92,7 +92,7 @@ void CPathRenderer::Init() {
 	        GLint logLen; 
 	        glGetProgramiv(mShaderID, GL_INFO_LOG_LENGTH, &logLen); 
 	        glGetProgramInfoLog(mShaderID, logLen, NULL, glErrorLogBuffer); 
-	        printf("Path Shader Program Linking Error:\n%s\n", glErrorLogBuffer);
+	        printf("[Path Renderer]: Path Shader Program Linking Error:\n%s\n", glErrorLogBuffer);
 	    } 
 	
 	    glDetachShader(mShaderID, vs);

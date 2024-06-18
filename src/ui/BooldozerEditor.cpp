@@ -15,6 +15,9 @@
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
 #include <glad/glad.h>
 
+#include <bzlib.h>
+#include "../lib/bsdifflib/bspatchlib.h"
+
 LBooldozerEditor::LBooldozerEditor()
 {
 	CurrentMode = EEditorMode::Actor_Mode;
@@ -86,8 +89,55 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 		ImGui::DockBuilderFinish(mMainDockSpaceID);
 		bInitialized = true;
-	}
 
+		if(OPTIONS.mRootPath != "" && !OPTIONS.mIsDOLPatched){
+			ImGui::OpenPopup("Unpatched DOL");
+		}
+	}
+	
+	if (ImGui::BeginPopupModal("Unpatched DOL", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("This root has a clean DOL. Certain edits will not be reflected in game!");
+		ImGui::Text("Apply externalized map data patch?");
+		ImGui::Separator();
+		if (ImGui::Button("Yes")) {
+			// Backup clean DOL - rip map data from there
+			// Apply BSDiff Patch to add room loading
+			
+			std::filesystem::path patchPath = std::filesystem::current_path() / RES_BASE_PATH / "externalizemaps.patch";
+			std::filesystem::path dolPath = std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol";
+			std::filesystem::path patchedPath = std::filesystem::path(OPTIONS.mRootPath) / "sys" / "patched.dol";
+			std::filesystem::path backupPath = std::filesystem::path(OPTIONS.mRootPath) / "sys" / ".main_dol_backup";
+
+			if(std::filesystem::exists(patchedPath)){
+				std::filesystem::remove(patchedPath);
+			}
+
+			if(std::filesystem::exists(backupPath)){
+				std::filesystem::remove(backupPath);
+			}
+
+			//Copy DOL to a backup
+			std::filesystem::copy(dolPath, std::filesystem::path(OPTIONS.mRootPath) / "sys" / ".main_dol_backup");
+
+			if(std::filesystem::exists(patchPath)){
+				bspatch(dolPath.string().c_str(), patchedPath.string().c_str(), patchPath.string().c_str());
+				std::filesystem::remove(dolPath);
+				std::filesystem::copy(patchedPath, dolPath);
+				std::filesystem::remove(patchedPath);
+				OPTIONS.mIsDOLPatched = true;
+			} else {
+				// show err
+			}
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("No")) {
+			ImGui::CloseCurrentPopup();
+		} 
+		ImGui::EndPopup();
+	}
+		
 	if (LUIUtility::RenderFileDialog("OpenMapDlg", path))
 	{
 		GetSelectionManager()->ClearSelection();
@@ -137,7 +187,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	glBindFramebuffer(GL_FRAMEBUFFER, mFbo);
 
 	if(winSize.x != mPrevWinWidth || winSize.y != mPrevWinHeight){
-		std::cout << "Regenerating textures..." << std::endl;
+		std::cout << "[Booldozer]: Regenerating textures..." << std::endl;
 		glDeleteTextures(1, &mViewTex);
 		glDeleteTextures(1, &mPickTex);
 		glDeleteRenderbuffers(1, &mRbo);
@@ -195,8 +245,6 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 		glReadBuffer(GL_COLOR_ATTACHMENT1);
 		glReadPixels(mousePos.x - cursorPos.x, ((uint32_t)winSize.y) - (mousePos.y - cursorPos.y), 1, 1, GL_RED_INTEGER, GL_INT, (void*)&id);
-
-		std::cout << "Read clicked id from " << mousePos.x - cursorPos.x << " " << mousePos.y - cursorPos.y << " as " << id << std::endl;
 
 		for(auto node : mLoadedMap->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)){
 			if(node->GetID() == id){
@@ -291,7 +339,7 @@ void LBooldozerEditor::onAppendMapCB()
 
 void LBooldozerEditor::onOpenRoomsCB()
 {
-	std::cout << "User selected open room(s)!" << std::endl;
+	std::cout << "[Booldozer]: User selected open room(s)!" << std::endl;
 }
 
 void LBooldozerEditor::onSaveMapCB()
