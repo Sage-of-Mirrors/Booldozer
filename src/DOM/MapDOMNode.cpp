@@ -133,7 +133,9 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 					return false;
 				}
 			} else {
-				std::cout << "[MapDOMNode]: DOL checksum doesn't match clean executable and no .main_dol_backup present - not ripping rooms" << std::endl;
+				std::cout << "[MapDOMNode]: DOL checksum doesn't match clean executable and no .main_dol_backup present - not ripping rooms.\n[MapDOMNode]: Did you edit this DOL yourself? Use a clean one, patch it with booldozer, and copy your edits!" << std::endl;
+				ImGui::OpenPopup("Map Extraction Error");
+				return false;
 			}
 		}
 	}

@@ -18,6 +18,10 @@
 #include <bzlib.h>
 #include "../lib/bsdifflib/bspatchlib.h"
 
+namespace {
+	char* patchErrorMsg = nullptr;
+}
+
 LBooldozerEditor::LBooldozerEditor()
 {
 	CurrentMode = EEditorMode::Actor_Mode;
@@ -95,15 +99,55 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		}
 	}
 	
+	if (ImGui::BeginPopupModal("Map Extraction Error", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::NewLine();
+		ImGui::Text("Couldn't rip static map data from dol. Did you edit your DOL already?");
+		ImGui::NewLine();
+		ImGui::Text("How to fix:");
+		if(ImGui::TreeNode("I want my edited rooms and doors to show up in game!")){
+			ImGui::Bullet();
+			ImGui::SameLine();
+			ImGui::Text("Backup edited dol");
+			ImGui::Bullet();
+			ImGui::SameLine();
+			ImGui::Text("Extract *CLEAN DOL* from iso/gcm");
+			ImGui::Bullet();
+			ImGui::SameLine();
+			ImGui::Text("Place clean dol at '<root>/sys/main.dol'");
+			ImGui::Bullet();
+			ImGui::SameLine();
+			ImGui::Text("Restart Booldozer and apply patch");
+			ImGui::Bullet();
+			ImGui::SameLine();
+			ImGui::Text("Re-apply your modifications to newly patched dol");
+			ImGui::TreePop();
+		}
+		
+		if(ImGui::TreeNode("Just show me the map!")){
+			ImGui::Bullet();
+			ImGui::SameLine();
+			ImGui::Text("Extract *CLEAN DOL* from iso/gcm");
+			ImGui::Bullet();
+			ImGui::SameLine();
+			ImGui::Text("Place clean dol at '<root>/sys/.main_dol_backup'");
+			ImGui::TreePop();
+		}
+
+		ImGui::Separator();
+		
+		if (ImGui::Button("Ok")) {
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+
 	if (ImGui::BeginPopupModal("Unpatched DOL", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		ImGui::Text("This root has a clean DOL. Certain edits will not be reflected in game!");
 		ImGui::Text("Apply externalized map data patch?");
 		ImGui::Separator();
 		if (ImGui::Button("Yes")) {
-			// Backup clean DOL - rip map data from there
-			// Apply BSDiff Patch to add room loading
-			
 			std::filesystem::path patchPath = std::filesystem::current_path() / RES_BASE_PATH / "externalizemaps.patch";
 			std::filesystem::path dolPath = std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol";
 			std::filesystem::path patchedPath = std::filesystem::path(OPTIONS.mRootPath) / "sys" / "patched.dol";
@@ -119,22 +163,47 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 			//Copy DOL to a backup
 			std::filesystem::copy(dolPath, std::filesystem::path(OPTIONS.mRootPath) / "sys" / ".main_dol_backup");
-
+		
 			if(std::filesystem::exists(patchPath)){
-				bspatch(dolPath.string().c_str(), patchedPath.string().c_str(), patchPath.string().c_str());
-				std::filesystem::remove(dolPath);
-				std::filesystem::copy(patchedPath, dolPath);
-				std::filesystem::remove(patchedPath);
-				OPTIONS.mIsDOLPatched = true;
-			} else {
-				// show err
+				patchErrorMsg = bspatch(dolPath.string().c_str(), patchedPath.string().c_str(), patchPath.string().c_str());
+				if(patchErrorMsg == NULL){
+					std::filesystem::remove(dolPath);
+					std::filesystem::copy(patchedPath, dolPath);
+					std::filesystem::remove(patchedPath);
+					OPTIONS.mIsDOLPatched = true;
+				} else {
+					ImGui::OpenPopup("Patching Error");
+				}
 			}
-			ImGui::CloseCurrentPopup();
+				ImGui::CloseCurrentPopup();
+			} else {
+				ImGui::OpenPopup("Missing Patch File");
+				ImGui::CloseCurrentPopup();
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("No")) {
 			ImGui::CloseCurrentPopup();
 		} 
+		ImGui::EndPopup();
+	}
+
+	if (ImGui::BeginPopupModal("Patching Error", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("Error Applying Patch: %s", patchErrorMsg);
+		ImGui::Separator();
+		if (ImGui::Button("Ok")) {
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+
+	if (ImGui::BeginPopupModal("Missing Patch File", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("Patch file not found!");
+		ImGui::Separator();
+		if (ImGui::Button("Ok")) {
+			ImGui::CloseCurrentPopup();
+		}
 		ImGui::EndPopup();
 	}
 		
