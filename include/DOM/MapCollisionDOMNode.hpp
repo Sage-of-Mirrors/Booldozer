@@ -38,33 +38,22 @@ struct LCollisionGridCell {
 
 class LMapCollisionDOMNode : public LBGRenderDOMNode
 {
-private:
-	int W1 { 1 }, W2 { 1 };
-
-
-	std::vector<glm::vec3> mNormalData;
-
-	std::vector<std::shared_ptr<LCollisionTriangle>> mTriangles;
-
 
 public:
 	typedef LBGRenderDOMNode Super;
 
 	std::vector<glm::vec3> mPositionData;
-	std::vector<std::shared_ptr<LTriangleGroup>> mTriangleGroups;
+	std::vector<glm::vec3> mNormalData;
+	std::vector<std::shared_ptr<LCollisionTriangle>> mTriangles;
 
 	bool mDirty { false };
-	bool mGridRender { true };
-	int mGridYLevel { 0 };
-	int mGridZLevel { 0 };
-	uint32_t mGridDimension[3];
-	std::shared_ptr<LCollisionGridCell> mSelectedCell { nullptr };
+	bool mWasRendered { false };
 	glm::vec3 mGridScale, mMinBounds, mAxisLengths;
-	std::vector<std::shared_ptr<LCollisionGridCell>> mGrid;
 
 	LMapCollisionDOMNode(std::string name);
 
 	virtual std::string GetName() override;
+	virtual void RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection) override;
 	virtual void RenderDetailsUI(float dt) override;
 
 	bool Load(bStream::CMemoryStream* stream);

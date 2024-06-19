@@ -47,7 +47,7 @@ void LObjectDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
     JmpIO->SetFloat(entry_index, "pos_z", mPosition.x);
 
     JmpIO->SetFloat(entry_index, "dir_x", mRotation.z);
-    JmpIO->SetFloat(entry_index, "dir_y", mRotation.y);
+    JmpIO->SetFloat(entry_index, "dir_y", -mRotation.y);
     JmpIO->SetFloat(entry_index, "dir_z", mRotation.x);
 
     JmpIO->SetFloat(entry_index, "scale_x", mScale.z);
@@ -75,7 +75,7 @@ void LObjectDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
     mPosition.x = JmpIO->GetFloat(entry_index, "pos_z");
 
     mRotation.z = JmpIO->GetFloat(entry_index, "dir_x");
-    mRotation.y = JmpIO->GetFloat(entry_index, "dir_y");
+    mRotation.y = -JmpIO->GetFloat(entry_index, "dir_y");
     mRotation.x = JmpIO->GetFloat(entry_index, "dir_z");
 
     mScale.z = JmpIO->GetFloat(entry_index, "scale_x");

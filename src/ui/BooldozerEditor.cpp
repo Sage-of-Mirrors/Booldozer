@@ -134,6 +134,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 			ImGui::TreePop();
 		}
 
+		ImGui::NewLine();
 		ImGui::Separator();
 		
 		if (ImGui::Button("Ok")) {

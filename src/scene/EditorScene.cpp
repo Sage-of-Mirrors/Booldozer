@@ -199,47 +199,20 @@ void LEditorScene::UpdateRenderers(){
 	if(auto firstRoom = mCurrentRooms[0].lock()){
 		std::shared_ptr<LMapDOMNode> mapNode = firstRoom->GetParentOfType<LMapDOMNode>(EDOMNodeType::Map).lock();
 		std::shared_ptr<LMapCollisionDOMNode> col = mapNode->GetChildrenOfType<LMapCollisionDOMNode>(EDOMNodeType::MapCollision)[0];
-	
+		if(col->GetIsRendered()){
 		// More Stupid Code. Why?
 
-		//for(int z = 0; z < col->mGridDimension[2]; z++){
-		//	for(int y = 0; y < col->mGridDimension[1]; y++){
-				for(int x = 0; x < col->mGridDimension[0]; x++){
-					auto gridCell = col->mGrid[x + (col->mGridYLevel * col->mGridDimension[0]) + (col->mGridZLevel * col->mGridDimension[0] * col->mGridDimension[1])];
-					uint32_t color = ~rand() & 0xFFFFFF;
-					glm::vec4 triColor = glm::vec4((float)(color >> 16 & 0xFF) / 255.0f, (float)(color >> 8 & 0xFF) / 255.0f, (float)(color & 0xFF) / 255.0f, 1.0f);
-					if(!gridCell->allTriangles.lock()) continue;
-					for(auto triangleRef : gridCell->allTriangles.lock()->triangles){
-						if(auto triangle = triangleRef.lock()){
-							std::vector<CPathPoint> renderTri = {
-								{ col->mPositionData[triangle->positionIdx[0]], triColor, 7000, -1 },
-								{ col->mPositionData[triangle->positionIdx[1]], triColor, 7000, -1 },
-								{ col->mPositionData[triangle->positionIdx[2]], triColor, 7000, -1 },
-								{ col->mPositionData[triangle->positionIdx[0]], triColor, 7000, -1 },
-							};
-							mPathRenderer.mPaths.push_back(renderTri);
-						}
-					}
-				}			
-		//	}
-		//}
-
-		/*for(auto group : col->mTriangleGroups){
-			uint32_t color = ~rand() & 0xFFFFFF;
-			glm::vec4 triColor = glm::vec4((float)(color >> 16 & 0xFF) / 255.0f, (float)(color >> 8 & 0xFF) / 255.0f, (float)(color & 0xFF) / 255.0f, 1.0f);
-			if(!group->render) continue;
-			for(auto triangleRef : group->triangles){
-				if(auto triangle = triangleRef.lock()){
-					std::vector<CPathPoint> renderTri = {
-						{ col->mPositionData[triangle->positionIdx[0]], triColor, 7000, -1 },
-						{ col->mPositionData[triangle->positionIdx[1]], triColor, 7000, -1 },
-						{ col->mPositionData[triangle->positionIdx[2]], triColor, 7000, -1 },
-						{ col->mPositionData[triangle->positionIdx[0]], triColor, 7000, -1 },
-					};
-					mPathRenderer.mPaths.push_back(renderTri);
-				}
+			for(auto triangle : col->mTriangles){
+				std::vector<CPathPoint> renderTri = {
+					{ col->mPositionData[triangle->positionIdx[0]], {0.15, 0.675, 0.8, 1.0}, 7000, -1 },
+					{ col->mPositionData[triangle->positionIdx[1]], {0.15, 0.675, 0.8, 1.0}, 7000, -1 },
+					{ col->mPositionData[triangle->positionIdx[2]], {0.15, 0.675, 0.8, 1.0}, 7000, -1 },
+					{ col->mPositionData[triangle->positionIdx[0]], {0.15, 0.675, 0.8, 1.0}, 7000, -1 },
+				};
+				mPathRenderer.mPaths.push_back(renderTri);
 			}
-		}*/
+			col->mDirty = false;
+		}
 	}
 
 
