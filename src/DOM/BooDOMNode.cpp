@@ -38,7 +38,7 @@ void LBooDOMNode::RenderDetailsUI(float dt)
     LUIUtility::RenderTooltip("?");
 
     // Bools
-    LUIUtility::RenderCheckBox("Attacks?", &mAttacks);
+    LUIUtility::RenderCheckBox("Attacks", &mAttacks);
     LUIUtility::RenderTooltip("Whether the Boo should dive-bomb Luigi.");
 }
 

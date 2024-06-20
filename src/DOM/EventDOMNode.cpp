@@ -73,10 +73,10 @@ void LEventDOMNode::RenderDetailsUI(float dt)
 	LUIUtility::RenderTooltip("How Luigi must interact with the event to trigger it.");
 
 	// Bools
-	LUIUtility::RenderCheckBox("Disable Interruption?", &mCanBeInterrupted);
+	LUIUtility::RenderCheckBox("Disable Interruption", &mCanBeInterrupted);
 	LUIUtility::RenderTooltip("If checked, this event cannot be interrupted by another event triggering while this event is playing.");
 
-	LUIUtility::RenderCheckBox("Freeze Luigi?", &mFreezePlayer);
+	LUIUtility::RenderCheckBox("Freeze Luigi", &mFreezePlayer);
 	LUIUtility::RenderTooltip("Whether this event should freeze Luigi while it is loading.");
 }
 

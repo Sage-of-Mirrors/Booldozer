@@ -47,6 +47,7 @@ LRoomEntityType DOMToEntityType(EDOMNodeType type){
 LRoomDOMNode::LRoomDOMNode(std::string name) : LBGRenderDOMNode(name)
 {
 	mType = EDOMNodeType::Room;
+	mRoomModels.push_back("(null)");
 }
 
 void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection)
@@ -80,7 +81,11 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 						toDelete = file;
 					}
 				}
-				if(toDelete != nullptr) ActiveRoomArchive->GetRoot()->DeleteFile(toDelete);
+				
+				if(toDelete != nullptr){
+					ActiveRoomArchive->GetRoot()->DeleteFile(toDelete);
+					std::erase(mRoomModels, std::filesystem::path(toDelete->GetName()).filename().stem().string());
+				}
 
 				if(ImGui::Button("Done")){
 					auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
@@ -126,6 +131,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 					modelFile.readBytesTo(modelData, modelFile.getSize());
 
 					std::cout << "[RoomDOMNode]: Adding model " << std::filesystem::path(modelPath).filename().string() << " to archive" << resPath.string() << std::endl;
+					mRoomModels.push_back(std::filesystem::path(modelPath).filename().stem().string());
 					newFile->SetName(std::filesystem::path(modelPath).filename().string());
 					newFile->SetData(modelData, modelFile.getSize());
 
@@ -190,7 +196,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 
 			// This checkbox toggles rendering of this entire category of entities.
 			// Since it isn't a real node, we'll manually toggle the entities' visibility.
-			if (LUIUtility::RenderCheckBox("##type_is_rendered", &mRoomEntityVisibility[i]))
+			if (LUIUtility::RenderCheckBox(&mRoomEntityVisibility[i]))
 			{
 				for (auto n : mRoomEntities[i])
 					n->SetIsRendered(mRoomEntityVisibility[i]);
@@ -201,8 +207,10 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 			ImGui::Indent();
 
 			// Entity tree <i> start
-			if (ImGui::TreeNode(LRoomEntityTreeNodeNames[i].c_str()))
+			if (ImGui::TreeNodeEx(LRoomEntityTreeNodeNames[i].c_str(), ImGuiTreeNodeFlags_AllowOverlap))
 			{
+				ImGui::SameLine();
+				ImGui::Spacing();
 				ImGui::SameLine();
 				ImGui::Text(ICON_FK_PLUS_CIRCLE);
 				if(ImGui::IsItemClicked())
@@ -224,6 +232,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 						newNode->SetRoomNumber(mRoomNumber);
 						AddChild(newNode);
 						mRoomEntities[i].push_back(newNode);
+						mode_selection->ClearSelection();
 					}
 				}
 				ImGui::SameLine();
@@ -441,7 +450,7 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 	ImGui::ColorEdit3("Lit Color", mLightColor);
 
 	// Bools
-	LUIUtility::RenderCheckBox("Skybox Visible?", &mShouldRenderSkybox);
+	LUIUtility::RenderCheckBox("Skybox Visible", &mShouldRenderSkybox);
 	LUIUtility::RenderTooltip("Whether the map's skybox should be visible outside this room.");
 
 	ImGui::NewLine();
@@ -659,6 +668,25 @@ LEntityDOMNode* LRoomDOMNode::GetSpawnGroupDragDropNode()
 	}
 
 	return nullptr;
+}
+
+void LRoomDOMNode::PostProcess(){
+	std::cout << "[RoomDOMNode]: Post Processing Room" << std::endl;
+	auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+	std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
+	auto arc = Archive::Rarc::Create();
+	bStream::CFileStream arcFile(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
+	if(arc->Load(&arcFile)){
+		for(auto file : arc->GetRoot()->GetFiles()){
+			std::string filename = std::filesystem::path(file->GetName()).filename().stem().string();
+			std::cout << "[RoomDOMNode]: Loading room model " << filename << std::endl;
+			if(std::filesystem::path(file->GetName()).extension() == ".bin"){
+				mRoomModels.push_back(filename);
+			}
+		}
+	} else {
+		std::cout << "[RoomDOMNode]: Couldn't load archive " << resPath.string() << std::endl;
+	}
 }
 
 void LRoomDOMNode::PreProcess(){

@@ -68,11 +68,11 @@ void LCharacterDOMNode::RenderDetailsUI(float dt)
 	LUIUtility::RenderTooltip("How this character will behave.");
 
 	// Bools
-	LUIUtility::RenderCheckBox("Visible?", &mIsVisible);
+	LUIUtility::RenderCheckBox("Visible", &mIsVisible);
 	LUIUtility::RenderTooltip("Whether this character should be visible.");
 
-	LUIUtility::RenderCheckBox("Stay on path between rooms?", &mStay);
-	LUIUtility::RenderTooltip("Whether this character should remain on a path when Luigi moves between rooms.");
+	LUIUtility::RenderCheckBox("Always Active", &mStay);
+	LUIUtility::RenderTooltip("Keeps actor loaded regardless of current room");
 }
 
 void LCharacterDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const

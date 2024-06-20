@@ -308,6 +308,8 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 	renderer_scene->SetActive(ImGui::IsItemHovered());
 
+	if(ImGui::IsItemClicked(0) || ImGui::IsItemClicked(1)) ImGui::FocusItem();
+
 	if(ImGui::IsItemClicked() && mLoadedMap != nullptr && !ImGuizmo::IsOver()){
 		int32_t id;
 		ImVec2 mousePos = ImGui::GetMousePos();

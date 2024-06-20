@@ -270,6 +270,9 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	for (auto pathNode : GetChildrenOfType<LPathDOMNode>(EDOMNodeType::Path))
 		pathNode->PostProcess(mMapArchive);
 
+	for (auto roomNode : GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room))
+		roomNode->PostProcess();
+
 	for (auto doorNode : GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door))
 		doorNode->PostProcess();
 

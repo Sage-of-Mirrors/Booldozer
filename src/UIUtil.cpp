@@ -4,12 +4,28 @@
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
 #include <IconsForkAwesome.h>
 
-bool LUIUtility::RenderCheckBox(std::string name, bool* c)
+bool LUIUtility::RenderCheckBox(bool* c)
 {
 	if(*c){
 		ImGui::Text(ICON_FK_EYE);
 	} else {
 		ImGui::Text(ICON_FK_EYE_SLASH);
+	}
+
+	if(ImGui::IsItemClicked()){
+		*c = !(*c);
+		return true;
+	}
+
+	return false;
+}
+
+bool LUIUtility::RenderCheckBox(std::string name, bool* c)
+{
+	if(*c){
+		ImGui::Text(fmt::format("{} {}", ICON_FK_CHECK_CIRCLE_O, name).c_str());
+	} else {
+		ImGui::Text(fmt::format("{} {}", ICON_FK_CIRCLE_O, name).c_str());
 	}
 
 	if(ImGui::IsItemClicked()){

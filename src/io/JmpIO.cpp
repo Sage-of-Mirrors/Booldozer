@@ -218,7 +218,7 @@ bool LJmpIO::GetBoolean(uint32_t entry_index, std::string field_name){
 	const LJmpFieldInfo* field = FetchJmpFieldInfo(field_name);
 
 	if(entry_index < mData.size() && field != nullptr){
-		return std::get<uint32_t>(mData.at(entry_index).at(field->Hash));
+		return std::get<uint32_t>(mData.at(entry_index).at(field->Hash)) > 0;
 	} else {
 		return false;
 	}

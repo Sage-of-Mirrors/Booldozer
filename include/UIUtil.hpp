@@ -11,6 +11,7 @@ namespace LUIUtility
 {
 	// Renders a checkbox for the given boolean. Returns whether the checkbox was modified, in which case the bool pointer
 	// now contains the new state.
+	bool RenderCheckBox(bool* c);
 	bool RenderCheckBox(std::string name, bool* c);
 	// Renders a checkbox that toggles the given node's IsRendered state.
 	void RenderCheckBox(LDOMNodeBase* node);

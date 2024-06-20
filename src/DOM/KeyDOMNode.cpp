@@ -46,7 +46,7 @@ void LKeyDOMNode::RenderDetailsUI(float dt)
     LUIUtility::RenderTooltip("The way in which the key will spawn. Using the second option WILL crash the game.");
 
     // Bools
-    LUIUtility::RenderCheckBox("Visible?", &mIsVisible);
+    LUIUtility::RenderCheckBox("Visible", &mIsVisible);
     LUIUtility::RenderTooltip("Whether this key should be visible.");
 }
 

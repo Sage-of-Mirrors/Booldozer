@@ -45,8 +45,16 @@ void LFurnitureDOMNode::RenderDetailsUI(float dt)
 {
 	LUIUtility::RenderTransformUI(mTransform.get(), mPosition, mRotation, mScale);
 
-	LUIUtility::RenderTextInput("Model", &mModelName);
-	ImGui::InputInt("ruum", &mRoomNumber);
+	std::weak_ptr<LRoomDOMNode> roomNode = GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room);
+	if(ImGui::BeginCombo("Model", mModelName.c_str())){
+		for(auto furniture : roomNode.lock()->GetAvailableFurniture()){
+			if(ImGui::Selectable(furniture.c_str())){
+				mModelName = furniture;
+			}
+		}
+		ImGui::EndCombo();
+	}
+	//LUIUtility::RenderTextInput("Model", &mModelName);
 
 	LUIUtility::RenderTextInput("Name", &mName);
 	LUIUtility::RenderTooltip("The name of this furniture object. The game doesn't do anything with this, so feel free to use it for notes.");
@@ -113,13 +121,13 @@ void LFurnitureDOMNode::RenderDetailsUI(float dt)
 		LUIUtility::RenderComboEnum<ESheetTexture>("Sheet Texture", mSheetTexture);
 		LUIUtility::RenderTooltip("The texture that the sheet placed on this piece of furniture will use.");
 
-		LUIUtility::RenderCheckBox("Vaccuumable?", &mCanSheetBeVaccuumed);
+		LUIUtility::RenderCheckBox("Vaccuumable", &mCanSheetBeVaccuumed);
 		LUIUtility::RenderTooltip("Whether Luigi can vaccuum up the sheet. If unchecked, the sheet will eventually snap back and damage Luigi when vaccuumed.");
 		ImGui::Unindent();
 	}
 
 	// Bools
-	LUIUtility::RenderCheckBox("Cutaway?", &mShouldCutaway);
+	LUIUtility::RenderCheckBox("Cutaway", &mShouldCutaway);
 	LUIUtility::RenderTooltip("Whether this piece of furniture should disappear when Luigi walks behind it.");
 }
 

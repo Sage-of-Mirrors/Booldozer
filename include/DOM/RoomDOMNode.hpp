@@ -139,6 +139,8 @@ class LRoomDOMNode : public LBGRenderDOMNode, public ISerializable
 
 	std::vector<LSpawnGroup> Groups;
 
+	std::vector<std::string> mRoomModels;
+
 	void GetEntitiesWithCreateName(const std::string CreateName, const LRoomEntityType Type, std::vector<std::shared_ptr<LEntityDOMNode>>& TargetVec);
 	LSpawnGroup* GetSpawnGroupWithCreateName(std::string createName);
 	LEntityDOMNode* GetSpawnGroupDragDropNode();
@@ -161,6 +163,8 @@ public:
 	glm::vec3 GetRoomModelDelta() { return mRoomModelDelta; }
 	void SetRoomModelDelta(glm::vec3 v) { mRoomModelDelta = v; }
 
+	std::vector<std::string> GetAvailableFurniture(){ return mRoomModels; }
+
 	virtual void RenderDetailsUI(float dt) override;
 	virtual void RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection) override;
 	void RenderWaveHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection);
@@ -170,7 +174,7 @@ public:
 	// Writes the JMP data from this room into the given LJmpIO instance at the specified entry.
 	virtual void Serialize(LJmpIO* JmpIO, uint32_t entry_index) const override;
 
-	virtual void PostProcess() override { };
+	virtual void PostProcess() override;
 	virtual void PreProcess() override;
 
 	// Loads the BIN models from the given archive, distributes them to entities that need them, and does various other room-specific loading stuff.

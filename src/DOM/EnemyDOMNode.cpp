@@ -108,10 +108,10 @@ void LEnemyDOMNode::RenderDetailsUI(float dt)
     LUIUtility::RenderTooltip("The location at which the enemy will spawn. If Spawn on Path is selected, you must specify a valid Path Name.");
 
     // Bools
-    LUIUtility::RenderCheckBox("Visible?", &mIsVisible);
+    LUIUtility::RenderCheckBox("Visible", &mIsVisible);
     LUIUtility::RenderTooltip("Whether this enemy should be visible.");
 
-    LUIUtility::RenderCheckBox("Stay on path between rooms?", &mStay);
+    LUIUtility::RenderCheckBox("Stay on path between rooms", &mStay);
     LUIUtility::RenderTooltip("Whether this enemy should remain on a path when Luigi moves between rooms.");
 }
 
