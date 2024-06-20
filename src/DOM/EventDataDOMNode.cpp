@@ -36,19 +36,17 @@ void LEventDataDOMNode::RenderHierarchyUI(std::shared_ptr<LEventDataDOMNode> sel
 	}
 }
 
-void LEventDataDOMNode::RenderDetailsUI(float dt, TextEditor* editor)
+void LEventDataDOMNode::RenderDetailsUI(float dt, TextEditor* event, TextEditor* script)
 {
     ImGuiTabBarFlags tabflags = ImGuiTabBarFlags_None;
     if(ImGui::BeginTabBar("EventModeTabs", tabflags)){
         if(ImGui::BeginTabItem("Script")){
             //ImGui::InputTextMultiline("Script File", &mEventScript, {ImGui::GetWindowSize().x, ImGui::GetWindowSize().y - 50}, 0);
-            editor->Render("TextEditor");
+            event->Render("Event Script");
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Text")){
-            for (int i = 0; i < mEventText.size(); i++){
-                ImGui::InputText(fmt::format("Speak {0}", i).c_str(), &mEventText[i], 0);
-            }
+            script->Render("Event Text");
 
             ImGui::EndTabItem();
         }
@@ -67,13 +65,7 @@ void LEventDataDOMNode::LoadEventArchive(std::shared_ptr<Archive::Rarc> arc, std
     std::shared_ptr<Archive::File> txtFile = mEventArchive->GetFile(std::filesystem::path("text") / std::string(eventScriptName + ".txt"));
 
     if(msgFile != nullptr){
-        mEventText = {};
-
-        std::stringstream msgFileFull = std::stringstream(LGenUtility::SjisToUtf8(std::string((char*)msgFile->GetData(), msgFile->GetSize())));
-        std::string msg = "";
-        while(!std::getline(msgFileFull, msg).eof()){
-            mEventText.push_back(msg);
-        }
+        mEventText = LGenUtility::SjisToUtf8(std::string((char*)msgFile->GetData(), msgFile->GetSize()));
     }
 
     if(txtFile != nullptr){
@@ -86,10 +78,7 @@ void LEventDataDOMNode::SaveEventArchive(){
     std::shared_ptr<Archive::File> msgFile = mEventArchive->GetFile(std::filesystem::path("message") / std::string(mEventMessagePath + ".csv"));
     std::shared_ptr<Archive::File> txtFile = mEventArchive->GetFile(std::filesystem::path("text") / std::string(mEventScriptPath + ".txt"));
 
-    std::string msgFileData = "";
-    for (auto msg : mEventText){
-        msgFileData.append(LGenUtility::Utf8ToSjis(msg)+"\n");
-    }
+    std::string msgFileData = LGenUtility::Utf8ToSjis(mEventText);
     
     std::string txtFileData = LGenUtility::Utf8ToSjis(mEventScript);
     

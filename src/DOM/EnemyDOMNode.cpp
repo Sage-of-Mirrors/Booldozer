@@ -111,8 +111,8 @@ void LEnemyDOMNode::RenderDetailsUI(float dt)
     LUIUtility::RenderCheckBox("Visible", &mIsVisible);
     LUIUtility::RenderTooltip("Whether this enemy should be visible.");
 
-    LUIUtility::RenderCheckBox("Stay on path between rooms", &mStay);
-    LUIUtility::RenderTooltip("Whether this enemy should remain on a path when Luigi moves between rooms.");
+    LUIUtility::RenderCheckBox("Always Active", &mStay);
+    LUIUtility::RenderTooltip("Keeps actor loaded regardless of current room");
 }
 
 void LEnemyDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const

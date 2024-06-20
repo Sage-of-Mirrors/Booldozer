@@ -22,7 +22,7 @@ private:
 	std::string mEventScript;
     
 	//Lines of text from event's csv file
-	std::vector<std::string> mEventText;
+	std::string mEventText;
 public:
 	typedef LBGRenderDOMNode Super;
 
@@ -34,7 +34,7 @@ public:
 	void LoadEventArchive(std::shared_ptr<Archive::Rarc> arc, std::filesystem::path eventPath, std::string eventScriptName, std::string eventCsvName);
 	void SaveEventArchive();
 
-    void RenderDetailsUI(float dt, TextEditor* editor);
+    void RenderDetailsUI(float dt, TextEditor* script, TextEditor* text);
 	void RenderHierarchyUI(std::shared_ptr<LEventDataDOMNode> self, LEditorSelection* mode_selection);
 
 /*=== Type operations ===*/

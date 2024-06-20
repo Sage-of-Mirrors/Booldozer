@@ -25,7 +25,7 @@ void LItemInfoDOMNode::RenderDetailsUI(float dt)
 	//LUIUtility::RenderTooltip("");
 
 	// Bools
-	LUIUtility::RenderCheckBox("Allow Movement?", &mAllowMovement);
+	LUIUtility::RenderCheckBox("Allow Movement", &mAllowMovement);
 	LUIUtility::RenderTooltip("");
 }
 

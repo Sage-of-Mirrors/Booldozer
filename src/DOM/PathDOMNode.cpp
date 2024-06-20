@@ -127,10 +127,10 @@ void LPathDOMNode::RenderDetailsUI(float dt)
 	LUIUtility::RenderTooltip("This value allows the actor following this path to do something when getting to the end of it.");
 
 	// Bools
-	LUIUtility::RenderCheckBox("Is Path Closed?", &mIsClosed);
+	LUIUtility::RenderCheckBox("Is Path Closed", &mIsClosed);
 	LUIUtility::RenderTooltip("Doesn't seem to be used; it probably would have marked this path as being a closed loop (last point -> first point).");
 
-	LUIUtility::RenderCheckBox("Is Ladder?", &mUse);
+	LUIUtility::RenderCheckBox("Is Ladder", &mUse);
 	LUIUtility::RenderTooltip("Whether this path can be used as a ladder when Luigi presses A next to it.");
 }
 

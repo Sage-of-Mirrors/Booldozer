@@ -81,8 +81,8 @@ void LGeneratorDOMNode::RenderDetailsUI(float dt)
     LUIUtility::RenderTooltip("Arg8");
 
     // Bools
-    LUIUtility::RenderCheckBox("Stay on path between rooms", &mStay);
-    LUIUtility::RenderTooltip("Whether this generator should remain on a path when Luigi moves between rooms.");
+    LUIUtility::RenderCheckBox("Always Active", &mStay);
+    LUIUtility::RenderTooltip("Keeps actor loaded regardless of current room");
 }
 
 void LGeneratorDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const

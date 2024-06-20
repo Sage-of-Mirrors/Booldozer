@@ -75,7 +75,7 @@ void LObserverDOMNode::RenderDetailsUI(float dt)
 	LUIUtility::RenderTooltip("The action that the observer will execute once its Condition has been met.");
 
 	// Bools
-	LUIUtility::RenderCheckBox("Visible?", &mIsVisible);
+	LUIUtility::RenderCheckBox("Visible", &mIsVisible);
 	LUIUtility::RenderTooltip("");
 
 	LUIUtility::RenderCheckBox("Unknown Boolean 1", &mUnkBool1);

@@ -65,10 +65,10 @@ void LTreasureTableDOMNode::RenderDetailsUI(float dt)
     LUIUtility::RenderTooltip("The item from the master item list to spawn from the chest.");
 
     // Bools
-    LUIUtility::RenderCheckBox("Chest has Sparkling Particles?", &mEffect);
+    LUIUtility::RenderCheckBox("Chest has Sparkling Particles", &mEffect);
     LUIUtility::RenderTooltip("Whether this chest should have sparkles floating around it.");
 
-    LUIUtility::RenderCheckBox("Focus Camera on Chest?", &mCamera);
+    LUIUtility::RenderCheckBox("Focus Camera on Chest", &mCamera);
     LUIUtility::RenderTooltip("Whether the camera should focus on this chest when it spawns, or when Luigi leaves and re-enters the room without opening it.");
 }
 
