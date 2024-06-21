@@ -76,8 +76,8 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
             glm::vec3 e01 = v1 - v2;
             glm::vec3 e21 = v3 - v2; 
 
-            glm::vec3 normal1 = glm::normalize(glm::cross(e10, e20));
-            glm::vec3 normal2 = glm::normalize(glm::cross(e01, e21));
+            glm::vec3 normal1 = glm::cross(e10, e20) / glm::normalize(glm::cross(e10, e20));
+            glm::vec3 normal2 = glm::cross(e01, e21) / glm::normalize(glm::cross(e01, e21));
 
             glm::vec3 faceNormal = {
                 (e10.y * e20.z) - (e10.z * e20.y),
@@ -85,15 +85,15 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
                 (e10.x * e20.y) - (e10.y * e20.x)
             };
 
-            faceNormal = glm::normalize(faceNormal);
+            faceNormal = faceNormal / glm::normalize(faceNormal);
             
             if(std::find(normals.begin(), normals.end(), faceNormal) == normals.end()) normals.push_back(faceNormal);
             tri.mNormal = std::distance(std::find(normals.begin(), normals.end(), faceNormal), normals.begin());
 
             // Tangents
-            glm::vec3 tan1 = -glm::normalize(glm::cross(normal1, e10));
-            glm::vec3 tan2 = glm::normalize(glm::cross(normal1, e20));
-            glm::vec3 tan3 = glm::normalize(glm::cross(normal2, e21));
+            glm::vec3 tan1 = -(glm::cross(normal1, e10) / glm::normalize(glm::cross(normal1, e10)));
+            glm::vec3 tan2 = glm::cross(normal1, e20) / glm::normalize(glm::cross(normal1, e20));
+            glm::vec3 tan3 = glm::cross(normal2, e21) / glm::normalize(glm::cross(normal2, e21));
             
             if(std::find(normals.begin(), normals.end(), tan1) == normals.end()) normals.push_back(tan1);
             tri.mEdgeTan1 = std::distance(std::find(normals.begin(), normals.end(), tan1), normals.begin());
@@ -102,22 +102,24 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
             tri.mEdgeTan2 = std::distance(std::find(normals.begin(), normals.end(), tan2), normals.begin());
 
             if(std::find(normals.begin(), normals.end(), tan3) == normals.end()) normals.push_back(tan3);
-            tri.mEdgeTan3 =std::distance(std::find(normals.begin(), normals.end(), tan3), normals.begin());
+            tri.mEdgeTan3 = std::distance(std::find(normals.begin(), normals.end(), tan3), normals.begin());
             
             glm::vec3 up(0.0f, 1.0f, 0.0f);
-            float numerator = glm::dot(faceNormal, up);
-            float denomenator = faceNormal.length() * up.length();
-            float angle = (float)glm::acos(numerator / denomenator);
+            float numerator = glm::dot(normal1, up);
+            float angle = (float)glm::acos(numerator);
 
-            angle *= (float)(180 / glm::pi<float>());
+            angle *= (float)(180.0f / glm::pi<float>());
+
             if(glm::abs(angle) >= 0.0f && glm::abs(angle) <= 0.5f){
-                tri.mUnkIdx = tri.mEdgeTan2;
+                tri.mUnkIdx = tri.mEdgeTan1;
             } else {
                 tri.mUnkIdx = 0;
             }
 
-            if(glm::abs(angle) <= 80.0f){
+            if(glm::abs(angle) <= 65.0f){
                 tri.mFloor = true;
+            } else {
+                tri.mFloor = false;
             }
             
             tri.mDot = glm::dot(tan3, e10);
