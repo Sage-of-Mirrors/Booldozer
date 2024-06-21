@@ -9,8 +9,8 @@
 #include <map>
 
 struct GridCell {
-    uint32_t mAllGroupIdx;
-    uint32_t mFloorGroupIdx;
+    std::vector<uint16_t> mAll;
+    std::vector<uint16_t> mFloor;
 };
 
 struct CollisionTriangle {

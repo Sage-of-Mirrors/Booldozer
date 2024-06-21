@@ -4,7 +4,6 @@
 #include "tiny_obj_loader.h"
 
 #include "intersect.h"
-
 // todo: thread this so we can show a loading screen
 //std::atomic<bool> mCollisonGenerated;
 
@@ -68,16 +67,17 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
             bbmin = glm::vec3(glm::min(bbmin.x, v2.x), glm::min(bbmin.y, v2.y), glm::min(bbmin.z, v2.z));
             bbmin = glm::vec3(glm::min(bbmin.x, v3.x), glm::min(bbmin.y, v3.y), glm::min(bbmin.z, v3.z));
 
-            bbmax = glm::vec3(glm::min(bbmax.x, v1.x), glm::min(bbmax.y, v1.y), glm::min(bbmax.z, v1.z));
-            bbmax = glm::vec3(glm::min(bbmax.x, v2.x), glm::min(bbmax.y, v2.y), glm::min(bbmax.z, v2.z));
-            bbmax = glm::vec3(glm::min(bbmax.x, v3.x), glm::min(bbmax.y, v3.y), glm::min(bbmax.z, v3.z));
+            bbmax = glm::vec3(glm::max(bbmax.x, v1.x), glm::max(bbmax.y, v1.y), glm::max(bbmax.z, v1.z));
+            bbmax = glm::vec3(glm::max(bbmax.x, v2.x), glm::max(bbmax.y, v2.y), glm::max(bbmax.z, v2.z));
+            bbmax = glm::vec3(glm::max(bbmax.x, v3.x), glm::max(bbmax.y, v3.y), glm::max(bbmax.z, v3.z));
 
             glm::vec3 e10 = v2 - v1; // u
             glm::vec3 e20 = v3 - v1; // v
-
             glm::vec3 e01 = v1 - v2;
             glm::vec3 e21 = v3 - v2; 
 
+            glm::vec3 normal1 = glm::normalize(glm::cross(e10, e20));
+            glm::vec3 normal2 = glm::normalize(glm::cross(e01, e21));
 
             glm::vec3 faceNormal = {
                 (e10.y * e20.z) - (e10.z * e20.y),
@@ -91,9 +91,9 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
             tri.mNormal = std::distance(std::find(normals.begin(), normals.end(), faceNormal), normals.begin());
 
             // Tangents
-            glm::vec3 tan1 = glm::normalize(glm::cross(faceNormal, e10));
-            glm::vec3 tan2 = glm::normalize(glm::cross(faceNormal, e20));
-            glm::vec3 tan3 = glm::normalize(glm::cross(faceNormal, e21));
+            glm::vec3 tan1 = -glm::normalize(glm::cross(normal1, e10));
+            glm::vec3 tan2 = glm::normalize(glm::cross(normal1, e20));
+            glm::vec3 tan3 = glm::normalize(glm::cross(normal2, e21));
             
             if(std::find(normals.begin(), normals.end(), tan1) == normals.end()) normals.push_back(tan1);
             tri.mEdgeTan1 = std::distance(std::find(normals.begin(), normals.end(), tan1), normals.begin());
@@ -129,8 +129,13 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
         }
     }
 
+    std::cout << "[CollisionIO:ObjImport]: Bounding Box ["
+        << bbmin.x << ", " << bbmin.y << ", " << bbmin.z << "] ["
+        << bbmax.x << ", " << bbmax.y << ", " << bbmax.z << "]" << std::endl; 
+
     glm::vec3 axisLengths((bbmax.x - bbmin.x), (bbmax.y - bbmin.y), (bbmax.z - bbmin.z));
 
+    std::vector<uint32_t> gridData = {};
     std::vector<uint16_t> groupData = { 0xFFFF };
 
     // Now that we have all the triangles, generate the grid and the groups.
@@ -146,58 +151,84 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
     float yHalfSize = yCellSize / 2;
     float zHalfSize = zCellSize / 2;
 
-    float curX = bbmin.x + xHalfSize;
-    float curY = bbmin.y + yHalfSize;
-    float curZ = bbmin.z + zHalfSize;
+    float curX = bbmin.x;
+    float curY = bbmin.y;
+    float curZ = bbmin.z;
 
     for (int z = 0; z < zCellCount; z++){
         for (int y = 0; y < yCellCount; y++){
             for (int x = 0; x < xCellCount; x++){
-                for(std::vector<CollisionTriangle>::iterator tri = triangles.begin(); tri != triangles.end(); tri++){
-                    GridCell cell;
+                GridCell cell;
 
-                    float boxCenter[3] = {curX, curY, curZ};
-                    float halfSize[3] = {xHalfSize, yHalfSize, zHalfSize};
+                float halfSize[3] = {xHalfSize, yHalfSize, zHalfSize};
+                float boxCenter[3] = {curX + xHalfSize, curY + yHalfSize, curZ + zHalfSize};
+                for(std::vector<CollisionTriangle>::iterator tri = triangles.begin(); tri != triangles.end(); tri++){
                     float verts[3][3] = {
                         {tri->v1.x, tri->v1.y, tri->v1.z},
                         {tri->v2.x, tri->v2.y, tri->v2.z},
                         {tri->v3.x, tri->v3.y, tri->v3.z}
                     };
 
-                    std::vector<uint16_t> floorTris = {};
-                    cell.mAllGroupIdx = groupData.size();
-                    bool empty = true;
                     if(triBoxOverlap(boxCenter, halfSize, verts) != 0){
+                        std::cout << "[CollisionIO:ObjImport]: Putting tri " << tri - triangles.begin() << " in grid space " << x << ", " << y << ",  "<< z << std::endl;
                         // add to cell all group!
-                        groupData.push_back(tri - triangles.begin());    
+                        cell.mAll.push_back(tri - triangles.begin());
                         // add to cell floor group!
-                        if(tri->mFloor) floorTris.push_back(tri - triangles.begin());
-                        empty = false;
+                        if(tri->mFloor) cell.mFloor.push_back(tri - triangles.begin());
                     }
 
-                    if(!empty){
-                        cell.mFloorGroupIdx = groupData.size();
-                        for(auto tri : floorTris){
-                            groupData.push_back(tri);
+                }
+                grid.push_back(cell);
+            }
+            curX = bbmin.x;
+            curY += yCellSize;
+        }
+        curY = bbmin.y;
+        curZ += zCellSize;
+    }
+    
+    // gen grid
+    for (int z = 0; z < zCellCount; z++){
+        for (int y = 0; y < yCellCount; y++){
+            for (int x = 0; x < xCellCount; x++){
+                int idx = x + (y * xCellCount) + (z * xCellCount * yCellCount);
+
+                if(grid[idx].mAll.size() > 0){
+                    gridData.push_back(groupData.size());
+                    for(auto triIdx : grid[idx].mAll){
+                        groupData.push_back(triIdx);
+                    }
+                    groupData.push_back(0xFFFF);
+                } else if(y > 0){
+                    idx = x + ((y - 1) * xCellCount) + (z * xCellCount * yCellCount);
+                    if(grid[idx].mAll.size() > 0){
+                        gridData.push_back(groupData.size());
+                        for(auto triIdx : grid[idx].mAll){
+                            groupData.push_back(triIdx);
                         }
                         groupData.push_back(0xFFFF);
                     } else {
-                        cell.mAllGroupIdx = 0;
-                        cell.mFloorGroupIdx = 0;
+                        gridData.push_back(0);
                     }
-
-
-                    grid.push_back(cell);
+                } else {
+                    gridData.push_back(0);
                 }
-            }
-            curX = bbmin.x + xHalfSize;
-            curY += yCellSize;
-        }
-        curY = bbmin.y + yHalfSize;
-        curZ += zCellSize;
-    }
-    groupData.push_back(0xFFFF);
 
+                if(grid[idx].mFloor.size() > 0){
+                    gridData.push_back(groupData.size());
+                    for(auto triIdx : grid[idx].mFloor){
+                        groupData.push_back(triIdx);
+                    }
+                    groupData.push_back(0xFFFF);
+                } else {
+                    gridData.push_back(0);
+                }
+
+            }
+        }
+    }
+
+    groupData.push_back(0xFFFF);
 
     // Write structures to file
     
@@ -265,10 +296,9 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
     }
 
     uint32_t gridOffset = stream.tell();
-
-    for(std::vector<GridCell>::iterator t = grid.begin(); t != grid.end(); t++){
-        stream.writeUInt32(t->mAllGroupIdx);
-        stream.writeUInt32(t->mFloorGroupIdx);
+    
+    for(std::vector<uint32_t>::iterator t = gridData.begin(); t != gridData.end(); t++){
+        stream.writeUInt32(*t);
     }
 
     uint32_t unkData = stream.tell();
