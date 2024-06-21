@@ -50,15 +50,8 @@ void LEventMode::RenderDetailsWindow(LSceneCamera* camera)
 	else if (mSelectionManager.GetPrimarySelection() != nullptr){
 		if(mSelectionManager.GetPrimarySelection()->GetNodeType() == EDOMNodeType::EventData){
 			ImGui::Begin("toolWindow");
-			ImGui::Text("Event Script");
-			ImGui::Separator();
-			std::shared_ptr<LEventDataDOMNode> selection = std::static_pointer_cast<LEventDataDOMNode>(mSelectionManager.GetPrimarySelection());
 
-			if(ImGui::Button("Save Event")){
-				std::cout << "[EventMode]: Saving Event Archive" << std::endl;
-				selection->mEventScript = mEditorScript.GetText();
-				selection->SaveEventArchive();
-			}
+			std::shared_ptr<LEventDataDOMNode> selection = std::static_pointer_cast<LEventDataDOMNode>(mSelectionManager.GetPrimarySelection());
 
 			if(mSelected != selection){
 				if(mSelected != nullptr){
@@ -69,7 +62,19 @@ void LEventMode::RenderDetailsWindow(LSceneCamera* camera)
 				mEditorText.SetText(selection->mEventText);
 				mSelected = selection;
 			}
+
+			ImGui::Text("Event");
+			ImGui::SameLine();
 			selection->RenderDetailsUI(0, &mEditorScript, &mEditorText);
+
+			ImGui::Separator();
+
+			if(ImGui::Button("Save")){
+				std::cout << "[EventMode]: Saving Event Archive" << std::endl;
+				selection->mEventScript = mEditorScript.GetText();
+				selection->SaveEventArchive();
+			}
+
 			ImGui::End();
 		} else {
 			ImGui::Begin("bottomPanel");

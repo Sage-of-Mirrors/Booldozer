@@ -4,6 +4,8 @@
 #include "GenUtil.hpp"
 #include "imgui.h"
 #include "../lib/bStream/bstream.h"
+#include "ImGuiFileDialog/ImGuiFileDialog.h"
+#include "io/CollisionIO.hpp"
 
 LMapCollisionDOMNode::LMapCollisionDOMNode(std::string name) : Super(name)
 {
@@ -33,7 +35,46 @@ void LMapCollisionDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self,
 
 void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 {
-	ImGui::Button("Import OBJ");
+	std::string path;
+	if(ImGui::Button("Import Mp")){
+		ImGuiFileDialog::Instance()->OpenDialog("ImportMpDlg", "Import Mp", "LM Collision Map (*.mp){.mp}", std::filesystem::current_path().string());
+	}
+
+	if(ImGui::Button("Import OBJ")){
+		ImGuiFileDialog::Instance()->OpenDialog("ImportObjColDlg", "Import OBJ", "Wavefront Obj (*.obj){.obj}", std::filesystem::current_path().string());
+	}
+
+	if (LUIUtility::RenderFileDialog("ImportMpDlg", path))
+	{
+		auto map = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+
+		LCollisionIO col;
+		col.LoadMp(std::filesystem::path(path), GetParentOfType<LMapDOMNode>(EDOMNodeType::Map));
+
+		auto mapArc = map.lock()->GetArchive().lock();
+		auto colFile = mapArc->GetFile("col.mp");
+
+		bStream::CMemoryStream colStream(colFile->GetData(), colFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+		Load(&colStream);
+		mDirty = true;
+	}
+
+	if (LUIUtility::RenderFileDialog("ImportObjColDlg", path))
+	{
+		auto map = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+
+		LCollisionIO col;
+		col.LoadObj(std::filesystem::path(path), GetParentOfType<LMapDOMNode>(EDOMNodeType::Map));
+
+		auto mapArc = map.lock()->GetArchive().lock();
+		auto colFile = mapArc->GetFile("col.mp");
+
+		bStream::CMemoryStream colStream(colFile->GetData(), colFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+		Load(&colStream);
+		mDirty = true;
+
+	}
+
 }
 
 bool LMapCollisionDOMNode::Load(bStream::CMemoryStream* stream)

@@ -257,7 +257,6 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	glBindFramebuffer(GL_FRAMEBUFFER, mFbo);
 
 	if(winSize.x != mPrevWinWidth || winSize.y != mPrevWinHeight){
-		std::cout << "[Booldozer]: Regenerating textures..." << std::endl;
 		glDeleteTextures(1, &mViewTex);
 		glDeleteTextures(1, &mPickTex);
 		glDeleteRenderbuffers(1, &mRbo);
