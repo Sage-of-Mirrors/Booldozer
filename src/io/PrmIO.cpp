@@ -377,7 +377,7 @@ void LPrmIO::RenderUI()
         ImGui::Text("Unknown/Unused Settings");
         ImGui::InputInt("Kiryu Count", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mKiryuCount);
         ImGui::InputInt("Num Ground", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mNumGround);
-        ImGui::Checkbox("Check", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mCheckbox);
+        LUIUtility::RenderCheckBox("Check", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mCheckbox);
 
         if(ImGui::Button("Save All Configs")){
             SaveConfigsToFile();

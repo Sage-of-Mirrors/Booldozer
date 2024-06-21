@@ -3,14 +3,13 @@
 #include "../lib/bStream/bstream.h"
 #include "GenUtil.hpp"
 #include "DOM/MapDOMNode.hpp"
-#include "GhostImg.h"
 #include <filesystem>
 #include <memory>
 #include <map>
 
 struct GridCell {
-    std::vector<uint16_t> mAll;
-    std::vector<uint16_t> mFloor;
+    std::vector<uint16_t> mAll {};
+    std::vector<uint16_t> mFloor {};
 };
 
 struct CollisionTriangle {

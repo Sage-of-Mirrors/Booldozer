@@ -48,7 +48,6 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
         for(int poly = 0; poly < shp.mesh.indices.size() / 3; poly++){
             CollisionTriangle tri;
             
-            std::cout << "[CollisionIO:ObjImport]: Shape Point Count - " << shp.mesh.indices.size() << std::endl;
             if(shp.mesh.indices.size() == 0) continue;
 
             tri.mVtx1 = shp.mesh.indices[(3*poly)+0].vertex_index;
@@ -76,33 +75,25 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
             glm::vec3 e01 = v1 - v2;
             glm::vec3 e21 = v3 - v2; 
 
-            glm::vec3 normal1 = glm::cross(e10, e20) / glm::normalize(glm::cross(e10, e20));
-            glm::vec3 normal2 = glm::cross(e01, e21) / glm::normalize(glm::cross(e01, e21));
-
-            glm::vec3 faceNormal = {
-                (e10.y * e20.z) - (e10.z * e20.y),
-                (e10.z * e20.x) - (e10.x * e20.z),
-                (e10.x * e20.y) - (e10.y * e20.x)
-            };
-
-            faceNormal = faceNormal / glm::normalize(faceNormal);
+            glm::vec3 normal1 = glm::normalize(glm::cross(e10, e20));
+            glm::vec3 normal2 = glm::normalize(glm::cross(e01, e21));
             
-            if(std::find(normals.begin(), normals.end(), faceNormal) == normals.end()) normals.push_back(faceNormal);
-            tri.mNormal = std::distance(std::find(normals.begin(), normals.end(), faceNormal), normals.begin());
+            if(std::find(normals.begin(), normals.end(), normal1) == normals.end()) normals.push_back(normal1);
+            tri.mNormal = std::find(normals.begin(), normals.end(), normal1) - normals.begin();
 
             // Tangents
-            glm::vec3 tan1 = -(glm::cross(normal1, e10) / glm::normalize(glm::cross(normal1, e10)));
-            glm::vec3 tan2 = glm::cross(normal1, e20) / glm::normalize(glm::cross(normal1, e20));
-            glm::vec3 tan3 = glm::cross(normal2, e21) / glm::normalize(glm::cross(normal2, e21));
+            glm::vec3 tan1 = -glm::normalize(glm::cross(normal1, e10));
+            glm::vec3 tan2 = glm::normalize(glm::cross(normal1, e20));
+            glm::vec3 tan3 = glm::normalize(glm::cross(normal2, e21));
             
             if(std::find(normals.begin(), normals.end(), tan1) == normals.end()) normals.push_back(tan1);
-            tri.mEdgeTan1 = std::distance(std::find(normals.begin(), normals.end(), tan1), normals.begin());
+            tri.mEdgeTan1 = std::find(normals.begin(), normals.end(), tan1) - normals.begin();
 
             if(std::find(normals.begin(), normals.end(), tan2) == normals.end()) normals.push_back(tan2);
-            tri.mEdgeTan2 = std::distance(std::find(normals.begin(), normals.end(), tan2), normals.begin());
+            tri.mEdgeTan2 = std::find(normals.begin(), normals.end(), tan2) - normals.begin();
 
             if(std::find(normals.begin(), normals.end(), tan3) == normals.end()) normals.push_back(tan3);
-            tri.mEdgeTan3 = std::distance(std::find(normals.begin(), normals.end(), tan3), normals.begin());
+            tri.mEdgeTan3 = std::find(normals.begin(), normals.end(), tan3) - normals.begin();
             
             glm::vec3 up(0.0f, 1.0f, 0.0f);
             float numerator = glm::dot(normal1, up);
@@ -141,9 +132,9 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
     std::vector<uint16_t> groupData = { 0xFFFF };
 
     // Now that we have all the triangles, generate the grid and the groups.
-	int xCellCount = (int)(glm::floor(axisLengths.x / 256.0f) + 1);
-	int yCellCount = (int)(glm::floor(axisLengths.y / 512.0f) + 1);
-	int zCellCount = (int)(glm::floor(axisLengths.z / 256.0f) + 1);
+	int xCellCount = (int)(glm::ceil(axisLengths.x / 256.0f) + 1);
+	int yCellCount = (int)(glm::ceil(axisLengths.y / 512.0f) + 1);
+	int zCellCount = (int)(glm::ceil(axisLengths.z / 256.0f) + 1);
 
     float xCellSize = axisLengths.x / xCellCount;
     float yCellSize = axisLengths.y / yCellCount;
@@ -172,7 +163,6 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
                     };
 
                     if(triBoxOverlap(boxCenter, halfSize, verts) != 0){
-                        std::cout << "[CollisionIO:ObjImport]: Putting tri " << tri - triangles.begin() << " in grid space " << x << ", " << y << ",  "<< z << std::endl;
                         // add to cell all group!
                         cell.mAll.push_back(tri - triangles.begin());
                         // add to cell floor group!
