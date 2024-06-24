@@ -6,6 +6,13 @@
 #include "../lib/bStream/bstream.h"
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
 #include "io/CollisionIO.hpp"
+#include <thread>
+#include <atomic>
+
+namespace {
+	std::thread importModelThread {};
+	std::atomic_bool isImportingCol { false };
+}
 
 LMapCollisionDOMNode::LMapCollisionDOMNode(std::string name) : Super(name)
 {
@@ -16,6 +23,23 @@ LMapCollisionDOMNode::LMapCollisionDOMNode(std::string name) : Super(name)
 std::string LMapCollisionDOMNode::GetName()
 {
 	return "Collision"; //uh
+}
+
+void LMapCollisionDOMNode::ImportObj(std::string path){
+	auto map = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+
+	LCollisionIO col;
+	col.LoadObj(std::filesystem::path(path), GetParentOfType<LMapDOMNode>(EDOMNodeType::Map));
+
+	isImportingCol = false;
+
+	auto mapArc = map.lock()->GetArchive().lock();
+	auto colFile = mapArc->GetFile("col.mp");
+
+	bStream::CMemoryStream colStream(colFile->GetData(), colFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+	Load(&colStream);
+	mDirty = true;
+
 }
 
 void LMapCollisionDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection)
@@ -44,6 +68,23 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 		ImGuiFileDialog::Instance()->OpenDialog("ImportObjColDlg", "Import OBJ", "Wavefront Obj (*.obj){.obj}", std::filesystem::current_path().string());
 	}
 
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal("Importing OBJ", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
+	{
+        const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+		ImGui::AlignTextToFramePadding();
+		ImGui::Spinner("##loadmapSpinner", 5.0f, 2, col);
+		ImGui::SameLine();
+		ImGui::Text("Importing Obj Collision...");
+		if(isImportingCol == false){
+			std::cout << "[BooldozerEditor]: Joining Import Thread" << std::endl;
+			importModelThread.join();
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+
 	if (LUIUtility::RenderFileDialog("ImportMpDlg", path))
 	{
 		auto map = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
@@ -61,17 +102,10 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 
 	if (LUIUtility::RenderFileDialog("ImportObjColDlg", path))
 	{
-		auto map = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
 
-		LCollisionIO col;
-		col.LoadObj(std::filesystem::path(path), GetParentOfType<LMapDOMNode>(EDOMNodeType::Map));
-
-		auto mapArc = map.lock()->GetArchive().lock();
-		auto colFile = mapArc->GetFile("col.mp");
-
-		bStream::CMemoryStream colStream(colFile->GetData(), colFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
-		Load(&colStream);
-		mDirty = true;
+		importModelThread = std::thread(&LMapCollisionDOMNode::ImportObj, this, path);
+		isImportingCol = true;
+		ImGui::OpenPopup("Importing OBJ");
 
 	}
 

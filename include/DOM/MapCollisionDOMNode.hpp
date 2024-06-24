@@ -56,6 +56,8 @@ public:
 	virtual void RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection) override;
 	virtual void RenderDetailsUI(float dt) override;
 
+	void ImportObj(std::string path);
+
 	bool Load(bStream::CMemoryStream* stream);
 	bool Save(bStream::CMemoryStream* stream);
 
