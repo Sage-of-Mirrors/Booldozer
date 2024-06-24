@@ -217,6 +217,11 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		renderer_scene->Clear();
 		OpenMap(path);
 
+		auto rooms = mLoadedMap->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
+		if(rooms.size() > 0){
+			renderer_scene->SetRoom(rooms[0]);
+		}
+
 		OPTIONS.mLastOpenedMap = path;
 		LResUtility::SaveUserSettings();
 	}
