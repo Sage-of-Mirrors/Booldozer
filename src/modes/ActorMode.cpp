@@ -184,7 +184,7 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 				mat = glm::translate(mat, {(max.x + min.x) / 2, (max.y + min.y) / 2, (max.z + min.z) / 2});
 			}
 
-			if(ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::LOCAL, &(mat)[0][0], &(deltaMat)[0][0], NULL)){
+			if(ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::WORLD, &(mat)[0][0], &(deltaMat)[0][0], NULL)){
 				renderer_scene->UpdateRenderers();
 				
 				if(ImGui::IsKeyDown(ImGuiKey_LeftAlt)){
@@ -200,18 +200,7 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 					roomNode->SetRoomModelDelta(roomNode->GetRoomModelDelta() + glm::vec3(deltaMat[3]));
 					// add delta to all child transforms
 					for(auto child : mSelectionManager.GetPrimarySelection()->GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Entity)){
-						child->SetPosition(child->GetPosition() + glm::vec3(deltaMat[3]));
-						
-						glm::mat4 m = glm::identity<glm::mat4>();
-
-						m = glm::translate(m, child->GetPosition());
-						m = glm::rotate(m, glm::radians(child->GetRotation().x), glm::vec3(1, 0, 0));
-						m = glm::rotate(m, glm::radians(-child->GetRotation().y), glm::vec3(0, 1, 0));
-						m = glm::rotate(m, glm::radians(child->GetRotation().z), glm::vec3(0, 0, 1));
-						m = glm::scale(m, child->GetScale());
-
-						*child->GetMat() = m;
-
+						(*child->GetMat()) = glm::translate(*child->GetMat(), glm::vec3(deltaMat[3]));
 					}
 				}
 			}

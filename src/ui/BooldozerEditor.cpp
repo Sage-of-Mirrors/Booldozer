@@ -3,6 +3,7 @@
 #include <../lib/bStream/bstream.h>
 #include <iostream>
 #include <vector>
+#include <thread>
 #include "ResUtil.hpp"
 #include "UIUtil.hpp"
 #include "DOL.hpp"
@@ -18,8 +19,11 @@
 #include <bzlib.h>
 #include "../lib/bsdifflib/bspatchlib.h"
 
+
 namespace {
-	char* patchErrorMsg = nullptr;
+	char* patchErrorMsg { nullptr };
+	std::thread mapOperationThread {};
+	std::atomic_bool mapLoading { false };
 }
 
 LBooldozerEditor::LBooldozerEditor()
@@ -38,6 +42,19 @@ LBooldozerEditor::~LBooldozerEditor(){
 	glDeleteRenderbuffers(1, &mRbo);
 	glDeleteTextures(1, &mViewTex);
 	glDeleteTextures(1, &mPickTex);
+}
+
+void LBooldozerEditor::LoadMap(std::string path, LEditorScene* scene){
+	OpenMap(path);
+	auto rooms = mLoadedMap->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
+	if(rooms.size() > 0){
+		scene->SetRoom(rooms[0]);
+	}
+
+	OPTIONS.mLastOpenedMap = path;
+	LResUtility::SaveUserSettings();
+	
+	mapLoading = false;
 }
 
 void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
@@ -210,20 +227,30 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		}
 		ImGui::EndPopup();
 	}
+
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal("Loading Map", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+        const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+		ImGui::Spinner("##loadmapSpinner", 5.0f, 2, col);
+		ImGui::SameLine();
+		ImGui::Text("Loading Map...");
+		if(mapLoading == false){
+			std::cout << "[BooldozerEditor]: Joining load thread" << std::endl;
+			mapOperationThread.join();
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
 		
 	if (LUIUtility::RenderFileDialog("OpenMapDlg", path))
 	{
 		GetSelectionManager()->ClearSelection();
 		renderer_scene->Clear();
-		OpenMap(path);
-
-		auto rooms = mLoadedMap->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
-		if(rooms.size() > 0){
-			renderer_scene->SetRoom(rooms[0]);
-		}
-
-		OPTIONS.mLastOpenedMap = path;
-		LResUtility::SaveUserSettings();
+		mapOperationThread = std::thread(&LBooldozerEditor::LoadMap, this, path, renderer_scene);
+		mapLoading = true;
+		ImGui::OpenPopup("Loading Map");
 	}
 
 	if (LUIUtility::RenderFileDialog("AppendMapDlg", path))
@@ -249,7 +276,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	}
 
 
-	if (mLoadedMap != nullptr && !mLoadedMap->Children.empty() && mCurrentMode != nullptr)
+	if (mapLoading == false && mLoadedMap != nullptr && !mLoadedMap->Children.empty() && mCurrentMode != nullptr)
 		mCurrentMode->Render(mLoadedMap, renderer_scene);
 
 	mGhostConfigs.RenderUI();
@@ -309,7 +336,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 	glClearTexImage(mPickTex, 0, GL_RED_INTEGER, GL_INT, &unused);
 	
-	renderer_scene->RenderSubmit((uint32_t)winSize.x,  (uint32_t)winSize.y);
+	if(!mapLoading) renderer_scene->RenderSubmit((uint32_t)winSize.x,  (uint32_t)winSize.y);
 
 
 	ImGui::Image(reinterpret_cast<void*>(static_cast<uintptr_t>(mViewTex)), winSize, {0.0f, 1.0f}, {1.0f, 0.0f});
@@ -353,24 +380,10 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 void LBooldozerEditor::OpenMap(std::string file_path)
 {
-	if (OPTIONS.mRootPath == "")
-	{
-		ImGui::OpenPopup("Root Not Set");
-		return;
-	}
 
 	mLoadedMap = std::make_shared<LMapDOMNode>();
 	mLoadedMap->LoadMap(std::filesystem::path(file_path));
-	if(mLoadedMap == nullptr || mLoadedMap->Children.empty()){
-		if (ImGui::BeginPopupModal("Map failed to load", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-		{
-			ImGui::Text("No idea why, sorry boss.");
-			ImGui::Separator();
 
-			if (ImGui::Button("OK", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
-			ImGui::EndPopup();
-		}
-	}
 	mGhostConfigs.LoadConfigs(mLoadedMap);
 }
 

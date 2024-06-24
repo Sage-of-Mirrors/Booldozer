@@ -239,16 +239,21 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 				ImGui::Text(ICON_FK_MINUS_CIRCLE);
 				if(ImGui::IsItemClicked()){
 					if(mode_selection->IsSingleSelection()){
+						
+						auto select = mode_selection->GetPrimarySelection();
+						mode_selection->ClearSelection();
+
 						for (auto iter = mRoomEntities[i].begin(); iter != mRoomEntities[i].end(); ++iter)
 						{
-							if (*iter == mode_selection->GetPrimarySelection())
+							if (*iter == select)
 							{
 								mRoomEntities[i].erase(iter);
 								break;
 							}
 						}
-						RemoveChild(mode_selection->GetPrimarySelection());
-						mode_selection->ClearSelection();
+						
+						RemoveChild(select);
+					
 					}
 				}
 
