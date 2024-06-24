@@ -46,10 +46,6 @@ LBooldozerEditor::~LBooldozerEditor(){
 
 void LBooldozerEditor::LoadMap(std::string path, LEditorScene* scene){
 	OpenMap(path);
-	auto rooms = mLoadedMap->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
-	if(rooms.size() > 0){
-		scene->SetRoom(rooms[0]);
-	}
 
 	OPTIONS.mLastOpenedMap = path;
 	LResUtility::SaveUserSettings();
@@ -249,6 +245,13 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		if(mapLoading == false){
 			std::cout << "[BooldozerEditor]: Joining load/append thread" << std::endl;
 			mapOperationThread.join();
+
+			auto rooms = mLoadedMap->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
+			
+			if(rooms.size() > 0){
+				renderer_scene->SetRoom(rooms[0]);
+			}
+
 			ImGui::CloseCurrentPopup();
 		}
 		ImGui::EndPopup();
