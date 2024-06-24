@@ -192,12 +192,8 @@ void LBooldozerApp::RenderUI(float deltaTime) {
 
             ImGui::Separator();
 
-			if (ImGui::MenuItem("Save Map Archive..."))
-                mEditorContext.onSaveMapArchiveCB();
-            
 			if (ImGui::MenuItem("Save Map..."))
-                mEditorContext.onSaveMapCB();
-			
+                mEditorContext.onSaveMapArchiveCB();
 
             ImGui::EndMenu();
         }

@@ -63,7 +63,9 @@ class LBooldozerEditor
 	float mPrevWinWidth { -1.0f };
 	float mPrevWinHeight { -1.0f };
 
+	void SaveMap(std::string path);
 	void LoadMap(std::string path, LEditorScene* scene);
+
 	void OpenMap(std::string file_path);
 	void AppendMap(std::string map_path);
 	void SaveMapToFiles(std::string folder_path);
