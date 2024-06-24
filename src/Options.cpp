@@ -2,7 +2,6 @@
 #include "UIUtil.hpp"
 #include "ResUtil.hpp"
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
-
 #include <imgui.h>
 
 LUserOptions OPTIONS;
@@ -34,6 +33,10 @@ void LUserOptions::FromJson(const nlohmann::json& j, LUserOptions& options)
 	DOL dol;
 	dol.LoadDOLFile(std::filesystem::path(options.mRootPath) / "sys" / "main.dol");
 
+	if(OPTIONS.mRootPath != "" && !OPTIONS.mIsDOLPatched){
+		ImGui::OpenPopup("Unpatched DOL");
+	}
+
 }
 
 void LOptionsMenu::OpenMenu()
@@ -42,7 +45,7 @@ void LOptionsMenu::OpenMenu()
 	ImGui::OpenPopup("Options");
 }
 
-void LOptionsMenu::RenderOptionsPopup()
+void LOptionsMenu::RenderOptionsPopup(LEditorScene* scene)
 {
 	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
@@ -63,7 +66,6 @@ void LOptionsMenu::RenderOptionsPopup()
 		// Render folder dialog if open
 		if (LUIUtility::RenderFileDialog("SetGameRoot", path)){
 			mTempOptions.mRootPath = path;
-			GCResourceManager.Init(); // reinit resource manager to reload game archive
 		}
 
 		// Tooltip
@@ -89,7 +91,7 @@ void LOptionsMenu::RenderOptionsPopup()
 		ImGui::Separator();
 
 		// Save button
-		if (ImGui::Button("Save", ImVec2(120, 0)))
+		if (ImGui::Button("Save", ImVec2(120, 0)) && mTempOptions.mRootPath != "")
 		{
 			if(OPTIONS.mRootPath != mTempOptions.mRootPath){
 				DOL dol;
@@ -100,6 +102,9 @@ void LOptionsMenu::RenderOptionsPopup()
 			}
 			OPTIONS = mTempOptions;
 			LResUtility::SaveUserSettings();
+			GCResourceManager.Init();
+			scene->Clear();
+			scene->LoadResFromRoot();
 
 			ImGui::CloseCurrentPopup();
 		}
@@ -108,7 +113,7 @@ void LOptionsMenu::RenderOptionsPopup()
 		ImGui::SameLine();
 
 		// Cancel button
-		if (ImGui::Button("Cancel", ImVec2(120, 0)))
+		if (ImGui::Button("Cancel", ImVec2(120, 0)) && mTempOptions.mRootPath != "")
 			ImGui::CloseCurrentPopup();
 
 		ImGui::EndPopup();

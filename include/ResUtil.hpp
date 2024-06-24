@@ -30,8 +30,8 @@ namespace LResUtility
 	class LGCResourceManager
 	{
 		bool mInitialized = false;
-		bool mLoadedGameArchive = false;
 		public:
+			bool mLoadedGameArchive = false;
 			std::shared_ptr<Archive::Rarc> mGameArchive { nullptr };
 			void Init();
 			void Cleanup();

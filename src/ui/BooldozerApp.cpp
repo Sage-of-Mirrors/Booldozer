@@ -90,7 +90,7 @@ bool LBooldozerApp::Setup() {
 		io.Fonts->AddFontFromFileTTF((std::filesystem::current_path() / "res" / "font" / "forkawesome.ttf").string().c_str(), icons_config.GlyphMinAdvanceX, &icons_config, icons_ranges );
 	}
 
-	mEditorScene.init();
+	mEditorScene.Init();
 
 	return true;
 }
@@ -131,7 +131,7 @@ bool LBooldozerApp::Execute(float deltaTime) {
 	if (mWindow == nullptr || glfwWindowShouldClose(mWindow))
 		return false;
 
-	mEditorScene.update(mWindow, deltaTime, mEditorContext.GetSelectionManager());
+	mEditorScene.Update(mWindow, deltaTime, mEditorContext.GetSelectionManager());
 
 	// Begin actual rendering
 	glfwMakeContextCurrent(mWindow);
@@ -168,7 +168,7 @@ void LBooldozerApp::Render(float deltaTime) {
     RenderUI(deltaTime);
 
 	mEditorContext.Render(deltaTime, &mEditorScene);
-    mOptionsMenu.RenderOptionsPopup();
+    mOptionsMenu.RenderOptionsPopup(&mEditorScene);
 }
 
 void LBooldozerApp::RenderUI(float deltaTime) {
@@ -258,9 +258,10 @@ void LBooldozerApp::RenderUI(float deltaTime) {
     }
 
 
-    if (openOptionsMenu)
+    if (openOptionsMenu || mEditorContext.mOpenRootFlag)
     {
         mOptionsMenu.OpenMenu();
+		mEditorContext.mOpenRootFlag = false;
     }
 
     ImGuizmo::BeginFrame();

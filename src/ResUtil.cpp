@@ -12,12 +12,16 @@ void LResUtility::LGCResourceManager::Init()
 	mGameArchive = Archive::Rarc::Create();
 
 	std::filesystem::path gameArcPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Game" / "game_usa.szp";
-	bStream::CFileStream gameArchiveFileStream(gameArcPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
-	if(!mGameArchive->Load(&gameArchiveFileStream)){
-		std::cout << "[ResUtil]: Unable to load Game Archive " << gameArcPath.string() << std::endl;
-		mLoadedGameArchive = false;
+	if(std::filesystem::exists(gameArcPath)){
+		bStream::CFileStream gameArchiveFileStream(gameArcPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
+		if(!mGameArchive->Load(&gameArchiveFileStream)){
+			std::cout << "[ResUtil]: Unable to load Game Archive " << gameArcPath.string() << std::endl;
+			mLoadedGameArchive = false;
+		} else {
+			mLoadedGameArchive = true;
+		}
 	} else {
-		mLoadedGameArchive = true;
+		std::cout << "[ResUtil]: Couldn't find game archive" << std::endl;
 	}
 }
 

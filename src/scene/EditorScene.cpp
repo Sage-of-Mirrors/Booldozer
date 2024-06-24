@@ -31,7 +31,43 @@ LEditorScene::~LEditorScene(){
 	MDL::DestroyShaders();
 }
 
-void LEditorScene::init(){
+void LEditorScene::LoadResFromRoot(){
+	mDoorModels.reserve(14);
+
+	for(int door_id = 0; door_id < 14; door_id++){
+		if(GCResourceManager.mGameArchive == nullptr || GCResourceManager.mLoadedGameArchive == false) continue; // should be done better
+		std::shared_ptr<Archive::File> doorModelFile = GCResourceManager.mGameArchive->GetFile(std::filesystem::path(fmt::format("iwamoto/door/door_{:02}.bin", door_id)));
+		if(doorModelFile != nullptr){
+			bStream::CMemoryStream bin_data(doorModelFile->GetData(), doorModelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+			
+			auto doorModel = std::make_shared<BinModel>(&bin_data);
+			mDoorModels.push_back(doorModel);
+		}
+	}
+	
+	J3DModelLoader Loader;
+
+	if((std::filesystem::exists(std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp"))){
+
+		std::shared_ptr<Archive::Rarc> skyboxArchive = Archive::Rarc::Create();
+
+		bStream::CFileStream skyboxArchiveFile((std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp").string());
+
+		if(!skyboxArchive->Load(&skyboxArchiveFile)){
+			return;
+		}
+		
+		std::shared_ptr<Archive::File> skyboxModelFile = skyboxArchive->GetFile("vrball01.bmd");
+		
+		if(skyboxModelFile != nullptr){
+			bStream::CMemoryStream modelData(skyboxModelFile->GetData(), skyboxModelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+			mSkyboxModel = Loader.Load(&modelData, 0);
+			mSkyBox = mSkyboxModel->CreateInstance();
+		}
+	}
+}
+
+void LEditorScene::Init(){
 	Initialized = true;
 
 	J3DUniformBufferObject::CreateUBO();
@@ -52,46 +88,13 @@ void LEditorScene::init(){
 	BinModel::InitShaders();
 	MDL::InitShaders();
 
-	mDoorModels.reserve(14);
+	LoadResFromRoot();
 
-	for(int door_id = 0; door_id < 14; door_id++){
-		if(GCResourceManager.mGameArchive == nullptr) continue; // should be done better
-		std::shared_ptr<Archive::File> doorModelFile = GCResourceManager.mGameArchive->GetFile(std::filesystem::path(fmt::format("iwamoto/door/door_{:02}.bin", door_id)));
-		if(doorModelFile != nullptr){
-			bStream::CMemoryStream bin_data(doorModelFile->GetData(), doorModelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
-			
-			auto doorModel = std::make_shared<BinModel>(&bin_data);
-			mDoorModels.push_back(doorModel);
-		}
-	}
-	
-	J3DModelLoader Loader;
-	
-	//std::shared_ptr<Archive::File> modelFile = GCResourceManager.mGameArchive->GetFile(std::filesystem::path("kt_static") / "coin.bmd");
+}
 
-	//if(modelFile != nullptr){
-	//	bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
-	//	mCoinModel = Loader.Load(&modelData, 0);
-	//}
-
-	if((std::filesystem::exists(std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp"))){
-
-		std::shared_ptr<Archive::Rarc> skyboxArchive = Archive::Rarc::Create();
-
-		bStream::CFileStream skyboxArchiveFile((std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp").string());
-
-		if(!skyboxArchive->Load(&skyboxArchiveFile)){
-			return;
-		}
-		
-		std::shared_ptr<Archive::File> skyboxModelFile = skyboxArchive->GetFile("vrball01.bmd");
-		
-		if(skyboxModelFile != nullptr){
-			bStream::CMemoryStream modelData(skyboxModelFile->GetData(), skyboxModelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
-			mSkyboxModel = Loader.Load(&modelData, 0);
-			mSkyBox = mSkyboxModel->CreateInstance();
-		}
-	}
+void LEditorScene::Clear(){
+	mPathRenderer.mPaths.clear();
+	mPointManager.mBillboards.clear();
 }
 
 glm::mat4 LEditorScene::getCameraView(){
@@ -539,7 +542,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 	UpdateRenderers();
 }
 
-void LEditorScene::update(GLFWwindow* window, float dt, LEditorSelection* selection)
+void LEditorScene::Update(GLFWwindow* window, float dt, LEditorSelection* selection)
 {
 	if(mActive) Camera.Update(window, dt);
 

@@ -94,7 +94,10 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::DockBuilderFinish(mMainDockSpaceID);
 		bInitialized = true;
 
-		if(OPTIONS.mRootPath != "" && !OPTIONS.mIsDOLPatched){
+		if (OPTIONS.mRootPath == "")
+		{
+			ImGui::OpenPopup("Root Not Set");
+		} else if(OPTIONS.mRootPath != "" && !OPTIONS.mIsDOLPatched){
 			ImGui::OpenPopup("Unpatched DOL");
 		}
 	}
@@ -211,6 +214,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	if (LUIUtility::RenderFileDialog("OpenMapDlg", path))
 	{
 		GetSelectionManager()->ClearSelection();
+		renderer_scene->Clear();
 		OpenMap(path);
 
 		OPTIONS.mLastOpenedMap = path;
@@ -285,7 +289,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		GLenum attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
 		glDrawBuffers(2, attachments);
 
-		assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+		//assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
 	}
 	
 	glViewport(0, 0, (uint32_t)winSize.x, (uint32_t)winSize.y);
@@ -366,12 +370,6 @@ void LBooldozerEditor::OpenMap(std::string file_path)
 }
 
 void LBooldozerEditor::AppendMap(std::string map_path){
-	if (OPTIONS.mRootPath == "")
-	{
-		ImGui::OpenPopup("Root Not Set");
-		return;
-	}
-
 	auto appendMap = std::make_shared<LMapDOMNode>();
 	appendMap->LoadMap(std::filesystem::path(map_path));
 	if(appendMap == nullptr || appendMap->Children.empty()){
@@ -389,12 +387,6 @@ void LBooldozerEditor::AppendMap(std::string map_path){
 }
 
 void LBooldozerEditor::SaveMapToArchive(std::string file_path){
-	if (OPTIONS.mRootPath == "")
-	{
-		ImGui::OpenPopup("Root Not Set");
-		return;
-	}
-
 	mLoadedMap->SaveMapToArchive(file_path);
 }
 
@@ -486,10 +478,14 @@ void LBooldozerEditor::RenderNoRootPopup()
 {
 	if (ImGui::BeginPopupModal("Root Not Set", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 	{
-		ImGui::Text("You currently do not have a valid Game Root set.\nYou must specify a copy of the game to work on before you can open maps.\n\nPlease open the Options menu (Edit -> Options) and provide a valid Game Root path.");
+		ImGui::Text("You currently do not have a valid Game Root set.\n");
+
 		ImGui::Separator();
 
-		if (ImGui::Button("OK", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+		if (ImGui::Button("OK", ImVec2(120, 0))) {
+			ImGui::CloseCurrentPopup();
+			mOpenRootFlag = true;
+		}
 		ImGui::EndPopup();
 	}
 }

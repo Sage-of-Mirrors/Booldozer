@@ -102,4 +102,6 @@ public:
 	// Switches the current mode to the given new one.
 	void ChangeMode();
 
+	bool mOpenRootFlag { false };
+
 };

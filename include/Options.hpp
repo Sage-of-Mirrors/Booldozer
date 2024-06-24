@@ -1,8 +1,8 @@
 #pragma once
 
 #include <json.hpp>
-
 #include <string>
+#include "scene/EditorScene.hpp"
 
 struct LUserOptions
 {
@@ -28,5 +28,5 @@ struct LOptionsMenu
 	LUserOptions mTempOptions;
 
 	void OpenMenu();
-	void RenderOptionsPopup();
+	void RenderOptionsPopup(LEditorScene* scene);
 };
