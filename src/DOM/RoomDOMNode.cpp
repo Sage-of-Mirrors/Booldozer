@@ -62,6 +62,8 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 
 	bool openRoomRes = false;
 	if(GetIsSelected()){
+		ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+		ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 		if(ImGui::BeginPopupModal("##roomResources", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
 			if(ActiveRoomArchive != nullptr){
 				// show resources in room archive, allow add/delete of models
@@ -70,16 +72,54 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 				ImGui::Text("Room Resource Files");
 				ImGui::SameLine();
 				ImGui::Text(ICON_FK_PLUS_CIRCLE);
-				if(ImGui::IsItemClicked()) ImGuiFileDialog::Instance()->OpenModal("addModelToRoomArchiveDialog", "Select Model", "Bin Model (*.bin){.bin}", OPTIONS.mRootPath);
+				if(ImGui::IsItemClicked()) ImGuiFileDialog::Instance()->OpenModal("addModelToRoomArchiveDialog", "Select Model", "Resource (*.bin *.anm *.bas){.bin,.anm,.bas}", OPTIONS.mRootPath);
 				ImGui::Separator();
 
-				for(auto file : ActiveRoomArchive->GetRoot()->GetFiles()){
-					ImGui::Text(file->GetName().c_str());
-					ImGui::SameLine();
-					ImGui::Text(ICON_FK_MINUS_CIRCLE);
-					if(ImGui::IsItemClicked()) {
-						toDelete = file;
+				if(ImGui::TreeNode("Models")){
+					for(auto file : ActiveRoomArchive->GetRoot()->GetFiles()){
+						if(std::filesystem::path(file->GetName()).extension().string() != ".bin") continue;
+						ImGui::Text(file->GetName().c_str());
+						ImGui::SameLine();
+						ImGui::Text(ICON_FK_MINUS_CIRCLE);
+						if(ImGui::IsItemClicked()) {
+							toDelete = file;
+						}
 					}
+					ImGui::TreePop();
+				}
+
+				if(ImGui::TreeNode("Animations")){
+					auto animFolder = ActiveRoomArchive->GetRoot()->GetFolder("anm");
+					if(animFolder != nullptr){
+						for(auto file : animFolder->GetFiles()){
+							if(std::filesystem::path(file->GetName()).extension().string() != ".anm") continue;
+							ImGui::Text(file->GetName().c_str());
+							ImGui::SameLine();
+							ImGui::Text(ICON_FK_MINUS_CIRCLE);
+							if(ImGui::IsItemClicked()) {
+								toDelete = file;
+							}
+						}
+
+						if(toDelete != nullptr){
+							animFolder->DeleteFile(toDelete);
+							toDelete = nullptr;
+						}
+					}
+					ImGui::TreePop();
+				}
+
+				if(ImGui::TreeNode("Sounds")){
+					for(auto file : ActiveRoomArchive->GetRoot()->GetFiles()){
+						if(std::filesystem::path(file->GetName()).extension().string() != ".bas") continue;
+						ImGui::Text(file->GetName().c_str());
+						ImGui::SameLine();
+						ImGui::Text(ICON_FK_MINUS_CIRCLE);
+						if(ImGui::IsItemClicked()) {
+							toDelete = file;
+						}
+					}
+					ImGui::TreePop();
 				}
 				
 				if(toDelete != nullptr){
@@ -97,24 +137,6 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 				ImGui::EndPopup();
 			}
 		} 
-	
-		if(ImGui::BeginPopupContextItem()){
-			if(ImGui::Selectable("Resources")){
-				openRoomRes = true;
-				auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
-				std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
-				ActiveRoomArchive = Archive::Rarc::Create();
-				bStream::CFileStream arcFile(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
-				if(!ActiveRoomArchive->Load(&arcFile)){
-					std::cout << "[RoomDOMNode]: Failed to load room archive " << resPath.string() << std::endl;
-					ActiveRoomArchive = nullptr;
-				}
-				//ImGuiFileDialog::Instance()->OpenDialog("addModelToRoomArchiveDialog", "Select Model", "Bin Model (*.bin){.bin}", OPTIONS.mRootPath);
-			}
-			ImGui::EndPopup();
-		}
-	
-		if(openRoomRes) ImGui::OpenPopup("##roomResources");
 
 		std::string modelPath;
 		if(LUIUtility::RenderFileDialog("addModelToRoomArchiveDialog", modelPath)){
@@ -188,6 +210,26 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 
 	if (treeOpened)
 	{
+		if(GetIsSelected()){
+			ImGui::SameLine();
+			ImGui::Spacing();
+			ImGui::SameLine();
+			ImGui::Text(ICON_FK_ARCHIVE);
+			if(ImGui::IsItemClicked(0)){
+				openRoomRes = true;
+				auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+				std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
+				ActiveRoomArchive = Archive::Rarc::Create();
+				bStream::CFileStream arcFile(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
+				if(!ActiveRoomArchive->Load(&arcFile)){
+					std::cout << "[RoomDOMNode]: Failed to load room archive " << resPath.string() << std::endl;
+					ActiveRoomArchive = nullptr;
+				}
+			}
+
+			if(openRoomRes) ImGui::OpenPopup("##roomResources");
+		}
+		
 		// Iterating all of the entity types
 		for (uint32_t i = 0; i < LRoomEntityType_Max; i++)
 		{
@@ -235,6 +277,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 						mode_selection->ClearSelection();
 					}
 				}
+
 				ImGui::SameLine();
 				ImGui::Text(ICON_FK_MINUS_CIRCLE);
 				if(ImGui::IsItemClicked()){

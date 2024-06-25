@@ -84,7 +84,7 @@ void LUIUtility::RenderNodeSelectableDragSource(LDOMNodeBase* node)
 
 bool LUIUtility::RenderNodeSelectableTreeNode(const std::string& name, const bool& highlight, bool& selected)
 {
-	ImGuiTreeNodeFlags base_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
+	ImGuiTreeNodeFlags base_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
 	if (highlight)
 		base_flags |= ImGuiTreeNodeFlags_Selected;
