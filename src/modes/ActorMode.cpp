@@ -9,6 +9,7 @@
 //#include <DiscordIntegration.hpp>
 
 bool isRoomDirty = false;
+std::shared_ptr<LRoomDOMNode> prevRoom = nullptr;
 
 LActorMode::LActorMode()
 {
@@ -188,6 +189,12 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 				}
 			}
 		} else {
+			std::shared_ptr<LRoomDOMNode> curRoom = dynamic_pointer_cast<LRoomDOMNode>(mSelectionManager.GetPrimarySelection());
+			if(prevRoom != curRoom){
+				renderer_scene->SetRoom(dynamic_pointer_cast<LRoomDOMNode>(mSelectionManager.GetPrimarySelection()));
+				prevRoom = curRoom;
+			}
+
 			std::shared_ptr<LRoomDataDOMNode> data = mSelectionManager.GetPrimarySelection()->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
 
 			glm::mat4 mat = glm::identity<glm::mat4>();
