@@ -204,7 +204,7 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 				mat = glm::translate(mat, {(max.x + min.x) / 2, (max.y + min.y) / 2, (max.z + min.z) / 2});
 			}
 
-			if(ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::WORLD, &(mat)[0][0], &(deltaMat)[0][0], NULL)){
+			if(ImGuizmo::Manipulate(&view[0][0], &proj[0][0], ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::WORLD, &(mat)[0][0], &(deltaMat)[0][0], NULL)){
 				renderer_scene->UpdateRenderers();
 				
 				if(ImGui::IsKeyDown(ImGuiKey_LeftAlt)){
@@ -213,14 +213,17 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 				else if(ImGui::IsKeyDown(ImGuiKey_LeftCtrl)){
 					data->SetMax(mat[3]);
 				} else {
+					glm::vec3 translation = glm::vec3(deltaMat[3]);
 					// add delta to max and min
-					data->SetMax(data->GetMax() + glm::vec3(deltaMat[3]));
-					data->SetMin(data->GetMin() + glm::vec3(deltaMat[3]));
+					data->SetMax(data->GetMax() + translation);
+					data->SetMin(data->GetMin() + translation);
 					std::shared_ptr<LRoomDOMNode> roomNode = dynamic_pointer_cast<LRoomDOMNode>(mSelectionManager.GetPrimarySelection());
-					roomNode->SetRoomModelDelta(roomNode->GetRoomModelDelta() + glm::vec3(deltaMat[3]));
+					roomNode->SetRoomModelDelta(roomNode->GetRoomModelDelta() + translation);
 					// add delta to all child transforms
 					for(auto child : mSelectionManager.GetPrimarySelection()->GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Entity)){
-						(*child->GetMat()) = glm::translate(*child->GetMat(), glm::vec3(deltaMat[3]));
+						(*child->GetMat())[3].x += translation.x;
+						(*child->GetMat())[3].y += translation.y;
+						(*child->GetMat())[3].z += translation.z;
 					}
 				}
 			}
