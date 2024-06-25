@@ -11,7 +11,7 @@
 
 namespace {
 	std::thread importModelThread {};
-	std::atomic_bool isImportingCol { false };
+	std::atomic<bool> isImportingCol { false };
 }
 
 LMapCollisionDOMNode::LMapCollisionDOMNode(std::string name) : Super(name)

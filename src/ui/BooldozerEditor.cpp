@@ -23,7 +23,7 @@
 namespace {
 	char* patchErrorMsg { nullptr };
 	std::thread mapOperationThread {};
-	std::atomic_bool mapLoading { false };
+	std::atomic<bool> mapLoading { false };
 }
 
 LBooldozerEditor::LBooldozerEditor()
