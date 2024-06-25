@@ -2,7 +2,9 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "ImGuizmo.h"
+#include "IconsForkAwesome.h"
 #include "UIUtil.hpp"
+#include "Options.hpp"
 
 //#include <DiscordIntegration.hpp>
 
@@ -23,12 +25,28 @@ void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 	
 	bool roomsUpdated = false;
 
-	if(ImGui::Button("+")){
+	ImGui::Text(ICON_FK_PLUS_CIRCLE);
+	if(ImGui::IsItemClicked(0)){
 		// Show new room modal!
 		auto rooms = current_map->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
 		std::shared_ptr<LRoomDOMNode> newRoom = std::make_shared<LRoomDOMNode>(fmt::format("Room {}", rooms.size() + 1));
 		std::shared_ptr<LRoomDataDOMNode> newRoomData = std::make_shared<LRoomDataDOMNode>(fmt::format("Room {}", rooms.size() + 1));
-		
+
+		std::string resourcePathRoot = std::filesystem::path(rooms[0]->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0]->GetResourcePath()).parent_path().string();
+
+		newRoomData->SetRoomResourcePath(fmt::format("{}/room_{:02}.arc", resourcePathRoot, rooms.size() + 1));
+
+		// for some reason filesystem path wasnt working to build this path so for now just build it manually...
+		std::string resPathInRoot = fmt::format("{}/{}/{}", OPTIONS.mRootPath, "files", newRoomData->GetResourcePath());
+		std::cout << "[ActorMode]: Room resource path " << resPathInRoot << std::endl;
+		if(!std::filesystem::exists(resPathInRoot)){
+			std::shared_ptr<Archive::Rarc> arc = Archive::Rarc::Create();
+			std::shared_ptr<Archive::Folder> root = Archive::Folder::Create(arc);
+			arc->SetRoot(root);
+			// now before save, construct as path to replace directory seperators with proper system seps
+			arc->SaveToFile(std::filesystem::path(resPathInRoot).string());
+		}
+
 		newRoomData->SetRoomID(rooms.size()+1);
 		newRoomData->SetRoomIndex(rooms.size()+1);
 		newRoom->AddChild(newRoomData);
@@ -39,8 +57,8 @@ void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 	}
 
 	ImGui::SameLine();
-	
-	if(ImGui::Button("-")){
+	ImGui::Text(ICON_FK_MINUS_CIRCLE);
+	if(ImGui::IsItemClicked(0)){
 		if(mSelectionManager.GetPrimarySelection()->GetNodeType() == EDOMNodeType::Room){
 			auto room = mSelectionManager.GetPrimarySelection();
 			mSelectionManager.ClearSelection();
@@ -54,12 +72,14 @@ void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 	if(roomsUpdated){
 		std::sort(current_map->Children.begin(), current_map->Children.end(), [&](std::shared_ptr<LDOMNodeBase> l, std::shared_ptr<LDOMNodeBase> r){
 			if((l->GetNodeType() == r->GetNodeType()) && l->GetNodeType() == EDOMNodeType::Room){
-				return static_pointer_cast<LRoomDOMNode>(l)->GetRoomNumber() < static_pointer_cast<LRoomDOMNode>(r)->GetRoomNumber();
+				return static_pointer_cast<LRoomDOMNode>(l)->GetRoomIndex() < static_pointer_cast<LRoomDOMNode>(r)->GetRoomIndex();
 			} else {
 				return false;
 			}
 		});
 	}
+
+	LUIUtility::RenderTooltip("EXPERIMENTAL: Please *backup rooms.map*, as room ids/indicies may get shuffled by accident!");
 	
 	ImGui::Separator();
 
