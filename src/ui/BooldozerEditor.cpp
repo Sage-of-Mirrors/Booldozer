@@ -3,7 +3,10 @@
 #include <../lib/bStream/bstream.h>
 #include <iostream>
 #include <vector>
+
 #include <thread>
+#include <mutex>
+
 #include "ResUtil.hpp"
 #include "UIUtil.hpp"
 #include "DOL.hpp"
@@ -18,7 +21,6 @@
 
 #include <bzlib.h>
 #include "../lib/bsdifflib/bspatchlib.h"
-
 
 namespace {
 	char* patchErrorMsg { nullptr };
@@ -382,6 +384,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 	glClearTexImage(mPickTex, 0, GL_RED_INTEGER, GL_INT, &unused);
 	
+	// is this slow? shouldnt be but is it???
 	loadLock.lock();
 	if(!mapLoading) renderer_scene->RenderSubmit((uint32_t)winSize.x,  (uint32_t)winSize.y);
 	loadLock.unlock();

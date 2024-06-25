@@ -7,6 +7,7 @@
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
 #include "io/CollisionIO.hpp"
 #include <thread>
+#include <mutex>
 
 namespace {
 	std::thread importModelThread {};
