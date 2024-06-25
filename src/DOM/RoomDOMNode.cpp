@@ -779,7 +779,7 @@ void LRoomDOMNode::PreProcess(){
 			binFile = new uint8_t[binFileSize];
 			
 			stream.seek(12 + (0x04 * 12));
-			offset = stream.readUInt32() + 0x08 + (0x0C * 2) + 0x04;
+			uint32_t offset = stream.readUInt32() + 0x08 + (0x0C * 2);
 			stream.seek(offset);
 			x = stream.readFloat();
 			y = stream.readFloat();
@@ -816,7 +816,7 @@ void LRoomDOMNode::PreProcess(){
 			bStream::CMemoryStream binWriteStream(roomBin->GetData(), roomBin->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 
 			binWriteStream.seek(12 + (0x04 * 12));
-			uint32_t offset = binWriteStream.readUInt32() + 0x08 + (0x0C * 2) + 0x04;
+			uint32_t offset = binWriteStream.readUInt32() + 0x08 + (0x0C * 2);
 
 			float x = 0.0f, y = 0.0f, z = 0.0f;
 			binWriteStream.seek(offset);
