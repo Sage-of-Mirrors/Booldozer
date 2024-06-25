@@ -767,7 +767,6 @@ void LRoomDOMNode::PreProcess(){
 	if(!std::filesystem::exists(resPath)) return;
 
 	if(resPath.extension() == ".bin"){
-		uint8_t* binFile = nullptr;
 		size_t binFileSize = 0;
 		uint32_t offset;
 		float x = 0.0f, y = 0.0f, z = 0.0f;
@@ -775,31 +774,28 @@ void LRoomDOMNode::PreProcess(){
 		{
 			bStream::CFileStream stream(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
 			
-			binFileSize = stream.getSize();
-			binFile = new uint8_t[binFileSize];
-			
-			stream.seek(12 + (0x04 * 12));
-			uint32_t offset = stream.readUInt32() + 0x08 + (0x0C * 2);
-			stream.seek(offset);
+			uint32_t offsets[21];
+			stream.seek(12);
+
+			for (size_t o = 0; o < 21; o++)
+			{
+				offsets[o] = stream.readUInt32();
+			}
+
+			offset = offsets[12] + 0x24;
+
+			stream.seek(offsets[12] + 0x24);
 			x = stream.readFloat();
 			y = stream.readFloat();
 			z = stream.readFloat();
-
-			stream.seek(0);
-			stream.readBytesTo(binFile, binFileSize);
 		}
 
 		{
 			bStream::CFileStream binWriteStream(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::Out);
-			binWriteStream.writeBytes(binFile, binFileSize);
 			binWriteStream.seek(offset);
 			binWriteStream.writeFloat(mRoomModelDelta.x + x);
-			binWriteStream.writeFloat(mRoomModelDelta.z + y);
-			binWriteStream.writeFloat(mRoomModelDelta.y + z);
-		}
-
-		if(binFile != nullptr){
-			delete[] binFile;
+			binWriteStream.writeFloat(mRoomModelDelta.y + y);
+			binWriteStream.writeFloat(mRoomModelDelta.z + z);
 		}
 
 	} else if(resPath.extension() == ".arc"){
@@ -813,23 +809,32 @@ void LRoomDOMNode::PreProcess(){
 		std::shared_ptr<Archive::File> roomBin = roomResource->GetFile("room.bin");
 
 		if(roomBin != nullptr){
-			bStream::CMemoryStream binWriteStream(roomBin->GetData(), roomBin->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
-
-			binWriteStream.seek(12 + (0x04 * 12));
-			uint32_t offset = binWriteStream.readUInt32() + 0x08 + (0x0C * 2);
-
 			float x = 0.0f, y = 0.0f, z = 0.0f;
-			binWriteStream.seek(offset);
-			x = binWriteStream.readFloat();
-			y = binWriteStream.readFloat();
-			z = binWriteStream.readFloat();
+			uint32_t offsets[21];
+			
+			{
+				bStream::CMemoryStream stream(roomBin->GetData(), roomBin->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+	
+				stream.seek(12);
+				for (size_t o = 0; o < 21; o++)
+				{
+					offsets[o] = stream.readUInt32();
+				}
 
-			binWriteStream.changeMode(bStream::OpenMode::Out);
-			binWriteStream.seek(offset);
-			binWriteStream.writeFloat(mRoomModelDelta.x + x);
-			binWriteStream.writeFloat(mRoomModelDelta.z + y);
-			binWriteStream.writeFloat(mRoomModelDelta.y + z);
+				stream.seek(offsets[12] + 0x24);
 
+				x = stream.readFloat();
+				y = stream.readFloat();
+				z = stream.readFloat();
+			}
+
+			{
+				bStream::CMemoryStream stream(roomBin->GetData(), roomBin->GetSize(), bStream::Endianess::Big, bStream::OpenMode::Out);
+				stream.seek(offsets[12] + 0x24);
+				stream.writeFloat(mRoomModelDelta.x + x);
+				stream.writeFloat(mRoomModelDelta.y + y);
+				stream.writeFloat(mRoomModelDelta.z + z);
+			}
 		}
 
 		roomResource->SaveToFile(resPath);

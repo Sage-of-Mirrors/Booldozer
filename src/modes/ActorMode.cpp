@@ -224,6 +224,8 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 						(*child->GetMat())[3].x += translation.x;
 						(*child->GetMat())[3].y += translation.y;
 						(*child->GetMat())[3].z += translation.z;
+
+						child->SetPosition(child->GetPosition() + translation);
 					}
 				}
 			}
