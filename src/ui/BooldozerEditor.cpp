@@ -23,7 +23,8 @@
 namespace {
 	char* patchErrorMsg { nullptr };
 	std::thread mapOperationThread {};
-	std::atomic<bool> mapLoading { false };
+	std::mutex loadLock {};
+	bool mapLoading { false };
 }
 
 LBooldozerEditor::LBooldozerEditor()
@@ -50,7 +51,9 @@ void LBooldozerEditor::LoadMap(std::string path, LEditorScene* scene){
 	OPTIONS.mLastOpenedMap = path;
 	LResUtility::SaveUserSettings();
 	
+	loadLock.lock();
 	mapLoading = false;
+	loadLock.unlock();
 }
 
 void LBooldozerEditor::SaveMap(std::string path){
@@ -59,7 +62,9 @@ void LBooldozerEditor::SaveMap(std::string path){
 	OPTIONS.mLastOpenedMap = path;
 	LResUtility::SaveUserSettings();
 	
+	loadLock.lock();
 	mapLoading = false;
+	loadLock.unlock();
 }
 
 void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
@@ -242,6 +247,8 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::Spinner("##loadmapSpinner", 5.0f, 2, col);
 		ImGui::SameLine();
 		ImGui::Text("Loading Map...");
+		
+		loadLock.lock();
 		if(mapLoading == false){
 			std::cout << "[BooldozerEditor]: Joining load/append thread" << std::endl;
 			mapOperationThread.join();
@@ -254,6 +261,8 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 			ImGui::CloseCurrentPopup();
 		}
+		loadLock.unlock();
+
 		ImGui::EndPopup();
 	}
 
@@ -265,11 +274,15 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::Spinner("##loadmapSpinner", 5.0f, 2, col);
 		ImGui::SameLine();
 		ImGui::Text("Saving Map...");
+
+		loadLock.lock();
 		if(mapLoading == false){
 			std::cout << "[BooldozerEditor]: Joining save thread" << std::endl;
 			mapOperationThread.join();
 			ImGui::CloseCurrentPopup();
 		}
+		loadLock.unlock();
+
 		ImGui::EndPopup();
 	}
 		
@@ -277,23 +290,34 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	{
 		GetSelectionManager()->ClearSelection();
 		renderer_scene->Clear();
-		mapOperationThread = std::thread(&LBooldozerEditor::LoadMap, this, path, renderer_scene);
+		
+		loadLock.lock();
 		mapLoading = true;
+		loadLock.unlock();
+
+		mapOperationThread = std::thread(&LBooldozerEditor::LoadMap, this, path, renderer_scene);
 		ImGui::OpenPopup("Loading Map");
 	}
 
 	if (LUIUtility::RenderFileDialog("AppendMapDlg", path))
 	{
 		GetSelectionManager()->ClearSelection();
-		mapOperationThread = std::thread(&LBooldozerEditor::AppendMap, this, path);
+		
+		loadLock.lock();
 		mapLoading = true;
+		loadLock.unlock();
+
+		mapOperationThread = std::thread(&LBooldozerEditor::AppendMap, this, path);
 		ImGui::OpenPopup("Loading Map");
 	}
 
 	if (LUIUtility::RenderFileDialog("SaveMapArchiveDlg", path))
 	{
-		mapOperationThread = std::thread(&LBooldozerEditor::SaveMap, this, path);
+		loadLock.lock();
 		mapLoading = true;
+		loadLock.unlock();
+
+		mapOperationThread = std::thread(&LBooldozerEditor::SaveMap, this, path);
 		ImGui::OpenPopup("Saving Map");
 	}
 
@@ -358,7 +382,9 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 	glClearTexImage(mPickTex, 0, GL_RED_INTEGER, GL_INT, &unused);
 	
+	loadLock.lock();
 	if(!mapLoading) renderer_scene->RenderSubmit((uint32_t)winSize.x,  (uint32_t)winSize.y);
+	loadLock.unlock();
 
 
 	ImGui::Image(reinterpret_cast<void*>(static_cast<uintptr_t>(mViewTex)), winSize, {0.0f, 1.0f}, {1.0f, 0.0f});
@@ -414,7 +440,9 @@ void LBooldozerEditor::AppendMap(std::string map_path){
 	if(appendMap->LoadMap(std::filesystem::path(map_path))){
 		mLoadedMap->AppendMap(appendMap);
 	}
+	loadLock.lock();
 	mapLoading = false;
+	loadLock.unlock();
 }
 
 void LBooldozerEditor::SaveMapToArchive(std::string file_path){

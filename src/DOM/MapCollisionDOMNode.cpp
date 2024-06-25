@@ -7,11 +7,11 @@
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
 #include "io/CollisionIO.hpp"
 #include <thread>
-#include <atomic>
 
 namespace {
 	std::thread importModelThread {};
-	std::atomic<bool> isImportingCol { false };
+	std::mutex importLock {};
+	bool isImportingCol { false };
 }
 
 LMapCollisionDOMNode::LMapCollisionDOMNode(std::string name) : Super(name)
@@ -31,8 +31,6 @@ void LMapCollisionDOMNode::ImportObj(std::string path){
 	LCollisionIO col;
 	col.LoadObj(std::filesystem::path(path), GetParentOfType<LMapDOMNode>(EDOMNodeType::Map));
 
-	isImportingCol = false;
-
 	auto mapArc = map.lock()->GetArchive().lock();
 	auto colFile = mapArc->GetFile("col.mp");
 
@@ -40,6 +38,9 @@ void LMapCollisionDOMNode::ImportObj(std::string path){
 	Load(&colStream);
 	mDirty = true;
 
+	importLock.lock();
+	isImportingCol = false;
+	importLock.unlock();
 }
 
 void LMapCollisionDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection)
@@ -77,11 +78,15 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 		ImGui::Spinner("##loadmapSpinner", 5.0f, 2, col);
 		ImGui::SameLine();
 		ImGui::Text("Importing Obj Collision...");
+		
+		importLock.lock();
 		if(isImportingCol == false){
 			std::cout << "[BooldozerEditor]: Joining Import Thread" << std::endl;
 			importModelThread.join();
 			ImGui::CloseCurrentPopup();
 		}
+		importLock.unlock();
+
 		ImGui::EndPopup();
 	}
 
@@ -102,9 +107,13 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 
 	if (LUIUtility::RenderFileDialog("ImportObjColDlg", path))
 	{
+		// shouldn't _need_ to worry about this but just in case - lock
+		importLock.lock();
+		isImportingCol = true;
+		importLock.unlock();
 
 		importModelThread = std::thread(&LMapCollisionDOMNode::ImportObj, this, path);
-		isImportingCol = true;
+		
 		ImGui::OpenPopup("Importing OBJ");
 
 	}
