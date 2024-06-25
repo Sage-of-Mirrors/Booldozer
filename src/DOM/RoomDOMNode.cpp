@@ -152,14 +152,31 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 					uint8_t* modelData = new uint8_t[modelFile.getSize()]{};
 					modelFile.readBytesTo(modelData, modelFile.getSize());
 
+					std::string ext = std::filesystem::path(modelPath).extension().string();
+
 					std::cout << "[RoomDOMNode]: Adding model " << std::filesystem::path(modelPath).filename().string() << " to archive" << resPath.string() << std::endl;
-					mRoomModels.push_back(std::filesystem::path(modelPath).filename().stem().string());
+					if(ext == ".bin"){
+						mRoomModels.push_back(std::filesystem::path(modelPath).filename().stem().string());
+					}
 					newFile->SetName(std::filesystem::path(modelPath).filename().string());
 					newFile->SetData(modelData, modelFile.getSize());
 
 					delete[] modelData;
 
-					ActiveRoomArchive->GetRoot()->AddFile(newFile);
+					if(ext == ".anm"){
+						std::shared_ptr<Archive::Folder> animFolder = ActiveRoomArchive->GetRoot()->GetFolder("anm");
+
+						if(animFolder == nullptr){
+							animFolder = Archive::Folder::Create(ActiveRoomArchive);
+							animFolder->SetName("anm");
+							ActiveRoomArchive->GetRoot()->AddSubdirectory(animFolder);
+						}
+						
+						animFolder->AddFile(newFile);
+
+					} else {
+						ActiveRoomArchive->GetRoot()->AddFile(newFile);
+					}
 					ActiveRoomArchive->SaveToFile(resPath.string());
 				}
 			}
