@@ -52,6 +52,7 @@ class LEditorScene {
 
     uint32_t mSelectedRoomNumber;
 
+
     bool mActive { false };
 
 public:
@@ -60,6 +61,7 @@ public:
     glm::mat4 getCameraView();
     glm::mat4 getCameraProj();
 
+    static void SetDirty();
     void SetActive(bool active) { mActive = active; }
 
     void SetRoom(std::shared_ptr<LRoomDOMNode> room);

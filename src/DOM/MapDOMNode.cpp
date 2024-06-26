@@ -341,9 +341,6 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 		else
 		{
 			entitiesOfType = GetChildrenOfType<LEntityDOMNode>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType));
-
-			if (entitiesOfType.size() == 0)
-				continue;
 		}
 
 		for (auto ent : entitiesOfType)

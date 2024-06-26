@@ -307,18 +307,13 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 						
 						auto select = mode_selection->GetPrimarySelection();
 						mode_selection->ClearSelection();
-
-						for (auto iter = mRoomEntities[i].begin(); iter != mRoomEntities[i].end(); ++iter)
-						{
-							if (*iter == select)
-							{
-								mRoomEntities[i].erase(iter);
-								break;
-							}
-						}
 						
+						std::erase(mRoomEntities[i], select);
+						
+						// Remove from map if child of map too
+						GetParentOfType<LMapDOMNode>(EDOMNodeType::Map).lock()->RemoveChild(select);
 						RemoveChild(select);
-					
+						LEditorScene::SetDirty();
 					}
 				}
 

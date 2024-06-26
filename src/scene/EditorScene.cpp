@@ -24,6 +24,10 @@
 #include <J3D/J3DModelLoader.hpp>
 #include <J3D/Rendering/J3DRendering.hpp>
 
+namespace {
+	bool mIsDirty { false };
+}
+
 LEditorScene::LEditorScene() : Initialized(false) {}
 
 LEditorScene::~LEditorScene(){
@@ -229,9 +233,19 @@ void LEditorScene::UpdateRenderers(){
 	mPathRenderer.UpdateData();
 }
 
-// This whole thing is so so SO awful.
 
+void LEditorScene::SetDirty(){
+	mIsDirty = true;
+}
+
+// This whole thing is so so SO awful.
 void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
+
+	if(mIsDirty){
+		UpdateRenderers();
+		mIsDirty = false;
+	}
+
 	if (m_height == 0)
 		m_height = 1;
 
