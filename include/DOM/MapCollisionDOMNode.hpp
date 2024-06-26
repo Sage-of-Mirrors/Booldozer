@@ -46,7 +46,6 @@ public:
 	std::vector<glm::vec3> mNormalData;
 	std::vector<std::shared_ptr<LCollisionTriangle>> mTriangles;
 
-	bool mDirty { false };
 	bool mWasRendered { false };
 	glm::vec3 mGridScale, mMinBounds, mAxisLengths;
 

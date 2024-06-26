@@ -8,6 +8,7 @@
 #include "io/CollisionIO.hpp"
 #include <thread>
 #include <mutex>
+#include "scene/EditorScene.hpp"
 
 namespace {
 	std::thread importModelThread {};
@@ -37,7 +38,8 @@ void LMapCollisionDOMNode::ImportObj(std::string path){
 
 	bStream::CMemoryStream colStream(colFile->GetData(), colFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 	Load(&colStream);
-	mDirty = true;
+
+	LEditorScene::SetDirty();
 
 	importLock.lock();
 	isImportingCol = false;
@@ -55,7 +57,7 @@ void LMapCollisionDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self,
 	}
 	if(mWasRendered != GetIsRendered()){
 		mWasRendered = GetIsRendered();
-		mDirty = true;
+		LEditorScene::SetDirty();
 	}
 }
 
@@ -103,7 +105,9 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 
 		bStream::CMemoryStream colStream(colFile->GetData(), colFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 		Load(&colStream);
-		mDirty = true;
+	
+		LEditorScene::SetDirty();
+
 	}
 
 	if (LUIUtility::RenderFileDialog("ImportObjColDlg", path))
@@ -123,6 +127,10 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 
 bool LMapCollisionDOMNode::Load(bStream::CMemoryStream* stream)
 {
+
+	mPositionData.clear();
+	mNormalData.clear();
+	mTriangles.clear();
     
 	mGridScale = glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat());
 	mMinBounds = glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat());

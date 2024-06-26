@@ -224,7 +224,6 @@ void LEditorScene::UpdateRenderers(){
 				};
 				mPathRenderer.mPaths.push_back(renderTri);
 			}
-			col->mDirty = false;
 		}
 	}
 
@@ -273,17 +272,6 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 				mSkyBox->SetScale({15,15,15});
 				renderables.push_back(mSkyBox);
 				break;
-			}
-		}
-	}
-
-	if(mCurrentRooms.size() > 0){
-		if(auto firstRoom = mCurrentRooms[0].lock()){
-			std::shared_ptr<LMapDOMNode> mapNode = firstRoom->GetParentOfType<LMapDOMNode>(EDOMNodeType::Map).lock();
-			std::shared_ptr<LMapCollisionDOMNode> col = mapNode->GetChildrenOfType<LMapCollisionDOMNode>(EDOMNodeType::MapCollision)[0];
-
-			if(col->mDirty){
-				UpdateRenderers();
 			}
 		}
 	}
