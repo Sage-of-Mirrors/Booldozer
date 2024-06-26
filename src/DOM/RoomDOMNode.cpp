@@ -288,10 +288,15 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 						case LRoomEntityType_Keys: newNode = std::make_shared<LKeyDOMNode>("key01"); break;
 					}
 					if(newNode != nullptr){
-						newNode->SetRoomNumber(mRoomNumber);
-						AddChild(newNode);
-						mRoomEntities[i].push_back(newNode);
-						mode_selection->ClearSelection();
+						auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+						if(data != nullptr){
+							glm::vec3 center = data->GetMin() + ((data->GetMax() - data->GetMin()) * 0.5f);
+							newNode->SetPosition(center);
+							newNode->SetRoomNumber(mRoomNumber);
+							AddChild(newNode);
+							mRoomEntities[i].push_back(newNode);
+							mode_selection->ClearSelection();
+						}
 					}
 				}
 
