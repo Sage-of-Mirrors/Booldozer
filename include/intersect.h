@@ -46,11 +46,13 @@ OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
 #include <stdio.h>
 
 
+#ifdef __cplusplus  // Provide C++ Compatibility
+    extern "C" {
+#endif
+
 
 #define X 0
-
 #define Y 1
-
 #define Z 2
 
 
@@ -81,7 +83,6 @@ OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
   if(x2>max) max=x2;
 
 
-
 int planeBoxOverlap(float normal[3], float vert[3], float maxbox[3])	// -NJMP-
 {
   int q;
@@ -102,14 +103,10 @@ int planeBoxOverlap(float normal[3], float vert[3], float maxbox[3])	// -NJMP-
   }
 
   if(DOT(normal,vmin)>0.0f) return 0;	// -NJMP-
-
   if(DOT(normal,vmax)>=0.0f) return 1;	// -NJMP-
 
   return 0;
 }
-
-
-
 
 
 /*======================== X-tests ========================*/
@@ -121,15 +118,12 @@ int planeBoxOverlap(float normal[3], float vert[3], float maxbox[3])	// -NJMP-
 	rad = fa * boxhalfsize[Y] + fb * boxhalfsize[Z];   \
 	if(min>rad || max<-rad) return 0;
 
-
-
 #define AXISTEST_X2(a, b, fa, fb)			   \
 	p0 = a*v0[Y] - b*v0[Z];			           \
 	p1 = a*v1[Y] - b*v1[Z];			       	   \
         if(p0<p1) {min=p0; max=p1;} else {min=p1; max=p0;} \
 	rad = fa * boxhalfsize[Y] + fb * boxhalfsize[Z];   \
 	if(min>rad || max<-rad) return 0;
-
 
 
 /*======================== Y-tests ========================*/
@@ -142,7 +136,6 @@ int planeBoxOverlap(float normal[3], float vert[3], float maxbox[3])	// -NJMP-
 	if(min>rad || max<-rad) return 0;
 
 
-
 #define AXISTEST_Y1(a, b, fa, fb)			   \
 	p0 = -a*v0[X] + b*v0[Z];		      	   \
 	p1 = -a*v1[X] + b*v1[Z];	     	       	   \
@@ -151,10 +144,7 @@ int planeBoxOverlap(float normal[3], float vert[3], float maxbox[3])	// -NJMP-
 	if(min>rad || max<-rad) return 0;
 
 
-
 /*======================== Z-tests ========================*/
-
-
 
 #define AXISTEST_Z12(a, b, fa, fb)			   \
 	p1 = a*v1[X] - b*v1[Y];			           \
@@ -164,15 +154,12 @@ int planeBoxOverlap(float normal[3], float vert[3], float maxbox[3])	// -NJMP-
 	if(min>rad || max<-rad) return 0;
 
 
-
 #define AXISTEST_Z0(a, b, fa, fb)			   \
 	p0 = a*v0[X] - b*v0[Y];				   \
 	p1 = a*v1[X] - b*v1[Y];			           \
         if(p0<p1) {min=p0; max=p1;} else {min=p1; max=p0;} \
 	rad = fa * boxhalfsize[X] + fb * boxhalfsize[Y];   \
 	if(min>rad || max<-rad) return 0;
-
-
 
 int triBoxOverlap(float boxcenter[3],float boxhalfsize[3],float triverts[3][3])
 {
@@ -262,3 +249,7 @@ int triBoxOverlap(float boxcenter[3],float boxhalfsize[3],float triverts[3][3])
 
    return 1;   /* box and triangle overlaps */
 }
+
+#ifdef __cplusplus
+}
+#endif

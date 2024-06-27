@@ -3,6 +3,8 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
+#include <fmt/format.h>
+
 #include "intersect.h"
 // todo: thread this so we can show a loading screen
 //std::atomic<bool> mCollisonGenerated;
@@ -26,7 +28,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
     glm::vec3 bbmin, bbmax;
 
     int tangentIdx = 0;
-    std::vector<glm::vec3> normals { glm::vec3(0.0f, 0.0f, 0.0f) };
+    std::vector<glm::vec3> normals {glm::vec3(0.0f)};
     std::vector<CollisionTriangle> triangles;
     std::vector<GridCell> grid; 
 
@@ -41,8 +43,6 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
     if(!ret){
         return;
     }
-
-    tangentIdx = attributes.normals.size();
 
     for(auto shp : shapes){
         for(int poly = 0; poly < shp.mesh.indices.size() / 3; poly++){
@@ -78,26 +78,25 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
             glm::vec3 normal1 = glm::normalize(glm::cross(e10, e20));
             glm::vec3 normal2 = glm::normalize(glm::cross(e01, e21));
             
-            if(std::find(normals.begin(), normals.end(), normal1) == normals.end()) normals.push_back(normal1);
-            tri.mNormal = std::find(normals.begin(), normals.end(), normal1) - normals.begin();
+            if(!LGenUtility::VectorContains<glm::vec3>(normals, normal1)) normals.push_back(normal1);
+            tri.mNormal = LGenUtility::VectorIndexOf<glm::vec3>(normals, normal1);
 
             // Tangents
             glm::vec3 tan1 = -glm::normalize(glm::cross(normal1, e10));
             glm::vec3 tan2 = glm::normalize(glm::cross(normal1, e20));
             glm::vec3 tan3 = glm::normalize(glm::cross(normal2, e21));
             
-            if(std::find(normals.begin(), normals.end(), tan1) == normals.end()) normals.push_back(tan1);
-            tri.mEdgeTan1 = std::find(normals.begin(), normals.end(), tan1) - normals.begin();
+            if(!LGenUtility::VectorContains<glm::vec3>(normals, tan1)) normals.push_back(tan1);
+            tri.mEdgeTan1 = LGenUtility::VectorIndexOf<glm::vec3>(normals, tan1);
 
-            if(std::find(normals.begin(), normals.end(), tan2) == normals.end()) normals.push_back(tan2);
-            tri.mEdgeTan2 = std::find(normals.begin(), normals.end(), tan2) - normals.begin();
+            if(!LGenUtility::VectorContains<glm::vec3>(normals, tan2)) normals.push_back(tan2);
+            tri.mEdgeTan2 = LGenUtility::VectorIndexOf<glm::vec3>(normals, tan2);
 
-            if(std::find(normals.begin(), normals.end(), tan3) == normals.end()) normals.push_back(tan3);
-            tri.mEdgeTan3 = std::find(normals.begin(), normals.end(), tan3) - normals.begin();
+            if(!LGenUtility::VectorContains<glm::vec3>(normals, tan3)) normals.push_back(tan3);
+            tri.mEdgeTan3 = LGenUtility::VectorIndexOf<glm::vec3>(normals, tan3);
             
             glm::vec3 up(0.0f, 1.0f, 0.0f);
-            float numerator = glm::dot(normal1, up);
-            float angle = (float)glm::acos(numerator);
+            float angle = (float)glm::acos(glm::dot(normal1, up));
 
             angle *= (float)(180.0f / glm::pi<float>());
 
@@ -123,8 +122,12 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
     }
 
     std::cout << "[CollisionIO:ObjImport]: Bounding Box ["
-        << bbmin.x << ", " << bbmin.y << ", " << bbmin.z << "] ["
-        << bbmax.x << ", " << bbmax.y << ", " << bbmax.z << "]" << std::endl; 
+        << bbmin.x - 100.0f << ", " << bbmin.y - 100.0f << ", " << bbmin.z - 100.0f << "] ["
+        << bbmax.x + 100.0f << ", " << bbmax.y + 100.0f << ", " << bbmax.z + 100.0f << "]" << std::endl; 
+
+
+    bbmin -= 100.0f;
+    bbmax += 100.0f;
 
     glm::vec3 axisLengths((bbmax.x - bbmin.x), (bbmax.y - bbmin.y), (bbmax.z - bbmin.z));
 
@@ -153,8 +156,9 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
             for (int x = 0; x < xCellCount; x++){
                 GridCell cell;
 
-                float halfSize[3] = {xHalfSize, yHalfSize, zHalfSize};
-                float boxCenter[3] = {curX + xHalfSize, curY + yHalfSize, curZ + zHalfSize};
+                float halfSize[3] = {xCellSize, yCellSize, zCellSize};
+                float boxCenter[3] = {curX + (xCellSize / 2), curY + (xCellSize / 2), curZ + (xCellSize / 2)};
+                std::cout << fmt::format("[CollisionIO:ObjImport]: Cell [{}, {}, {}] - ", x, y, z);
                 for(std::vector<CollisionTriangle>::iterator tri = triangles.begin(); tri != triangles.end(); tri++){
                     float verts[3][3] = {
                         {tri->v1.x, tri->v1.y, tri->v1.z},
@@ -162,15 +166,18 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
                         {tri->v3.x, tri->v3.y, tri->v3.z}
                     };
 
-                    if(triBoxOverlap(boxCenter, halfSize, verts) != 0){
-                        // add to cell all group!
+                    if(triBoxOverlap(boxCenter, halfSize, verts)){
+                        std::cout << tri - triangles.begin() << ", ";
+                         // add to cell all group!
                         cell.mAll.push_back(tri - triangles.begin());
                         // add to cell floor group!
                         if(tri->mFloor) cell.mFloor.push_back(tri - triangles.begin());
                     }
 
                 }
+                std::cout << std::endl;
                 grid.push_back(cell);
+                curX += xCellSize;
             }
             curX = bbmin.x;
             curY += yCellSize;
@@ -301,6 +308,9 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
     for(int x = 0; x < delta; x++){
         stream.writeUInt8(0x40);
     }
+
+    long end = stream.tell();
+    stream.setSize(end);
 
     stream.seek(0x28);
     stream.writeUInt32(normalsOffset);
