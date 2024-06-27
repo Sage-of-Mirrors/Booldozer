@@ -27,7 +27,6 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
     
     glm::vec3 bbmin, bbmax;
 
-    int tangentIdx = 0;
     std::vector<glm::vec3> normals {glm::vec3(0.0f)};
     std::vector<CollisionTriangle> triangles;
     std::vector<GridCell> grid; 
@@ -133,9 +132,9 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
     std::vector<int16_t> groupData = {};
 
     // Now that we have all the triangles, generate the grid and the groups.
-	int xCellCount = (int)(glm::ceil(axisLengths.x / 256.0f) + 1);
-	int yCellCount = (int)(glm::ceil(axisLengths.y / 512.0f) + 1);
-	int zCellCount = (int)(glm::ceil(axisLengths.z / 256.0f) + 1);
+	int xCellCount = (int)(glm::ceil(axisLengths.x / 256.0f));
+	int yCellCount = (int)(glm::ceil(axisLengths.y / 512.0f));
+	int zCellCount = (int)(glm::ceil(axisLengths.z / 256.0f));
 
     float xCellSize = axisLengths.x / xCellCount;
     float yCellSize = axisLengths.y / yCellCount;
