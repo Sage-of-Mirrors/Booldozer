@@ -27,6 +27,7 @@ struct CollisionTriangle {
 
     bool mFloor;
     glm::vec3 v1, v2, v3;
+    int16_t mTriIdx;
 };
 
 class LCollisionIO {

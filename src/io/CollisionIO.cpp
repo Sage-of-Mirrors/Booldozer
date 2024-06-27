@@ -5,7 +5,7 @@
 
 #include <fmt/format.h>
 
-#include "intersect.h"
+#include <GenUtil.hpp>
 // todo: thread this so we can show a loading screen
 //std::atomic<bool> mCollisonGenerated;
 
@@ -116,23 +116,21 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
 
             tri.mMask = 0x8000;
             tri.mFriction = 0;
+            tri.mTriIdx = triangles.size();
 
             triangles.push_back(tri);
         }
     }
 
     std::cout << "[CollisionIO:ObjImport]: Bounding Box ["
-        << bbmin.x - 100.0f << ", " << bbmin.y - 100.0f << ", " << bbmin.z - 100.0f << "] ["
-        << bbmax.x + 100.0f << ", " << bbmax.y + 100.0f << ", " << bbmax.z + 100.0f << "]" << std::endl; 
+        << bbmin.x << ", " << bbmin.y << ", " << bbmin.z << "] ["
+        << bbmax.x << ", " << bbmax.y << ", " << bbmax.z << "]" << std::endl; 
 
-
-    bbmin -= 100.0f;
-    bbmax += 100.0f;
 
     glm::vec3 axisLengths((bbmax.x - bbmin.x), (bbmax.y - bbmin.y), (bbmax.z - bbmin.z));
 
     std::vector<uint32_t> gridData = {};
-    std::vector<uint16_t> groupData = { 0xFFFF };
+    std::vector<int16_t> groupData = {};
 
     // Now that we have all the triangles, generate the grid and the groups.
 	int xCellCount = (int)(glm::ceil(axisLengths.x / 256.0f) + 1);
@@ -156,22 +154,18 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
             for (int x = 0; x < xCellCount; x++){
                 GridCell cell;
 
-                float halfSize[3] = {xCellSize, yCellSize, zCellSize};
-                float boxCenter[3] = {curX + (xCellSize / 2), curY + (xCellSize / 2), curZ + (xCellSize / 2)};
+                glm::vec3 boxExtents = {xCellSize, yCellSize, zCellSize};
+                glm::vec3 boxCenter = {curX + (xCellSize / 2), curY + (yCellSize / 2), curZ + (zCellSize / 2)};
                 std::cout << fmt::format("[CollisionIO:ObjImport]: Cell [{}, {}, {}] - ", x, y, z);
                 for(std::vector<CollisionTriangle>::iterator tri = triangles.begin(); tri != triangles.end(); tri++){
-                    float verts[3][3] = {
-                        {tri->v1.x, tri->v1.y, tri->v1.z},
-                        {tri->v2.x, tri->v2.y, tri->v2.z},
-                        {tri->v3.x, tri->v3.y, tri->v3.z}
-                    };
+                    glm::vec3 triVerts[3] = {tri->v1, tri->v2, tri->v3};
 
-                    if(triBoxOverlap(boxCenter, halfSize, verts)){
-                        std::cout << tri - triangles.begin() << ", ";
+                    if(LGenUtility::TriBoxIntersect(triVerts, boxCenter, boxExtents)){
+                        std::cout << tri->mTriIdx << ", ";
                          // add to cell all group!
-                        cell.mAll.push_back(tri - triangles.begin());
+                        cell.mAll.push_back(tri->mTriIdx);
                         // add to cell floor group!
-                        if(tri->mFloor) cell.mFloor.push_back(tri - triangles.begin());
+                        if(tri->mFloor) cell.mFloor.push_back(tri->mTriIdx);
                     }
 
                 }
@@ -185,6 +179,8 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
         curY = bbmin.y;
         curZ += zCellSize;
     }
+
+    groupData.push_back(0xFFFF);
     
     // gen grid
     for (int z = 0; z < zCellCount; z++){
@@ -199,10 +195,10 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
                     }
                     groupData.push_back(0xFFFF);
                 } else if(y > 0){
-                    idx = x + ((y - 1) * xCellCount) + (z * xCellCount * yCellCount);
-                    if(grid[idx].mAll.size() > 0){
+                    int prevIdx = x + ((y - 1) * xCellCount) + (z * xCellCount * yCellCount);
+                    if(grid[prevIdx].mAll.size() > 0){
                         gridData.push_back(groupData.size());
-                        for(auto triIdx : grid[idx].mAll){
+                        for(auto triIdx : grid[prevIdx].mAll){
                             groupData.push_back(triIdx);
                         }
                         groupData.push_back(0xFFFF);
@@ -290,8 +286,8 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
 
     uint32_t groupOffset = stream.tell();
 
-    for(std::vector<uint16_t>::iterator t = groupData.begin(); t != groupData.end(); t++){
-        stream.writeUInt16(*t);
+    for(std::vector<int16_t>::iterator t = groupData.begin(); t != groupData.end(); t++){
+        stream.writeInt16(*t);
     }
 
     uint32_t gridOffset = stream.tell();

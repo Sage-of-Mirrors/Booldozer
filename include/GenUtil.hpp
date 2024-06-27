@@ -6,6 +6,7 @@
 #include <string>
 #include <sstream>
 #include <climits>
+#include <glm/glm.hpp>
 
 namespace LGenUtility
 {
@@ -68,4 +69,6 @@ namespace LGenUtility
 
     // Converts the given string from Shift-JIS encoding to UTF-8.
     std::string SjisToUtf8(const std::string& value);
+
+    bool TriBoxIntersect(glm::vec3 tri[3], glm::vec3 boxCenter, glm::vec3 boxExtents);
 }
