@@ -31,7 +31,7 @@ void LMapCollisionDOMNode::ImportObj(std::string path){
 	auto map = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
 
 	LCollisionIO col;
-	col.LoadObj(std::filesystem::path(path), GetParentOfType<LMapDOMNode>(EDOMNodeType::Map));
+	col.LoadObj(std::filesystem::path(path), GetParentOfType<LMapDOMNode>(EDOMNodeType::Map), mMatColProp);
 
 	auto mapArc = map.lock()->GetArchive().lock();
 	auto colFile = mapArc->GetFile("col.mp");
@@ -64,12 +64,61 @@ void LMapCollisionDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self,
 void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 {
 	std::string path;
-	if(ImGui::Button("Import Mp")){
-		ImGuiFileDialog::Instance()->OpenDialog("ImportMpDlg", "Import Mp", "LM Collision Map (*.mp){.mp}", std::filesystem::current_path().string());
-	}
 
-	if(ImGui::Button("Import OBJ")){
-		ImGuiFileDialog::Instance()->OpenDialog("ImportObjColDlg", "Import OBJ", "Wavefront Obj (*.obj){.obj}", std::filesystem::current_path().string());
+	if(ImGui::BeginTabBar("##colImportFormats", ImGuiTabBarFlags_None)){
+		if(ImGui::BeginTabItem("mp")){
+			if(ImGui::Button("Import")){
+				LUIUtility::RenderTooltip("Import an existing col.mp");
+				ImGuiFileDialog::Instance()->OpenDialog("ImportMpDlg", "Import Mp", "LM Collision Map (*.mp){.mp}", std::filesystem::current_path().string());
+			}
+			ImGui::EndTabItem();
+		}
+
+		if(ImGui::BeginTabItem("obj")){
+			ImGui::Text("Material Settings");
+			LUIUtility::RenderTooltip("Custom OBJ Material Property names to load Collision Properties from");
+
+			ImGui::Text("Group");
+			ImGui::SameLine();
+			LUIUtility::RenderTextInput("##matPropertyGroup", &mMatColProp["Group"]);
+			LUIUtility::RenderTooltip("Name of material property with group bitmask");
+
+			ImGui::Text("Sound");
+			ImGui::SameLine();
+			LUIUtility::RenderTextInput("##matPropertySound", &mMatColProp["Sound"]);
+			LUIUtility::RenderTooltip("Name of material property with sound index data");
+
+			ImGui::Text("Sound Echo Switch");
+			ImGui::SameLine();
+			LUIUtility::RenderTextInput("##matPropertySndEcho", &mMatColProp["SoundEchoSwitch"]);
+			LUIUtility::RenderTooltip("Name of material property with sound echo switch");
+
+			ImGui::Text("Friction");
+			ImGui::SameLine();
+			LUIUtility::RenderTextInput("##matPropertyFric", &mMatColProp["Friction"]);
+			LUIUtility::RenderTooltip("Name of material property with friction value");
+
+			ImGui::Text("Ladder");
+			ImGui::SameLine();
+			LUIUtility::RenderTextInput("##matPropertyLadder", &mMatColProp["Ladder"]);
+			LUIUtility::RenderTooltip("Name of material property with ladder flag. Unused.");
+			
+			ImGui::Text("IgnorePointer");
+			ImGui::SameLine();
+			LUIUtility::RenderTextInput("##matPropertyIgnorePointer", &mMatColProp["IgnorePointer"]);
+			LUIUtility::RenderTooltip("Name of material property with IgnorePointer");
+
+			ImGui::Text("Surface Material");
+			ImGui::SameLine();
+			LUIUtility::RenderTextInput("##matPropertyColMaterial", &mMatColProp["SurfaceMaterial"]);
+			LUIUtility::RenderTooltip("Unsure?");
+
+			if(ImGui::Button("Import")){
+				ImGuiFileDialog::Instance()->OpenDialog("ImportObjColDlg", "Import OBJ", "Wavefront Obj (*.obj){.obj}", std::filesystem::current_path().string());
+			}
+			ImGui::EndTabItem();
+		}
+		ImGui::EndTabBar();
 	}
 
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();

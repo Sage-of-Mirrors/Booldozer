@@ -23,7 +23,7 @@ void LCollisionIO::LoadMp(std::filesystem::path path, std::weak_ptr<LMapDOMNode>
     delete[] importColData;
 }
 
-void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map){    
+void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map, std::map<std::string, std::string> propertyMap){    
     
     glm::vec3 bbmin, bbmax;
 
@@ -37,7 +37,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
 
     std::string warn;
     std::string err;
-    bool ret = tinyobj::LoadObj(&attributes, &shapes, &materials, &warn, &err, path.string().c_str(), nullptr, true);
+    bool ret = tinyobj::LoadObj(&attributes, &shapes, &materials, &warn, &err, path.string().c_str(), path.parent_path().c_str(), true);
 
     if(!ret){
         return;
@@ -117,6 +117,43 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
             tri.mFriction = 0;
             tri.mTriIdx = triangles.size();
 
+            tri.mSound = 1;
+            tri.mSoundEchoSwitch = 0;
+            tri.mLadder = 0;
+            tri.mIgnorePointer = 0;
+            tri.mSurfMaterial = 0;
+
+            if(poly < shp.mesh.material_ids.size() && shp.mesh.material_ids[poly] > 0 && shp.mesh.material_ids[poly] < materials.size()){
+                tinyobj::material_t polyMat = materials[shp.mesh.material_ids[poly]];
+
+                for(auto [prop, val] : polyMat.unknown_parameter){
+                    try {
+                        if(prop == propertyMap["Group"]){
+                            if(val.substr(0,2) == "0x"){
+                                tri.mMask = std::stoi(val.substr(2), nullptr, 16);
+                            } else {
+                                tri.mMask = std::stoi(val, nullptr, 16);
+                            }
+                        } else if(prop == propertyMap["Sound"]){
+                            tri.mSound = std::stoi(val);
+                        } else if(prop == propertyMap["SoundEchoSwitch"]){
+                            tri.mSoundEchoSwitch = std::stoi(val);
+                        } else if(prop == propertyMap["Friction"]){
+                            tri.mFriction = std::stoi(val);
+                        } else if(prop == propertyMap["Ladder"]){
+                            tri.mLadder = std::stoi(val);
+                        } else if(prop == propertyMap["IgnorePointer"]){
+                            tri.mIgnorePointer = std::stoi(val);
+                        } else if(prop == propertyMap["SurfaceMaterial"]){
+                            tri.mSurfMaterial = std::stoi(val);
+                        } 
+                    } catch(std::invalid_argument e){
+                        continue;
+                    }
+                }
+            }
+            
+
             triangles.push_back(tri);
         }
     }
@@ -155,12 +192,10 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
 
                 glm::vec3 boxExtents = {xCellSize, yCellSize, zCellSize};
                 glm::vec3 boxCenter = {curX + (xCellSize / 2), curY + (yCellSize / 2), curZ + (zCellSize / 2)};
-                std::cout << fmt::format("[CollisionIO:ObjImport]: Cell [{}, {}, {}] - ", x, y, z);
                 for(std::vector<CollisionTriangle>::iterator tri = triangles.begin(); tri != triangles.end(); tri++){
                     glm::vec3 triVerts[3] = {tri->v1, tri->v2, tri->v3};
 
                     if(LGenUtility::TriBoxIntersect(triVerts, boxCenter, boxExtents)){
-                        std::cout << tri->mTriIdx << ", ";
                          // add to cell all group!
                         cell.mAll.push_back(tri->mTriIdx);
                         // add to cell floor group!
@@ -168,7 +203,6 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
                     }
 
                 }
-                std::cout << std::endl;
                 grid.push_back(cell);
                 curX += xCellSize;
             }
@@ -227,6 +261,42 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
     // Write structures to file
     
     bStream::CMemoryStream stream(1024, bStream::Endianess::Big, bStream::OpenMode::Out);
+    bStream::CMemoryStream polygoninfo(100, bStream::Endianess::Big, bStream::OpenMode::Out);
+    bStream::CMemoryStream sndpolygoninfo(100, bStream::Endianess::Big, bStream::OpenMode::Out);
+
+    uint32_t triCount = triangles.size();
+
+    // Write polygoninfo jmp header
+    polygoninfo.writeUInt32(triCount);
+    polygoninfo.writeUInt32(3);
+    polygoninfo.writeUInt32(0x34);
+    polygoninfo.writeUInt32(4);
+
+    polygoninfo.writeUInt32(0x002AAF7F);
+    polygoninfo.writeUInt32(3);
+    polygoninfo.writeUInt32(0);
+
+    polygoninfo.writeUInt32(0x01C2B94A);
+    polygoninfo.writeUInt32(4);
+    polygoninfo.writeUInt32(0x200);
+
+    polygoninfo.writeUInt32(0x00AF2BA5);
+    polygoninfo.writeUInt32(8);
+    polygoninfo.writeUInt32(0x300);
+
+    // Write sndpolygoninfo jmp header
+    sndpolygoninfo.writeUInt32(triCount);
+    sndpolygoninfo.writeUInt32(2);
+    sndpolygoninfo.writeUInt32(0x28);
+    sndpolygoninfo.writeUInt32(4);
+    sndpolygoninfo.writeUInt32(0x006064D7);
+    sndpolygoninfo.writeUInt32(0xF);
+    sndpolygoninfo.writeUInt32(0);
+    sndpolygoninfo.writeUInt32(0x005169FA);
+    sndpolygoninfo.writeUInt32(0x70);
+    sndpolygoninfo.writeUInt32(0x400);
+
+    // Write col.mp Header
 
     // Write scale
     stream.writeFloat(256.0f);
@@ -281,6 +351,19 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
 
         stream.writeUInt16(t->mMask);
         stream.writeUInt16(t->mFriction);
+
+        uint32_t polyProps = 0;
+        polyProps |= t->mIgnorePointer << 3;
+        polyProps |= t->mLadder << 2;
+        polyProps |= t->mSurfMaterial;
+        polygoninfo.writeUInt32(polyProps);
+
+        uint32_t soundProps = 0;
+        soundProps |= t->mSoundEchoSwitch << 4;
+        soundProps |= t->mSound;
+        sndpolygoninfo.writeUInt32(soundProps);
+
+
     }
 
     uint32_t groupOffset = stream.tell();
@@ -320,5 +403,33 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
     auto colFile = mapArc->GetFile("col.mp");
 
     colFile->SetData(stream.getBuffer(), stream.getSize());
+        
+    // pad and set polygoninfo data
+    int pad = LGenUtility::PadToBoundary(polygoninfo.getSize(), 32);
+    for(int x = 0; x < pad; x++) polygoninfo.writeUInt8(0);
+
+    polygoninfo.setSize(polygoninfo.tell());
+    std::cout << "[CollisionIO:ObjImport]: polygoninfo size is " << polygoninfo.getSize() << std::endl;
+    auto polygoninfoFile = mapArc->GetFolder("jmp")->GetFile("polygoninfo");
+    if(polygoninfoFile == nullptr){
+        polygoninfoFile = Archive::File::Create();
+        polygoninfoFile->SetName("polygoninfo");
+        mapArc->GetFolder("jmp")->AddFile(polygoninfoFile);
+    }
+    polygoninfoFile->SetData(polygoninfo.getBuffer(), polygoninfo.getSize());
+
+    // pad and set soundpolygoninfo data
+    pad = LGenUtility::PadToBoundary(sndpolygoninfo.getSize(), 32);
+    for(int x = 0; x < pad; x++) sndpolygoninfo.writeUInt8(0);
+
+    sndpolygoninfo.setSize(sndpolygoninfo.tell());
+        std::cout << "[CollisionIO:ObjImport]: soundpolygoninfo size is " << sndpolygoninfo.getSize() << std::endl;
+    auto sndpolygoninfoFile = mapArc->GetFolder("jmp")->GetFile("soundpolygoninfo");
+    if(sndpolygoninfoFile == nullptr){
+        sndpolygoninfoFile = Archive::File::Create();
+        sndpolygoninfoFile->SetName("soundpolygoninfo");
+        mapArc->GetFolder("jmp")->AddFile(sndpolygoninfoFile);
+    }
+    sndpolygoninfoFile->SetData(sndpolygoninfo.getBuffer(), sndpolygoninfo.getSize());
 
 }

@@ -25,6 +25,12 @@ struct CollisionTriangle {
     uint16_t mMask;
     uint16_t mFriction;
 
+    uint32_t mSound;
+    uint32_t mSoundEchoSwitch;
+    uint32_t mLadder;
+    uint32_t mIgnorePointer;
+    uint32_t mSurfMaterial;
+
     bool mFloor;
     glm::vec3 v1, v2, v3;
     int16_t mTriIdx;
@@ -33,7 +39,7 @@ struct CollisionTriangle {
 class LCollisionIO {
 public:
     void LoadMp(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map);
-    void LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map);
+    void LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map, std::map<std::string, std::string> propertyMap);
 
     LCollisionIO(){}
     ~LCollisionIO(){}

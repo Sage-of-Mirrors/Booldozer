@@ -45,8 +45,18 @@ public:
 	std::vector<glm::vec3> mPositionData;
 	std::vector<glm::vec3> mNormalData;
 	std::vector<std::shared_ptr<LCollisionTriangle>> mTriangles;
+	std::map<std::string, std::string> mMatColProp {
+		{"Group", "group"},
+		{"Sound", "sound"},
+		{"SoundEchoSwitch", "soundechoswitch"},
+		{"Friction", "friction"},
+		{"Ladder", "ladder"},
+		{"IgnorePointer", "ignorepointer"},
+		{"SurfaceMaterial", "surfmaterial"}
+	};
 
 	bool mWasRendered { false };
+	bool mShinyFriction { true };
 	glm::vec3 mGridScale, mMinBounds, mAxisLengths;
 
 	LMapCollisionDOMNode(std::string name);
