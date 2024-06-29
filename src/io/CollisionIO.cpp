@@ -37,7 +37,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
 
     std::string warn;
     std::string err;
-    bool ret = tinyobj::LoadObj(&attributes, &shapes, &materials, &warn, &err, path.string().c_str(), path.parent_path().c_str(), true);
+    bool ret = tinyobj::LoadObj(&attributes, &shapes, &materials, &warn, &err, path.string().c_str(), path.parent_path().string().c_str(), true);
 
     if(!ret){
         return;
@@ -117,14 +117,14 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
             tri.mFriction = 0;
             tri.mTriIdx = triangles.size();
 
-            tri.mSound = 1;
+            tri.mSound = 0;
             tri.mSoundEchoSwitch = 0;
             tri.mLadder = 0;
             tri.mIgnorePointer = 0;
             tri.mSurfMaterial = 0;
 
-            if(poly < shp.mesh.material_ids.size() && shp.mesh.material_ids[poly] > 0 && shp.mesh.material_ids[poly] < materials.size()){
-                tinyobj::material_t polyMat = materials[shp.mesh.material_ids[poly]];
+            if(materials.size() > 0 && shp.mesh.material_ids.size() > 0 && shp.mesh.material_ids[0] < materials.size()){
+                tinyobj::material_t polyMat = materials[shp.mesh.material_ids[0]];
 
                 for(auto [prop, val] : polyMat.unknown_parameter){
                     try {
@@ -259,177 +259,190 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
     groupData.push_back(0xFFFF);
 
     // Write structures to file
-    
-    bStream::CMemoryStream stream(1024, bStream::Endianess::Big, bStream::OpenMode::Out);
-    bStream::CMemoryStream polygoninfo(100, bStream::Endianess::Big, bStream::OpenMode::Out);
-    bStream::CMemoryStream sndpolygoninfo(100, bStream::Endianess::Big, bStream::OpenMode::Out);
-
-    uint32_t triCount = triangles.size();
-
-    // Write polygoninfo jmp header
-    polygoninfo.writeUInt32(triCount);
-    polygoninfo.writeUInt32(3);
-    polygoninfo.writeUInt32(0x34);
-    polygoninfo.writeUInt32(4);
-
-    polygoninfo.writeUInt32(0x002AAF7F);
-    polygoninfo.writeUInt32(3);
-    polygoninfo.writeUInt32(0);
-
-    polygoninfo.writeUInt32(0x01C2B94A);
-    polygoninfo.writeUInt32(4);
-    polygoninfo.writeUInt32(0x200);
-
-    polygoninfo.writeUInt32(0x00AF2BA5);
-    polygoninfo.writeUInt32(8);
-    polygoninfo.writeUInt32(0x300);
-
-    // Write sndpolygoninfo jmp header
-    sndpolygoninfo.writeUInt32(triCount);
-    sndpolygoninfo.writeUInt32(2);
-    sndpolygoninfo.writeUInt32(0x28);
-    sndpolygoninfo.writeUInt32(4);
-    sndpolygoninfo.writeUInt32(0x006064D7);
-    sndpolygoninfo.writeUInt32(0xF);
-    sndpolygoninfo.writeUInt32(0);
-    sndpolygoninfo.writeUInt32(0x005169FA);
-    sndpolygoninfo.writeUInt32(0x70);
-    sndpolygoninfo.writeUInt32(0x400);
-
-    // Write col.mp Header
-
-    // Write scale
-    stream.writeFloat(256.0f);
-    stream.writeFloat(512.0f);
-    stream.writeFloat(256.0f);
-
-    // Write Min + Axis Len
-    stream.writeFloat(bbmin.x);
-    stream.writeFloat(bbmin.y);
-    stream.writeFloat(bbmin.z);
-
-    stream.writeFloat(axisLengths.x);
-    stream.writeFloat(axisLengths.y);
-    stream.writeFloat(axisLengths.z);
-
-    stream.writeUInt32(0x40);
-    stream.writeUInt32(0);
-    stream.writeUInt32(0);
-    stream.writeUInt32(0);
-    stream.writeUInt32(0);
-    stream.writeUInt32(0);
-    stream.writeUInt32(0);
-
-    for(int v = 0; v < attributes.vertices.size(); v++){
-        stream.writeFloat(attributes.vertices[v]);
-    }
-
-    uint32_t normalsOffset = stream.tell();
-
-    for(std::vector<glm::vec3>::iterator n = normals.begin(); n != normals.end(); n++){
-        stream.writeFloat(n->x);
-        stream.writeFloat(n->y);
-        stream.writeFloat(n->z);
-    }
-
-    uint32_t trianglesOffset = stream.tell();
-
-    for(std::vector<CollisionTriangle>::iterator t = triangles.begin(); t != triangles.end(); t++){
-        stream.writeUInt16(t->mVtx1);
-        stream.writeUInt16(t->mVtx2);
-        stream.writeUInt16(t->mVtx3);
-
-        stream.writeUInt16(t->mNormal);
-
-        stream.writeUInt16(t->mEdgeTan1);
-        stream.writeUInt16(t->mEdgeTan2);
-        stream.writeUInt16(t->mEdgeTan3);
-
-        stream.writeUInt16(t->mUnkIdx);
-
-        stream.writeFloat(t->mDot);
-
-        stream.writeUInt16(t->mMask);
-        stream.writeUInt16(t->mFriction);
-
-        uint32_t polyProps = 0;
-        polyProps |= t->mIgnorePointer << 3;
-        polyProps |= t->mLadder << 2;
-        polyProps |= t->mSurfMaterial;
-        polygoninfo.writeUInt32(polyProps);
-
-        uint32_t soundProps = 0;
-        soundProps |= t->mSoundEchoSwitch << 4;
-        soundProps |= t->mSound;
-        sndpolygoninfo.writeUInt32(soundProps);
-
-
-    }
-
-    uint32_t groupOffset = stream.tell();
-
-    for(std::vector<int16_t>::iterator t = groupData.begin(); t != groupData.end(); t++){
-        stream.writeInt16(*t);
-    }
-
-    uint32_t gridOffset = stream.tell();
-    
-    for(std::vector<uint32_t>::iterator t = gridData.begin(); t != gridData.end(); t++){
-        stream.writeUInt32(*t);
-    }
-
-    uint32_t unkData = stream.tell();
-
-    long aligned = (stream.tell() + 31) & ~31;
-    long delta = aligned - stream.tell();
-
-    for(int x = 0; x < delta; x++){
-        stream.writeUInt8(0x40);
-    }
-
-    long end = stream.tell();
-    stream.setSize(end);
-
-    stream.seek(0x28);
-    stream.writeUInt32(normalsOffset);
-    stream.writeUInt32(trianglesOffset);
-    stream.writeUInt32(groupOffset);
-    stream.writeUInt32(gridOffset);
-    stream.writeUInt32(gridOffset);
-    stream.writeUInt32(unkData);
-    stream.seek(0);
-
     auto mapArc = map.lock()->GetArchive().lock();
-    auto colFile = mapArc->GetFile("col.mp");
+    
+    {
+        bStream::CMemoryStream stream(1024, bStream::Endianess::Big, bStream::OpenMode::Out);
 
-    colFile->SetData(stream.getBuffer(), stream.getSize());
+        // Write col.mp Header
+
+        // Write scale
+        stream.writeFloat(256.0f);
+        stream.writeFloat(512.0f);
+        stream.writeFloat(256.0f);
+
+        // Write Min + Axis Len
+        stream.writeFloat(bbmin.x);
+        stream.writeFloat(bbmin.y);
+        stream.writeFloat(bbmin.z);
+
+        stream.writeFloat(axisLengths.x);
+        stream.writeFloat(axisLengths.y);
+        stream.writeFloat(axisLengths.z);
+
+        stream.writeUInt32(0x40);
+        stream.writeUInt32(0);
+        stream.writeUInt32(0);
+        stream.writeUInt32(0);
+        stream.writeUInt32(0);
+        stream.writeUInt32(0);
+        stream.writeUInt32(0);
+
+        for(int v = 0; v < attributes.vertices.size(); v++){
+            stream.writeFloat(attributes.vertices[v]);
+        }
+
+        uint32_t normalsOffset = stream.tell();
+
+        for(std::vector<glm::vec3>::iterator n = normals.begin(); n != normals.end(); n++){
+            stream.writeFloat(n->x);
+            stream.writeFloat(n->y);
+            stream.writeFloat(n->z);
+        }
+
+        uint32_t trianglesOffset = stream.tell();
+
+        for(std::vector<CollisionTriangle>::iterator t = triangles.begin(); t != triangles.end(); t++){
+            stream.writeUInt16(t->mVtx1);
+            stream.writeUInt16(t->mVtx2);
+            stream.writeUInt16(t->mVtx3);
+
+            stream.writeUInt16(t->mNormal);
+
+            stream.writeUInt16(t->mEdgeTan1);
+            stream.writeUInt16(t->mEdgeTan2);
+            stream.writeUInt16(t->mEdgeTan3);
+
+            stream.writeUInt16(t->mUnkIdx);
+
+            stream.writeFloat(t->mDot);
+
+            stream.writeUInt16(t->mMask);
+            stream.writeUInt16(t->mFriction);
+
+        }
+
+        uint32_t groupOffset = stream.tell();
+
+        for(std::vector<int16_t>::iterator t = groupData.begin(); t != groupData.end(); t++){
+            stream.writeInt16(*t);
+        }
+
+        uint32_t gridOffset = stream.tell();
         
-    // pad and set polygoninfo data
-    int pad = LGenUtility::PadToBoundary(polygoninfo.getSize(), 32);
-    for(int x = 0; x < pad; x++) polygoninfo.writeUInt8(0);
+        for(std::vector<uint32_t>::iterator t = gridData.begin(); t != gridData.end(); t++){
+            stream.writeUInt32(*t);
+        }
 
-    polygoninfo.setSize(polygoninfo.tell());
-    std::cout << "[CollisionIO:ObjImport]: polygoninfo size is " << polygoninfo.getSize() << std::endl;
-    auto polygoninfoFile = mapArc->GetFolder("jmp")->GetFile("polygoninfo");
-    if(polygoninfoFile == nullptr){
-        polygoninfoFile = Archive::File::Create();
-        polygoninfoFile->SetName("polygoninfo");
-        mapArc->GetFolder("jmp")->AddFile(polygoninfoFile);
+        uint32_t unkData = stream.tell();
+
+        long aligned = (stream.tell() + 31) & ~31;
+        long delta = aligned - stream.tell();
+
+        for(int x = 0; x < delta; x++){
+            stream.writeUInt8(0x40);
+        }
+
+        long end = stream.tell();
+        stream.setSize(end);
+
+        stream.seek(0x28);
+        stream.writeUInt32(normalsOffset);
+        stream.writeUInt32(trianglesOffset);
+        stream.writeUInt32(groupOffset);
+        stream.writeUInt32(gridOffset);
+        stream.writeUInt32(gridOffset);
+        stream.writeUInt32(unkData);
+        stream.seek(0);
+        auto colFile = mapArc->GetFile("col.mp");
+
+        colFile->SetData(stream.getBuffer(), stream.getSize());
     }
-    polygoninfoFile->SetData(polygoninfo.getBuffer(), polygoninfo.getSize());
 
-    // pad and set soundpolygoninfo data
-    pad = LGenUtility::PadToBoundary(sndpolygoninfo.getSize(), 32);
-    for(int x = 0; x < pad; x++) sndpolygoninfo.writeUInt8(0);
 
-    sndpolygoninfo.setSize(sndpolygoninfo.tell());
+    {
+        bStream::CMemoryStream polygoninfo(100, bStream::Endianess::Big, bStream::OpenMode::Out);
+        
+        // Write polygoninfo jmp header
+        polygoninfo.writeUInt32(triangles.size());
+        polygoninfo.writeUInt32(3);
+        polygoninfo.writeUInt32(0x34);
+        polygoninfo.writeUInt32(4);
+
+        polygoninfo.writeUInt32(0x002AAF7F);
+        polygoninfo.writeUInt32(3);
+        polygoninfo.writeUInt32(0);
+
+        polygoninfo.writeUInt32(0x01C2B94A);
+        polygoninfo.writeUInt32(4);
+        polygoninfo.writeUInt32(0x200);
+
+        polygoninfo.writeUInt32(0x00AF2BA5);
+        polygoninfo.writeUInt32(8);
+        polygoninfo.writeUInt32(0x300);
+
+        for(std::vector<CollisionTriangle>::iterator t = triangles.begin(); t != triangles.end(); t++){
+            uint32_t polyProps = 0x00;
+            polyProps |= t->mIgnorePointer << 3;
+            polyProps |= t->mLadder << 2;
+            polyProps |= t->mSurfMaterial;
+            polygoninfo.writeUInt32(polyProps);
+        }
+
+        // pad and set polygoninfo data
+        long aligned = (polygoninfo.tell() + 31) & ~31;
+        long delta = aligned - polygoninfo.tell();
+        for(int x = 0; x < delta; x++) polygoninfo.writeUInt8(0x40);
+
+        polygoninfo.setSize(polygoninfo.tell());
+        std::cout << "[CollisionIO:ObjImport]: polygoninfo size is " << polygoninfo.getSize() << std::endl;
+        auto polygoninfoFile = mapArc->GetFolder("jmp")->GetFile("polygoninfo");
+        if(polygoninfoFile == nullptr){
+            polygoninfoFile = Archive::File::Create();
+            polygoninfoFile->SetName("polygoninfo");
+            mapArc->GetFolder("jmp")->AddFile(polygoninfoFile);
+        }
+        polygoninfoFile->SetData(polygoninfo.getBuffer(), polygoninfo.getSize());
+    }
+
+    {
+
+        bStream::CMemoryStream sndpolygoninfo(100, bStream::Endianess::Big, bStream::OpenMode::Out);
+
+        // Write sndpolygoninfo jmp header
+        sndpolygoninfo.writeUInt32(triangles.size());
+        sndpolygoninfo.writeUInt32(2);
+        sndpolygoninfo.writeUInt32(0x28);
+        sndpolygoninfo.writeUInt32(4);
+
+        sndpolygoninfo.writeUInt32(0x006064D7);
+        sndpolygoninfo.writeUInt32(0xF);
+        sndpolygoninfo.writeUInt32(0);
+
+        sndpolygoninfo.writeUInt32(0x005169FA);
+        sndpolygoninfo.writeUInt32(0x70);
+        sndpolygoninfo.writeUInt32(0x400);
+
+        for(std::vector<CollisionTriangle>::iterator t = triangles.begin(); t != triangles.end(); t++){
+        uint32_t soundProps = 0x00;
+            soundProps |= t->mSoundEchoSwitch << 4;
+            soundProps |= t->mSound;
+            sndpolygoninfo.writeUInt32(soundProps);
+        }
+
+        // pad and set soundpolygoninfo data
+        long aligned = (sndpolygoninfo.tell() + 31) & ~31;
+        long delta = aligned - sndpolygoninfo.tell();
+        for(int x = 0; x < delta; x++) sndpolygoninfo.writeUInt8(0x40);
+
+        sndpolygoninfo.setSize(sndpolygoninfo.tell());
         std::cout << "[CollisionIO:ObjImport]: soundpolygoninfo size is " << sndpolygoninfo.getSize() << std::endl;
-    auto sndpolygoninfoFile = mapArc->GetFolder("jmp")->GetFile("soundpolygoninfo");
-    if(sndpolygoninfoFile == nullptr){
-        sndpolygoninfoFile = Archive::File::Create();
-        sndpolygoninfoFile->SetName("soundpolygoninfo");
-        mapArc->GetFolder("jmp")->AddFile(sndpolygoninfoFile);
+        auto sndpolygoninfoFile = mapArc->GetFolder("jmp")->GetFile("soundpolygoninfo");
+        if(sndpolygoninfoFile == nullptr){
+            sndpolygoninfoFile = Archive::File::Create();
+            sndpolygoninfoFile->SetName("soundpolygoninfo");
+            mapArc->GetFolder("jmp")->AddFile(sndpolygoninfoFile);
+        }
+        sndpolygoninfoFile->SetData(sndpolygoninfo.getBuffer(), sndpolygoninfo.getSize());
     }
-    sndpolygoninfoFile->SetData(sndpolygoninfo.getBuffer(), sndpolygoninfo.getSize());
-
 }
