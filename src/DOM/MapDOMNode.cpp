@@ -102,7 +102,11 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 				std::string eventName = archive.path().stem().string();
 				std::string csvName = eventName;
 
-				csvName.replace(0, 5, "message");
+				char* eventNm;
+				int eventNo = 0;
+				
+				std::sscanf(eventName.c_str(), "%5s%3d", &eventNm, &eventNo);
+				csvName = fmt::format("message{}", eventNo);
 				std::shared_ptr<LEventDataDOMNode> eventData =  std::make_shared<LEventDataDOMNode>(eventName);
 				
 				eventData->LoadEventArchive(eventArc, archive.path(), eventName, csvName);

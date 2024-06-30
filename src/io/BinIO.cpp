@@ -747,7 +747,9 @@ void BinModel::Draw(glm::mat4* transform, int32_t id, bool selected, bool bIgnor
     glUseProgram(mProgramID);
     glUniform1i(glGetUniformLocation(mProgramID, "pickID"), id);
     glUniform1i(glGetUniformLocation(mProgramID, "selected"), selected);
-    mRoot->Draw(glm::identity<glm::mat4>(), transform, this, bIgnoreTransforms);
+    if(mRoot.get() != nullptr){
+        mRoot->Draw(glm::identity<glm::mat4>(), transform, this, bIgnoreTransforms);
+    }
 }
 
 BinModel::~BinModel(){

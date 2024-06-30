@@ -72,6 +72,7 @@ void LEventMode::RenderDetailsWindow(LSceneCamera* camera)
 			if(ImGui::Button("Save")){
 				std::cout << "[EventMode]: Saving Event Archive" << std::endl;
 				selection->mEventScript = mEditorScript.GetText();
+				selection->mEventText = mEditorText.GetText();
 				selection->SaveEventArchive();
 			}
 
