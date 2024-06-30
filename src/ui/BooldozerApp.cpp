@@ -29,7 +29,6 @@ void DealWithGLErrors(GLenum source, GLenum type, GLuint id, GLenum severity, GL
 }
 
 bool LBooldozerApp::Setup() {
-    GCResourceManager.Init();
     
 	// Init GLFW
 	if (!glfwInit()) {

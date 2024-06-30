@@ -51,6 +51,8 @@ class LBooldozerEditor
 	// UI Windows
 	bool bInitialized { false };
 
+	bool mOnStartPopup { false };
+
 	uint32_t mMainDockSpaceID { 0 };
 	uint32_t mDockNodeLeftID { 0 };
 	uint32_t mDockNodeRightID { 0 };

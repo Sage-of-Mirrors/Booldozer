@@ -50,8 +50,11 @@ bool LRoomDataDOMNode::Load(const uint32_t& index, const LStaticMapDataIO& sourc
 	// Adjacent rooms
 	source.GetAdjacentRoomListData(mRoomID, mAdjacentRoomIndices);
 
-	for (uint16_t rIndex : mAdjacentRoomIndices)
-		mAdjacentRooms.push_back(mapRooms[rIndex]);
+	for (uint16_t rIndex : mAdjacentRoomIndices){
+		if(mapRooms.size() > rIndex && mapRooms[rIndex] != nullptr){
+			mAdjacentRooms.push_back(mapRooms[rIndex]);
+		}
+	}
 
 	mAltResPaths = source.GetAltResourceData(mRoomID);
 

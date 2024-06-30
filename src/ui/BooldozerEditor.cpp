@@ -123,6 +123,8 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::DockBuilderFinish(mMainDockSpaceID);
 		bInitialized = true;
 
+		GCResourceManager.Init();
+		
 		if (OPTIONS.mRootPath == "")
 		{
 			ImGui::OpenPopup("Root Not Set");
@@ -205,13 +207,14 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 					std::filesystem::remove(patchedPath);
 					OPTIONS.mIsDOLPatched = true;
 				} else {
+					ImGui::CloseCurrentPopup();
 					ImGui::OpenPopup("Patching Error");
 				}
-			}
-				ImGui::CloseCurrentPopup();
 			} else {
 				ImGui::OpenPopup("Missing Patch File");
 				ImGui::CloseCurrentPopup();
+			}
+			ImGui::CloseCurrentPopup();
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("No")) {

@@ -33,10 +33,6 @@ void LUserOptions::FromJson(const nlohmann::json& j, LUserOptions& options)
 	DOL dol;
 	dol.LoadDOLFile(std::filesystem::path(options.mRootPath) / "sys" / "main.dol");
 
-	if(OPTIONS.mRootPath != "" && !OPTIONS.mIsDOLPatched){
-		ImGui::OpenPopup("Unpatched DOL");
-	}
-
 }
 
 void LOptionsMenu::OpenMenu()
@@ -49,6 +45,8 @@ void LOptionsMenu::RenderOptionsPopup(LEditorScene* scene)
 {
 	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+	bool rootChanged = false;
 
 	if (ImGui::BeginPopupModal("Options", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 	{
@@ -94,11 +92,7 @@ void LOptionsMenu::RenderOptionsPopup(LEditorScene* scene)
 		if (ImGui::Button("Save", ImVec2(120, 0)) && mTempOptions.mRootPath != "")
 		{
 			if(OPTIONS.mRootPath != mTempOptions.mRootPath){
-				DOL dol;
-				dol.LoadDOLFile(std::filesystem::path(mTempOptions.mRootPath) / "sys" / "main.dol");
-				if(!OPTIONS.mIsDOLPatched){
-					ImGui::OpenPopup("Unpatched DOL");
-				}
+				rootChanged = true;
 			}
 			OPTIONS = mTempOptions;
 			LResUtility::SaveUserSettings();
@@ -107,6 +101,7 @@ void LOptionsMenu::RenderOptionsPopup(LEditorScene* scene)
 			scene->LoadResFromRoot();
 
 			ImGui::CloseCurrentPopup();
+
 		}
 
 		ImGui::SetItemDefaultFocus();
@@ -117,5 +112,13 @@ void LOptionsMenu::RenderOptionsPopup(LEditorScene* scene)
 			ImGui::CloseCurrentPopup();
 
 		ImGui::EndPopup();
+	}
+	
+	if(rootChanged){
+		DOL dol;
+		dol.LoadDOLFile(std::filesystem::path(mTempOptions.mRootPath) / "sys" / "main.dol");
+		if(OPTIONS.mIsDOLPatched == 0){
+			ImGui::OpenPopup("Unpatched DOL");
+		}
 	}
 }
