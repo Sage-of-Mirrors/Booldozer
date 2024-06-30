@@ -78,9 +78,9 @@ void LEventDataDOMNode::SaveEventArchive(){
     std::shared_ptr<Archive::File> msgFile = mEventArchive->GetFile(std::filesystem::path("message") / std::string(mEventMessagePath + ".csv"));
     std::shared_ptr<Archive::File> txtFile = mEventArchive->GetFile(std::filesystem::path("text") / std::string(mEventScriptPath + ".txt"));
 
-    std::string msgFileData = LGenUtility::Utf8ToSjis(mEventText);
+    std::string msgFileData = mEventText;//LGenUtility::Utf8ToSjis(mEventText);
     
-    std::string txtFileData = LGenUtility::Utf8ToSjis(mEventScript);
+    std::string txtFileData = mEventScript;//LGenUtility::Utf8ToSjis(mEventScript);
     
     if(msgFile != nullptr){
         msgFile->SetData((uint8_t*)msgFileData.data(), msgFileData.size());

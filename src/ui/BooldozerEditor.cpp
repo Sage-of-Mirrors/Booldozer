@@ -124,6 +124,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		bInitialized = true;
 
 		GCResourceManager.Init();
+		renderer_scene->LoadResFromRoot();
 		
 		if (OPTIONS.mRootPath == "")
 		{
