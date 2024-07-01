@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <json.hpp>
 
+#include "IconsForkAwesome.h"
+
 namespace LUIUtility
 {
 	// Renders a checkbox for the given boolean. Returns whether the checkbox was modified, in which case the bool pointer
@@ -151,12 +153,14 @@ namespace LUIUtility
 
 		ImGui::Text("%s",name.c_str());
 		ImGui::SameLine();
-		if (ImGui::Button(" + "))
+		ImGui::Text(ICON_FK_PLUS_CIRCLE);
+		if (ImGui::IsItemClicked(0))
 		{
 			vector.push_back(std::weak_ptr<T>());
 		}
 		ImGui::SameLine();
-		if (ImGui::Button(" - ") && vector.size() > 0)
+		ImGui::Text(ICON_FK_MINUS_CIRCLE);
+		if (ImGui::IsItemClicked(0) && vector.size() > 0)
 		{
 			vector.erase(vector.end() - 1);
 		}

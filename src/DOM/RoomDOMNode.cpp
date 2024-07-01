@@ -351,14 +351,16 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 		//Mirrors are technically map entities not room entities, but thats ok
 		if (ImGui::TreeNode("Mirrors"))
 		{
-			if(ImGui::Button("+"))
+			ImGui::Text(ICON_FK_PLUS_CIRCLE);
+			if(ImGui::IsItemClicked(0))
 			{
 				std::shared_ptr<LMirrorDOMNode> mirror = std::make_shared<LMirrorDOMNode>("Mirror");
 				AddChild(mirror);
 			}
 
 			ImGui::SameLine();
-			if(ImGui::Button("-")){
+			ImGui::Text(ICON_FK_MINUS_CIRCLE);
+			if(ImGui::IsItemClicked(0)){
 				if(mode_selection->IsSingleSelection()){
 					//TODO: Remove from map as well
 					RemoveChild(mode_selection->GetPrimarySelection());

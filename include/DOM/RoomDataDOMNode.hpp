@@ -68,6 +68,7 @@ public:
 	void SetRoomIndex(int32_t idx) { mRoomIndex = idx; }
 	void SetRoomID(int32_t id) { mRoomID = id; }
 	void SetRoomResourcePath(std::string resourcePath) { mResourcePath = resourcePath; mAltResPaths.push_back(resourcePath); }
+	void RemoveAdjacent(std::shared_ptr<LRoomDOMNode> remove);
 
 	void RenderTransformUI();
 

@@ -421,6 +421,8 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 	mActorModels.clear();
 	mMaterialAnimations.clear();
 
+	mCurrentRooms.clear();
+
 	//This is ensured to exist, but check it anyway
 	if(roomData.size() != 0)
 	{

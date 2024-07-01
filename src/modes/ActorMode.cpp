@@ -9,6 +9,7 @@
 //#include <DiscordIntegration.hpp>
 
 bool isRoomDirty = false;
+bool roomsUpdated = false;
 std::shared_ptr<LRoomDOMNode> prevRoom = nullptr;
 
 LActorMode::LActorMode()
@@ -24,7 +25,6 @@ void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 	ImGui::Text("Rooms");
 	ImGui::SameLine();
 	
-	bool roomsUpdated = false;
 
 	ImGui::Text(ICON_FK_PLUS_CIRCLE);
 	if(ImGui::IsItemClicked(0)){
@@ -61,23 +61,16 @@ void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 	ImGui::Text(ICON_FK_MINUS_CIRCLE);
 	if(ImGui::IsItemClicked(0)){
 		if(mSelectionManager.GetPrimarySelection()->GetNodeType() == EDOMNodeType::Room){
-			auto room = mSelectionManager.GetPrimarySelection();
+			auto room = std::dynamic_pointer_cast<LRoomDOMNode>(mSelectionManager.GetPrimarySelection());
 			mSelectionManager.ClearSelection();
+			current_map->ForEachChildOfType<LRoomDOMNode>(EDOMNodeType::Room, [&](std::shared_ptr<LRoomDOMNode> r){
+				r->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0]->RemoveAdjacent(room);
+			});
 			current_map->RemoveChild(room);
+			roomsUpdated = true;
 			ImGui::End();
 			return;
 		}
-		roomsUpdated = true;
-	}
-
-	if(roomsUpdated){
-		std::sort(current_map->Children.begin(), current_map->Children.end(), [&](std::shared_ptr<LDOMNodeBase> l, std::shared_ptr<LDOMNodeBase> r){
-			if((l->GetNodeType() == r->GetNodeType()) && l->GetNodeType() == EDOMNodeType::Room){
-				return static_pointer_cast<LRoomDOMNode>(l)->GetRoomIndex() < static_pointer_cast<LRoomDOMNode>(r)->GetRoomIndex();
-			} else {
-				return false;
-			}
-		});
 	}
 
 	LUIUtility::RenderTooltip("EXPERIMENTAL: Please *backup rooms.map*, as room ids/indicies may get shuffled by accident!");
@@ -123,12 +116,18 @@ void LActorMode::RenderDetailsWindow()
 
 void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene)
 {
+
 	//LUIUtility::RenderGizmoToggle();
 
 	ImGuiWindowClass mainWindowOverride;
 	mainWindowOverride.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
 	ImGui::SetNextWindowClass(&mainWindowOverride);
 	RenderSceneHierarchy(current_map);
+
+	if(roomsUpdated){
+		renderer_scene->SetRoom(current_map->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room).front());
+		roomsUpdated = false;
+	}
 
 	ImGui::SetNextWindowClass(&mainWindowOverride);
 	RenderDetailsWindow();
@@ -139,12 +138,6 @@ void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 
 	if(mRoomChanged || isRoomDirty){
 		if(std::shared_ptr<LRoomDOMNode> room = mManualRoomSelect.lock()){
-			/*
-			std::string room_name = fmt::format("Editing {}", room->GetName());
-
-			Discord::RichPresence.details = room_name.c_str();
-			Discord_UpdatePresence(&Discord::RichPresence);
-			*/
 			renderer_scene->SetRoom(room);
 			isRoomDirty = false;
 		}
