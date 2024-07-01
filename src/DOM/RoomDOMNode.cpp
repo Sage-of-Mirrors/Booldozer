@@ -793,9 +793,9 @@ void LRoomDOMNode::PreProcess(){
 		{
 			bStream::CFileStream binWriteStream(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::Out);
 			binWriteStream.seek(offset);
-			binWriteStream.writeFloat(mRoomModelDelta.x + x);
+			binWriteStream.writeFloat(mRoomModelDelta.z + x);
 			binWriteStream.writeFloat(mRoomModelDelta.y + y);
-			binWriteStream.writeFloat(mRoomModelDelta.z + z);
+			binWriteStream.writeFloat(mRoomModelDelta.x + z);
 		}
 
 	} else if(resPath.extension() == ".arc"){
