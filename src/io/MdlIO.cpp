@@ -354,16 +354,16 @@ namespace MDL {
 
         mMatrixTable.reserve(LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount) + LGenUtility::SwapEndian<uint16_t>(mHeader.WeightCount));
 
-        std::fill(mMatrixTable.begin(), mMatrixTable.end(), glm::mat4(1.0f));
-
         stream->seek(LGenUtility::SwapEndian<uint32_t>(mHeader.InverseMatrixOffset));
         for (size_t i = 0; i < LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount); i++){
-            mMatrixTable[i] = {
-                stream->readFloat(), stream->readFloat(), stream->readFloat(), stream->readFloat(),
-                stream->readFloat(), stream->readFloat(), stream->readFloat(), stream->readFloat(),
-                stream->readFloat(), stream->readFloat(), stream->readFloat(), stream->readFloat(),
-                0,                                     0,                   0,                   1
-            };
+            mMatrixTable.push_back(
+                {
+                    stream->readFloat(), stream->readFloat(), stream->readFloat(), stream->readFloat(),
+                    stream->readFloat(), stream->readFloat(), stream->readFloat(), stream->readFloat(),
+                    stream->readFloat(), stream->readFloat(), stream->readFloat(), stream->readFloat(),
+                    0,                                     0,                   0,                   1
+                }
+            );
             mMatrixTable[i] = glm::inverseTranspose(mMatrixTable[i]);
         }
 
