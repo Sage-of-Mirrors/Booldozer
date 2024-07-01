@@ -240,6 +240,7 @@ public:
 
 	virtual std::string GetName() override { return mAccessName == "(null)" ? mModelName : mModelName + " [" + mAccessName + "]"; }
 	std::string GetModelName() { return mModelName; }
+	void SetModelName(std::string name) { mModelName = name; }
 	
 	std::string GetAccessName() const { return mAccessName; }
 	void SetAccessName(std::string newAccessName) { mAccessName = newAccessName; }

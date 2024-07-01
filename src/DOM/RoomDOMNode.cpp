@@ -10,7 +10,11 @@
 #include "IconsForkAwesome.h"
 #include "modes/ActorMode.hpp"
 
-static std::shared_ptr<Archive::Rarc> ActiveRoomArchive = nullptr;
+namespace {
+	std::shared_ptr<Archive::Rarc> ActiveRoomArchive = nullptr;
+	std::shared_ptr<Archive::File> EditFileName = nullptr;
+	std::string FileName = "(null)";
+}
 
 std::string const LRoomEntityTreeNodeNames[LRoomEntityType_Max] = {
 	"Characters",
@@ -78,7 +82,56 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 				if(ImGui::TreeNode("Models")){
 					for(auto file : ActiveRoomArchive->GetRoot()->GetFiles()){
 						if(std::filesystem::path(file->GetName()).extension().string() != ".bin") continue;
-						ImGui::Text(file->GetName().c_str());
+
+						if(EditFileName == file){
+							
+							LUIUtility::RenderTextInput("##filename", &FileName);
+
+							if(ImGui::IsItemFocused() && ImGui::IsKeyDown(ImGuiKey_Enter)){
+								auto furniture = self->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
+								for(auto entry : furniture){
+									if(entry->GetModelName() == std::filesystem::path(file->GetName()).stem().string()){
+										entry->SetModelName(std::filesystem::path(FileName).stem().string());
+									}
+								}
+								std::replace(mRoomModels.begin(), mRoomModels.end(), std::filesystem::path(file->GetName()).stem().string(), std::filesystem::path(FileName).stem().string());
+								file->SetName(FileName);
+								EditFileName = nullptr;
+							}
+						} else {
+							ImGui::Text(file->GetName().c_str());
+						}
+
+						ImGui::SameLine();
+						ImGui::Text(ICON_FK_PENCIL);
+						if(ImGui::IsItemClicked()) {
+							if(EditFileName != file){
+								if(EditFileName != nullptr){
+									auto furniture = self->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
+									for(auto entry : furniture){
+										if(entry->GetModelName() == std::filesystem::path(file->GetName()).stem().string()){
+											entry->SetModelName(std::filesystem::path(FileName).stem().string());
+										}
+									}
+									std::replace(mRoomModels.begin(), mRoomModels.end(), std::filesystem::path(file->GetName()).stem().string(), std::filesystem::path(FileName).stem().string());
+									file->SetName(FileName);
+								}
+								EditFileName = file;
+								FileName = file->GetName();
+								std::cout << "[RoomDOMNode]: Original Filename is " << FileName << std::endl;
+							} else if(EditFileName == file){
+								auto furniture = self->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
+								for(auto entry : furniture){
+									if(entry->GetModelName() == std::filesystem::path(file->GetName()).stem().string()){
+										entry->SetModelName(std::filesystem::path(FileName).stem().string());
+									}
+								}
+								std::replace(mRoomModels.begin(), mRoomModels.end(), std::filesystem::path(file->GetName()).stem().string(), std::filesystem::path(FileName).stem().string());
+								file->SetName(FileName);
+								EditFileName = nullptr;
+							}
+						}
+						
 						ImGui::SameLine();
 						ImGui::Text(ICON_FK_MINUS_CIRCLE);
 						if(ImGui::IsItemClicked()) {
@@ -131,6 +184,8 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 					auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
 					ActiveRoomArchive->SaveToFile(std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path());
 					ActiveRoomArchive = nullptr;
+					EditFileName = nullptr;
+					FileName = "";
 					ImGui::CloseCurrentPopup();
 					isRoomDirty = true;
 				}
