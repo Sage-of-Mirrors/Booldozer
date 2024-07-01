@@ -6,6 +6,7 @@
 #include "fmt/core.h"
 #include "UIUtil.hpp"
 #include "GenUtil.hpp"
+#include <regex>
 
 LEventDataDOMNode::LEventDataDOMNode(std::string name) : Super(name)
 {
@@ -36,7 +37,7 @@ void LEventDataDOMNode::RenderHierarchyUI(std::shared_ptr<LEventDataDOMNode> sel
 	}
 }
 
-void LEventDataDOMNode::RenderDetailsUI(float dt, TextEditor* event, TextEditor* script)
+void LEventDataDOMNode::RenderDetailsUI(float dt, TextEditor* event)
 {
     ImGuiTabBarFlags tabflags = ImGuiTabBarFlags_None;
     if(ImGui::BeginTabBar("EventModeTabs", tabflags)){
@@ -46,7 +47,22 @@ void LEventDataDOMNode::RenderDetailsUI(float dt, TextEditor* event, TextEditor*
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Text")){
-            script->Render("Event Text");
+            int num = 0;
+            for(std::vector<std::string>::iterator str = mEventText.begin(); str != mEventText.end(); str++){
+                ImGui::InputTextMultiline(fmt::format("##msg{}", num++).c_str(), &(*str));
+
+                ImGui::SameLine();
+
+                ImGui::Text(ICON_FK_MINUS_CIRCLE);
+                if(ImGui::IsItemClicked()){
+                    mEventText.erase(str);
+                }
+            }
+
+            ImGui::Text(ICON_FK_PLUS_CIRCLE);
+            if(ImGui::IsItemClicked()){
+                mEventText.push_back("");
+            }
 
             ImGui::EndTabItem();
         }
@@ -65,7 +81,16 @@ void LEventDataDOMNode::LoadEventArchive(std::shared_ptr<Archive::Rarc> arc, std
     std::shared_ptr<Archive::File> txtFile = mEventArchive->GetFile(std::filesystem::path("text") / std::string(eventScriptName + ".txt"));
 
     if(msgFile != nullptr){
-        mEventText = LGenUtility::SjisToUtf8(std::string((char*)msgFile->GetData(), msgFile->GetSize()));
+        std::string messages = std::string((char*)msgFile->GetData(), msgFile->GetSize());
+        std::string msg = "";
+        for(std::string::iterator c = messages.begin(); c < messages.end(); c++){
+            if(*c == '\n' && c != messages.begin() && *(c-1) == '\r'){
+                mEventText.push_back( LGenUtility::SjisToUtf8(msg));
+                msg = "";
+            } else {
+                msg += (*c);
+            }
+        }
     }
 
     if(txtFile != nullptr){
@@ -78,9 +103,16 @@ void LEventDataDOMNode::SaveEventArchive(){
     std::shared_ptr<Archive::File> msgFile = mEventArchive->GetFile(std::filesystem::path("message") / std::string(mEventMessagePath + ".csv"));
     std::shared_ptr<Archive::File> txtFile = mEventArchive->GetFile(std::filesystem::path("text") / std::string(mEventScriptPath + ".txt"));
 
-    std::string msgFileData = mEventText;//LGenUtility::Utf8ToSjis(mEventText);
+
+    std::string msg = "";
+    for(auto str : mEventText){
+        msg += str;
+        msg += "\r\n";
+    }
+
+    std::string msgFileData = LGenUtility::Utf8ToSjis(msg);
     
-    std::string txtFileData = mEventScript;//LGenUtility::Utf8ToSjis(mEventScript);
+    std::string txtFileData = LGenUtility::Utf8ToSjis(mEventScript);
     
     if(msgFile != nullptr){
         msgFile->SetData((uint8_t*)msgFileData.data(), msgFileData.size());

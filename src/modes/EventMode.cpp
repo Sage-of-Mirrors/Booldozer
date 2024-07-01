@@ -56,23 +56,20 @@ void LEventMode::RenderDetailsWindow(LSceneCamera* camera)
 			if(mSelected != selection){
 				if(mSelected != nullptr){
 					mSelected->mEventScript = mEditorScript.GetText();
-					mSelected->mEventText = mEditorText.GetText();
 				}
 				mEditorScript.SetText(selection->mEventScript);
-				mEditorText.SetText(selection->mEventText);
 				mSelected = selection;
 			}
 
 			ImGui::Text("Event");
 			ImGui::SameLine();
-			selection->RenderDetailsUI(0, &mEditorScript, &mEditorText);
+			selection->RenderDetailsUI(0, &mEditorScript);
 
 			ImGui::Separator();
 
 			if(ImGui::Button("Save")){
 				std::cout << "[EventMode]: Saving Event Archive" << std::endl;
 				selection->mEventScript = mEditorScript.GetText();
-				selection->mEventText = mEditorText.GetText();
 				selection->SaveEventArchive();
 			}
 

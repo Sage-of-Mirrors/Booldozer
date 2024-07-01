@@ -11,7 +11,6 @@ class LEventMode : public LEditorModeBase
 	void RenderDetailsWindow(LSceneCamera* camera);
 
 	TextEditor mEditorScript;
-	TextEditor mEditorText;
 	std::shared_ptr<LEventDataDOMNode> mSelected;
 
 	uint32_t mDockNodeBottom;
