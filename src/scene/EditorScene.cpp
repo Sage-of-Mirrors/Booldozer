@@ -38,7 +38,7 @@ LEditorScene::~LEditorScene(){
 void LEditorScene::LoadResFromRoot(){
 	mDoorModels.reserve(14);
 
-	for(int door_id = 0; door_id < 14; door_id++){
+	for(int door_id = 0; door_id < 15; door_id++){
 		if(GCResourceManager.mGameArchive == nullptr || GCResourceManager.mLoadedGameArchive == false) continue; // should be done better
 		std::shared_ptr<Archive::File> doorModelFile = GCResourceManager.mGameArchive->GetFile(std::filesystem::path(fmt::format("iwamoto/door/door_{:02}.bin", door_id)));
 		if(doorModelFile != nullptr){
