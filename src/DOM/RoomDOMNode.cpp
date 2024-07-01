@@ -184,6 +184,14 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 					auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
 					ActiveRoomArchive->SaveToFile(std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path());
 					ActiveRoomArchive = nullptr;
+					auto furniture = self->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
+					for(auto entry : furniture){
+						if(entry->GetModelName() == std::filesystem::path(EditFileName->GetName()).stem().string()){
+							entry->SetModelName(std::filesystem::path(FileName).stem().string());
+						}
+					}
+					std::replace(mRoomModels.begin(), mRoomModels.end(), std::filesystem::path(EditFileName->GetName()).stem().string(), std::filesystem::path(FileName).stem().string());
+					EditFileName->SetName(FileName);
 					EditFileName = nullptr;
 					FileName = "";
 					ImGui::CloseCurrentPopup();
