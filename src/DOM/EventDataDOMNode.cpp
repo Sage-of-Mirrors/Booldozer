@@ -43,7 +43,9 @@ void LEventDataDOMNode::RenderDetailsUI(float dt, TextEditor* event)
     if(ImGui::BeginTabBar("EventModeTabs", tabflags)){
         if(ImGui::BeginTabItem("Script")){
             //ImGui::InputTextMultiline("Script File", &mEventScript, {ImGui::GetWindowSize().x, ImGui::GetWindowSize().y - 50}, 0);
-            event->Render("Event Script");
+            ImVec2 cRegion = ImGui::GetContentRegionAvail();
+            cRegion.y -= 25;
+            event->Render("Event Script", cRegion, true);
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Text")){
