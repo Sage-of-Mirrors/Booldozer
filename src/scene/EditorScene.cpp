@@ -217,18 +217,18 @@ void LEditorScene::UpdateRenderers(){
 		if(col->GetIsRendered()){
 		// More Stupid Code. Why?
 
-			for(auto triangle : col->mTriangles){
+			for(auto triangle : col->mModel.mTriangles){
 				std::vector<CPathPoint> renderTri = {
-					{ col->mPositionData[triangle.mVtx1], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
-					{ col->mPositionData[triangle.mVtx1] + (col->mNormalData[triangle.mNormal] * 7.0f), {0.0, 0.775, 0.32, 1.0}, 800, -1 },
-					{ col->mPositionData[triangle.mVtx1], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
-					{ col->mPositionData[triangle.mVtx2], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
-					{ col->mPositionData[triangle.mVtx2] + (col->mNormalData[triangle.mNormal] * 7.0f), {0.0, 0.775, 0.32, 1.0}, 800, -1 },
-					{ col->mPositionData[triangle.mVtx2], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
-					{ col->mPositionData[triangle.mVtx3], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
-					{ col->mPositionData[triangle.mVtx3] + (col->mNormalData[triangle.mNormal] * 7.0f), {0.0, 0.775, 0.32, 1.0}, 800, -1 },
-					{ col->mPositionData[triangle.mVtx3], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
-					{ col->mPositionData[triangle.mVtx1], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
+					{ col->mModel.mVertices[triangle.mVtx1], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
+					{ col->mModel.mVertices[triangle.mVtx1] + (col->mModel.mNormals[triangle.mNormal] * 7.0f), {0.0, 0.775, 0.32, 1.0}, 800, -1 },
+					{ col->mModel.mVertices[triangle.mVtx1], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
+					{ col->mModel.mVertices[triangle.mVtx2], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
+					{ col->mModel.mVertices[triangle.mVtx2] + (col->mModel.mNormals[triangle.mNormal] * 7.0f), {0.0, 0.775, 0.32, 1.0}, 800, -1 },
+					{ col->mModel.mVertices[triangle.mVtx2], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
+					{ col->mModel.mVertices[triangle.mVtx3], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
+					{ col->mModel.mVertices[triangle.mVtx3] + (col->mModel.mNormals[triangle.mNormal] * 7.0f), {0.0, 0.775, 0.32, 1.0}, 800, -1 },
+					{ col->mModel.mVertices[triangle.mVtx3], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
+					{ col->mModel.mVertices[triangle.mVtx1], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
 				};
 				mPathRenderer.mPaths.push_back(renderTri);
 			}

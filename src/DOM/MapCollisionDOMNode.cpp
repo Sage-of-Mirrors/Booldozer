@@ -14,9 +14,6 @@ namespace {
 	std::thread importModelThread {};
 	std::mutex importLock {};
 	bool isImportingCol { false };
-
-	std::mutex generateLock {};
-	bool isGeneratingCol { false };
 }
 
 LMapCollisionDOMNode::LMapCollisionDOMNode(std::string name) : Super(name)
@@ -34,7 +31,7 @@ void LMapCollisionDOMNode::ImportObj(std::string path){
 	auto map = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
 
 	LCollisionIO col;
-	col.LoadObj(std::filesystem::path(path), GetParentOfType<LMapDOMNode>(EDOMNodeType::Map), mMatColProp);
+	col.LoadObj(std::filesystem::path(path), GetParentOfType<LMapDOMNode>(EDOMNodeType::Map), mMatColProp, mBakeFurniture);
 
 	auto mapArc = map.lock()->GetArchive().lock();
 	auto colFile = mapArc->GetFile("col.mp");
@@ -47,30 +44,6 @@ void LMapCollisionDOMNode::ImportObj(std::string path){
 	importLock.lock();
 	isImportingCol = false;
 	importLock.unlock();
-}
-
-bool LMapCollisionDOMNode::FromMap(){
-	auto map = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
-
-	// import obj as base map first?
-
-	LCollisionIO col;
-	col.FromMap(map.lock());
-	//col.LoadObj(std::filesystem::path(path), GetParentOfType<LMapDOMNode>(EDOMNodeType::Map), mMatColProp);
-
-	auto mapArc = map.lock()->GetArchive().lock();
-	auto colFile = mapArc->GetFile("col.mp");
-
-	bStream::CMemoryStream colStream(colFile->GetData(), colFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
-	Load(&colStream);
-
-	LEditorScene::SetDirty();
-
-	generateLock.lock();
-	isGeneratingCol = false;
-	generateLock.unlock();
-
-	return true;
 }
 
 void LMapCollisionDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection)
@@ -103,6 +76,9 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 		}
 
 		if(ImGui::BeginTabItem("Obj")){
+
+			LUIUtility::RenderCheckBox("Bake Furniture", &mBakeFurniture);
+
 			ImGui::Text("Material Settings");
 			LUIUtility::RenderTooltip("Custom OBJ Material Property names to load Collision Properties from");
 
@@ -147,49 +123,11 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 			ImGui::EndTabItem();
 		}
 
-		if(ImGui::BeginTabItem("Bake Furniture")){
-			bool button = ImGui::Button("Bake");
-			LUIUtility::RenderTooltip("Generate Collision from Furniture scanboxes and map's existing collision");
-			if(button){
-				generateLock.lock();
-				isGeneratingCol = true;
-				generateLock.unlock();
-
-				importModelThread = std::thread(&LMapCollisionDOMNode::FromMap, this);
-				bakeColClicked = true;
-			}
-			ImGui::EndTabItem();
-		}
-
 		ImGui::EndTabBar();
 	}
 
-	if(bakeColClicked){
-		ImGui::OpenPopup("Baking Furniture");
-	}
 
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal("Baking Furniture", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
-	{
-        const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
-		ImGui::AlignTextToFramePadding();
-		ImGui::Spinner("##loadmapSpinner", 5.0f, 2, col);
-		ImGui::SameLine();
-		ImGui::Text("Baking Furniture Collision...");
-		
-		generateLock.lock();
-		if(isGeneratingCol == false){
-			std::cout << "[BooldozerEditor]: Joining Bake Collision Thread" << std::endl;
-			importModelThread.join();
-			ImGui::CloseCurrentPopup();
-		}
-		generateLock.unlock();
-
-		ImGui::EndPopup();
-	}
-
-    center = ImGui::GetMainViewport()->GetCenter();
     ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 	if (ImGui::BeginPopupModal("Importing Obj", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
 	{
@@ -245,9 +183,9 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 bool LMapCollisionDOMNode::Load(bStream::CMemoryStream* stream)
 {
 
-	mPositionData.clear();
-	mNormalData.clear();
-	mTriangles.clear();
+	mModel.mVertices.clear();
+	mModel.mNormals.clear();
+	mModel.mTriangles.clear();
     
 	mGridScale = glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat());
 	mMinBounds = glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat());
@@ -268,13 +206,13 @@ bool LMapCollisionDOMNode::Load(bStream::CMemoryStream* stream)
 
 	for (size_t i = 0; i < (normalDataOffset - vertexDataOffset) / 0x0C; i++)
 	{
-		mPositionData.push_back(glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat()));
+		mModel.mVertices.push_back(glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat()));
 	}
 	
 	stream->seek(normalDataOffset);
 	for (size_t i = 0; i < (triangleDataOffset - normalDataOffset) / 0x0C; i++)
 	{
-		mNormalData.push_back(glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat()));
+		mModel.mNormals.push_back(glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat()));
 	}
 
 	stream->seek(triangleDataOffset);
@@ -297,7 +235,7 @@ bool LMapCollisionDOMNode::Load(bStream::CMemoryStream* stream)
 		triangle.mMask = stream->readUInt16();
 		triangle.mFriction = stream->readUInt16();
 
-		mTriangles.push_back(triangle);
+		mModel.mTriangles.push_back(triangle);
 	}
 
 	std::cout << "[CollisionDOMNode]: Finished reading Collision File" << std::endl;

@@ -37,6 +37,7 @@ struct CollisionTriangle {
 };
 
 struct ColModel {
+    glm::vec3 min, max;
     std::vector<glm::vec3> mVertices;
     std::vector<glm::vec3> mNormals;
     std::vector<CollisionTriangle> mTriangles;
@@ -45,8 +46,7 @@ struct ColModel {
 class LCollisionIO {
 public:
     void LoadMp(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map);
-    void LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map, std::map<std::string, std::string> propertyMap);
-    void FromMap(std::shared_ptr<LMapDOMNode> map);
+    void LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map, std::map<std::string, std::string> propertyMap, bool bakeFurniture);
 
     LCollisionIO(){}
     ~LCollisionIO(){}

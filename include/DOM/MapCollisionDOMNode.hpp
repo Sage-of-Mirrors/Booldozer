@@ -29,9 +29,8 @@ class LMapCollisionDOMNode : public LBGRenderDOMNode
 public:
 	typedef LBGRenderDOMNode Super;
 
-	std::vector<glm::vec3> mPositionData;
-	std::vector<glm::vec3> mNormalData;
-	std::vector<CollisionTriangle> mTriangles;
+	ColModel mModel;
+
 	std::map<std::string, std::string> mMatColProp {
 		{"Group", "group"},
 		{"Sound", "sound"},
@@ -43,7 +42,8 @@ public:
 	};
 
 	bool mWasRendered { false };
-	bool mShinyFriction { true };
+	bool mBakeFurniture { false };
+
 	glm::vec3 mGridScale, mMinBounds, mAxisLengths;
 
 	LMapCollisionDOMNode(std::string name);
