@@ -41,7 +41,6 @@ class LEditorScene {
     
     std::vector<std::shared_ptr<BinModel>> mDoorModels;
     std::map<std::string, std::shared_ptr<BinModel>> mRoomModels;
-    std::map<std::string, std::shared_ptr<BinModel>> mRoomFurniture;
 
 
     std::map<std::string, std::unique_ptr<MDL::Model>> mActorModels;
@@ -57,6 +56,7 @@ class LEditorScene {
 
 public:
     LSceneCamera Camera;
+    std::map<std::string, std::shared_ptr<BinModel>> mRoomFurniture;
     
     glm::mat4 getCameraView();
     glm::mat4 getCameraProj();
@@ -74,6 +74,8 @@ public:
     void Clear();
     void Update(GLFWwindow* window, float dt, LEditorSelection* selection);
     void LoadResFromRoot();
+
+    static LEditorScene* GetEditorScene();
 
     LEditorScene();
     ~LEditorScene();

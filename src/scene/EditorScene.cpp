@@ -24,8 +24,15 @@
 #include <J3D/J3DModelLoader.hpp>
 #include <J3D/Rendering/J3DRendering.hpp>
 
+
+// This kind of sucks but the application code doesnt currently have a way to get EditorScene
 namespace {
 	bool mIsDirty { false };
+	LEditorScene* mScene;
+}
+
+LEditorScene* LEditorScene::GetEditorScene(){
+	return mScene;
 }
 
 LEditorScene::LEditorScene() : Initialized(false) {}
@@ -93,7 +100,7 @@ void LEditorScene::Init(){
 	MDL::InitShaders();
 
 	LoadResFromRoot();
-
+	mScene = this;
 }
 
 void LEditorScene::Clear(){
@@ -113,6 +120,7 @@ void LEditorScene::UpdateRenderers(){
 	//std::cout << "calling update renderers. this should only happen a few times!" << std::endl;
 	mPathRenderer.mPaths.clear();
 	mPointManager.mBillboards.clear();
+
 	for(auto room : mCurrentRooms){
 		if(!room.expired() && Initialized)
 		{

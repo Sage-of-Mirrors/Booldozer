@@ -91,13 +91,18 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 								auto furniture = self->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
 								for(auto entry : furniture){
 									if(entry->GetModelName() == std::filesystem::path(file->GetName()).stem().string()){
-										entry->SetModelName(std::filesystem::path(FileName).stem().string());
+										entry->SetModelName(FileName);
 									}
 								}
-								std::replace(mRoomModels.begin(), mRoomModels.end(), std::filesystem::path(file->GetName()).stem().string(), std::filesystem::path(FileName).stem().string());
-								file->SetName(FileName);
+								LEditorScene::GetEditorScene()->mRoomFurniture[FileName] = LEditorScene::GetEditorScene()->mRoomFurniture[std::filesystem::path(EditFileName->GetName()).stem().string()];
+								LEditorScene::GetEditorScene()->mRoomFurniture.erase(std::filesystem::path(EditFileName->GetName()).stem().string());
+								std::replace(mRoomModels.begin(), mRoomModels.end(), std::filesystem::path(file->GetName()).stem().string(), FileName);
+								file->SetName(FileName+".bin");
 								EditFileName = nullptr;
 							}
+
+							ImGui::SameLine();
+							ImGui::Text(".bin");
 						} else {
 							ImGui::Text(file->GetName().c_str());
 						}
@@ -109,15 +114,17 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 								if(EditFileName != nullptr){
 									auto furniture = self->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
 									for(auto entry : furniture){
-										if(entry->GetModelName() == std::filesystem::path(file->GetName()).stem().string()){
-											entry->SetModelName(std::filesystem::path(FileName).stem().string());
+										if(entry->GetModelName() == std::filesystem::path(EditFileName->GetName()).stem().string()){
+											entry->SetModelName(FileName);
 										}
+										LEditorScene::GetEditorScene()->mRoomFurniture[FileName] = LEditorScene::GetEditorScene()->mRoomFurniture[std::filesystem::path(EditFileName->GetName()).stem().string()];
+										LEditorScene::GetEditorScene()->mRoomFurniture.erase(std::filesystem::path(EditFileName->GetName()).stem().string());
+										std::replace(mRoomModels.begin(), mRoomModels.end(), std::filesystem::path(EditFileName->GetName()).stem().string(), FileName);
+										EditFileName->SetName(FileName+".bin");
 									}
-									std::replace(mRoomModels.begin(), mRoomModels.end(), std::filesystem::path(file->GetName()).stem().string(), std::filesystem::path(FileName).stem().string());
-									file->SetName(FileName);
 								}
 								EditFileName = file;
-								FileName = file->GetName();
+								FileName = std::filesystem::path(file->GetName()).stem().string();
 								std::cout << "[RoomDOMNode]: Original Filename is " << FileName << std::endl;
 							} else if(EditFileName == file){
 								auto furniture = self->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
@@ -126,8 +133,10 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 										entry->SetModelName(std::filesystem::path(FileName).stem().string());
 									}
 								}
-								std::replace(mRoomModels.begin(), mRoomModels.end(), std::filesystem::path(file->GetName()).stem().string(), std::filesystem::path(FileName).stem().string());
-								file->SetName(FileName);
+								LEditorScene::GetEditorScene()->mRoomFurniture[FileName] = LEditorScene::GetEditorScene()->mRoomFurniture[std::filesystem::path(EditFileName->GetName()).stem().string()];
+								LEditorScene::GetEditorScene()->mRoomFurniture.erase(std::filesystem::path(EditFileName->GetName()).stem().string());
+								std::replace(mRoomModels.begin(), mRoomModels.end(), std::filesystem::path(file->GetName()).stem().string(), FileName);
+								file->SetName(FileName+".bin");
 								EditFileName = nullptr;
 							}
 						}
@@ -184,20 +193,25 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 					auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
 					ActiveRoomArchive->SaveToFile(std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path());
 					ActiveRoomArchive = nullptr;
+
 					if(EditFileName != nullptr){
 						auto furniture = self->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
 						for(auto entry : furniture){
 							if(entry->GetModelName() == std::filesystem::path(EditFileName->GetName()).stem().string()){
-								entry->SetModelName(std::filesystem::path(FileName).stem().string());
+								entry->SetModelName(FileName);
 							}
 						}
-						std::replace(mRoomModels.begin(), mRoomModels.end(), std::filesystem::path(EditFileName->GetName()).stem().string(), std::filesystem::path(FileName).stem().string());
-						EditFileName->SetName(FileName);
+						
+						LEditorScene::GetEditorScene()->mRoomFurniture[FileName] = LEditorScene::GetEditorScene()->mRoomFurniture[std::filesystem::path(EditFileName->GetName()).stem().string()];
+						LEditorScene::GetEditorScene()->mRoomFurniture.erase(std::filesystem::path(EditFileName->GetName()).stem().string());
+
+						std::replace(mRoomModels.begin(), mRoomModels.end(), std::filesystem::path(EditFileName->GetName()).stem().string(), FileName);
+						EditFileName->SetName(FileName+".bin");
 						EditFileName = nullptr;
 					}
+
 					FileName = "";
 					ImGui::CloseCurrentPopup();
-					isRoomDirty = true;
 				}
 				ImGui::EndPopup();
 			}
