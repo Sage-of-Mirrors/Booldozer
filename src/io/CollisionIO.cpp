@@ -1,13 +1,23 @@
 #include "io/CollisionIO.hpp"
+#include <glm/gtx/matrix_decompose.hpp>
 #include <Archive.hpp>
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
 #include <fmt/format.h>
 
+#include "DOM/MapDOMNode.hpp"
+#include "DOM/RoomDOMNode.hpp"
+#include "DOM/FurnitureDOMNode.hpp"
+#include "DOM/MapCollisionDOMNode.hpp"
+
 #include <GenUtil.hpp>
-// todo: thread this so we can show a loading screen
-//std::atomic<bool> mCollisonGenerated;
+
+ColModel CUBE {
+    .mVertices = {{ -0.5, 0.5, 0.5 }, { -0.5, -0.5, -0.5 }, { -0.5, -0.5, 0.5 }, { -0.5, 0.5, -0.5 }, { 0.5, -0.5, -0.5 }, { 0.5, 0.5, -0.5 }, { 0.5, -0.5, 0.5 }, { 0.5, 0.5, 0.5 }},
+    .mNormals = {{ 0, 0, 0 }, { -1.0, -0.0, 0.0 }, { -0.0, 0.7071067811865475, -0.7071067811865475 }, { 0.0, 0.0, 1.0 }, { 0.0, -1.0, 0.0 }, { 0.0, 0.0, -1.0 }, { 0.7071067811865475, 0.7071067811865475, 0.0 }, { 1.0, 0.0, 0.0 }, { -0.0, 0.7071067811865475, 0.7071067811865475 }, { -0.7071067811865475, 0.7071067811865475, -0.0 }, { 0.7071067811865475, 0.0, 0.7071067811865475 }, { 0.0, 1.0, 0.0 }, { -0.7071067811865475, -0.0, 0.7071067811865475 }, { -0.0, -0.7071067811865475, 0.7071067811865475 }, { -0.7071067811865475, -0.7071067811865475, -0.0 }, { 0.0, -0.7071067811865475, -0.7071067811865475 }, { 0.7071067811865475, -0.7071067811865475, 0.0 }, { -0.7071067811865475, -0.0, -0.7071067811865475 }, { 0.7071067811865475, 0.0, -0.7071067811865475 }},
+    .mTriangles = {{ .mVtx1 = 0, .mVtx2 = 1, .mVtx3 = 2, .mNormal = 1, .mEdgeTan1 = 2, .mEdgeTan2 = 3, .mEdgeTan3 = 4, .mUnkIdx = 0, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = false, .v1 = { -1.0, 1.0, 1.0 }, .v2 = { -1.0, -1.0, -1.0 }, .v3 = { -1.0, -1.0, 1.0 }, .mTriIdx = 0},{ .mVtx1 = 3, .mVtx2 = 4, .mVtx3 = 1, .mNormal = 5, .mEdgeTan1 = 6, .mEdgeTan2 = 1, .mEdgeTan3 = 4, .mUnkIdx = 0, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = false, .v1 = { -1.0, 1.0, -1.0 }, .v2 = { 1.0, -1.0, -1.0 }, .v3 = { -1.0, -1.0, -1.0 }, .mTriIdx = 1},{ .mVtx1 = 5, .mVtx2 = 6, .mVtx3 = 4, .mNormal = 7, .mEdgeTan1 = 8, .mEdgeTan2 = 5, .mEdgeTan3 = 4, .mUnkIdx = 0, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = false, .v1 = { 1.0, 1.0, -1.0 }, .v2 = { 1.0, -1.0, 1.0 }, .v3 = { 1.0, -1.0, -1.0 }, .mTriIdx = 2},{ .mVtx1 = 7, .mVtx2 = 2, .mVtx3 = 6, .mNormal = 3, .mEdgeTan1 = 9, .mEdgeTan2 = 7, .mEdgeTan3 = 4, .mUnkIdx = 0, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = false, .v1 = { 1.0, 1.0, 1.0 }, .v2 = { -1.0, -1.0, 1.0 }, .v3 = { 1.0, -1.0, 1.0 }, .mTriIdx = 3},{ .mVtx1 = 4, .mVtx2 = 2, .mVtx3 = 1, .mNormal = 4, .mEdgeTan1 = 10, .mEdgeTan2 = 5, .mEdgeTan3 = 1, .mUnkIdx = 0, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = false, .v1 = { 1.0, -1.0, -1.0 }, .v2 = { -1.0, -1.0, 1.0 }, .v3 = { -1.0, -1.0, -1.0 }, .mTriIdx = 4},{ .mVtx1 = 3, .mVtx2 = 7, .mVtx3 = 5, .mNormal = 11, .mEdgeTan1 = 12, .mEdgeTan2 = 5, .mEdgeTan3 = 7, .mUnkIdx = 12, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = true, .v1 = { -1.0, 1.0, -1.0 }, .v2 = { 1.0, 1.0, 1.0 }, .v3 = { 1.0, 1.0, -1.0 }, .mTriIdx = 5},{ .mVtx1 = 0, .mVtx2 = 3, .mVtx3 = 1, .mNormal = 1, .mEdgeTan1 = 11, .mEdgeTan2 = 13, .mEdgeTan3 = 5, .mUnkIdx = 0, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = false, .v1 = { -1.0, 1.0, 1.0 }, .v2 = { -1.0, 1.0, -1.0 }, .v3 = { -1.0, -1.0, -1.0 }, .mTriIdx = 6},{ .mVtx1 = 3, .mVtx2 = 5, .mVtx3 = 4, .mNormal = 5, .mEdgeTan1 = 11, .mEdgeTan2 = 14, .mEdgeTan3 = 7, .mUnkIdx = 0, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = false, .v1 = { -1.0, 1.0, -1.0 }, .v2 = { 1.0, 1.0, -1.0 }, .v3 = { 1.0, -1.0, -1.0 }, .mTriIdx = 7},{ .mVtx1 = 5, .mVtx2 = 7, .mVtx3 = 6, .mNormal = 7, .mEdgeTan1 = 11, .mEdgeTan2 = 15, .mEdgeTan3 = 3, .mUnkIdx = 0, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = false, .v1 = { 1.0, 1.0, -1.0 }, .v2 = { 1.0, 1.0, 1.0 }, .v3 = { 1.0, -1.0, 1.0 }, .mTriIdx = 8},{ .mVtx1 = 7, .mVtx2 = 0, .mVtx3 = 2, .mNormal = 3, .mEdgeTan1 = 11, .mEdgeTan2 = 16, .mEdgeTan3 = 1, .mUnkIdx = 0, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = false, .v1 = { 1.0, 1.0, 1.0 }, .v2 = { -1.0, 1.0, 1.0 }, .v3 = { -1.0, -1.0, 1.0 }, .mTriIdx = 9},{ .mVtx1 = 4, .mVtx2 = 6, .mVtx3 = 2, .mNormal = 4, .mEdgeTan1 = 7, .mEdgeTan2 = 17, .mEdgeTan3 = 3, .mUnkIdx = 0, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = false, .v1 = { 1.0, -1.0, -1.0 }, .v2 = { 1.0, -1.0, 1.0 }, .v3 = { -1.0, -1.0, 1.0 }, .mTriIdx = 10},{ .mVtx1 = 3, .mVtx2 = 0, .mVtx3 = 7, .mNormal = 11, .mEdgeTan1 = 1, .mEdgeTan2 = 18, .mEdgeTan3 = 3, .mUnkIdx = 1, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = true, .v1 = { -1.0, 1.0, -1.0 }, .v2 = { -1.0, 1.0, 1.0 }, .v3 = { 1.0, 1.0, 1.0 }, .mTriIdx = 11}}
+};
 
 void LCollisionIO::LoadMp(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map){
     auto mapArc = map.lock()->GetArchive().lock();
@@ -21,6 +31,420 @@ void LCollisionIO::LoadMp(std::filesystem::path path, std::weak_ptr<LMapDOMNode>
     colFile->SetData(importColData, importCol.getSize());
 
     delete[] importColData;
+}
+
+void LCollisionIO::FromMap(std::shared_ptr<LMapDOMNode> map){
+
+    glm::vec3 bbmin, bbmax;
+
+    std::cout << "[CollisionIO:FromMap]: Grabbing map's current collision..." << std::endl;
+    std::shared_ptr<LMapCollisionDOMNode> col = map->GetChildrenOfType<LMapCollisionDOMNode>(EDOMNodeType::MapCollision)[0];
+
+    // Copy map's current collision model
+    ColModel output;
+
+    for(auto pos : col->mPositionData){
+            glm::vec3 vtx = {pos.z, pos.y, pos.x};
+            output.mVertices.push_back(vtx);     
+    }
+
+    for(auto norm : col->mNormalData){
+        glm::vec3 vtx = {norm.z, norm.y, norm.x};
+        output.mNormals.push_back(norm);
+    }
+    output.mTriangles = col->mTriangles;
+
+    std::vector<GridCell> grid; 
+
+    std::cout << "[CollisionIO:FromMap]: Adding furniture cubes to collision map..." << std::endl;
+    
+    map->ForEachChildOfType<LRoomDOMNode>(EDOMNodeType::Room, [&](std::shared_ptr<LRoomDOMNode> room){
+        std::vector<std::shared_ptr<LFurnitureDOMNode>> roomFurniture = room->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
+        for(std::shared_ptr<LFurnitureDOMNode> furniture : roomFurniture){
+            std::cout << "Adding Furniture " << furniture->GetName() << std::endl;
+            glm::vec3 pos;
+            glm::quat rot;
+            glm::vec3 scale;
+            glm::vec3 skew;
+            glm::vec4 persp;
+
+            glm::decompose(*furniture->GetMat(), scale, rot, pos, skew, persp);
+
+            glm::mat4 transform = glm::identity<glm::mat4>();
+            glm::ivec3 scanbox = furniture->GetScanbox();
+            transform *= glm::scale(glm::vec3(scanbox.z, scanbox.y, scanbox.x));
+            transform *= glm::toMat4(rot);
+
+            for(std::vector<CollisionTriangle>::iterator tri = CUBE.mTriangles.begin(); tri != CUBE.mTriangles.end(); tri++){
+                CollisionTriangle newTri = (*tri);
+
+                glm::vec4 v1 = glm::vec4(newTri.v1, 0) * transform;
+                glm::vec4 v2 = glm::vec4(newTri.v2, 0) * transform;
+                glm::vec4 v3 = glm::vec4(newTri.v3, 0) * transform;
+
+                newTri.v1 = glm::vec3(v1) + glm::vec3(pos.z, pos.y + scanbox.y, pos.x);
+                newTri.v2 = glm::vec3(v2) + glm::vec3(pos.z, pos.y + scanbox.y, pos.x);
+                newTri.v3 = glm::vec3(v3) + glm::vec3(pos.z, pos.y + scanbox.y, pos.x);
+
+                glm::vec3 e10 = newTri.v2 - newTri.v1; // u
+                glm::vec3 e20 = newTri.v3 - newTri.v1; // v
+                glm::vec3 e01 = newTri.v1 - newTri.v2;
+                glm::vec3 e21 = newTri.v3 - newTri.v2; 
+
+                glm::vec3 normal1 = glm::normalize(glm::cross(e10, e20));
+                glm::vec3 normal2 = glm::normalize(glm::cross(e01, e21));
+                
+                if(!LGenUtility::VectorContains<glm::vec3>(output.mNormals, normal1)) output.mNormals.push_back(normal1);
+                newTri.mNormal = LGenUtility::VectorIndexOf<glm::vec3>(output.mNormals, normal1);
+
+                // Tangents
+                glm::vec3 tan1 = -glm::normalize(glm::cross(normal1, e10));
+                glm::vec3 tan2 = glm::normalize(glm::cross(normal1, e20));
+                glm::vec3 tan3 = glm::normalize(glm::cross(normal2, e21));
+                
+                if(!LGenUtility::VectorContains<glm::vec3>(output.mNormals, tan1)) output.mNormals.push_back(tan1);
+                newTri.mEdgeTan1 = LGenUtility::VectorIndexOf<glm::vec3>(output.mNormals, tan1);
+
+                if(!LGenUtility::VectorContains<glm::vec3>(output.mNormals, tan2)) output.mNormals.push_back(tan2);
+                newTri.mEdgeTan2 = LGenUtility::VectorIndexOf<glm::vec3>(output.mNormals, tan2);
+
+                if(!LGenUtility::VectorContains<glm::vec3>(output.mNormals, tan3)) output.mNormals.push_back(tan3);
+                newTri.mEdgeTan3 = LGenUtility::VectorIndexOf<glm::vec3>(output.mNormals, tan3);
+                
+                glm::vec3 up(0.0f, 1.0f, 0.0f);
+                float angle = (float)glm::acos(glm::dot(normal1, up));
+
+                angle *= (float)(180.0f / glm::pi<float>());
+
+                if(glm::abs(angle) >= 0.0f && glm::abs(angle) <= 0.5f){
+                    newTri.mUnkIdx = newTri.mEdgeTan1;
+                } else {
+                    newTri.mUnkIdx = 0;
+                }
+
+                if(glm::abs(angle) <= 65.0f){
+                    newTri.mFloor = true;
+                } else {
+                    newTri.mFloor = false;
+                }
+                
+                newTri.mDot = glm::dot(tan3, e10);
+
+                if(!LGenUtility::VectorContains<glm::vec3>(output.mVertices, newTri.v1)) output.mVertices.push_back(newTri.v1);
+                newTri.mVtx1 = LGenUtility::VectorIndexOf<glm::vec3>(output.mVertices, newTri.v1);
+
+                if(!LGenUtility::VectorContains<glm::vec3>(output.mVertices, newTri.v2)) output.mVertices.push_back(newTri.v2);
+                newTri.mVtx2 = LGenUtility::VectorIndexOf<glm::vec3>(output.mVertices, newTri.v2);
+
+                if(!LGenUtility::VectorContains<glm::vec3>(output.mVertices, newTri.v3)) output.mVertices.push_back(newTri.v3);
+                newTri.mVtx3 = LGenUtility::VectorIndexOf<glm::vec3>(output.mVertices, newTri.v3);
+            
+                newTri.mTriIdx = output.mTriangles.size();
+                output.mTriangles.push_back(newTri);
+            }
+        }
+    });
+
+    for(auto vtx : output.mVertices){
+        bbmin = glm::vec3(glm::min(bbmin.x, vtx.x), glm::min(bbmin.y, vtx.y), glm::min(bbmin.z, vtx.z));
+        bbmin = glm::vec3(glm::min(bbmin.x, vtx.x), glm::min(bbmin.y, vtx.y), glm::min(bbmin.z, vtx.z));
+        bbmin = glm::vec3(glm::min(bbmin.x, vtx.x), glm::min(bbmin.y, vtx.y), glm::min(bbmin.z, vtx.z));
+
+        bbmax = glm::vec3(glm::max(bbmax.x, vtx.x), glm::max(bbmax.y, vtx.y), glm::max(bbmax.z, vtx.z));
+        bbmax = glm::vec3(glm::max(bbmax.x, vtx.x), glm::max(bbmax.y, vtx.y), glm::max(bbmax.z, vtx.z));
+        bbmax = glm::vec3(glm::max(bbmax.x, vtx.x), glm::max(bbmax.y, vtx.y), glm::max(bbmax.z, vtx.z));   
+    }
+
+    std::cout << "[CollisionIO:FromMap]: Bounding Box ["
+        << bbmin.x << ", " << bbmin.y << ", " << bbmin.z << "] ["
+        << bbmax.x << ", " << bbmax.y << ", " << bbmax.z << "]" << std::endl; 
+
+
+    glm::vec3 axisLengths((bbmax.x - bbmin.x), (bbmax.y - bbmin.y), (bbmax.z - bbmin.z));
+
+    std::vector<uint32_t> gridData = {};
+    std::vector<int16_t> groupData = {};
+
+    // Now that we have all the triangles, generate the grid and the groups.
+	int xCellCount = (int)(glm::ceil(axisLengths.x / 256.0f));
+	int yCellCount = (int)(glm::ceil(axisLengths.y / 512.0f));
+	int zCellCount = (int)(glm::ceil(axisLengths.z / 256.0f));
+
+    float xCellSize = axisLengths.x / xCellCount;
+    float yCellSize = axisLengths.y / yCellCount;
+    float zCellSize = axisLengths.z / zCellCount;
+
+    float xHalfSize = xCellSize / 2;
+    float yHalfSize = yCellSize / 2;
+    float zHalfSize = zCellSize / 2;
+
+    float curX = bbmin.x;
+    float curY = bbmin.y;
+    float curZ = bbmin.z;
+
+    for (int z = 0; z < zCellCount; z++){
+        for (int y = 0; y < yCellCount; y++){
+            for (int x = 0; x < xCellCount; x++){
+                GridCell cell;
+
+                glm::vec3 boxExtents = {xCellSize, yCellSize, zCellSize};
+                glm::vec3 boxCenter = {curX + (xCellSize / 2), curY + (yCellSize / 2), curZ + (zCellSize / 2)};
+                for(std::vector<CollisionTriangle>::iterator tri = output.mTriangles.begin(); tri != output.mTriangles.end(); tri++){
+                    glm::vec3 triVerts[3] = {tri->v1, tri->v2, tri->v3};
+
+                    if(LGenUtility::TriBoxIntersect(triVerts, boxCenter, boxExtents)){
+                         // add to cell all group!
+                        cell.mAll.push_back(tri->mTriIdx);
+                        // add to cell floor group!
+                        if(tri->mFloor) cell.mFloor.push_back(tri->mTriIdx);
+                    }
+
+                }
+                grid.push_back(cell);
+                curX += xCellSize;
+            }
+            curX = bbmin.x;
+            curY += yCellSize;
+        }
+        curY = bbmin.y;
+        curZ += zCellSize;
+    }
+
+    groupData.push_back(0xFFFF);
+    
+    // gen grid
+    for (int z = 0; z < zCellCount; z++){
+        for (int y = 0; y < yCellCount; y++){
+            for (int x = 0; x < xCellCount; x++){
+                int idx = x + (y * xCellCount) + (z * xCellCount * yCellCount);
+
+                if(grid[idx].mAll.size() > 0){
+                    gridData.push_back(groupData.size());
+                    for(auto triIdx : grid[idx].mAll){
+                        groupData.push_back(triIdx);
+                    }
+                    groupData.push_back(0xFFFF);
+                } else if(y > 0){
+                    int prevIdx = x + ((y - 1) * xCellCount) + (z * xCellCount * yCellCount);
+                    if(grid[prevIdx].mAll.size() > 0){
+                        gridData.push_back(groupData.size());
+                        for(auto triIdx : grid[prevIdx].mAll){
+                            groupData.push_back(triIdx);
+                        }
+                        groupData.push_back(0xFFFF);
+                    } else {
+                        gridData.push_back(0);
+                    }
+                } else {
+                    gridData.push_back(0);
+                }
+
+                if(grid[idx].mFloor.size() > 0){
+                    gridData.push_back(groupData.size());
+                    for(auto triIdx : grid[idx].mFloor){
+                        groupData.push_back(triIdx);
+                    }
+                    groupData.push_back(0xFFFF);
+                } else {
+                    gridData.push_back(0);
+                }
+
+            }
+        }
+    }
+
+    groupData.push_back(0xFFFF);
+
+    // Write structures to file
+    auto mapArc = map->GetArchive().lock();
+    
+    {
+        bStream::CMemoryStream stream(1024, bStream::Endianess::Big, bStream::OpenMode::Out);
+
+        // Write col.mp Header
+
+        // Write scale
+        stream.writeFloat(256.0f);
+        stream.writeFloat(512.0f);
+        stream.writeFloat(256.0f);
+
+        // Write Min + Axis Len
+        stream.writeFloat(bbmin.x);
+        stream.writeFloat(bbmin.y);
+        stream.writeFloat(bbmin.z);
+
+        stream.writeFloat(axisLengths.x);
+        stream.writeFloat(axisLengths.y);
+        stream.writeFloat(axisLengths.z);
+
+        stream.writeUInt32(0x40);
+        stream.writeUInt32(0);
+        stream.writeUInt32(0);
+        stream.writeUInt32(0);
+        stream.writeUInt32(0);
+        stream.writeUInt32(0);
+        stream.writeUInt32(0);
+
+        for(std::vector<glm::vec3>::iterator n = output.mVertices.begin(); n != output.mVertices.end(); n++){
+            stream.writeFloat(n->x);
+            stream.writeFloat(n->y);
+            stream.writeFloat(n->z);
+        }
+
+        uint32_t normalsOffset = stream.tell();
+
+        for(std::vector<glm::vec3>::iterator n = output.mNormals.begin(); n != output.mNormals.end(); n++){
+            stream.writeFloat(n->x);
+            stream.writeFloat(n->y);
+            stream.writeFloat(n->z);
+        }
+
+        uint32_t trianglesOffset = stream.tell();
+
+        for(std::vector<CollisionTriangle>::iterator t = output.mTriangles.begin(); t != output.mTriangles.end(); t++){
+            stream.writeUInt16(t->mVtx1);
+            stream.writeUInt16(t->mVtx2);
+            stream.writeUInt16(t->mVtx3);
+
+            stream.writeUInt16(t->mNormal);
+
+            stream.writeUInt16(t->mEdgeTan1);
+            stream.writeUInt16(t->mEdgeTan2);
+            stream.writeUInt16(t->mEdgeTan3);
+
+            stream.writeUInt16(t->mUnkIdx);
+
+            stream.writeFloat(t->mDot);
+
+            stream.writeUInt16(t->mMask);
+            stream.writeUInt16(t->mFriction);
+
+        }
+
+        uint32_t groupOffset = stream.tell();
+
+        for(std::vector<int16_t>::iterator t = groupData.begin(); t != groupData.end(); t++){
+            stream.writeInt16(*t);
+        }
+
+        uint32_t gridOffset = stream.tell();
+        
+        for(std::vector<uint32_t>::iterator t = gridData.begin(); t != gridData.end(); t++){
+            stream.writeUInt32(*t);
+        }
+
+        uint32_t unkData = stream.tell();
+
+        long aligned = (stream.tell() + 31) & ~31;
+        long delta = aligned - stream.tell();
+
+        for(int x = 0; x < delta; x++){
+            stream.writeUInt8(0x40);
+        }
+
+        long end = stream.tell();
+        stream.setSize(end);
+
+        stream.seek(0x28);
+        stream.writeUInt32(normalsOffset);
+        stream.writeUInt32(trianglesOffset);
+        stream.writeUInt32(groupOffset);
+        stream.writeUInt32(gridOffset);
+        stream.writeUInt32(gridOffset);
+        stream.writeUInt32(unkData);
+        stream.seek(0);
+        auto colFile = mapArc->GetFile("col.mp");
+
+        colFile->SetData(stream.getBuffer(), stream.getSize());
+    }
+
+
+    {
+        bStream::CMemoryStream polygoninfo(100, bStream::Endianess::Big, bStream::OpenMode::Out);
+        
+        // Write polygoninfo jmp header
+        polygoninfo.writeUInt32(output.mTriangles.size());
+        polygoninfo.writeUInt32(3);
+        polygoninfo.writeUInt32(0x34);
+        polygoninfo.writeUInt32(4);
+
+        polygoninfo.writeUInt32(0x002AAF7F);
+        polygoninfo.writeUInt32(3);
+        polygoninfo.writeUInt32(0);
+
+        polygoninfo.writeUInt32(0x01C2B94A);
+        polygoninfo.writeUInt32(4);
+        polygoninfo.writeUInt32(0x200);
+
+        polygoninfo.writeUInt32(0x00AF2BA5);
+        polygoninfo.writeUInt32(8);
+        polygoninfo.writeUInt32(0x300);
+
+        for(std::vector<CollisionTriangle>::iterator t = output.mTriangles.begin(); t != output.mTriangles.end(); t++){
+            uint32_t polyProps = 0x00;
+            polyProps |= t->mIgnorePointer << 3;
+            polyProps |= t->mLadder << 2;
+            polyProps |= t->mSurfMaterial;
+            polygoninfo.writeUInt32(polyProps);
+        }
+
+        // pad and set polygoninfo data
+        long aligned = (polygoninfo.tell() + 31) & ~31;
+        long delta = aligned - polygoninfo.tell();
+        for(int x = 0; x < delta; x++) polygoninfo.writeUInt8(0x40);
+
+        polygoninfo.setSize(polygoninfo.tell());
+        std::cout << "[CollisionIO:ObjImport]: polygoninfo size is " << polygoninfo.getSize() << std::endl;
+        auto polygoninfoFile = mapArc->GetFolder("jmp")->GetFile("polygoninfo");
+        if(polygoninfoFile == nullptr){
+            polygoninfoFile = Archive::File::Create();
+            polygoninfoFile->SetName("polygoninfo");
+            mapArc->GetFolder("jmp")->AddFile(polygoninfoFile);
+        }
+        polygoninfoFile->SetData(polygoninfo.getBuffer(), polygoninfo.getSize());
+    }
+
+    {
+
+        bStream::CMemoryStream sndpolygoninfo(100, bStream::Endianess::Big, bStream::OpenMode::Out);
+
+        // Write sndpolygoninfo jmp header
+        sndpolygoninfo.writeUInt32(output.mTriangles.size());
+        sndpolygoninfo.writeUInt32(2);
+        sndpolygoninfo.writeUInt32(0x28);
+        sndpolygoninfo.writeUInt32(4);
+
+        sndpolygoninfo.writeUInt32(0x006064D7);
+        sndpolygoninfo.writeUInt32(0xF);
+        sndpolygoninfo.writeUInt32(0);
+
+        sndpolygoninfo.writeUInt32(0x005169FA);
+        sndpolygoninfo.writeUInt32(0x70);
+        sndpolygoninfo.writeUInt32(0x400);
+
+        for(std::vector<CollisionTriangle>::iterator t = output.mTriangles.begin(); t != output.mTriangles.end(); t++){
+        uint32_t soundProps = 0x00;
+            soundProps |= t->mSoundEchoSwitch << 4;
+            soundProps |= t->mSound;
+            sndpolygoninfo.writeUInt32(soundProps);
+        }
+
+        // pad and set soundpolygoninfo data
+        long aligned = (sndpolygoninfo.tell() + 31) & ~31;
+        long delta = aligned - sndpolygoninfo.tell();
+        for(int x = 0; x < delta; x++) sndpolygoninfo.writeUInt8(0x40);
+
+        sndpolygoninfo.setSize(sndpolygoninfo.tell());
+        std::cout << "[CollisionIO:ObjImport]: soundpolygoninfo size is " << sndpolygoninfo.getSize() << std::endl;
+        auto sndpolygoninfoFile = mapArc->GetFolder("jmp")->GetFile("soundpolygoninfo");
+        if(sndpolygoninfoFile == nullptr){
+            sndpolygoninfoFile = Archive::File::Create();
+            sndpolygoninfoFile->SetName("soundpolygoninfo");
+            mapArc->GetFolder("jmp")->AddFile(sndpolygoninfoFile);
+        }
+        sndpolygoninfoFile->SetData(sndpolygoninfo.getBuffer(), sndpolygoninfo.getSize());
+    }
+
 }
 
 void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map, std::map<std::string, std::string> propertyMap){    

@@ -4,6 +4,7 @@
 #include <json.hpp>
 #include <vector>
 #include <memory>
+#include "io/CollisionIO.hpp"
 
 namespace bStream
 {
@@ -22,20 +23,6 @@ struct LCollisionTriangle {
 	int16_t friction;
 };
 
-struct LTriangleGroup {
-	std::string name;
-	uint32_t startOffset;
-	uint32_t endOffset;
-	bool render { false };
-	std::vector<std::weak_ptr<LCollisionTriangle>> triangles;
-};
-
-struct LCollisionGridCell {
-	std::weak_ptr<LTriangleGroup> allTriangles;
-	std::weak_ptr<LTriangleGroup> floorTriangles;
-};
-
-
 class LMapCollisionDOMNode : public LBGRenderDOMNode
 {
 
@@ -44,7 +31,7 @@ public:
 
 	std::vector<glm::vec3> mPositionData;
 	std::vector<glm::vec3> mNormalData;
-	std::vector<std::shared_ptr<LCollisionTriangle>> mTriangles;
+	std::vector<CollisionTriangle> mTriangles;
 	std::map<std::string, std::string> mMatColProp {
 		{"Group", "group"},
 		{"Sound", "sound"},
@@ -64,6 +51,8 @@ public:
 	virtual std::string GetName() override;
 	virtual void RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection) override;
 	virtual void RenderDetailsUI(float dt) override;
+
+	bool FromMap();
 
 	void ImportObj(std::string path);
 

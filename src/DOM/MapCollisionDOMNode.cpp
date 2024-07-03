@@ -14,6 +14,9 @@ namespace {
 	std::thread importModelThread {};
 	std::mutex importLock {};
 	bool isImportingCol { false };
+
+	std::mutex generateLock {};
+	bool isGeneratingCol { false };
 }
 
 LMapCollisionDOMNode::LMapCollisionDOMNode(std::string name) : Super(name)
@@ -46,6 +49,30 @@ void LMapCollisionDOMNode::ImportObj(std::string path){
 	importLock.unlock();
 }
 
+bool LMapCollisionDOMNode::FromMap(){
+	auto map = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+
+	// import obj as base map first?
+
+	LCollisionIO col;
+	col.FromMap(map.lock());
+	//col.LoadObj(std::filesystem::path(path), GetParentOfType<LMapDOMNode>(EDOMNodeType::Map), mMatColProp);
+
+	auto mapArc = map.lock()->GetArchive().lock();
+	auto colFile = mapArc->GetFile("col.mp");
+
+	bStream::CMemoryStream colStream(colFile->GetData(), colFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+	Load(&colStream);
+
+	LEditorScene::SetDirty();
+
+	generateLock.lock();
+	isGeneratingCol = false;
+	generateLock.unlock();
+
+	return true;
+}
+
 void LMapCollisionDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection)
 {
 	LUIUtility::RenderCheckBox(this);
@@ -64,9 +91,10 @@ void LMapCollisionDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self,
 void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 {
 	std::string path;
+	bool bakeColClicked = false;
 
 	if(ImGui::BeginTabBar("##colImportFormats", ImGuiTabBarFlags_None)){
-		if(ImGui::BeginTabItem("mp")){
+		if(ImGui::BeginTabItem("Mp")){
 			if(ImGui::Button("Import")){
 				LUIUtility::RenderTooltip("Import an existing col.mp");
 				ImGuiFileDialog::Instance()->OpenDialog("ImportMpDlg", "Import Mp", "LM Collision Map (*.mp){.mp}", std::filesystem::current_path().string());
@@ -74,7 +102,7 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 			ImGui::EndTabItem();
 		}
 
-		if(ImGui::BeginTabItem("obj")){
+		if(ImGui::BeginTabItem("Obj")){
 			ImGui::Text("Material Settings");
 			LUIUtility::RenderTooltip("Custom OBJ Material Property names to load Collision Properties from");
 
@@ -118,12 +146,52 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 			}
 			ImGui::EndTabItem();
 		}
+
+		if(ImGui::BeginTabItem("Bake Furniture")){
+			bool button = ImGui::Button("Bake");
+			LUIUtility::RenderTooltip("Generate Collision from Furniture scanboxes and map's existing collision");
+			if(button){
+				generateLock.lock();
+				isGeneratingCol = true;
+				generateLock.unlock();
+
+				importModelThread = std::thread(&LMapCollisionDOMNode::FromMap, this);
+				bakeColClicked = true;
+			}
+			ImGui::EndTabItem();
+		}
+
 		ImGui::EndTabBar();
+	}
+
+	if(bakeColClicked){
+		ImGui::OpenPopup("Baking Furniture");
 	}
 
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
     ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal("Importing OBJ", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
+	if (ImGui::BeginPopupModal("Baking Furniture", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
+	{
+        const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+		ImGui::AlignTextToFramePadding();
+		ImGui::Spinner("##loadmapSpinner", 5.0f, 2, col);
+		ImGui::SameLine();
+		ImGui::Text("Baking Furniture Collision...");
+		
+		generateLock.lock();
+		if(isGeneratingCol == false){
+			std::cout << "[BooldozerEditor]: Joining Bake Collision Thread" << std::endl;
+			importModelThread.join();
+			ImGui::CloseCurrentPopup();
+		}
+		generateLock.unlock();
+
+		ImGui::EndPopup();
+	}
+
+    center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal("Importing Obj", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
 	{
         const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
 		ImGui::AlignTextToFramePadding();
@@ -168,7 +236,7 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 
 		importModelThread = std::thread(&LMapCollisionDOMNode::ImportObj, this, path);
 		
-		ImGui::OpenPopup("Importing OBJ");
+		ImGui::OpenPopup("Importing Obj");
 
 	}
 
@@ -212,24 +280,22 @@ bool LMapCollisionDOMNode::Load(bStream::CMemoryStream* stream)
 	stream->seek(triangleDataOffset);
 	for (size_t i = 0; i < (triangleGroupOffset - triangleDataOffset) / 0x18; i++)
 	{
-		std::shared_ptr<LCollisionTriangle> triangle = std::make_shared<LCollisionTriangle>();
+		CollisionTriangle triangle;
 
-		triangle->name = fmt::format("Triangle {}", i);
+		triangle.mVtx1 = stream->readUInt16();
+		triangle.mVtx2 = stream->readUInt16();
+		triangle.mVtx3 = stream->readUInt16();
 
-		triangle->positionIdx[0] = stream->readUInt16();
-		triangle->positionIdx[1] = stream->readUInt16();
-		triangle->positionIdx[2] = stream->readUInt16();
+		triangle.mNormal = stream->readUInt16();
 
-		triangle->normalIdx = stream->readUInt16();
+		triangle.mEdgeTan1 = stream->readUInt16();
+		triangle.mEdgeTan2 = stream->readUInt16();
+		triangle.mEdgeTan3 = stream->readUInt16();
 
-		triangle->edgeTanIdx[0] = stream->readUInt16();
-		triangle->edgeTanIdx[1] = stream->readUInt16();
-		triangle->edgeTanIdx[2] = stream->readUInt16();
-
-		triangle->unkIdx = stream->readUInt16();
-		triangle->dot = stream->readFloat();
-		triangle->enabledMask = stream->readUInt16();
-		triangle->friction = stream->readUInt16();
+		triangle.mUnkIdx = stream->readUInt16();
+		triangle.mDot = stream->readFloat();
+		triangle.mMask = stream->readUInt16();
+		triangle.mFriction = stream->readUInt16();
 
 		mTriangles.push_back(triangle);
 	}

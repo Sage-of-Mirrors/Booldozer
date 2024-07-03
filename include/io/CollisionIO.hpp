@@ -36,10 +36,17 @@ struct CollisionTriangle {
     int16_t mTriIdx;
 };
 
+struct ColModel {
+    std::vector<glm::vec3> mVertices;
+    std::vector<glm::vec3> mNormals;
+    std::vector<CollisionTriangle> mTriangles;
+};
+
 class LCollisionIO {
 public:
     void LoadMp(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map);
     void LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map, std::map<std::string, std::string> propertyMap);
+    void FromMap(std::shared_ptr<LMapDOMNode> map);
 
     LCollisionIO(){}
     ~LCollisionIO(){}
