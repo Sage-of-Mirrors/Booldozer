@@ -14,7 +14,7 @@
 #include <GenUtil.hpp>
 
 ColModel CUBE {
-    .mVertices = {{ -0.5, 0.5, -0.5 }, { 0.5, 0.5, 0.5 }, { 0.5, 0.5, -0.5 }, { -0.5, -0.5, 0.5 }, { 0.5, -0.5, 0.5 }, { -0.5, 0.5, 0.5 }, { -0.5, -0.5, -0.5 }, { 0.5, -0.5, -0.5 }},
+    .mVertices = {{ -1.0, 1.0, -1.0 }, { 1.0, 1.0, 1.0 }, { 1.0, 1.0, -1.0 }, { -1.0, -1.0, 1.0 }, { 1.0, -1.0, 1.0 }, { -1.0, 1.0, 1.0 }, { -1.0, -1.0, -1.0 }, { 1.0, -1.0, -1.0 }},
     .mTriangles = {{ .mVtx1 = 0, .mVtx2 = 1, .mVtx3 = 2, .mNormal = 1, .mEdgeTan1 = 2, .mEdgeTan2 = 3, .mEdgeTan3 = 4, .mUnkIdx = 2, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = true, .v1 = { -1.0, 1.0, -1.0 }, .v2 = { 1.0, 1.0, 1.0 }, .v3 = { 1.0, 1.0, -1.0 }, .mTriIdx = 0},{ .mVtx1 = 1, .mVtx2 = 3, .mVtx3 = 4, .mNormal = 5, .mEdgeTan1 = 6, .mEdgeTan2 = 4, .mEdgeTan3 = 7, .mUnkIdx = 0, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = false, .v1 = { 1.0, 1.0, 1.0 }, .v2 = { -1.0, -1.0, 1.0 }, .v3 = { 1.0, -1.0, 1.0 }, .mTriIdx = 1},{ .mVtx1 = 5, .mVtx2 = 6, .mVtx3 = 3, .mNormal = 8, .mEdgeTan1 = 9, .mEdgeTan2 = 5, .mEdgeTan3 = 7, .mUnkIdx = 0, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = false, .v1 = { -1.0, 1.0, 1.0 }, .v2 = { -1.0, -1.0, -1.0 }, .v3 = { -1.0, -1.0, 1.0 }, .mTriIdx = 2},{ .mVtx1 = 7, .mVtx2 = 3, .mVtx3 = 6, .mNormal = 7, .mEdgeTan1 = 10, .mEdgeTan2 = 3, .mEdgeTan3 = 8, .mUnkIdx = 0, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = false, .v1 = { 1.0, -1.0, -1.0 }, .v2 = { -1.0, -1.0, 1.0 }, .v3 = { -1.0, -1.0, -1.0 }, .mTriIdx = 3},{ .mVtx1 = 2, .mVtx2 = 4, .mVtx3 = 7, .mNormal = 4, .mEdgeTan1 = 11, .mEdgeTan2 = 3, .mEdgeTan3 = 7, .mUnkIdx = 0, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = false, .v1 = { 1.0, 1.0, -1.0 }, .v2 = { 1.0, -1.0, 1.0 }, .v3 = { 1.0, -1.0, -1.0 }, .mTriIdx = 4},{ .mVtx1 = 0, .mVtx2 = 7, .mVtx3 = 6, .mNormal = 3, .mEdgeTan1 = 12, .mEdgeTan2 = 8, .mEdgeTan3 = 7, .mUnkIdx = 0, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = false, .v1 = { -1.0, 1.0, -1.0 }, .v2 = { 1.0, -1.0, -1.0 }, .v3 = { -1.0, -1.0, -1.0 }, .mTriIdx = 5},{ .mVtx1 = 0, .mVtx2 = 5, .mVtx3 = 1, .mNormal = 1, .mEdgeTan1 = 8, .mEdgeTan2 = 13, .mEdgeTan3 = 5, .mUnkIdx = 8, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = true, .v1 = { -1.0, 1.0, -1.0 }, .v2 = { -1.0, 1.0, 1.0 }, .v3 = { 1.0, 1.0, 1.0 }, .mTriIdx = 6},{ .mVtx1 = 1, .mVtx2 = 5, .mVtx3 = 3, .mNormal = 5, .mEdgeTan1 = 1, .mEdgeTan2 = 14, .mEdgeTan3 = 8, .mUnkIdx = 0, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = false, .v1 = { 1.0, 1.0, 1.0 }, .v2 = { -1.0, 1.0, 1.0 }, .v3 = { -1.0, -1.0, 1.0 }, .mTriIdx = 7},{ .mVtx1 = 5, .mVtx2 = 0, .mVtx3 = 6, .mNormal = 8, .mEdgeTan1 = 1, .mEdgeTan2 = 15, .mEdgeTan3 = 3, .mUnkIdx = 0, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = false, .v1 = { -1.0, 1.0, 1.0 }, .v2 = { -1.0, 1.0, -1.0 }, .v3 = { -1.0, -1.0, -1.0 }, .mTriIdx = 8},{ .mVtx1 = 7, .mVtx2 = 4, .mVtx3 = 3, .mNormal = 7, .mEdgeTan1 = 4, .mEdgeTan2 = 16, .mEdgeTan3 = 5, .mUnkIdx = 0, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = false, .v1 = { 1.0, -1.0, -1.0 }, .v2 = { 1.0, -1.0, 1.0 }, .v3 = { -1.0, -1.0, 1.0 }, .mTriIdx = 9},{ .mVtx1 = 2, .mVtx2 = 1, .mVtx3 = 4, .mNormal = 4, .mEdgeTan1 = 1, .mEdgeTan2 = 17, .mEdgeTan3 = 5, .mUnkIdx = 0, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = false, .v1 = { 1.0, 1.0, -1.0 }, .v2 = { 1.0, 1.0, 1.0 }, .v3 = { 1.0, -1.0, 1.0 }, .mTriIdx = 10},{ .mVtx1 = 0, .mVtx2 = 2, .mVtx3 = 7, .mNormal = 3, .mEdgeTan1 = 1, .mEdgeTan2 = 18, .mEdgeTan3 = 4, .mUnkIdx = 0, .mDot = 2.0, .mMask = 0x8000, .mFriction = 0, .mSound = 0, .mSoundEchoSwitch = 0, .mLadder = 0, .mIgnorePointer = 0, .mSurfMaterial = 0, .mFloor = false, .v1 = { -1.0, 1.0, -1.0 }, .v2 = { 1.0, 1.0, -1.0 }, .v3 = { 1.0, -1.0, -1.0 }, .mTriIdx = 11}}
 };
 
@@ -173,31 +173,28 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
             std::vector<std::shared_ptr<LFurnitureDOMNode>> roomFurniture = room->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
             for(std::shared_ptr<LFurnitureDOMNode> furniture : roomFurniture){
                 std::cout << "Adding Furniture " << furniture->GetName() << std::endl;
-                glm::vec3 pos;
-                glm::quat rot;
-                glm::vec3 scale;
-                glm::vec3 skew;
-                glm::vec4 persp;
 
-                glm::decompose(*furniture->GetMat(), scale, rot, pos, skew, persp);
-
-                glm::mat4 transform = glm::identity<glm::mat4>();
                 glm::ivec3 scanbox = furniture->GetScanbox();
-                transform *= glm::scale(glm::vec3(scanbox.z, scanbox.y, scanbox.x));
-                transform *= glm::toMat4(rot);
+                glm::vec3 position = furniture->GetPosition();
+                glm::vec3 rotation = furniture->GetRotation();
+
+                glm::mat4 m = glm::identity<glm::mat4>();
+
+                m = glm::scale(m, glm::vec3(scanbox.z, scanbox.y, scanbox.x));
+                m = glm::rotate(m, glm::radians(rotation.z), glm::vec3(1, 0, 0));
+                m = glm::rotate(m, glm::radians(rotation.y), glm::vec3(0, 1, 0));
+                m = glm::rotate(m, glm::radians(rotation.x), glm::vec3(0, 0, 1));
 
                 for(std::vector<CollisionTriangle>::iterator tri = CUBE.mTriangles.begin(); tri != CUBE.mTriangles.end(); tri++){
                     CollisionTriangle newTri = (*tri);
 
-                    glm::vec4 v1 = glm::vec4(newTri.v1, 0) * transform;
-                    glm::vec4 v2 = glm::vec4(newTri.v2, 0) * transform;
-                    glm::vec4 v3 = glm::vec4(newTri.v3, 0) * transform;
+                    glm::vec4 v1 = glm::vec4(newTri.v1, 0);
+                    glm::vec4 v2 = glm::vec4(newTri.v2, 0);
+                    glm::vec4 v3 = glm::vec4(newTri.v3, 0);
 
-                    newTri.v1 = glm::vec3(v1) + glm::vec3(pos.z, pos.y + scanbox.y, pos.x);
-                    newTri.v2 = glm::vec3(v2) + glm::vec3(pos.z, pos.y + scanbox.y, pos.x);
-                    newTri.v3 = glm::vec3(v3) + glm::vec3(pos.z, pos.y + scanbox.y, pos.x);
-
-
+                    newTri.v1 = glm::vec3(v1 * m) + glm::vec3(position.z, position.y + scanbox.y, position.x);
+                    newTri.v2 = glm::vec3(v2 * m) + glm::vec3(position.z, position.y + scanbox.y, position.x);
+                    newTri.v3 = glm::vec3(v3 * m) + glm::vec3(position.z, position.y + scanbox.y, position.x);
 
                     glm::vec3 e10 = newTri.v2 - newTri.v1; // u
                     glm::vec3 e20 = newTri.v3 - newTri.v1; // v
@@ -243,6 +240,17 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
                     
                     newTri.mDot = glm::dot(tan3, e10);
 
+                    newTri.mMask = 0x8000;
+                    newTri.mFriction = 0;
+                    newTri.mTriIdx = triangles.size();
+
+                    newTri.mSound = 0;
+                    newTri.mSoundEchoSwitch = 0;
+                    newTri.mLadder = 0;
+                    newTri.mIgnorePointer = 0;
+                    newTri.mSurfMaterial = 0;
+
+
                     if(!LGenUtility::VectorContains<glm::vec3>(positions, newTri.v1)) positions.push_back(newTri.v1);
                     newTri.mVtx1 = LGenUtility::VectorIndexOf<glm::vec3>(positions, newTri.v1);
 
@@ -251,11 +259,96 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
 
                     if(!LGenUtility::VectorContains<glm::vec3>(positions, newTri.v3)) positions.push_back(newTri.v3);
                     newTri.mVtx3 = LGenUtility::VectorIndexOf<glm::vec3>(positions, newTri.v3);
-                
+
+                    triangles.push_back(newTri);
+                }
+            
+                m = glm::identity<glm::mat4>();
+
+                m = glm::scale(m, glm::vec3(scanbox.z, scanbox.y, -scanbox.x));
+                m = glm::rotate(m, glm::radians(rotation.z), glm::vec3(1, 0, 0));
+                m = glm::rotate(m, glm::radians(rotation.y), glm::vec3(0, 1, 0));
+                m = glm::rotate(m, glm::radians(rotation.x), glm::vec3(0, 0, 1));
+
+                for(std::vector<CollisionTriangle>::iterator tri = CUBE.mTriangles.begin(); tri != CUBE.mTriangles.end(); tri++){
+                    CollisionTriangle newTri = (*tri);
+
+                    glm::vec4 v1 = glm::vec4(newTri.v1, 0);
+                    glm::vec4 v2 = glm::vec4(newTri.v2, 0);
+                    glm::vec4 v3 = glm::vec4(newTri.v3, 0);
+
+                    newTri.v1 = glm::vec3(v1 * m) + glm::vec3(position.z, position.y + scanbox.y, position.x);
+                    newTri.v2 = glm::vec3(v2 * m) + glm::vec3(position.z, position.y + scanbox.y, position.x);
+                    newTri.v3 = glm::vec3(v3 * m) + glm::vec3(position.z, position.y + scanbox.y, position.x);
+
+                    glm::vec3 e10 = newTri.v2 - newTri.v1; // u
+                    glm::vec3 e20 = newTri.v3 - newTri.v1; // v
+                    glm::vec3 e01 = newTri.v1 - newTri.v2;
+                    glm::vec3 e21 = newTri.v3 - newTri.v2; 
+
+                    glm::vec3 normal1 = -glm::normalize(glm::cross(e10, e20));
+                    glm::vec3 normal2 = -glm::normalize(glm::cross(e01, e21));
+                    
+                    if(!LGenUtility::VectorContains<glm::vec3>(normals, normal1)) normals.push_back(normal1);
+                    newTri.mNormal = LGenUtility::VectorIndexOf<glm::vec3>(normals, normal1);
+
+                    // Tangents
+                    glm::vec3 tan1 = glm::normalize(glm::cross(normal1, e10));
+                    glm::vec3 tan2 = -glm::normalize(glm::cross(normal1, e20));
+                    glm::vec3 tan3 = -glm::normalize(glm::cross(normal2, e21));
+                    
+                    if(!LGenUtility::VectorContains<glm::vec3>(normals, tan1)) normals.push_back(tan1);
+                    newTri.mEdgeTan1 = LGenUtility::VectorIndexOf<glm::vec3>(normals, tan1);
+
+                    if(!LGenUtility::VectorContains<glm::vec3>(normals, tan2)) normals.push_back(tan2);
+                    newTri.mEdgeTan2 = LGenUtility::VectorIndexOf<glm::vec3>(normals, tan2);
+
+                    if(!LGenUtility::VectorContains<glm::vec3>(normals, tan3)) normals.push_back(tan3);
+                    newTri.mEdgeTan3 = LGenUtility::VectorIndexOf<glm::vec3>(normals, tan3);
+                    
+                    glm::vec3 up(0.0f, 1.0f, 0.0f);
+                    float angle = (float)glm::acos(glm::dot(normal1, up));
+
+                    angle *= (float)(180.0f / glm::pi<float>());
+
+                    if(glm::abs(angle) >= 0.0f && glm::abs(angle) <= 0.5f){
+                        newTri.mUnkIdx = newTri.mEdgeTan1;
+                    } else {
+                        newTri.mUnkIdx = 0;
+                    }
+
+                    if(glm::abs(angle) <= 65.0f){
+                        newTri.mFloor = true;
+                    } else {
+                        newTri.mFloor = false;
+                    }
+                    
+                    newTri.mDot = glm::dot(tan3, e10);
+
+                    newTri.mMask = 0x8000;
+                    newTri.mFriction = 0;
                     newTri.mTriIdx = triangles.size();
+
+                    newTri.mSound = 0;
+                    newTri.mSoundEchoSwitch = 0;
+                    newTri.mLadder = 0;
+                    newTri.mIgnorePointer = 0;
+                    newTri.mSurfMaterial = 0;
+
+
+                    if(!LGenUtility::VectorContains<glm::vec3>(positions, newTri.v1)) positions.push_back(newTri.v1);
+                    newTri.mVtx1 = LGenUtility::VectorIndexOf<glm::vec3>(positions, newTri.v1);
+
+                    if(!LGenUtility::VectorContains<glm::vec3>(positions, newTri.v2)) positions.push_back(newTri.v2);
+                    newTri.mVtx2 = LGenUtility::VectorIndexOf<glm::vec3>(positions, newTri.v2);
+
+                    if(!LGenUtility::VectorContains<glm::vec3>(positions, newTri.v3)) positions.push_back(newTri.v3);
+                    newTri.mVtx3 = LGenUtility::VectorIndexOf<glm::vec3>(positions, newTri.v3);
+
                     triangles.push_back(newTri);
                 }
             }
+
         });
     }
 

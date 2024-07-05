@@ -220,13 +220,13 @@ void LEditorScene::UpdateRenderers(){
 			for(auto triangle : col->mModel.mTriangles){
 				std::vector<CPathPoint> renderTri = {
 					{ col->mModel.mVertices[triangle.mVtx1], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
-					{ col->mModel.mVertices[triangle.mVtx1] + (col->mModel.mNormals[triangle.mNormal] * 7.0f), {0.0, 0.775, 0.32, 1.0}, 800, -1 },
+					{ col->mModel.mVertices[triangle.mVtx1] + (col->mModel.mNormals[triangle.mNormal] * 9.0f), {0.0, 0.775, 0.32, 1.0}, 800, -1 },
 					{ col->mModel.mVertices[triangle.mVtx1], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
 					{ col->mModel.mVertices[triangle.mVtx2], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
-					{ col->mModel.mVertices[triangle.mVtx2] + (col->mModel.mNormals[triangle.mNormal] * 7.0f), {0.0, 0.775, 0.32, 1.0}, 800, -1 },
+					{ col->mModel.mVertices[triangle.mVtx2] + (col->mModel.mNormals[triangle.mNormal] * 9.0f), {0.0, 0.775, 0.32, 1.0}, 800, -1 },
 					{ col->mModel.mVertices[triangle.mVtx2], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
 					{ col->mModel.mVertices[triangle.mVtx3], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
-					{ col->mModel.mVertices[triangle.mVtx3] + (col->mModel.mNormals[triangle.mNormal] * 7.0f), {0.0, 0.775, 0.32, 1.0}, 800, -1 },
+					{ col->mModel.mVertices[triangle.mVtx3] + (col->mModel.mNormals[triangle.mNormal] * 9.0f), {0.0, 0.775, 0.32, 1.0}, 800, -1 },
 					{ col->mModel.mVertices[triangle.mVtx3], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
 					{ col->mModel.mVertices[triangle.mVtx1], {0.15, 0.675, 0.8, 1.0}, 0, -1 },
 				};
