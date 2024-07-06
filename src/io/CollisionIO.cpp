@@ -37,7 +37,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
     glm::vec3 bbmin, bbmax;
 
     std::vector<glm::vec3> positions {};
-    std::vector<glm::vec3> normals {glm::vec3(0.0f)};
+    std::vector<glm::vec3> normals {};
     std::vector<CollisionTriangle> triangles;
     std::vector<GridCell> grid; 
 
@@ -104,7 +104,8 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
             if(glm::abs(angle) >= 0.0f && glm::abs(angle) <= 0.5f){
                 tri.mUnkIdx = tri.mEdgeTan1;
             } else {
-                tri.mUnkIdx = 0;
+                if(!LGenUtility::VectorContains<glm::vec3>(normals, glm::vec3(0.0f))) normals.push_back(glm::vec3(0.0f));
+                tri.mUnkIdx = LGenUtility::VectorIndexOf<glm::vec3>(normals, glm::vec3(0.0f));
             }
 
             if(glm::abs(angle) <= 65.0f){
@@ -207,7 +208,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
                     if(!LGenUtility::VectorContains<glm::vec3>(normals, normal1)) normals.push_back(normal1);
                     newTri.mNormal = LGenUtility::VectorIndexOf<glm::vec3>(normals, normal1);
 
-                    // Tangents
+                    // Edges
                     glm::vec3 tan1 = -glm::normalize(glm::cross(normal1, e10));
                     glm::vec3 tan2 = glm::normalize(glm::cross(normal1, e20));
                     glm::vec3 tan3 = glm::normalize(glm::cross(normal2, e21));
@@ -229,7 +230,8 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
                     if(glm::abs(angle) >= 0.0f && glm::abs(angle) <= 0.5f){
                         newTri.mUnkIdx = newTri.mEdgeTan1;
                     } else {
-                        newTri.mUnkIdx = 0;
+                        if(!LGenUtility::VectorContains<glm::vec3>(normals, glm::vec3(0.0f))) normals.push_back(glm::vec3(0.0f));
+                        newTri.mUnkIdx = LGenUtility::VectorIndexOf<glm::vec3>(normals, glm::vec3(0.0f));
                     }
 
                     if(glm::abs(angle) <= 65.0f){
@@ -238,92 +240,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
                         newTri.mFloor = false;
                     }
                     
-                    newTri.mDot = glm::dot(tan3, e10);
-
-                    newTri.mMask = 0x8000;
-                    newTri.mFriction = 0;
-                    newTri.mTriIdx = triangles.size();
-
-                    newTri.mSound = 0;
-                    newTri.mSoundEchoSwitch = 0;
-                    newTri.mLadder = 0;
-                    newTri.mIgnorePointer = 0;
-                    newTri.mSurfMaterial = 0;
-
-
-                    if(!LGenUtility::VectorContains<glm::vec3>(positions, newTri.v1)) positions.push_back(newTri.v1);
-                    newTri.mVtx1 = LGenUtility::VectorIndexOf<glm::vec3>(positions, newTri.v1);
-
-                    if(!LGenUtility::VectorContains<glm::vec3>(positions, newTri.v2)) positions.push_back(newTri.v2);
-                    newTri.mVtx2 = LGenUtility::VectorIndexOf<glm::vec3>(positions, newTri.v2);
-
-                    if(!LGenUtility::VectorContains<glm::vec3>(positions, newTri.v3)) positions.push_back(newTri.v3);
-                    newTri.mVtx3 = LGenUtility::VectorIndexOf<glm::vec3>(positions, newTri.v3);
-
-                    triangles.push_back(newTri);
-                }
-            
-                m = glm::identity<glm::mat4>();
-
-                m = glm::scale(m, glm::vec3(scanbox.z, scanbox.y, -scanbox.x));
-                m = glm::rotate(m, glm::radians(rotation.z), glm::vec3(1, 0, 0));
-                m = glm::rotate(m, glm::radians(rotation.y), glm::vec3(0, 1, 0));
-                m = glm::rotate(m, glm::radians(rotation.x), glm::vec3(0, 0, 1));
-
-                for(std::vector<CollisionTriangle>::iterator tri = CUBE.mTriangles.begin(); tri != CUBE.mTriangles.end(); tri++){
-                    CollisionTriangle newTri = (*tri);
-
-                    glm::vec4 v1 = glm::vec4(newTri.v1, 0);
-                    glm::vec4 v2 = glm::vec4(newTri.v2, 0);
-                    glm::vec4 v3 = glm::vec4(newTri.v3, 0);
-
-                    newTri.v1 = glm::vec3(v1 * m) + glm::vec3(position.z, position.y + scanbox.y, position.x);
-                    newTri.v2 = glm::vec3(v2 * m) + glm::vec3(position.z, position.y + scanbox.y, position.x);
-                    newTri.v3 = glm::vec3(v3 * m) + glm::vec3(position.z, position.y + scanbox.y, position.x);
-
-                    glm::vec3 e10 = newTri.v2 - newTri.v1; // u
-                    glm::vec3 e20 = newTri.v3 - newTri.v1; // v
-                    glm::vec3 e01 = newTri.v1 - newTri.v2;
-                    glm::vec3 e21 = newTri.v3 - newTri.v2; 
-
-                    glm::vec3 normal1 = -glm::normalize(glm::cross(e10, e20));
-                    glm::vec3 normal2 = -glm::normalize(glm::cross(e01, e21));
-                    
-                    if(!LGenUtility::VectorContains<glm::vec3>(normals, normal1)) normals.push_back(normal1);
-                    newTri.mNormal = LGenUtility::VectorIndexOf<glm::vec3>(normals, normal1);
-
-                    // Tangents
-                    glm::vec3 tan1 = glm::normalize(glm::cross(normal1, e10));
-                    glm::vec3 tan2 = -glm::normalize(glm::cross(normal1, e20));
-                    glm::vec3 tan3 = -glm::normalize(glm::cross(normal2, e21));
-                    
-                    if(!LGenUtility::VectorContains<glm::vec3>(normals, tan1)) normals.push_back(tan1);
-                    newTri.mEdgeTan1 = LGenUtility::VectorIndexOf<glm::vec3>(normals, tan1);
-
-                    if(!LGenUtility::VectorContains<glm::vec3>(normals, tan2)) normals.push_back(tan2);
-                    newTri.mEdgeTan2 = LGenUtility::VectorIndexOf<glm::vec3>(normals, tan2);
-
-                    if(!LGenUtility::VectorContains<glm::vec3>(normals, tan3)) normals.push_back(tan3);
-                    newTri.mEdgeTan3 = LGenUtility::VectorIndexOf<glm::vec3>(normals, tan3);
-                    
-                    glm::vec3 up(0.0f, 1.0f, 0.0f);
-                    float angle = (float)glm::acos(glm::dot(normal1, up));
-
-                    angle *= (float)(180.0f / glm::pi<float>());
-
-                    if(glm::abs(angle) >= 0.0f && glm::abs(angle) <= 0.5f){
-                        newTri.mUnkIdx = newTri.mEdgeTan1;
-                    } else {
-                        newTri.mUnkIdx = 0;
-                    }
-
-                    if(glm::abs(angle) <= 65.0f){
-                        newTri.mFloor = true;
-                    } else {
-                        newTri.mFloor = false;
-                    }
-                    
-                    newTri.mDot = glm::dot(tan3, e10);
+                    newTri.mDot = glm::dot(tan3, e21);
 
                     newTri.mMask = 0x8000;
                     newTri.mFriction = 0;
