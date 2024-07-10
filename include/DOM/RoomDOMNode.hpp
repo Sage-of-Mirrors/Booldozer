@@ -6,6 +6,7 @@
 #include "io/JmpIO.hpp"
 #include "glm/glm.hpp"
 #include <memory>
+#include <Archive.hpp>
 
 class LObserverDOMNode;
 class LEnemyDOMNode;
@@ -168,6 +169,8 @@ public:
 	virtual void RenderDetailsUI(float dt) override;
 	virtual void RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection) override;
 	void RenderWaveHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection);
+
+	void RoomResourceManagerHandleType(std::shared_ptr<LDOMNodeBase> self, std::shared_ptr<Archive::Folder> dir, std::string typeName, std::string typeExt);
 
 	// Reads the data from the specified entry in the given LJmpIO instance into this room's JMP properties.
 	virtual void Deserialize(LJmpIO* JmpIO, uint32_t entry_index) override;

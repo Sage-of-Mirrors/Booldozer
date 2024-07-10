@@ -1,5 +1,4 @@
 #include <bstream.h>
-#include <Archive.hpp>
 #include <fmt/format.h>
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
 #include "DOM/RoomDOMNode.hpp"
@@ -54,6 +53,86 @@ LRoomDOMNode::LRoomDOMNode(std::string name) : LBGRenderDOMNode(name)
 	mRoomModels.push_back("(null)");
 }
 
+void LRoomDOMNode::RoomResourceManagerHandleType(std::shared_ptr<LDOMNodeBase> self, std::shared_ptr<Archive::Folder> dir, std::string typeName, std::string typeExt){
+	std::shared_ptr<Archive::File> toDelete = nullptr;
+	if(ImGui::TreeNode(typeName.c_str())){
+		for(auto file : dir->GetFiles()){
+			if(std::filesystem::path(file->GetName()).extension().string() != typeExt) continue;
+			if(EditFileName == file){
+				
+				LUIUtility::RenderTextInput("##filename", &FileName);
+				if(ImGui::IsItemFocused() && ImGui::IsKeyDown(ImGuiKey_Enter)){
+					if(typeExt == ".bin"){
+						auto furniture = self->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
+						for(auto entry : furniture){
+							if(entry->GetModelName() == std::filesystem::path(file->GetName()).stem().string()){
+								entry->SetModelName(FileName);
+							}
+						}
+						LEditorScene::GetEditorScene()->mRoomFurniture[FileName] = LEditorScene::GetEditorScene()->mRoomFurniture[std::filesystem::path(EditFileName->GetName()).stem().string()];
+						LEditorScene::GetEditorScene()->mRoomFurniture.erase(std::filesystem::path(EditFileName->GetName()).stem().string());
+						std::replace(mRoomModels.begin(), mRoomModels.end(), std::filesystem::path(file->GetName()).stem().string(), FileName);
+					}
+					file->SetName(FileName+typeExt);
+					EditFileName = nullptr;
+				}
+				ImGui::SameLine();
+				ImGui::Text(typeExt.c_str());
+			} else {
+				ImGui::Text(file->GetName().c_str());
+			}
+			ImGui::SameLine();
+			ImGui::Text(ICON_FK_PENCIL);
+			if(ImGui::IsItemClicked()) {
+				if(EditFileName != file){
+					if(EditFileName != nullptr){
+						if(typeExt == ".bin"){
+							auto furniture = self->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
+							for(auto entry : furniture){
+								if(entry->GetModelName() == std::filesystem::path(EditFileName->GetName()).stem().string()){
+									entry->SetModelName(FileName);
+								}
+								LEditorScene::GetEditorScene()->mRoomFurniture[FileName] = LEditorScene::GetEditorScene()->mRoomFurniture[std::filesystem::path(EditFileName->GetName()).stem().string()];
+								LEditorScene::GetEditorScene()->mRoomFurniture.erase(std::filesystem::path(EditFileName->GetName()).stem().string());
+								std::replace(mRoomModels.begin(), mRoomModels.end(), std::filesystem::path(EditFileName->GetName()).stem().string(), FileName);
+							}
+						}
+						EditFileName->SetName(FileName+typeExt);
+					}
+					EditFileName = file;
+					FileName = std::filesystem::path(file->GetName()).stem().string();
+					std::cout << "[RoomDOMNode]: Original Filename is " << FileName << std::endl;
+				} else if(EditFileName == file){
+					if(typeExt == ".bin"){
+						auto furniture = self->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
+						for(auto entry : furniture){
+							if(entry->GetModelName() == std::filesystem::path(file->GetName()).stem().string()){
+								entry->SetModelName(std::filesystem::path(FileName).stem().string());
+							}
+						}
+						LEditorScene::GetEditorScene()->mRoomFurniture[FileName] = LEditorScene::GetEditorScene()->mRoomFurniture[std::filesystem::path(EditFileName->GetName()).stem().string()];
+						LEditorScene::GetEditorScene()->mRoomFurniture.erase(std::filesystem::path(EditFileName->GetName()).stem().string());
+						std::replace(mRoomModels.begin(), mRoomModels.end(), std::filesystem::path(file->GetName()).stem().string(), FileName);
+					}
+					file->SetName(FileName+typeExt);
+					EditFileName = nullptr;
+				}
+			}
+			
+			ImGui::SameLine();
+			ImGui::Text(ICON_FK_MINUS_CIRCLE);
+			if(ImGui::IsItemClicked()) {
+				toDelete = file;
+			}
+		}
+		ImGui::TreePop();
+	}
+
+	if(toDelete != nullptr){
+		dir->DeleteFile(toDelete);
+	}
+}
+
 void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection)
 {
 	// This checkbox toggles rendering of the room and all of its children.
@@ -72,144 +151,30 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 			if(ActiveRoomArchive != nullptr){
 				// show resources in room archive, allow add/delete of models
 				// notify when archive size is > 430kb!
-				std::shared_ptr<Archive::File> toDelete = nullptr;
 				ImGui::Text("Room Resource Files");
 				ImGui::SameLine();
 				ImGui::Text(ICON_FK_PLUS_CIRCLE);
-				if(ImGui::IsItemClicked()) ImGuiFileDialog::Instance()->OpenModal("addModelToRoomArchiveDialog", "Select Model", "Resource (*.bin *.anm *.bas){.bin,.anm,.bas}", OPTIONS.mRootPath);
+				if(ImGui::IsItemClicked()) ImGuiFileDialog::Instance()->OpenModal("addModelToRoomArchiveDialog", "Select Room Resource", "Resource (*.bin *.anm *.bas){.bin,.anm,.bas}", OPTIONS.mRootPath);
 				ImGui::Separator();
 
-				if(ImGui::TreeNode("Models")){
-					for(auto file : ActiveRoomArchive->GetRoot()->GetFiles()){
-						if(std::filesystem::path(file->GetName()).extension().string() != ".bin") continue;
-
-						if(EditFileName == file){
-							
-							LUIUtility::RenderTextInput("##filename", &FileName);
-
-							if(ImGui::IsItemFocused() && ImGui::IsKeyDown(ImGuiKey_Enter)){
-								auto furniture = self->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
-								for(auto entry : furniture){
-									if(entry->GetModelName() == std::filesystem::path(file->GetName()).stem().string()){
-										entry->SetModelName(FileName);
-									}
-								}
-								LEditorScene::GetEditorScene()->mRoomFurniture[FileName] = LEditorScene::GetEditorScene()->mRoomFurniture[std::filesystem::path(EditFileName->GetName()).stem().string()];
-								LEditorScene::GetEditorScene()->mRoomFurniture.erase(std::filesystem::path(EditFileName->GetName()).stem().string());
-								std::replace(mRoomModels.begin(), mRoomModels.end(), std::filesystem::path(file->GetName()).stem().string(), FileName);
-								file->SetName(FileName+".bin");
-								EditFileName = nullptr;
-							}
-
-							ImGui::SameLine();
-							ImGui::Text(".bin");
-						} else {
-							ImGui::Text(file->GetName().c_str());
-						}
-
-						ImGui::SameLine();
-						ImGui::Text(ICON_FK_PENCIL);
-						if(ImGui::IsItemClicked()) {
-							if(EditFileName != file){
-								if(EditFileName != nullptr){
-									auto furniture = self->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
-									for(auto entry : furniture){
-										if(entry->GetModelName() == std::filesystem::path(EditFileName->GetName()).stem().string()){
-											entry->SetModelName(FileName);
-										}
-										LEditorScene::GetEditorScene()->mRoomFurniture[FileName] = LEditorScene::GetEditorScene()->mRoomFurniture[std::filesystem::path(EditFileName->GetName()).stem().string()];
-										LEditorScene::GetEditorScene()->mRoomFurniture.erase(std::filesystem::path(EditFileName->GetName()).stem().string());
-										std::replace(mRoomModels.begin(), mRoomModels.end(), std::filesystem::path(EditFileName->GetName()).stem().string(), FileName);
-										EditFileName->SetName(FileName+".bin");
-									}
-								}
-								EditFileName = file;
-								FileName = std::filesystem::path(file->GetName()).stem().string();
-								std::cout << "[RoomDOMNode]: Original Filename is " << FileName << std::endl;
-							} else if(EditFileName == file){
-								auto furniture = self->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
-								for(auto entry : furniture){
-									if(entry->GetModelName() == std::filesystem::path(file->GetName()).stem().string()){
-										entry->SetModelName(std::filesystem::path(FileName).stem().string());
-									}
-								}
-								LEditorScene::GetEditorScene()->mRoomFurniture[FileName] = LEditorScene::GetEditorScene()->mRoomFurniture[std::filesystem::path(EditFileName->GetName()).stem().string()];
-								LEditorScene::GetEditorScene()->mRoomFurniture.erase(std::filesystem::path(EditFileName->GetName()).stem().string());
-								std::replace(mRoomModels.begin(), mRoomModels.end(), std::filesystem::path(file->GetName()).stem().string(), FileName);
-								file->SetName(FileName+".bin");
-								EditFileName = nullptr;
-							}
-						}
-						
-						ImGui::SameLine();
-						ImGui::Text(ICON_FK_MINUS_CIRCLE);
-						if(ImGui::IsItemClicked()) {
-							toDelete = file;
-						}
-					}
-					ImGui::TreePop();
+				if(ActiveRoomArchive->GetRoot()->GetFolder("anm") == nullptr){
+					std::shared_ptr<Archive::Folder> anmFolder = Archive::Folder::Create(ActiveRoomArchive);
+					anmFolder->SetName("anm");
+					ActiveRoomArchive->GetRoot()->AddSubdirectory(anmFolder);
 				}
 
-				if(ImGui::TreeNode("Animations")){
-					auto animFolder = ActiveRoomArchive->GetRoot()->GetFolder("anm");
-					if(animFolder != nullptr){
-						for(auto file : animFolder->GetFiles()){
-							if(std::filesystem::path(file->GetName()).extension().string() != ".anm") continue;
-							ImGui::Text(file->GetName().c_str());
-							ImGui::SameLine();
-							ImGui::Text(ICON_FK_MINUS_CIRCLE);
-							if(ImGui::IsItemClicked()) {
-								toDelete = file;
-							}
-						}
+				RoomResourceManagerHandleType(self, ActiveRoomArchive->GetRoot(), "Models", ".bin");
 
-						if(toDelete != nullptr){
-							animFolder->DeleteFile(toDelete);
-							toDelete = nullptr;
-						}
-					}
-					ImGui::TreePop();
-				}
+				RoomResourceManagerHandleType(self, ActiveRoomArchive->GetRoot()->GetFolder("anm"), "Animations", ".anm");
 
-				if(ImGui::TreeNode("Sounds")){
-					for(auto file : ActiveRoomArchive->GetRoot()->GetFiles()){
-						if(std::filesystem::path(file->GetName()).extension().string() != ".bas") continue;
-						ImGui::Text(file->GetName().c_str());
-						ImGui::SameLine();
-						ImGui::Text(ICON_FK_MINUS_CIRCLE);
-						if(ImGui::IsItemClicked()) {
-							toDelete = file;
-						}
-					}
-					ImGui::TreePop();
-				}
-				
-				if(toDelete != nullptr){
-					ActiveRoomArchive->GetRoot()->DeleteFile(toDelete);
-					std::erase(mRoomModels, std::filesystem::path(toDelete->GetName()).filename().stem().string());
-				}
+				RoomResourceManagerHandleType(self, ActiveRoomArchive->GetRoot(), "Sounds", ".bas");
 
 				if(ImGui::Button("Done")){
 					auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
 					ActiveRoomArchive->SaveToFile(std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path());
 					ActiveRoomArchive = nullptr;
 
-					if(EditFileName != nullptr){
-						auto furniture = self->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
-						for(auto entry : furniture){
-							if(entry->GetModelName() == std::filesystem::path(EditFileName->GetName()).stem().string()){
-								entry->SetModelName(FileName);
-							}
-						}
-						
-						LEditorScene::GetEditorScene()->mRoomFurniture[FileName] = LEditorScene::GetEditorScene()->mRoomFurniture[std::filesystem::path(EditFileName->GetName()).stem().string()];
-						LEditorScene::GetEditorScene()->mRoomFurniture.erase(std::filesystem::path(EditFileName->GetName()).stem().string());
-
-						std::replace(mRoomModels.begin(), mRoomModels.end(), std::filesystem::path(EditFileName->GetName()).stem().string(), FileName);
-						EditFileName->SetName(FileName+".bin");
-						EditFileName = nullptr;
-					}
-
+					EditFileName = nullptr;
 					FileName = "";
 					ImGui::CloseCurrentPopup();
 				}
