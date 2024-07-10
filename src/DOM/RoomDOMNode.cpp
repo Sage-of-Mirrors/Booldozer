@@ -379,23 +379,22 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 					}
 				}
 
-				ImGui::SameLine();
-				ImGui::Text(ICON_FK_MINUS_CIRCLE);
-				if(ImGui::IsItemClicked()){
-					if(mode_selection->IsSingleSelection()){
-						
+				if(mode_selection->IsSingleSelection() && mode_selection->GetPrimarySelection()->IsNodeType(EDOMNodeType::Entity)){
+					ImGui::SameLine();
+					ImGui::Text(ICON_FK_MINUS_CIRCLE);
+					if(ImGui::IsItemClicked()){
+							
 						auto select = mode_selection->GetPrimarySelection();
 						mode_selection->ClearSelection();
-						
+							
 						std::erase(mRoomEntities[i], select);
-						
+							
 						// Remove from map if child of map too
 						GetParentOfType<LMapDOMNode>(EDOMNodeType::Map).lock()->RemoveChild(select);
 						RemoveChild(select);
 						LEditorScene::SetDirty();
 					}
 				}
-
 				// Iterating all of the entities of type <i>
 				for (uint32_t j = 0; j < mRoomEntities[i].size(); j++)
 				{
