@@ -9,7 +9,7 @@
 #include <Archive.hpp>
 #include <filesystem>
 
-extern std::string const LEntityFileNames[];
+extern std::map<uint32_t, std::string> LEntityFileNames;
 
 class LRoomDOMNode;
 

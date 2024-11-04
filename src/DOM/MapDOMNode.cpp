@@ -5,30 +5,33 @@
 #include "Options.hpp"
 #include <cstring>
 
-std::string const LEntityFileNames[LEntityType_Max] = {
-	"characterinfo",
-	"enemyinfo",
-	"eventinfo",
-	"furnitureinfo",
-	"generatorinfo",
-	"groupinfo",
-	"itemappeartable",
-	"itemfishingtable",
-	"iteminfotable",
-	"itemtable",
-	"iyapootable",
-	"keyinfo",
-	"objinfo",
-	"observerinfo",
-	"railinfo",
-	"roominfo",
-	"soundgroupinfo",
-	"teidencharacterinfo",
-	"teidenenemyinfo",
-	"teidenkeyinfo",
-	"teidenobserverinfo",
-	"telesa",
-	"treasuretable"
+std::map<uint32_t,std::string> LEntityFileNames = {
+	{ LEntityType_Characters, "characterinfo" },
+	{ LEntityType_Enemies, "enemyinfo" },
+	{ LEntityType_Events, "eventinfo" },
+	{ LEntityType_Furniture, "furnitureinfo" },
+	{ LEntityType_Generators, "generatorinfo" },
+	{ LEntityType_Groups, "groupinfo" },
+	{ LEntityType_ItemAppear, "itemappeartable" },
+	{ LEntityType_ItemFishing, "itemfishingtable" },
+	{ LEntityType_ItemInfoTable, "iteminfotable" },
+	{ LEntityType_ItemTable, "itemtable" },
+	{ LEntityType_SpeedySpiritDrops, "iyapootable" },
+	{ LEntityType_Keys, "keyinfo" },
+	{ LEntityType_Objects, "objinfo" },
+	{ LEntityType_Observers, "observerinfo" },
+	{ LEntityType_Paths, "railinfo" },
+	{ LEntityType_Rooms, "roominfo" },
+	{ LEntityType_SoundGroups, "soundgroupinfo" },
+	{ LEntityType_BlackoutCharacters, "teidencharacterinfo" },
+	{ LEntityType_BlackoutEnemies, "teidenenemyinfo" },
+	{ LEntityType_BlackoutKeys, "teidenkeyinfo" },
+	{ LEntityType_BlackoutObservers, "teidenobserverinfo" },
+	{ LEntityType_Boos, "telesa" },
+	{ LEntityType_TreasureTable, "treasuretable" },
+	{ LEntityType_Polygons, "polygoninfo" },
+	{ LEntityType_SoundPolygons, "soundpolygoninfo" },
+	{ LEntityType_Max, "(none)" }
 };
 
 LMapDOMNode::LMapDOMNode() : Super("map")

@@ -2,6 +2,7 @@
 #include "DOM/EntityDOMNode.hpp"
 #include "GenUtil.hpp"
 #include <map>
+#include <fmt/core.h>
 
 LJmpIO::LJmpIO()
 {
@@ -61,7 +62,6 @@ bool LJmpIO::Load(bStream::CMemoryStream* stream)
 					break;
 				case EJmpFieldType::String:
 					std::get<std::string>(value) = stream->readString(mStringSize);
-					break;
 			}
 
 			entry.insert({f.Hash, value});
@@ -301,15 +301,14 @@ bool LJmpIO::SetString(uint32_t entry_index, std::string field_name, std::string
 }
 
 bool LJmpIO::Save(std::vector<std::shared_ptr<LEntityDOMNode>> entities, bStream::CMemoryStream& stream){
+
 	mEntryCount = entities.size();
 	mEntrySize = CalculateNewEntrySize();
 	mEntryStartOffset = mFieldCount * sizeof(LJmpFieldInfo) + JMP_HEADER_SIZE;
 
 	stream.writeInt32(mEntryCount);
 	stream.writeInt32(mFieldCount);
-	stream.writeUInt32(mFieldCount * sizeof(LJmpFieldInfo) + JMP_HEADER_SIZE);
-
-
+	stream.writeUInt32(mEntryStartOffset);
 	stream.writeUInt32(mEntrySize);
 
 	LJmpEntry entry; //empty entry data
@@ -326,56 +325,57 @@ bool LJmpIO::Save(std::vector<std::shared_ptr<LEntityDOMNode>> entities, bStream
 		entry.insert({f.Hash, LJmpValue()});
 	}
 
-	if(entities.size() > 0){
-		mData.clear();
-		mData.reserve(entities.size());
+	mData.clear();
+	mData.reserve(entities.size());
 
-		for (uint32_t i = 0; i < entities.size(); i++)
-		{
-			mData.push_back(entry); //Add empty dummy entry
-			entities[i]->Serialize(this, i); // set entry data
-		}
-
-		uint8_t* tempBuffer = new uint8_t[mEntryCount * mEntrySize]{};
-		for (uint32_t i = 0; i < entities.size(); i++)
-		{
-			for (const LJmpFieldInfo& f : mFields)
-			{
-				uint32_t offset = (mEntrySize * i) + f.Start;
-				switch(f.Type){
-					case EJmpFieldType::Integer:
-						{
-							uint32_t value = *reinterpret_cast<uint32_t*>(tempBuffer + offset); // Value already in place
-							value = (value & ~f.Bitmask) | (std::get<uint32_t>(mData.at(i).at(f.Hash)) << f.Shift) & f.Bitmask;
-							*reinterpret_cast<uint32_t*>(tempBuffer + offset) = value;
-						}
-						break;
-					case EJmpFieldType::String:
-						{
-							char buffer[32] = {'\0'};
-							std::string str = std::get<std::string>(mData.at(i).at(f.Hash));
-							strncpy(buffer, str.c_str(), str.size() > mStringSize ? mStringSize : str.size());
-							strncpy(reinterpret_cast<char*>(tempBuffer+offset), buffer, mStringSize);
-						}
-						break;
-					case EJmpFieldType::Float:
-						{
-							*reinterpret_cast<float*>(tempBuffer + offset) = std::get<float>(mData.at(i).at(f.Hash));
-							break;
-						}
-				}
-			}
-		}
-
-		stream.seek(mEntryStartOffset);
-		stream.writeBytes(tempBuffer, mEntryCount * mEntrySize);
-
-		delete[] tempBuffer;
+	for (uint32_t i = 0; i < entities.size(); i++)
+	{
+		mData.push_back(entry); //Add empty dummy entry
+		entities[i]->Serialize(this, i); // set entry data
 	}
 
-	size_t padded_size = LGenUtility::PadToBoundary(stream.tell(), 4);
-	std::cout << "Padding to " << padded_size << " bytes" << std::endl;
-	for(int i = 0; stream.tell() < padded_size; i++) stream.writeUInt8(0x40);
+	size_t fileSize = CalculateNewFileSize(mEntryCount);
+
+	uint8_t* tempBuffer = new uint8_t[fileSize]{};
+
+	bStream::CMemoryStream ReadStream(tempBuffer, fileSize, bStream::Endianess::Big, bStream::OpenMode::In);
+	bStream::CMemoryStream WriteStream(tempBuffer, fileSize, bStream::Endianess::Big, bStream::OpenMode::Out);
+
+	for (uint32_t i = 0; i < entities.size(); i++)
+	{
+		for (const LJmpFieldInfo& f : mFields)
+		{
+			uint32_t offset = -1;
+			ReadStream.seek((mEntrySize * i) + f.Start);
+			WriteStream.seek((mEntrySize * i) + f.Start);
+			switch(f.Type){
+
+				case EJmpFieldType::Integer:
+					{
+						uint32_t value = ReadStream.readUInt32(); // Value already in place
+						value = (value & ~f.Bitmask) | ((std::get<uint32_t>(mData.at(i).at(f.Hash)) << f.Shift) & f.Bitmask);
+						WriteStream.writeUInt32(value);
+					}
+					break;
+				case EJmpFieldType::Float:
+					WriteStream.writeFloat(std::get<float>(mData.at(i).at(f.Hash)));
+					break;
+				case EJmpFieldType::String:
+					{
+						char buffer[32] = {'\0'};
+						std::string str = std::get<std::string>(mData.at(i).at(f.Hash));
+						strncpy(buffer, str.c_str(), str.size() > mStringSize ? mStringSize : str.size());
+						WriteStream.writeBytes((uint8_t*)buffer, mStringSize);
+					}
+					break;
+			}
+		}
+	}
+
+	stream.seek(mEntryStartOffset);
+	stream.writeBytes(tempBuffer, fileSize);
+
+	delete[] tempBuffer;
 
 	return true;
 }
