@@ -373,4 +373,6 @@ include/DiscordIntegration.hpp
 *.ini
 *.a
 
-lib/
+lib/*
+!lib/CMakeLists.txt
+!lib/imgui.cmake
