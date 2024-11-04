@@ -76,7 +76,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	const ImGuiViewport* mainViewport = ImGui::GetMainViewport();
 
 	ImGuiDockNodeFlags dockFlags = ImGuiDockNodeFlags_AutoHideTabBar;
-	mMainDockSpaceID = ImGui::DockSpaceOverViewport(mainViewport, dockFlags);
+	mMainDockSpaceID = ImGui::DockSpaceOverViewport(0, mainViewport, dockFlags);
 	
 	if(!bInitialized){
 
@@ -394,7 +394,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	loadLock.unlock();
 
 
-	ImGui::Image(reinterpret_cast<void*>(static_cast<uintptr_t>(mViewTex)), winSize, {0.0f, 1.0f}, {1.0f, 0.0f});
+	ImGui::Image(static_cast<uintptr_t>(mViewTex), winSize, {0.0f, 1.0f}, {1.0f, 0.0f});
 
 	renderer_scene->SetActive(ImGui::IsItemHovered());
 

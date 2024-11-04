@@ -38,12 +38,12 @@ void LSpeedySpiritDropDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) co
 {
     JmpIO->SetString(entry_index, "name", mName);
 
-    JmpIO->SetSignedInt(entry_index, "coin", mCoins);
-    JmpIO->SetSignedInt(entry_index, "bill", mBills);
-    JmpIO->SetSignedInt(entry_index, "gold", mGoldBars);
-    JmpIO->SetSignedInt(entry_index, "sapphire", mSapphires);
-    JmpIO->SetSignedInt(entry_index, "emerald", mEmeralds);
-    JmpIO->SetSignedInt(entry_index, "ruby", mRubies);
+    JmpIO->SetUnsignedInt(entry_index, "coin", mCoins);
+    JmpIO->SetUnsignedInt(entry_index, "bill", mBills);
+    JmpIO->SetUnsignedInt(entry_index, "gold", mGoldBars);
+    JmpIO->SetUnsignedInt(entry_index, "sapphire", mSapphires);
+    JmpIO->SetUnsignedInt(entry_index, "emerald", mEmeralds);
+    JmpIO->SetUnsignedInt(entry_index, "ruby", mRubies);
 }
 
 void LSpeedySpiritDropDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)

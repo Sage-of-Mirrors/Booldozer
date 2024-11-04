@@ -47,7 +47,7 @@ void LEditorScene::LoadResFromRoot(){
 
 	for(int door_id = 0; door_id < 15; door_id++){
 		if(GCResourceManager.mGameArchive == nullptr || GCResourceManager.mLoadedGameArchive == false) continue; // should be done better
-		std::shared_ptr<Archive::File> doorModelFile = GCResourceManager.mGameArchive->GetFile(std::filesystem::path(fmt::format("iwamoto/door/door_{:02}.bin", door_id)));
+		std::shared_ptr<Archive::File> doorModelFile = GCResourceManager.mGameArchive->GetFile(std::filesystem::path(std::format("iwamoto/door/door_{:02}.bin", door_id)));
 		if(doorModelFile != nullptr){
 			bStream::CMemoryStream bin_data(doorModelFile->GetData(), doorModelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 			
@@ -58,7 +58,7 @@ void LEditorScene::LoadResFromRoot(){
 	
 	J3DModelLoader Loader;
 
-	if((std::filesystem::exists(std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp"))){
+	/*if((std::filesystem::exists(std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp"))){
 
 		std::shared_ptr<Archive::Rarc> skyboxArchive = Archive::Rarc::Create();
 
@@ -75,7 +75,7 @@ void LEditorScene::LoadResFromRoot(){
 			mSkyboxModel = Loader.Load(&modelData, 0);
 			mSkyBox = mSkyboxModel->CreateInstance();
 		}
-	}
+	}*/
 }
 
 void LEditorScene::Init(){

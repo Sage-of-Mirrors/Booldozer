@@ -600,6 +600,7 @@ void LRoomDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 	mInternalName = JmpIO->GetString(entry_index, "name");
 
 	mRoomNumber = JmpIO->GetSignedInt(entry_index, "RoomNo");
+	std::cout << "[RoomDOMNode] Read Room Number " << mRoomNumber << std::endl;
 	mThunder = JmpIO->GetSignedInt(entry_index, "Thunder");
 
 	mShouldRenderSkybox = JmpIO->GetBoolean(entry_index, "VRbox");
@@ -622,21 +623,22 @@ void LRoomDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 {
 	JmpIO->SetString(entry_index, "name", mInternalName);
 
-	JmpIO->SetSignedInt(entry_index, "RoomNo", mRoomNumber);
-	JmpIO->SetSignedInt(entry_index, "Thunder", mThunder);
+	std::cout << "[RoomDOMNode] Writing Room Number " << mRoomNumber << std::endl;
+	JmpIO->SetUnsignedInt(entry_index, "RoomNo", mRoomNumber);
+	JmpIO->SetUnsignedInt(entry_index, "Thunder", mThunder);
 
 	JmpIO->SetBoolean(entry_index, "VRbox", mShouldRenderSkybox);
 
-	JmpIO->SetSignedInt(entry_index, "DustLv", mDustLevel);
+	JmpIO->SetUnsignedInt(entry_index, "DustLv", mDustLevel);
 
-	JmpIO->SetSignedInt(entry_index, "LightColorR", mLightColor[0] * 255.f);
-	JmpIO->SetSignedInt(entry_index, "LightColorG", mLightColor[1] * 255.f);
-	JmpIO->SetSignedInt(entry_index, "LightColorB", mLightColor[2] * 255.f);
+	JmpIO->SetUnsignedInt(entry_index, "LightColorR", mLightColor[0] * 255.f);
+	JmpIO->SetUnsignedInt(entry_index, "LightColorG", mLightColor[1] * 255.f);
+	JmpIO->SetUnsignedInt(entry_index, "LightColorB", mLightColor[2] * 255.f);
 
-	JmpIO->SetSignedInt(entry_index, "Distance", mDistance);
-	JmpIO->SetSignedInt(entry_index, "Lv", mLv);
-	JmpIO->SetSignedInt(entry_index, "sound_echo_parameter", mSoundEchoParameter);
-	JmpIO->SetSignedInt(entry_index, "sound_room_code", mSoundRoomCode);
+	JmpIO->SetUnsignedInt(entry_index, "Distance", mDistance);
+	JmpIO->SetUnsignedInt(entry_index, "Lv", mLv);
+	JmpIO->SetUnsignedInt(entry_index, "sound_echo_parameter", mSoundEchoParameter);
+	JmpIO->SetUnsignedInt(entry_index, "sound_room_code", mSoundRoomCode);
 
 	JmpIO->SetUnsignedInt(entry_index, "sound_room_size", mSoundRoomSize);
 }
@@ -650,7 +652,7 @@ bool LRoomDOMNode::CompleteLoad()
 	std::filesystem::path fullResPath = basePath / t.relative_path();
 
 	if (std::filesystem::exists(fullResPath))
-		//std::cout << fmt::format(mName, "{0} has resource at {1}", fullResPath) << std::endl;
+		//std::cout << std::format(mName, "{0} has resource at {1}", fullResPath) << std::endl;
 
 	// Load models here
 

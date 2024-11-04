@@ -101,19 +101,19 @@ void LObserverDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetFloat(entry_index, "scale_y", mScale.y);
 	JmpIO->SetFloat(entry_index, "scale_z", mScale.x);
 
-	JmpIO->SetSignedInt(entry_index, "room_no", mRoomNumber);
+	JmpIO->SetUnsignedInt(entry_index, "room_no", mRoomNumber);
 
-	JmpIO->SetSignedInt(entry_index, "cond_arg0", mCondArg0);
+	JmpIO->SetUnsignedInt(entry_index, "cond_arg0", mCondArg0);
 
-	JmpIO->SetSignedInt(entry_index, "arg0", mArg0);
-	JmpIO->SetSignedInt(entry_index, "arg1", mArg1);
-	JmpIO->SetSignedInt(entry_index, "arg2", mArg2);
-	JmpIO->SetSignedInt(entry_index, "arg3", mArg3);
-	JmpIO->SetSignedInt(entry_index, "arg4", mArg4);
-	JmpIO->SetSignedInt(entry_index, "arg5", mArg5);
+	JmpIO->SetUnsignedInt(entry_index, "arg0", mArg0);
+	JmpIO->SetUnsignedInt(entry_index, "arg1", mArg1);
+	JmpIO->SetUnsignedInt(entry_index, "arg2", mArg2);
+	JmpIO->SetUnsignedInt(entry_index, "arg3", mArg3);
+	JmpIO->SetUnsignedInt(entry_index, "arg4", mArg4);
+	JmpIO->SetUnsignedInt(entry_index, "arg5", mArg5);
 
-	JmpIO->SetSignedInt(entry_index, "appear_flag", mSpawnFlag);
-	JmpIO->SetSignedInt(entry_index, "disappear_flag", mDespawnFlag);
+	JmpIO->SetUnsignedInt(entry_index, "appear_flag", mSpawnFlag);
+	JmpIO->SetUnsignedInt(entry_index, "disappear_flag", mDespawnFlag);
 
 	JmpIO->SetUnsignedInt(entry_index, "cond_type", (uint32_t)mCondType);
 	JmpIO->SetUnsignedInt(entry_index, "do_type", (uint32_t)mDoType);

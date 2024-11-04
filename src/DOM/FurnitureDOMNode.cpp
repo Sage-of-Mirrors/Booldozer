@@ -149,27 +149,27 @@ void LFurnitureDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetFloat(entry_index, "scale_y", mScale.y);
 	JmpIO->SetFloat(entry_index, "scale_z", mScale.x);
 
-	JmpIO->SetSignedInt(entry_index, "room_no", mRoomNumber);
+	JmpIO->SetUnsignedInt(entry_index, "room_no", mRoomNumber);
 
 	JmpIO->SetFloat(entry_index, "item_offset_y", mVerticalItemSpawnOffset);
 
-	JmpIO->SetSignedInt(entry_index, "item_table", mItemTableIndex);
-	JmpIO->SetSignedInt(entry_index, "generate_num", mGenerateNumber);
-	JmpIO->SetSignedInt(entry_index, "telesa_hide", mBooHideChance);
-	JmpIO->SetSignedInt(entry_index, "move_level", mShakeIntensity);
+	JmpIO->SetUnsignedInt(entry_index, "item_table", mItemTableIndex);
+	JmpIO->SetUnsignedInt(entry_index, "generate_num", mGenerateNumber);
+	JmpIO->SetUnsignedInt(entry_index, "telesa_hide", mBooHideChance);
+	JmpIO->SetUnsignedInt(entry_index, "move_level", mShakeIntensity);
 
 	JmpIO->SetFloat(entry_index, "arg0", mVecArgs.x);
 	JmpIO->SetFloat(entry_index, "arg1", mVecArgs.y);
 	JmpIO->SetFloat(entry_index, "arg2", mVecArgs.z);
 
-	JmpIO->SetSignedInt(entry_index, "appear_flag", mSpawnFlag);
-	JmpIO->SetSignedInt(entry_index, "disappear_flag", mDespawnFlag);
+	JmpIO->SetUnsignedInt(entry_index, "appear_flag", mSpawnFlag);
+	JmpIO->SetUnsignedInt(entry_index, "disappear_flag", mDespawnFlag);
 
-	JmpIO->SetSignedInt(entry_index, "furniture_x", mHitboxExtents.z);
-	JmpIO->SetSignedInt(entry_index, "furniture_y", mHitboxExtents.y);
-	JmpIO->SetSignedInt(entry_index, "furniture_z", mHitboxExtents.x);
+	JmpIO->SetUnsignedInt(entry_index, "furniture_x", mHitboxExtents.z);
+	JmpIO->SetUnsignedInt(entry_index, "furniture_y", mHitboxExtents.y);
+	JmpIO->SetUnsignedInt(entry_index, "furniture_z", mHitboxExtents.x);
 
-	JmpIO->SetSignedInt(entry_index, "counter", mGBHScanID);
+	JmpIO->SetUnsignedInt(entry_index, "counter", mGBHScanID);
 
 	JmpIO->SetUnsignedInt(entry_index, "move", (uint32_t)mBehaviorType);
 	JmpIO->SetUnsignedInt(entry_index, "furniture_sound", (uint32_t)mSoundID);

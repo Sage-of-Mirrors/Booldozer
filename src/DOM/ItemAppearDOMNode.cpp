@@ -41,7 +41,7 @@ std::string LItemAppearDOMNode::GetName()
         if (result != "")
             result += ", ";
 
-        result = fmt::format("{0}{1} (x{2})", result, name, count);
+        result = std::format("{0}{1} (x{2})", result, name, count);
     }
 
     return result;
@@ -52,7 +52,7 @@ void LItemAppearDOMNode::RenderDetailsUI(float dt)
     for (uint32_t i = 0; i < 20; i++)
     {
         ImGui::PushID(i);
-        LUIUtility::RenderNodeReferenceCombo<LItemInfoDOMNode>(fmt::format("Item Slot {0}", i), EDOMNodeType::ItemInfo, Parent, mItemInfoRefs[i]);
+        LUIUtility::RenderNodeReferenceCombo<LItemInfoDOMNode>(std::format("Item Slot {0}", i), EDOMNodeType::ItemInfo, Parent, mItemInfoRefs[i]);
         ImGui::PopID();
     }
 }
@@ -61,7 +61,7 @@ void LItemAppearDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 {
     for (uint32_t i = 0; i < 20; i++)
     {
-        JmpIO->SetString(entry_index, fmt::format("item{0}", i), mItemNames[i]);
+        JmpIO->SetString(entry_index, std::format("item{0}", i), mItemNames[i]);
     }
 }
 
@@ -69,7 +69,7 @@ void LItemAppearDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 {
     for (uint32_t i = 0; i < 20; i++)
     {
-        mItemNames[i] = JmpIO->GetString(entry_index, fmt::format("item{0}", i));
+        mItemNames[i] = JmpIO->GetString(entry_index, std::format("item{0}", i));
     }
 }
 

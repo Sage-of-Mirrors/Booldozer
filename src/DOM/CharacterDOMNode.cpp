@@ -91,15 +91,15 @@ void LCharacterDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetFloat(entry_index, "dir_y", -mRotation.y);
 	JmpIO->SetFloat(entry_index, "dir_z", mRotation.x);
 
-	JmpIO->SetSignedInt(entry_index, "room_no", mRoomNumber);
+	JmpIO->SetUnsignedInt(entry_index, "room_no", mRoomNumber);
 
-	JmpIO->SetSignedInt(entry_index, "appear_flag", mSpawnFlag);
-	JmpIO->SetSignedInt(entry_index, "disappear_flag", mDespawnFlag);
+	JmpIO->SetUnsignedInt(entry_index, "appear_flag", mSpawnFlag);
+	JmpIO->SetUnsignedInt(entry_index, "disappear_flag", mDespawnFlag);
 
-	JmpIO->SetSignedInt(entry_index, "event_set_no", mEventSetNumber);
-	JmpIO->SetSignedInt(entry_index, "item_table", mItemTableIndex);
-	JmpIO->SetSignedInt(entry_index, "appear_point", mSpawnPointID);
-	JmpIO->SetSignedInt(entry_index, "msg_no", mGBHScanID);
+	JmpIO->SetUnsignedInt(entry_index, "event_set_no", mEventSetNumber);
+	JmpIO->SetUnsignedInt(entry_index, "item_table", mItemTableIndex);
+	JmpIO->SetUnsignedInt(entry_index, "appear_point", mSpawnPointID);
+	JmpIO->SetUnsignedInt(entry_index, "msg_no", mGBHScanID);
 
 	JmpIO->SetUnsignedInt(entry_index, "cond_type", (uint32_t)mCondType);
 	JmpIO->SetUnsignedInt(entry_index, "attack_type", (uint32_t)mAttackType);

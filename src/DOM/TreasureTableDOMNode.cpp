@@ -75,22 +75,22 @@ void LTreasureTableDOMNode::RenderDetailsUI(float dt)
 void LTreasureTableDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 {
     JmpIO->SetString(entry_index, "other", mOther);
-    JmpIO->SetSignedInt(entry_index, "room", mRoomNumber);
+    JmpIO->SetUnsignedInt(entry_index, "room", mRoomNumber);
 
-    JmpIO->SetSignedInt(entry_index, "size", (int32_t)mSize);
+    JmpIO->SetUnsignedInt(entry_index, "size", (int32_t)mSize);
 
-    JmpIO->SetSignedInt(entry_index, "coin", mCoins);
-    JmpIO->SetSignedInt(entry_index, "bill", mBills);
-    JmpIO->SetSignedInt(entry_index, "gold", mGoldBars);
-    JmpIO->SetSignedInt(entry_index, "SPearl", mSmallPearls);
-    JmpIO->SetSignedInt(entry_index, "MPearl", mMediumPearls);
-    JmpIO->SetSignedInt(entry_index, "LPearl", mLargePearls);
-    JmpIO->SetSignedInt(entry_index, "sapphire", mSapphires);
-    JmpIO->SetSignedInt(entry_index, "emerald", mEmeralds);
-    JmpIO->SetSignedInt(entry_index, "ruby", mRubies);
-    JmpIO->SetSignedInt(entry_index, "diamond", mDiamonds);
-    JmpIO->SetSignedInt(entry_index, "cdiamond", mRedDiamonds);
-    JmpIO->SetSignedInt(entry_index, "rdiamond", mGoldDiamonds);
+    JmpIO->SetUnsignedInt(entry_index, "coin", mCoins);
+    JmpIO->SetUnsignedInt(entry_index, "bill", mBills);
+    JmpIO->SetUnsignedInt(entry_index, "gold", mGoldBars);
+    JmpIO->SetUnsignedInt(entry_index, "SPearl", mSmallPearls);
+    JmpIO->SetUnsignedInt(entry_index, "MPearl", mMediumPearls);
+    JmpIO->SetUnsignedInt(entry_index, "LPearl", mLargePearls);
+    JmpIO->SetUnsignedInt(entry_index, "sapphire", mSapphires);
+    JmpIO->SetUnsignedInt(entry_index, "emerald", mEmeralds);
+    JmpIO->SetUnsignedInt(entry_index, "ruby", mRubies);
+    JmpIO->SetUnsignedInt(entry_index, "diamond", mDiamonds);
+    JmpIO->SetUnsignedInt(entry_index, "cdiamond", mRedDiamonds);
+    JmpIO->SetUnsignedInt(entry_index, "rdiamond", mGoldDiamonds);
 
     JmpIO->SetBoolean(entry_index, "effect", mEffect);
     JmpIO->SetBoolean(entry_index, "camera", mCamera);

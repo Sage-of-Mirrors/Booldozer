@@ -13,7 +13,7 @@ void LBooDOMNode::RenderDetailsUI(float dt)
 {
     // Integers
     if(ImGui::InputInt("Initial Room", &mInitialRoom)){
-        mName = fmt::format("Boo {}", mInitialRoom);
+        mName = std::format("Boo {}", mInitialRoom);
     }
     
     LUIUtility::RenderTooltip("The room that this Boo spawns in.");
@@ -44,15 +44,15 @@ void LBooDOMNode::RenderDetailsUI(float dt)
 
 void LBooDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 {
-    JmpIO->SetSignedInt(entry_index, "init_room", mInitialRoom);
-    JmpIO->SetSignedInt(entry_index, "next_room_wait", mNextRoomWait);
+    JmpIO->SetUnsignedInt(entry_index, "init_room", mInitialRoom);
+    JmpIO->SetUnsignedInt(entry_index, "next_room_wait", mNextRoomWait);
 
     JmpIO->SetFloat(entry_index, "accel", mAcceleration);
     JmpIO->SetFloat(entry_index, "max_speed", mMaxSpeed);
     JmpIO->SetFloat(entry_index, "rnd_angle", mAngle);
 
-    JmpIO->SetSignedInt(entry_index, "str_hp", mHP);
-    JmpIO->SetSignedInt(entry_index, "move_time", mMoveTime);
+    JmpIO->SetUnsignedInt(entry_index, "str_hp", mHP);
+    JmpIO->SetUnsignedInt(entry_index, "move_time", mMoveTime);
 
     JmpIO->SetBoolean(entry_index, "attack", mAttacks);
 }
@@ -81,7 +81,7 @@ void LBooDOMNode::PostProcess()
     // Grab a temporary shared_ptr for the parent.
     auto parentShared = Parent.lock();
 
-    mName = fmt::format("Boo {}", mInitialRoom);
+    mName = std::format("Boo {}", mInitialRoom);
 
 }
 

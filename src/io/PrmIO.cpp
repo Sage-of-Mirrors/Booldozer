@@ -37,7 +37,7 @@ bool AngleVisualizer(const char* label, float* angle, uint32_t sGhostImg)
     //TODO: figure out why this breaks the combo box
     //draw_list->PathArcTo(ImVec2(center.x, center.y), 30.0f, 0.0f, -((*angle) * (pi / 180)), 10);
 
-	draw_list->AddImage((void*)(intptr_t)sGhostImg, ImVec2(center.x - 8, center.y - 8), ImVec2(center.x + 8, center.y + 8));
+	draw_list->AddImage(static_cast<intptr_t>(sGhostImg), ImVec2(center.x - 8, center.y - 8), ImVec2(center.x + 8, center.y + 8));
 
 
     pos.y += 80;

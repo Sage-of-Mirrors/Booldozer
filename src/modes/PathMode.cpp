@@ -45,7 +45,7 @@ void LPathMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 			for (size_t i = 0; i < paths.size(); i++)
 			{
 				auto path = paths[i];
-				std::string nodeName = fmt::format("{0}###{1}", path->GetName(), i);
+				std::string nodeName = std::format("{0}###{1}", path->GetName(), i);
 
 				bool treeSelected = false;
 				bool treeOpened = LUIUtility::RenderNodeSelectableTreeNode(nodeName, path->GetIsSelected() && !bLastClickedWasPoint, treeSelected);
@@ -77,14 +77,14 @@ void LPathMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 					for (size_t j = 0; j < path->Children.size(); j++)
 					{
 						auto point = path->Children[j];
-						std::string ptName = fmt::format("point###{0}", j);//fmt::format("Point ", j, ": (", point->X.Value, ", ", point->Y.Value, ", ", point->Z.Value, ")###", j);
+						std::string ptName = std::format("point###{0}", j);//std::format("Point ", j, ": (", point->X.Value, ", ", point->Y.Value, ", ", point->Z.Value, ")###", j);
 
 						if (LUIUtility::RenderNodeSelectable(point.get(), point->GetIsSelected() && bLastClickedWasPoint))
 						{
 							mPointSelection.AddToSelection(point);
 							bLastClickedWasPoint = true;
 						}
-						if (ImGui::BeginPopupContextItem(fmt::format("pointctx###{0}", j).c_str()))
+						if (ImGui::BeginPopupContextItem(std::format("pointctx###{0}", j).c_str()))
 						{
 							// This point was removed, so skip everything else.
 							if (RenderPointContextMenu(std::static_pointer_cast<LPathDOMNode>(path), std::static_pointer_cast<LPathPointDOMNode>(point)))

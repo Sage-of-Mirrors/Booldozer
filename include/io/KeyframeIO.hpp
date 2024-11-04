@@ -25,8 +25,8 @@ class LTrackCommon
     
 
 public:
-    std::vector<uint32_t> mKeys;
-    std::map<uint32_t, LKeyframeCommon> mFrames;
+    std::vector<int32_t> mKeys;
+    std::map<int32_t, LKeyframeCommon> mFrames;
 
     void LoadTrack(bStream::CStream* stream, uint32_t keyframeDataOffset, ETrackType type);
 

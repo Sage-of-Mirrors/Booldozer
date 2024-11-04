@@ -70,7 +70,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	// Make sure file path is valid
 	if (!std::filesystem::exists(file_path))
 	{
-		std::cout << fmt::format("[MapDOMNode]: File \"{}\" does not exist", file_path.string().c_str()) << std::endl;
+		std::cout << std::format("[MapDOMNode]: File \"{}\" does not exist", file_path.string().c_str()) << std::endl;
 		return false;
 	}
 
@@ -106,7 +106,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 				int eventNo = 0;
 				
 				std::sscanf(eventName.c_str(), "%5s%3d", &eventNm, &eventNo);
-				csvName = fmt::format("message{}", eventNo);
+				csvName = std::format("message{}", eventNo);
 				std::shared_ptr<LEventDataDOMNode> eventData =  std::make_shared<LEventDataDOMNode>(eventName);
 				
 				eventData->LoadEventArchive(eventArc, archive.path(), eventName, csvName);
@@ -126,12 +126,12 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 			std::cout << "[MapDOMNode]: Trying to rip static data for map " << mName << std::endl;
 			if (!OPTIONS.mIsDOLPatched && !mStaticMapIO.RipStaticDataFromExecutable(dol, roomsMap, mName, "GLME01"))
 			{
-				std::cout << fmt::format("[MapDOMNode]: Failed to rip static map data to {0}", roomsMap.string()) << std::endl;
+				std::cout << std::format("[MapDOMNode]: Failed to rip static map data to {0}", roomsMap.string()) << std::endl;
 				return false;
 			} else if(OPTIONS.mIsDOLPatched && std::filesystem::exists(std::filesystem::path(OPTIONS.mRootPath) / "sys" / ".main_dol_backup") && dol.LoadDOLFile(std::filesystem::path(OPTIONS.mRootPath) / "sys" / ".main_dol_backup")){
 				if(!mStaticMapIO.RipStaticDataFromExecutable(dol, roomsMap, mName, "GLME01"))
 				{
-					std::cout << fmt::format("[MapDOMNode]: Failed to rip static map data to {0}", roomsMap.string()) << std::endl;
+					std::cout << std::format("[MapDOMNode]: Failed to rip static map data to {0}", roomsMap.string()) << std::endl;
 					return false;
 				}
 			} else {
@@ -144,7 +144,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 	if (!ReadStaticData(roomsMap))
 	{
-		std::cout << fmt::format("[MapDOMNode]: Failed to open static data from {0}", roomsMap.string()) << std::endl;
+		std::cout << std::format("[MapDOMNode]: Failed to open static data from {0}", roomsMap.string()) << std::endl;
 		return false;
 	}
 
@@ -159,22 +159,23 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	}
 
 	// Grab the friendly room names for this map
-	nlohmann::json roomNames = LResUtility::GetNameMap(fmt::format("{0}_rooms", mName));
+	nlohmann::json roomNames = LResUtility::GetNameMap(std::format("{0}_rooms", mName));
 
 	// Use the static room data to know how many rooms to load
 	for (size_t i = 0; i < mStaticMapIO.GetRoomCount(); i++)
 	{
-		std::string roomName = fmt::format("room_{:02}", i);
+		std::string roomName = std::format("room_{:02}", i);
 		if (roomNames.find(roomName) != roomNames.end())
-			roomName = roomNames[roomName];
+			roomName = roomNames[roomName].get<std::string>();
 
 		std::shared_ptr<LRoomDOMNode> newRoom = std::make_shared<LRoomDOMNode>(roomName);
 
 		// roominfo might not have this room defined in it, so only try to read if the index is within the bounds.
-		if (i < JmpIOManagers[LEntityType_Rooms].GetEntryCount())
+		if (i < JmpIOManagers[LEntityType_Rooms].GetEntryCount()){
 			newRoom->Deserialize(&JmpIOManagers[LEntityType_Rooms], static_cast<uint32_t>(i));
-		else
+		} else {
 			newRoom->SetRoomNumber(static_cast<int32_t>(i));
+		}
 
 		AddChild(newRoom);
 	}
@@ -218,13 +219,13 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		bStream::CMemoryStream fileReader = bStream::CMemoryStream(jmpFile->GetData(), jmpFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 		if (!JmpIOManagers[entityType].Load(&fileReader))
 		{
-			std::cout << fmt::format("[MapDOMNode]: Error loading JMP data from \"{}\"", LEntityFileNames[entityType].c_str()) << std::endl;
+			std::cout << std::format("[MapDOMNode]: Error loading JMP data from \"{}\"", LEntityFileNames[entityType].c_str()) << std::endl;
 			continue;
 		}
 
 		if (!LoadEntityNodes(&JmpIOManagers[entityType], (LEntityType)entityType))
 		{
-			std::cout << fmt::format("[MapDOMNode]: Error loading entities from \"{}\"", LEntityFileNames[entityType].c_str()) << std::endl;
+			std::cout << std::format("[MapDOMNode]: Error loading entities from \"{}\"", LEntityFileNames[entityType].c_str()) << std::endl;
 			continue;
 		}
 	}
@@ -311,14 +312,14 @@ bool LMapDOMNode::LoadStaticData(std::vector<std::shared_ptr<LRoomDOMNode>> room
 		LStaticDoorData d;
 		mStaticMapIO.GetDoorData(i, d);
 
-		std::shared_ptr<LDoorDOMNode> doorNode = std::make_shared<LDoorDOMNode>(fmt::format("Door {0}", i));
+		std::shared_ptr<LDoorDOMNode> doorNode = std::make_shared<LDoorDOMNode>(std::format("Door {0}", i));
 		doorNode->Load(d);
 		AddChild(doorNode);
 	}
 
 	for (uint32_t i = 0; i < rooms.size(); i++)
 	{
-		std::shared_ptr<LRoomDataDOMNode> roomData = std::make_shared<LRoomDataDOMNode>(fmt::format("room data {0}", i));
+		std::shared_ptr<LRoomDataDOMNode> roomData = std::make_shared<LRoomDataDOMNode>(std::format("room data {0}", i));
 		roomData->Load(i, mStaticMapIO, rooms, GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door));
 
 		rooms[i]->AddChild(roomData);
@@ -336,17 +337,17 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 	{
 		std::vector<std::shared_ptr<LEntityDOMNode>> entitiesOfType;
 		
-		if (entityType == LEntityType_Characters || entityType == LEntityType_Enemies || entityType == LEntityType_Observers || entityType == LEntityType_Keys)
+		if (entityType == LEntityType_Characters || entityType == LEntityType_Enemies || entityType == LEntityType_Observers || entityType == LEntityType_Keys){
 			entitiesOfType = GetChildrenOfType<LEntityDOMNode>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType), isNotBlackoutFilter);
-		else if (entityType == LEntityType_BlackoutCharacters || entityType == LEntityType_BlackoutEnemies || entityType == LEntityType_BlackoutObservers || entityType == LEntityType_BlackoutKeys)
-			entitiesOfType = GetChildrenOfType<LEntityDOMNode>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType), isBlackoutFilter);
-		else
-		{
+		} else if (entityType == LEntityType_BlackoutCharacters || entityType == LEntityType_BlackoutEnemies || entityType == LEntityType_BlackoutObservers || entityType == LEntityType_BlackoutKeys){
+			entitiesOfType = GetChildrenOfType<LEntityDOMNode>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType), isBlackoutFilter);		
+		} else {
 			entitiesOfType = GetChildrenOfType<LEntityDOMNode>(LEntityDOMNode::EntityTypeToDOMNodeType((LEntityType)entityType));
 		}
 
-		for (auto ent : entitiesOfType)
+		for (auto ent : entitiesOfType){
 			ent->PreProcess();
+		}
 
 		// Calculate the size of the required buffer. Header size + number of fields * field size + number of entities * entity size
 		size_t newFileSize = JmpIOManagers[entityType].CalculateNewFileSize(entitiesOfType.size());
@@ -355,6 +356,7 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 		JmpIOManagers[entityType].Save(entitiesOfType, memWriter);
 
 		std::shared_ptr<Archive::File> jmpFile = mMapArchive->GetFile(std::filesystem::path("jmp") / LEntityFileNames[entityType]);
+		std::cout << std::format("Saving jmp file {}", jmpFile->GetName()) << std::endl;
 		
 		if(jmpFile == nullptr){
 			jmpFile = Archive::File::Create(); // [v]: if this jmp file doesnt exist, make it
@@ -378,7 +380,7 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 
 		if (jmpTemplate.find("fields") == jmpTemplate.end())
 		{
-			std::cout << fmt::format("[MapDOMNode]: Failed to read JSON at {0}", (RES_BASE_PATH / "jmp_templates" / "path.json").string());
+			std::cout << std::format("[MapDOMNode]: Failed to read JSON at {0}", (RES_BASE_PATH / "jmp_templates" / "path.json").string());
 			return false;
 		}
 
@@ -465,7 +467,7 @@ bool LMapDOMNode::SaveMapToFiles(std::filesystem::path folder_path)
 
 		if (jmpTemplate.find("fields") == jmpTemplate.end())
 		{
-			std::cout << fmt::format("[MapDOMNode]: Failed to read JSON at {0}", (RES_BASE_PATH / "jmp_templates" / "path.json").string());
+			std::cout << std::format("[MapDOMNode]: Failed to read JSON at {0}", (RES_BASE_PATH / "jmp_templates" / "path.json").string());
 			return false;
 		}
 
@@ -533,37 +535,37 @@ bool LMapDOMNode::LoadEntityNodes(LJmpIO* jmp_io, LEntityType type)
 		switch (type)
 		{
 			case LEntityType_Furniture:
-				newNode = std::make_shared<LFurnitureDOMNode>(fmt::format("Furniture {0}", i));
+				newNode = std::make_shared<LFurnitureDOMNode>(std::format("Furniture {0}", i));
 				break;
 			case LEntityType_Observers:
-				newNode = std::make_shared<LObserverDOMNode>(fmt::format("Observer {0}", i));
+				newNode = std::make_shared<LObserverDOMNode>(std::format("Observer {0}", i));
 				break;
 			case LEntityType_Enemies:
-				newNode = std::make_shared<LEnemyDOMNode>(fmt::format("Enemy {0}", i));
+				newNode = std::make_shared<LEnemyDOMNode>(std::format("Enemy {0}", i));
 				break;
 			case LEntityType_Events:
-				newNode = std::make_shared<LEventDOMNode>(fmt::format("Event {0}", i));
+				newNode = std::make_shared<LEventDOMNode>(std::format("Event {0}", i));
 				break;
 			case LEntityType_Characters:
-				newNode = std::make_shared<LCharacterDOMNode>(fmt::format("Character {0}", i));
+				newNode = std::make_shared<LCharacterDOMNode>(std::format("Character {0}", i));
 				break;
 			case LEntityType_ItemInfoTable:
-				newNode = std::make_shared<LItemInfoDOMNode>(fmt::format("Item Info {0}", i));
+				newNode = std::make_shared<LItemInfoDOMNode>(std::format("Item Info {0}", i));
 				break;
 			case LEntityType_ItemAppear:
-				newNode = std::make_shared<LItemAppearDOMNode>(fmt::format("Item Drop Group {0}", i));
+				newNode = std::make_shared<LItemAppearDOMNode>(std::format("Item Drop Group {0}", i));
 				break;
 			case LEntityType_ItemFishing:
-				newNode = std::make_shared<LItemFishingDOMNode>(fmt::format("Capture Item Group {0}", i));
+				newNode = std::make_shared<LItemFishingDOMNode>(std::format("Capture Item Group {0}", i));
 				break;
 			case LEntityType_TreasureTable:
-				newNode = std::make_shared<LTreasureTableDOMNode>(fmt::format("Treasure Table {0}", i));
+				newNode = std::make_shared<LTreasureTableDOMNode>(std::format("Treasure Table {0}", i));
 				break;
 			case LEntityType_Generators:
 				newNode = std::make_shared<LGeneratorDOMNode>("generator");
 				break;
 			case LEntityType_Objects:
-				newNode = std::make_shared<LObjectDOMNode>(fmt::format("Object {0}", i));
+				newNode = std::make_shared<LObjectDOMNode>(std::format("Object {0}", i));
 				break;
 			case LEntityType_Keys:
 				newNode = std::make_shared<LKeyDOMNode>("key01");

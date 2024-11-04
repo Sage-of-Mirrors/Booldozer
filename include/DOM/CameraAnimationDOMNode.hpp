@@ -9,10 +9,10 @@ class LCameraAnimationDOMNode : public LBGRenderDOMNode
 private:
 
     bool mPlaying;
-    uint32_t mCurrentFrame;
+    int32_t mCurrentFrame;
     
-    uint32_t mStartFrame;
-    uint32_t mFrameCount;
+    int32_t mStartFrame;
+    int32_t mFrameCount;
 
     uint32_t mNextPosKeyX;
     uint32_t mNextPosKeyY;

@@ -24,9 +24,9 @@ bool LUIUtility::RenderCheckBox(bool* c)
 bool LUIUtility::RenderCheckBox(std::string name, bool* c)
 {
 	if(*c){
-		ImGui::Text(fmt::format("{} {}", ICON_FK_CHECK_CIRCLE_O, name).c_str());
+		ImGui::Text(std::format("{} {}", ICON_FK_CHECK_CIRCLE_O, name).c_str());
 	} else {
-		ImGui::Text(fmt::format("{} {}", ICON_FK_CIRCLE_O, name).c_str());
+		ImGui::Text(std::format("{} {}", ICON_FK_CIRCLE_O, name).c_str());
 	}
 
 	if(ImGui::IsItemClicked()){
@@ -133,7 +133,7 @@ bool LUIUtility::RenderComboBox(std::string name, std::map<std::string, std::str
 	{
 		for (auto [ internal_name, visible_name ] : options)
 		{
-			std::string selectableName = fmt::format("{0}##{1}", visible_name, internal_name);
+			std::string selectableName = std::format("{0}##{1}", visible_name, internal_name);
 			bool is_selected = (value == internal_name);
 
 			if (ImGui::Selectable(selectableName.c_str(), is_selected))
@@ -178,7 +178,7 @@ bool LUIUtility::RenderComboBox(std::string name, nlohmann::ordered_json options
 				std::string jKey = entry.key();
 				std::string jValue = entry.value().get<std::string>();
 
-				std::string selectableName = fmt::format("{0}##{1}", jValue,  jKey);
+				std::string selectableName = std::format("{0}##{1}", jValue,  jKey);
 				bool is_selected = (value == jKey);
 
 				if (ImGui::Selectable(selectableName.c_str(), is_selected))

@@ -135,16 +135,16 @@ void LEnemyDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
     JmpIO->SetFloat(entry_index, "scale_y", mScale.y);
     JmpIO->SetFloat(entry_index, "scale_z", mScale.x);
 
-    JmpIO->SetSignedInt(entry_index, "room_no", mRoomNumber);
+    JmpIO->SetUnsignedInt(entry_index, "room_no", mRoomNumber);
 
-    JmpIO->SetSignedInt(entry_index, "floating_height", mFloatingHeight);
-    JmpIO->SetSignedInt(entry_index, "appear_percent", mAppearChance);
+    JmpIO->SetUnsignedInt(entry_index, "floating_height", mFloatingHeight);
+    JmpIO->SetUnsignedInt(entry_index, "appear_percent", mAppearChance);
 
-    JmpIO->SetSignedInt(entry_index, "appear_flag", mSpawnFlag);
-    JmpIO->SetSignedInt(entry_index, "disappear_flag", mDespawnFlag);
+    JmpIO->SetUnsignedInt(entry_index, "appear_flag", mSpawnFlag);
+    JmpIO->SetUnsignedInt(entry_index, "disappear_flag", mDespawnFlag);
 
-    JmpIO->SetSignedInt(entry_index, "event_set_no", mEventSetNumber);
-    JmpIO->SetSignedInt(entry_index, "item_table", mItemTableIndex);
+    JmpIO->SetUnsignedInt(entry_index, "event_set_no", mEventSetNumber);
+    JmpIO->SetUnsignedInt(entry_index, "item_table", mItemTableIndex);
 
     JmpIO->SetUnsignedInt(entry_index, "cond_type", (uint32_t)mCondType);
     JmpIO->SetUnsignedInt(entry_index, "move_type", mMoveType);
@@ -258,7 +258,7 @@ void LEnemyDOMNode::PreProcess()
             }
 
             // Set the new access name in this enemy and in the associated furniture node.
-            mAccessName = fmt::format("{0}_{1}", mRoomNumber, furnitureIndex);
+            mAccessName = std::format("{0}_{1}", mRoomNumber, furnitureIndex);
             furnitureShared->SetAccessName(mAccessName);
         }
         // Furniture already has a valid access name, so we'll just grab it.

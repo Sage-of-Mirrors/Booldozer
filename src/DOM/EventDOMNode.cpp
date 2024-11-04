@@ -97,18 +97,18 @@ void LEventDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetFloat(entry_index, "scale_y", mScale.y);
 	JmpIO->SetFloat(entry_index, "scale_z", mScale.x);
 
-	JmpIO->SetSignedInt(entry_index, "EventNo", mEventNo);
-	JmpIO->SetSignedInt(entry_index, "EventArea", mActivationRadius);
-	JmpIO->SetSignedInt(entry_index, "EventFlag", mSpawnFlag);
+	JmpIO->SetUnsignedInt(entry_index, "EventNo", mEventNo);
+	JmpIO->SetUnsignedInt(entry_index, "EventArea", mActivationRadius);
+	JmpIO->SetUnsignedInt(entry_index, "EventFlag", mSpawnFlag);
 
-	JmpIO->SetSignedInt(entry_index, "EventTime", mMinHour);
-	JmpIO->SetSignedInt(entry_index, "EventTime2", mMinMinute);
-	JmpIO->SetSignedInt(entry_index, "EventTime3", mMaxHour);
-	JmpIO->SetSignedInt(entry_index, "EventTime4", mMaxMinute);
+	JmpIO->SetUnsignedInt(entry_index, "EventTime", mMinHour);
+	JmpIO->SetUnsignedInt(entry_index, "EventTime2", mMinMinute);
+	JmpIO->SetUnsignedInt(entry_index, "EventTime3", mMaxHour);
+	JmpIO->SetUnsignedInt(entry_index, "EventTime4", mMaxMinute);
 
-	JmpIO->SetSignedInt(entry_index, "EventLoad", mMaxTriggerCount);
-	JmpIO->SetSignedInt(entry_index, "disappear_flag", mDespawnFlag);
-	JmpIO->SetSignedInt(entry_index, "event_parameter", mParameter);
+	JmpIO->SetUnsignedInt(entry_index, "EventLoad", mMaxTriggerCount);
+	JmpIO->SetUnsignedInt(entry_index, "disappear_flag", mDespawnFlag);
+	JmpIO->SetUnsignedInt(entry_index, "event_parameter", mParameter);
 
 	JmpIO->SetUnsignedInt(entry_index, "EventIf", (uint32_t)mEventIf);
 

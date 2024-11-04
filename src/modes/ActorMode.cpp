@@ -30,15 +30,15 @@ void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 	if(ImGui::IsItemClicked(0)){
 		// Show new room modal!
 		auto rooms = current_map->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
-		std::shared_ptr<LRoomDOMNode> newRoom = std::make_shared<LRoomDOMNode>(fmt::format("Room {}", rooms.size() + 1));
-		std::shared_ptr<LRoomDataDOMNode> newRoomData = std::make_shared<LRoomDataDOMNode>(fmt::format("Room {}", rooms.size() + 1));
+		std::shared_ptr<LRoomDOMNode> newRoom = std::make_shared<LRoomDOMNode>(std::format("Room {}", rooms.size() + 1));
+		std::shared_ptr<LRoomDataDOMNode> newRoomData = std::make_shared<LRoomDataDOMNode>(std::format("Room {}", rooms.size() + 1));
 
 		std::string resourcePathRoot = std::filesystem::path(rooms[0]->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0]->GetResourcePath()).parent_path().string();
 
-		newRoomData->SetRoomResourcePath(fmt::format("{}/room_{:02}.arc", resourcePathRoot, rooms.size() + 1));
+		newRoomData->SetRoomResourcePath(std::format("{}/room_{:02}.arc", resourcePathRoot, rooms.size() + 1));
 
 		// for some reason filesystem path wasnt working to build this path so for now just build it manually...
-		std::string resPathInRoot = fmt::format("{}/{}/{}", OPTIONS.mRootPath, "files", newRoomData->GetResourcePath());
+		std::string resPathInRoot = std::format("{}/{}/{}", OPTIONS.mRootPath, "files", newRoomData->GetResourcePath());
 		std::cout << "[ActorMode]: Room resource path " << resPathInRoot << std::endl;
 		if(!std::filesystem::exists(resPathInRoot)){
 			std::shared_ptr<Archive::Rarc> arc = Archive::Rarc::Create();

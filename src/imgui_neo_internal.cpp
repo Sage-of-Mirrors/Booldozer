@@ -2,9 +2,7 @@
 // Created by Matty on 2022-01-28.
 //
 
-#ifndef IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_DEFINE_MATH_OPERATORS
-#endif
 
 #include "imgui_neo_internal.h"
 #include "imgui_internal.h"
@@ -29,37 +27,59 @@ namespace ImGui {
     }
 
     void
-    RenderNeoSequencerTopBarOverlay(float zoom, float valuesWidth,uint32_t startFrame, uint32_t endFrame, uint32_t offsetFrame, const ImVec2 &cursor, const ImVec2 &size,
+    RenderNeoSequencerTopBarOverlay(float zoom, float valuesWidth,unsigned startFrame, unsigned endFrame, unsigned offsetFrame, const ImVec2 &cursor, const ImVec2 &size,
                                     ImDrawList *drawList, bool drawFrameLines,
-                                    bool drawFrameText) {
+                                    bool drawFrameText, float maxPixelsPerTick) {
         if(!drawList) drawList = ImGui::GetWindowDrawList();
 
         const auto & style = GetStyle();
 
         const ImRect barArea = {cursor + ImVec2{style.FramePadding.x + valuesWidth,style.FramePadding.y}, cursor + size };
 
-        const uint32_t viewEnd = endFrame + offsetFrame;
-        const uint32_t viewStart = startFrame + offsetFrame;
+        const unsigned viewEnd = endFrame + offsetFrame;
+        const unsigned viewStart = startFrame + offsetFrame;
 
         if(drawFrameLines) {
-            const auto count = (int32_t)((float)((viewEnd + 1) - viewStart) / zoom);
+            const auto count = (int)((float)((viewEnd + 1) - viewStart) / zoom);
 
-            const auto perFrameWidth = GetPerFrameWidth(size.x, valuesWidth, endFrame, startFrame, zoom); 
+            int counter = 0;
+            unsigned primaryFrames = pow(10, counter++);
+            unsigned secondaryFrames = pow(10, counter);
 
-            for(int32_t i = 0; i < count; i++) {
-                const ImVec2 p1 = {barArea.Min.x + (float)i * perFrameWidth, barArea.Max.y};
+            float perFrameWidth = GetPerFrameWidth(size.x, valuesWidth, endFrame, startFrame, zoom);
 
-                const auto tenthFrame = ((viewStart + i) % 10 == 0);
+            if(perFrameWidth <= 0.0f) return;
 
-                const auto lineHeight = tenthFrame ? barArea.GetSize().y : barArea.GetSize().y / 2.0f;
+            while (perFrameWidth < maxPixelsPerTick)
+            {
+                primaryFrames = pow(10, counter++);
+                secondaryFrames = pow(10, counter);
 
-                const ImVec2 p2 = {barArea.Min.x + (float)i * perFrameWidth, barArea.Max.y - lineHeight};
+                perFrameWidth *= (float)primaryFrames;
+            }
+
+            if(primaryFrames == 0 || secondaryFrames == 0) {
+                primaryFrames = 1;
+                secondaryFrames = 10;
+            }
+
+            for(int i = 0; i < count; i++) {
+
+                const auto primaryFrame = ((viewStart + i) % primaryFrames == 0);
+                const auto secondaryFrame = ((viewStart + i) % secondaryFrames == 0);
+
+                if(!primaryFrame && !secondaryFrame) continue;
+
+                const auto lineHeight = secondaryFrame ? barArea.GetSize().y : barArea.GetSize().y / 2.0f;
+
+                const ImVec2 p1 = {barArea.Min.x + (float)i * (perFrameWidth / (float)primaryFrames), barArea.Max.y};
+                const ImVec2 p2 = {barArea.Min.x + (float)i * (perFrameWidth / (float)primaryFrames), barArea.Max.y - lineHeight};
 
                 drawList->AddLine(p1,p2, IM_COL32_WHITE, 1.0f);
 
-                if(drawFrameText && tenthFrame) {
+                if(drawFrameText && secondaryFrame) {
                     char text[10];
-                    const auto printRes = snprintf(text, sizeof(text), "%u", viewStart + i);
+                    const auto printRes = snprintf(text, sizeof(text), "%i", viewStart + i);
                     if(printRes > 0) {
                         drawList->AddText(NULL, 0, {p1.x + 2.0f, barArea.Min.y }, IM_COL32_WHITE,text);
                     }
@@ -101,14 +121,14 @@ namespace ImGui {
         }
     }
 
-    float GetPerFrameWidth(float totalSizeX, float valuesWidth, uint32_t endFrame, uint32_t startFrame, float zoom) {
+    float GetPerFrameWidth(float totalSizeX, float valuesWidth, unsigned endFrame, unsigned startFrame, float zoom) {
         const auto& imStyle = GetStyle();
 
         const auto size = totalSizeX - valuesWidth - imStyle.FramePadding.x;
 
-        const auto count = (endFrame + 1) - startFrame;
+        auto count = (endFrame + 1) - startFrame;
 
-        return (size / (float)count) * zoom;
+        return ((size / (float)count) * zoom);
     }
 
     struct Vec2Pair {
@@ -129,6 +149,8 @@ namespace ImGui {
         const auto pair = getCurrentFrameLine(pointerBB, timelineHeight);
 
         drawList->AddLine(pair.a, pair.b, ColorConvertFloat4ToU32(color), lineWidth);
+
+        drawList->PopClipRect();
 
         { //Top pointer has custom shape, we have to create it
             const auto size = pointerBB.GetSize();

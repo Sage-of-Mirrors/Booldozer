@@ -572,7 +572,7 @@ namespace MDL {
                         break;
 
                     default:
-                        std::cout << "[MDL Loader]: Unimplemented primitive " << fmt::format("{0}", opcode) << std::endl; 
+                        std::cout << "[MDL Loader]: Unimplemented primitive " << std::format("{0}", opcode) << std::endl; 
                         break;
                     }
                 }

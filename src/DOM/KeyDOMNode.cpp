@@ -68,10 +68,10 @@ void LKeyDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
     JmpIO->SetFloat(entry_index, "scale_y", mScale.y);
     JmpIO->SetFloat(entry_index, "scale_z", mScale.x);
 
-    JmpIO->SetSignedInt(entry_index, "OpenDoorNo", mOpenDoorNumber);
+    JmpIO->SetUnsignedInt(entry_index, "OpenDoorNo", mOpenDoorNumber);
 
-    JmpIO->SetSignedInt(entry_index, "appear_flag", mSpawnFlag);
-    JmpIO->SetSignedInt(entry_index, "disappear_flag", mDespawnFlag);
+    JmpIO->SetUnsignedInt(entry_index, "appear_flag", mSpawnFlag);
+    JmpIO->SetUnsignedInt(entry_index, "disappear_flag", mDespawnFlag);
 
     JmpIO->SetUnsignedInt(entry_index, "cond_type", (uint32_t)mCondType);
     JmpIO->SetUnsignedInt(entry_index, "appear_type", (uint32_t)mAppearType);
@@ -129,7 +129,7 @@ void LKeyDOMNode::PostProcess()
 
 		if (containingRoom != nullptr)
 		{
-			std::cout << fmt::format("[KeyDOMNode]: Key going to {0}", containingRoom->GetName()) << std::endl;
+			std::cout << std::format("[KeyDOMNode]: Key going to {0}", containingRoom->GetName()) << std::endl;
 			containingRoom->AddChild(GetSharedPtr<LKeyDOMNode>(EDOMNodeType::Key));
 			mapNodeLocked->RemoveChild(GetSharedPtr<LKeyDOMNode>(EDOMNodeType::Key));
 		}

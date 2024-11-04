@@ -3,7 +3,7 @@
 #include "DOM/CameraAnimationDOMNode.hpp"
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
-#include "fmt/core.h"
+#include <format>
 #include "UIUtil.hpp"
 #include "GenUtil.hpp"
 #include <regex>
@@ -51,7 +51,7 @@ void LEventDataDOMNode::RenderDetailsUI(float dt, TextEditor* event)
         if(ImGui::BeginTabItem("Text")){
             int num = 0;
             for(std::vector<std::string>::iterator str = mEventText.begin(); str != mEventText.end(); str++){
-                ImGui::InputTextMultiline(fmt::format("##msg{}", num++).c_str(), &(*str));
+                ImGui::InputTextMultiline(std::format("##msg{}", num++).c_str(), &(*str));
 
                 ImGui::SameLine();
 

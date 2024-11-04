@@ -104,24 +104,24 @@ void LGeneratorDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
     JmpIO->SetFloat(entry_index, "scale_y", mScale.y);
     JmpIO->SetFloat(entry_index, "scale_z", mScale.x);
 
-    JmpIO->SetSignedInt(entry_index, "room_no", mRoomNumber);
+    JmpIO->SetUnsignedInt(entry_index, "room_no", mRoomNumber);
 
-    JmpIO->SetSignedInt(entry_index, "appear_flag", mSpawnFlag);
-    JmpIO->SetSignedInt(entry_index, "disappear_flag", mDespawnFlag);
+    JmpIO->SetUnsignedInt(entry_index, "appear_flag", mSpawnFlag);
+    JmpIO->SetUnsignedInt(entry_index, "disappear_flag", mDespawnFlag);
 
-    JmpIO->SetSignedInt(entry_index, "appear_time", mActorSpawnRate);
-    JmpIO->SetSignedInt(entry_index, "max_enemy_once", mActorsPerBurst);
-    JmpIO->SetSignedInt(entry_index, "max_enemy", mActorSpawnLimit);
+    JmpIO->SetUnsignedInt(entry_index, "appear_time", mActorSpawnRate);
+    JmpIO->SetUnsignedInt(entry_index, "max_enemy_once", mActorsPerBurst);
+    JmpIO->SetUnsignedInt(entry_index, "max_enemy", mActorSpawnLimit);
 
-    JmpIO->SetSignedInt(entry_index, "arg0", mArg0);
-    JmpIO->SetSignedInt(entry_index, "arg1", mArg1);
-    JmpIO->SetSignedInt(entry_index, "arg2", mArg2);
-    JmpIO->SetSignedInt(entry_index, "arg3", mArg3);
-    JmpIO->SetSignedInt(entry_index, "arg4", mArg4);
-    JmpIO->SetSignedInt(entry_index, "arg5", mArg5);
-    JmpIO->SetSignedInt(entry_index, "arg6", mArg6);
-    JmpIO->SetSignedInt(entry_index, "arg7", mArg7);
-    JmpIO->SetSignedInt(entry_index, "arg8", mArg8);
+    JmpIO->SetUnsignedInt(entry_index, "arg0", mArg0);
+    JmpIO->SetUnsignedInt(entry_index, "arg1", mArg1);
+    JmpIO->SetUnsignedInt(entry_index, "arg2", mArg2);
+    JmpIO->SetUnsignedInt(entry_index, "arg3", mArg3);
+    JmpIO->SetUnsignedInt(entry_index, "arg4", mArg4);
+    JmpIO->SetUnsignedInt(entry_index, "arg5", mArg5);
+    JmpIO->SetUnsignedInt(entry_index, "arg6", mArg6);
+    JmpIO->SetUnsignedInt(entry_index, "arg7", mArg7);
+    JmpIO->SetUnsignedInt(entry_index, "arg8", mArg8);
 
     JmpIO->SetBoolean(entry_index, "stay", mStay);
 }

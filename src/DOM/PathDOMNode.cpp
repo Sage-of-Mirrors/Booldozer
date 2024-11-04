@@ -140,10 +140,10 @@ void LPathDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 	JmpIO->SetString(entry_index, "type", mInterpolationType);
 	JmpIO->SetString(entry_index, "next", mNextPathName);
 
-	JmpIO->SetSignedInt(entry_index, "no", mOrganizationNumber);
-	JmpIO->SetSignedInt(entry_index, "num_pnt", (int32_t)Children.size());
-	JmpIO->SetSignedInt(entry_index, "room_no", mRoomNumber);
-	JmpIO->SetSignedInt(entry_index, "arg0", mArg0);
+	JmpIO->SetUnsignedInt(entry_index, "no", mOrganizationNumber);
+	JmpIO->SetUnsignedInt(entry_index, "num_pnt", (int32_t)Children.size());
+	JmpIO->SetUnsignedInt(entry_index, "room_no", mRoomNumber);
+	JmpIO->SetUnsignedInt(entry_index, "arg0", mArg0);
 
 	JmpIO->SetUnsignedInt(entry_index, "do_type", (uint32_t)mDoType);
 

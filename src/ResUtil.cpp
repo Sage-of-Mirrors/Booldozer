@@ -1,7 +1,7 @@
 #include "ResUtil.hpp"
 #include "Options.hpp"
 #include "imgui.h"
-#include "fmt/core.h"
+#include <format>
 
 LResUtility::LGCResourceManager GCResourceManager;
 std::map<std::string, nlohmann::ordered_json> LResUtility::NameMaps = {};
@@ -33,7 +33,7 @@ nlohmann::ordered_json LResUtility::DeserializeJSON(std::filesystem::path file_p
 
 	if (file_path.empty() || !std::filesystem::exists(file_path))
 	{
-		std::cout << fmt::format("[ResUtil]: Unable to load JSON file from {0}", file_path.string()) << std::endl;
+		std::cout << std::format("[ResUtil]: Unable to load JSON file from {0}", file_path.string()) << std::endl;
 		return j;
 	}
 
@@ -51,7 +51,7 @@ nlohmann::ordered_json LResUtility::GetNameMap(std::string name)
 	if (NameMaps.count(name) != 0)
 		return NameMaps[name];
 
-	std::filesystem::path fullPath = std::filesystem::current_path() / NAMES_BASE_PATH / fmt::format("{0}.json", name);
+	std::filesystem::path fullPath = std::filesystem::current_path() / NAMES_BASE_PATH / std::format("{0}.json", name);
 
 	auto json = DeserializeJSON(fullPath);
 	if (!json.empty())
@@ -62,7 +62,7 @@ nlohmann::ordered_json LResUtility::GetNameMap(std::string name)
 
 nlohmann::ordered_json LResUtility::GetMirrorTemplate(std::string name)
 {
-	std::filesystem::path fullPath = std::filesystem::current_path() / RES_BASE_PATH / fmt::format("{0}.json", name);
+	std::filesystem::path fullPath = std::filesystem::current_path() / RES_BASE_PATH / std::format("{0}.json", name);
 
 	return DeserializeJSON(fullPath);
 }
@@ -74,13 +74,13 @@ uint32_t LResUtility::GetStaticMapDataOffset(std::string mapName, std::string re
 
 	if (deserializedJson.find(mapName) == deserializedJson.end())
 	{
-		std::cout << fmt::format("[ResUtil]: Map {0} not found in static room data at {1}\n", mapName, fullPath.string());
+		std::cout << std::format("[ResUtil]: Map {0} not found in static room data at {1}\n", mapName, fullPath.string());
 		return 0;
 	}
 
 	if (deserializedJson[mapName].find(region) == deserializedJson[mapName].end())
 	{
-		std::cout << fmt::format("[ResUtil]: Map {0} does not have static room data for region {1}\n", mapName, region);
+		std::cout << std::format("[ResUtil]: Map {0} does not have static room data for region {1}\n", mapName, region);
 		return 0;
 	}
 
@@ -110,7 +110,7 @@ std::tuple<std::string, std::string, bool> LResUtility::GetActorModelFromName(st
 
 	if (deserializedJson.find(name) == deserializedJson.end())
 	{
-		std::cout << fmt::format("[ResUtil]: Actor {0} not found in actor data\n", name);
+		std::cout << std::format("[ResUtil]: Actor {0} not found in actor data\n", name);
 		return {name, "", false};
 	}
 
@@ -144,5 +144,5 @@ void LResUtility::SaveUserSettings()
 	if (destFile.is_open())
 		destFile << serialize;
 	else
-		std::cout << fmt::format("[ResUtil]: Error saving user settings to {0}", fullPath.string());
+		std::cout << std::format("[ResUtil]: Error saving user settings to {0}", fullPath.string());
 }

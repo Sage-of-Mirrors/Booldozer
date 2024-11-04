@@ -17,18 +17,18 @@ std::string LDoorDOMNode::GetName()
 {
 	std::string name = "";
 
-	name = fmt::format("{0} [{1}]", name, mJmpId);
+	name = std::format("{0} [{1}]", name, mJmpId);
 
 	switch (mOrientation)
 	{
 	case EDoorOrientation::Front_Facing:
-		name = fmt::format("{0} {1}", name, "↕ ");
+		name = std::format("{0} {1}", name, "↕ ");
 		break;
 	case EDoorOrientation::Side_Facing:
-		name = fmt::format("{0} {1}", name, "↔ ");
+		name = std::format("{0} {1}", name, "↔ ");
 		break;
 	case EDoorOrientation::No_Fade:
-		name = fmt::format("{0} {1}", name, "No Fade ");
+		name = std::format("{0} {1}", name, "No Fade ");
 		break;
 	default:
 		break;
@@ -37,10 +37,10 @@ std::string LDoorDOMNode::GetName()
 	switch (mDoorType)
 	{
 	case EDoorType::Viewport:
-		name = fmt::format("{0} {1}", name, "(VP) ");
+		name = std::format("{0} {1}", name, "(VP) ");
 		break;
 	case EDoorType::Window:
-		name = fmt::format("{0} {1}", name, "(W) ");
+		name = std::format("{0} {1}", name, "(W) ");
 		break;
 	}
 
@@ -48,13 +48,13 @@ std::string LDoorDOMNode::GetName()
 	if (auto mapNodeLocked = mapNode.lock())
 	{
 		if (auto wsRoomLocked = mWestSouthRoom.lock())
-			name = fmt::format("{0} {1}", name, wsRoomLocked->GetName());
+			name = std::format("{0} {1}", name, wsRoomLocked->GetName());
 		else
-			name = fmt::format("{0} {1}", name, "<Invalid Room>");
+			name = std::format("{0} {1}", name, "<Invalid Room>");
 		if (auto enRoomLocked = mEastNorthRoom.lock())
-			name = fmt::format("{0} {1} {2}", name, "/", enRoomLocked->GetName());
+			name = std::format("{0} {1} {2}", name, "/", enRoomLocked->GetName());
 		else
-			name = fmt::format("{0} {1} {2}", name, "/", "<Invalid Room>");
+			name = std::format("{0} {1} {2}", name, "/", "<Invalid Room>");
 	}
 
 	return name;
