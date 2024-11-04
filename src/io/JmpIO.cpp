@@ -2,7 +2,7 @@
 #include "DOM/EntityDOMNode.hpp"
 #include "GenUtil.hpp"
 #include <map>
-#include <fmt/core.h>
+#include <format>
 
 LJmpIO::LJmpIO()
 {
