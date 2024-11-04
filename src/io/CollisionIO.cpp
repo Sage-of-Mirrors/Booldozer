@@ -4,7 +4,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
-#include <fmt/format.h>
+#include <format>
 
 #include "DOM/MapDOMNode.hpp"
 #include "DOM/RoomDOMNode.hpp"

@@ -11,9 +11,6 @@
 [submodule "lib/glm"]
 	path = lib/glm
 	url = git@github.com:g-truc/glm.git
-[submodule "lib/fmt"]
-	path = lib/fmt
-	url = https://github.com/fmtlib/fmt.git
 [submodule "lib/J3DUltra"]
 	path = lib/J3DUltra
 	url = https://github.com/Sage-of-Mirrors/J3DUltra.git
