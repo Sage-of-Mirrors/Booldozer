@@ -3,7 +3,7 @@
 #include "io/BinIO.hpp"
 #include <glad/glad.h>
 #include <glm/gtc/matrix_inverse.hpp>
-#include <fmt/core.h>
+#include <format>
 
 namespace MDL {
     void SceneGraphNode::Read(bStream::CStream* stream){
