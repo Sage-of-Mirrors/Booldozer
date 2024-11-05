@@ -294,7 +294,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 						ActiveRoomArchive = Archive::Rarc::Create();
 						
 						auto rootFolder = Archive::Folder::Create(ActiveRoomArchive);
-						rootFolder->SetName(resPath.filename().stem());
+						rootFolder->SetName(resPath.filename().stem().string());
 
 						ActiveRoomArchive->SetRoot(rootFolder);
 						
