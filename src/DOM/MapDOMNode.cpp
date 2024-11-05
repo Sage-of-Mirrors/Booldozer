@@ -126,6 +126,8 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		
 	}
 
+	std::cout << "[MapDOMNode] Loading rooms.map" << std::endl;
+
 	std::filesystem::path roomsMap = LResUtility::GetStaticMapDataPath(mName);
 	if (!std::filesystem::exists(roomsMap))
 	{
@@ -157,7 +159,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		return false;
 	}
 
-	std::cout << "[MapDOMNode] Loaded rooms.map " << std::endl;
+	std::cout << "[MapDOMNode] Loading roominfo " << std::endl;
 
 	// Attempt to load roominfo data. Doesn't necessarily exist!
 	std::shared_ptr<Archive::File> roomInfoFile = mMapArchive->GetFile("/jmp/roominfo");
