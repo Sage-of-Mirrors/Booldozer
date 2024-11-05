@@ -65,7 +65,7 @@ void LPrmIO::LoadConfigs(std::shared_ptr<LMapDOMNode>& map)
 
     mMap = map;
 
-    if(GCResourceManager.mGameArchive != nullptr){
+    if(GCResourceManager.mLoadedGameArchive){
         std::shared_ptr<Archive::Folder> ctpFolder = GCResourceManager.mGameArchive->GetFolder("/param/ctp");
 
         if(ctpFolder != nullptr){

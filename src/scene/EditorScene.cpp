@@ -46,7 +46,7 @@ void LEditorScene::LoadResFromRoot(){
 	mDoorModels.reserve(14);
 
 	for(int door_id = 0; door_id < 15; door_id++){
-		if(GCResourceManager.mGameArchive == nullptr || GCResourceManager.mLoadedGameArchive == false) continue; // should be done better
+		if(GCResourceManager.mLoadedGameArchive == false) continue; // should be done better
 		std::shared_ptr<Archive::File> doorModelFile = GCResourceManager.mGameArchive->GetFile(std::filesystem::path(std::format("iwamoto/door/door_{:02}.bin", door_id)));
 		if(doorModelFile != nullptr){
 			bStream::CMemoryStream bin_data(doorModelFile->GetData(), doorModelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
@@ -496,7 +496,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 					} else {
 						std::filesystem::path fullModelPath = std::filesystem::path("model") / (std::get<0>(actorRef) + ".arc") / "model" / (std::get<0>(actorRef) + ".mdl");
 						
-						if(GCResourceManager.mGameArchive != nullptr){
+						if(GCResourceManager.mLoadedGameArchive){
 							std::shared_ptr<Archive::File> modelFile = GCResourceManager.mGameArchive->GetFile(fullModelPath);
 							
 							if(modelFile == nullptr){
