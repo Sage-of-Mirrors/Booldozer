@@ -71,13 +71,19 @@ void LOptionsMenu::RenderOptionsPopup(LEditorScene* scene)
 
 /*=== Dolphin Path ===*/
 		// Text input box
+		#ifdef _WIN32
 		LUIUtility::RenderTextInput("Dolphin Path", &mTempOptions.mDolphinPath, 500);
 		ImGui::SameLine(605);
 
 		// Button for file dialog
-		if (ImGui::Button("...##Dolphin"))
+		if (ImGui::Button("...##Dolphin")){
 			ImGuiFileDialog::Instance()->OpenModal("SetDolphinPath", "Choose Dolphin Installation", "Executables (*.exe){.exe}", mTempOptions.mDolphinPath);
-
+		}
+		#else
+		LUIUtility::RenderTextInput("Dolphin Command (ex, dolphin-emu)", &mTempOptions.mDolphinPath, 500);
+		ImGui::SameLine(605);
+		#endif
+		
 		// Render file dialog if open
 		if (LUIUtility::RenderFileDialog("SetDolphinPath", path))
 			mTempOptions.mDolphinPath = path;
