@@ -547,7 +547,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 				bStream::CFileStream bin(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
 				#ifdef _WIN32
 				std::string resPath = curRoomData->GetResourcePath();
-				std::replace(resPath.begin(), resPath.end(), "/", "\\");
+				std::replace(resPath.begin(), resPath.end(), '/', '\\');
 				mRoomModels.insert({ resPath, std::make_shared<BinModel>(&bin)});
 				#else
 				mRoomModels.insert({ curRoomData->GetResourcePath(), std::make_shared<BinModel>(&bin)});
