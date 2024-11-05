@@ -280,11 +280,47 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 				openRoomRes = true;
 				auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
 				std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
-				ActiveRoomArchive = Archive::Rarc::Create();
-				bStream::CFileStream arcFile(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
-				if(!ActiveRoomArchive->Load(&arcFile)){
-					std::cout << "[RoomDOMNode]: Failed to load room archive " << resPath.string() << std::endl;
-					ActiveRoomArchive = nullptr;
+				std::cout << "[RoomDOMNode]: Loading room archive " << resPath.string() << std::endl;
+				if(std::filesystem::exists(resPath)){
+					if(resPath.extension() == ".arc"){
+						ActiveRoomArchive = Archive::Rarc::Create();
+						bStream::CFileStream arcFile(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
+						if(!ActiveRoomArchive->Load(&arcFile)){
+							std::cout << "[RoomDOMNode]: Failed to load room archive " << resPath.string() << std::endl;
+							ActiveRoomArchive = nullptr;
+						}
+					} else {
+						// This is for archive editing so we need to make an archive if its just a model
+						ActiveRoomArchive = Archive::Rarc::Create();
+						
+						auto rootFolder = Archive::Folder::Create(ActiveRoomArchive);
+						rootFolder->SetName(resPath.filename().stem());
+
+						ActiveRoomArchive->SetRoot(rootFolder);
+						
+						auto roomModel = Archive::File::Create();
+						roomModel->SetName("room.bin");
+
+						bStream::CFileStream modelFile(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
+						std::size_t modelFileSize = modelFile.getSize();
+
+						uint8_t* modelData = new uint8_t[modelFileSize];
+
+						modelFile.readBytesTo(modelData, modelFileSize);
+						roomModel->SetData(modelData, modelFileSize);
+						
+						ActiveRoomArchive->GetRoot()->AddFile(roomModel);
+
+						delete[] modelData;
+
+						std::filesystem::path path(data->GetResourcePath());
+						
+						path.replace_extension(".arc");
+
+						data->SetRoomResourcePath(path.string());
+					
+						ActiveRoomArchive->SaveToFile(resPath);
+					}
 				}
 			}
 

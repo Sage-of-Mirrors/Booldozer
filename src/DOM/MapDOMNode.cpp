@@ -386,7 +386,6 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 		JmpIOManagers[entityType].Save(entitiesOfType, memWriter);
 
 		std::shared_ptr<Archive::File> jmpFile = mMapArchive->GetFile(std::filesystem::path("jmp") / LEntityFileNames[entityType]);
-		std::cout << std::format("Saving jmp file {}", jmpFile->GetName()) << std::endl;
 		
 		if(jmpFile == nullptr){
 			jmpFile = Archive::File::Create(); // [v]: if this jmp file doesnt exist, make it
@@ -401,6 +400,7 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 			}
 		}
 		
+		std::cout << std::format("Saving jmp file {}", jmpFile->GetName()) << std::endl;
 		jmpFile->SetData(memWriter.getBuffer(), newFileSize);
 	}
 
