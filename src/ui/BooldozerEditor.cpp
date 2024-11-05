@@ -437,6 +437,7 @@ void LBooldozerEditor::OpenMap(std::string file_path)
 {
 
 	mLoadedMap = std::make_shared<LMapDOMNode>();
+	std::cout << "[MapDOMNode] Starting Load Map" << std::endl;
 	mLoadedMap->LoadMap(std::filesystem::path(file_path));
 
 	mGhostConfigs.LoadConfigs(mLoadedMap);

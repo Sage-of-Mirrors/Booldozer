@@ -75,6 +75,8 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	{
 		std::cout << std::format("[MapDOMNode]: File \"{}\" does not exist", file_path.string().c_str()) << std::endl;
 		return false;
+	} else {
+		std::cout << "[MapDOMNode] Archive " << file_path << std::endl; 
 	}
 
 	bStream::CFileStream mMapArchiveStream(file_path.string(), bStream::Endianess::Big, bStream::OpenMode::In);
@@ -85,9 +87,12 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		return false;
 	}
 
+	std::cout << "[MapDOMNode] Archive Loaded, Processing Map" << std::endl;
+
 	// We'll call ourselves whatever the root directory of the archive is
 	mName = file_path.stem().string();
 
+	std::cout << "[MapDOMNode] Loading Event Archives" << std::endl;
 	std::filesystem::path eventPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Event";
 	if(std::filesystem::exists(eventPath))
 	{
@@ -98,6 +103,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 			//Exclude cvs subdir
 			if(archive.is_regular_file()){
+				std::cout << "[MapDOMNode] Loading Event " << archive.path().string() << std::endl; 
 				bStream::CFileStream eventStream(archive.path().string(), bStream::Endianess::Big, bStream::OpenMode::In);
 				if(!eventArc->Load(&eventStream)) continue;
 
@@ -151,6 +157,8 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		return false;
 	}
 
+	std::cout << "[MapDOMNode] Loaded rooms.map " << std::endl;
+
 	// Attempt to load roominfo data. Doesn't necessarily exist!
 	std::shared_ptr<Archive::File> roomInfoFile = mMapArchive->GetFile("/jmp/roominfo");
 
@@ -159,8 +167,13 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		// Prep the roominfo data to be read from
 		bStream::CMemoryStream roomMemStream(roomInfoFile->GetData(), roomInfoFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 		JmpIOManagers[LEntityType_Rooms].Load(&roomMemStream);
+	} else  {
+		std::cout << "[MapDOMNode] Couldn't Load roominfo" << std::endl;
+		return false;
 	}
 
+	std::cout << "[MapDOMNode] Loading Room Names" << std::endl;
+	
 	// Grab the friendly room names for this map
 	nlohmann::json roomNames = LResUtility::GetNameMap(std::format("{0}_rooms", mName));
 
@@ -185,11 +198,14 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 	auto rooms = GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
 
+	std::cout << "[MapDOMNode] Processing Static Room Data" << std::endl;
+	
 	// Complete loading the basic map data
 	LoadStaticData(rooms);
 
-	// Load Collision
 
+	// Load Collision
+	std::cout << "[MapDOMNode] Loading Map Collision" << std::endl;
 	std::shared_ptr<LMapCollisionDOMNode> collision = std::make_shared<LMapCollisionDOMNode>("Collision");
 
 	std::shared_ptr<Archive::File> collisionFile = mMapArchive->GetFile("col.mp");
@@ -201,6 +217,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		AddChild(collision);
 	}
 
+	std::cout << "[MapDOMNode] Loading JMP Files" << std::endl;
 
 	// Now load the entity data from the map's archive.
 	for (int32_t entityType = 0; entityType < LEntityType_Max; entityType++)
@@ -232,6 +249,8 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 			continue;
 		}
 	}
+
+	std::cout << "[MapDOMNode] Loading Map Mirrors" << std::endl;
 
 	// Get the path the mirrors file should be at.
 	std::filesystem::path mirrorsPath = LResUtility::GetMirrorDataPath(mName);
@@ -268,6 +287,8 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		}
 	}
 
+	std::cout << "[MapDOMNode] Post Processing JMP Nodes" << std::endl;
+
 	// Shore up things like entity references now that all of the entity data has been loaded
 	for (auto loadedNode : GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Entity))
 		loadedNode->PostProcess();
@@ -289,6 +310,8 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	// where they'll also set up things like models for furniture
 	for (std::shared_ptr<LRoomDOMNode> r : rooms)
 		r->CompleteLoad();
+
+	std::cout << "[MapDOMNode] Loading Complete" << std::endl;
 
 	return true;
 }
