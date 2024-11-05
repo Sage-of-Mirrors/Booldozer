@@ -98,11 +98,9 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	{
 		for (auto& archive : std::filesystem::directory_iterator(eventPath))
 		{
-
-			std::shared_ptr<Archive::Rarc> eventArc = Archive::Rarc::Create();
-
 			//Exclude cvs subdir
 			if(archive.is_regular_file()){
+				std::shared_ptr<Archive::Rarc> eventArc = Archive::Rarc::Create();
 				std::cout << "[MapDOMNode] Loading Event " << archive.path().string() << std::endl; 
 				bStream::CFileStream eventStream(archive.path().string(), bStream::Endianess::Big, bStream::OpenMode::In);
 				if(!eventArc->Load(&eventStream)) continue;
