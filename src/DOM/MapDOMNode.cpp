@@ -96,20 +96,24 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	std::filesystem::path eventPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Event";
 	if(std::filesystem::exists(eventPath))
 	{
-		for (auto& archive : std::filesystem::directory_iterator(eventPath))
+		for (const auto&  archive : std::filesystem::directory_iterator(eventPath.string()))
 		{
+			std::cout << "[MapDOMNode] Loading Event " << archive.path().string() << std::endl; 
+			
 			//Exclude cvs subdir
 			if(archive.is_regular_file()){
 				std::shared_ptr<Archive::Rarc> eventArc = Archive::Rarc::Create();
-				std::cout << "[MapDOMNode] Loading Event " << archive.path().string() << std::endl; 
+				
 				bStream::CFileStream eventStream(archive.path().string(), bStream::Endianess::Big, bStream::OpenMode::In);
-				if(!eventArc->Load(&eventStream)) continue;
+				if(!eventArc->Load(&eventStream)){
+					continue;
+				}
 
 				//Name of the event file were loading, ex 'event48'
 				std::string eventName = archive.path().stem().string();
 				std::string csvName = eventName;
 
-				char* eventNm;
+				char* eventNm[5];
 				int eventNo = 0;
 				
 				std::sscanf(eventName.c_str(), "%5s%3d", &eventNm, &eventNo);
