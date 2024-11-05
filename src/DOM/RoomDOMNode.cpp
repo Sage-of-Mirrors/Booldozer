@@ -319,7 +319,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 
 						data->SetRoomResourcePath(path.string());
 					
-						ActiveRoomArchive->SaveToFile(resPath);
+						ActiveRoomArchive->SaveToFile(resPath.string());
 					}
 				}
 			}
