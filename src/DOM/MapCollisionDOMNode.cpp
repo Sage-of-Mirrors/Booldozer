@@ -172,7 +172,7 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 		isImportingCol = true;
 		importLock.unlock();
 
-		importModelThread = std::thread(&LMapCollisionDOMNode::ImportObj, this, path);
+		importModelThread = std::thread(&LMapCollisionDOMNode::ImportObj, std::ref(*this), path);
 		
 		ImGui::OpenPopup("Importing Obj");
 

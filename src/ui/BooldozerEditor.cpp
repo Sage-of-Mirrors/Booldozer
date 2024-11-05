@@ -301,7 +301,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		mapLoading = true;
 		loadLock.unlock();
 
-		mapOperationThread = std::thread(&LBooldozerEditor::LoadMap, this, path, renderer_scene);
+		mapOperationThread = std::thread(&LBooldozerEditor::LoadMap, std::ref(*this), path, renderer_scene);
 		ImGui::OpenPopup("Loading Map");
 	}
 
@@ -313,7 +313,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		mapLoading = true;
 		loadLock.unlock();
 
-		mapOperationThread = std::thread(&LBooldozerEditor::AppendMap, this, path);
+		mapOperationThread = std::thread(&LBooldozerEditor::AppendMap, std::ref(*this), path);
 		ImGui::OpenPopup("Loading Map");
 	}
 
@@ -323,7 +323,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		mapLoading = true;
 		loadLock.unlock();
 
-		mapOperationThread = std::thread(&LBooldozerEditor::SaveMap, this, path);
+		mapOperationThread = std::thread(&LBooldozerEditor::SaveMap, std::ref(*this), path);
 		ImGui::OpenPopup("Saving Map");
 	}
 

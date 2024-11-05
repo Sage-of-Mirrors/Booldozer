@@ -19,6 +19,7 @@ void LResUtility::LGCResourceManager::Init()
 			std::cout << "[ResUtil]: Unable to load Game Archive " << gameArcPath.string() << std::endl;
 			mLoadedGameArchive = false;
 		} else {
+			std::cout << "[ResUtil] Loaded Game Archive" << std::endl;
 			mLoadedGameArchive = true;
 		}
 	} else {
