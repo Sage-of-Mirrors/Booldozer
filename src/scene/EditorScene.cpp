@@ -545,7 +545,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 			} else {
 				//If this is happening the map only has room models, no furniture.
 				bStream::CFileStream bin(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
-				mRoomModels.insert({curRoomData->GetResourcePath(), std::make_shared<BinModel>(&bin)});
+				mRoomModels.insert({ std::filesystem::path(curRoomData->GetResourcePath()).make_preferred(), std::make_shared<BinModel>(&bin)});
 			}
 		}
 
