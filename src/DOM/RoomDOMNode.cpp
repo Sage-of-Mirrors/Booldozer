@@ -786,18 +786,20 @@ void LRoomDOMNode::PostProcess(){
 	std::cout << "[RoomDOMNode]: Post Processing Room" << std::endl;
 	auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
 	std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
-	auto arc = Archive::Rarc::Create();
-	bStream::CFileStream arcFile(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
-	if(arc->Load(&arcFile)){
-		for(auto file : arc->GetRoot()->GetFiles()){
-			std::string filename = std::filesystem::path(file->GetName()).filename().stem().string();
-			std::cout << "[RoomDOMNode]: Loading room model " << filename << std::endl;
-			if(std::filesystem::path(file->GetName()).extension() == ".bin"){
-				mRoomModels.push_back(filename);
+	if(resPath.extension() == ".arc"){
+		auto arc = Archive::Rarc::Create();
+		bStream::CFileStream arcFile(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
+		if(arc->Load(&arcFile)){
+			for(auto file : arc->GetRoot()->GetFiles()){
+				std::string filename = std::filesystem::path(file->GetName()).filename().stem().string();
+				std::cout << "[RoomDOMNode]: Loading room model " << filename << std::endl;
+				if(std::filesystem::path(file->GetName()).extension() == ".bin"){
+					mRoomModels.push_back(filename);
+				}
 			}
+		} else {
+			std::cout << "[RoomDOMNode]: Couldn't load archive " << resPath.string() << std::endl;
 		}
-	} else {
-		std::cout << "[RoomDOMNode]: Couldn't load archive " << resPath.string() << std::endl;
 	}
 }
 
