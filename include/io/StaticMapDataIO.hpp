@@ -136,6 +136,7 @@ class LStaticMapDataIO
 
 public:
 	LStaticMapDataIO();
+	~LStaticMapDataIO(){ if(mData) { delete[] mData; }}
 
 	size_t GetRoomCount() { return mRoomCount; }
 	size_t GetDoorCount() { return mDoorCount; }
