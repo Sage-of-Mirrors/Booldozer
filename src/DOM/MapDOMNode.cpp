@@ -365,6 +365,9 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 
 	for (int32_t entityType = 0; entityType < LEntityType_Max; entityType++)
 	{
+		// skip polygoninfo and soundpolygoninfo, they should only be edited by changes to collision
+		if(static_cast<LEntityType>(entityType) == LEntityType_Polygons || static_cast<LEntityType>(entityType) == LEntityType_SoundPolygons) continue;
+
 		std::vector<std::shared_ptr<LEntityDOMNode>> entitiesOfType;
 		
 		if (entityType == LEntityType_Characters || entityType == LEntityType_Enemies || entityType == LEntityType_Observers || entityType == LEntityType_Keys){
