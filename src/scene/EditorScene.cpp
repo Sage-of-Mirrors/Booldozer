@@ -58,24 +58,30 @@ void LEditorScene::LoadResFromRoot(){
 	
 	J3DModelLoader Loader;
 
-	/*if((std::filesystem::exists(std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp"))){
+	if((std::filesystem::exists(std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp"))){
 
 		std::shared_ptr<Archive::Rarc> skyboxArchive = Archive::Rarc::Create();
 
-		bStream::CFileStream skyboxArchiveFile((std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp").string());
+		bStream::CFileStream skyboxArchiveFile((std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp").string(), bStream::Endianess::Big, bStream::OpenMode::In);
 
 		if(!skyboxArchive->Load(&skyboxArchiveFile)){
+			std::cout << "[EditorScene] Failed to load SkyBox Archive" << std::endl;
 			return;
 		}
 		
 		std::shared_ptr<Archive::File> skyboxModelFile = skyboxArchive->GetFile("vrball01.bmd");
 		
 		if(skyboxModelFile != nullptr){
+			std::cout << "[EditorScene] Loaded SkyBox Model" << std::endl;
 			bStream::CMemoryStream modelData(skyboxModelFile->GetData(), skyboxModelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 			mSkyboxModel = Loader.Load(&modelData, 0);
 			mSkyBox = mSkyboxModel->CreateInstance();
+		} else {
+			std::cout << "[EditorScene] Failed to load SkyBox Model" << std::endl;
 		}
-	}*/
+	} else {
+		std::cout << "[EditorScene] Couldn't find Skybox archive " << (std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp").string() << std::endl;
+	}
 }
 
 void LEditorScene::Init(){
@@ -262,8 +268,6 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 	glm::mat4 proj = Camera.GetProjectionMatrix();
 
 	J3DUniformBufferObject::SetProjAndViewMatrices(proj, view);
-
-	// This causes the UBO to be doubole submitted, needs to be fixed. Perhaps BMD Rendering first?
 	J3DUniformBufferObject::SubmitUBO();
 
 	std::vector<std::shared_ptr<J3DModelInstance>> renderables;
@@ -277,18 +281,18 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 			if(roomLocked->GetSkyboxEnabled() && mSkyBox != nullptr){
 				mSkyBox->SetTranslation(roomLocked->GetPosition());
 				mSkyBox->SetRotation({0,0,0});
-				mSkyBox->SetScale({15,15,15});
+				mSkyBox->SetScale({20,20,20});
 				renderables.push_back(mSkyBox);
 				break;
 			}
 		}
 	}
 
-	glFrontFace(GL_CW);
+	glDisable(GL_CULL_FACE);
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
-
+	
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -404,9 +408,9 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 	mPointManager.Draw(&Camera);
 	mPathRenderer.Draw(&Camera);
 
-	auto packets = J3D::Rendering::SortPackets(renderables, Camera.GetCenter());
 
-	J3D::Rendering::Render(0, view, proj, packets);
+	auto packets = J3D::Rendering::SortPackets(renderables, Camera.GetCenter());
+	J3D::Rendering::Render(1, view, proj, packets);
 }
 
 bool LEditorScene::HasRoomLoaded(int32_t roomNumber){
