@@ -1,9 +1,88 @@
 
 #include "DOM/CameraAnimationDOMNode.hpp"
 #include "imgui.h"
+#include <glad/glad.h>
 #include "misc/cpp/imgui_stdlib.h"
 #include "imgui_neo_internal.h"
 #include "imgui_neo_sequencer.h"
+
+static bool mAnimPlayerReady { false };
+static uint32_t mPreviewFbo { 0 }, mPreviewRbo { 0 }, mPreviewTex { 0 };
+
+static glm::vec3 mEye, mCenter;
+static float mFovY { 90.0f }; 
+
+namespace CameraAnimation {
+    void InitPreview(){
+		glGenFramebuffers(1, &mPreviewFbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, mPreviewFbo);
+
+		glGenRenderbuffers(1, &mPreviewRbo);
+		glBindRenderbuffer(GL_RENDERBUFFER, mPreviewRbo);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 640, 480);
+
+		glGenTextures(1, &mPreviewTex);
+
+		glBindTexture(GL_TEXTURE_2D, mPreviewTex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 640, 480, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mPreviewTex, 0);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mPreviewRbo);
+
+		assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+        std::cout << mPreviewTex << std::endl;
+
+    }
+
+    void CleanupPreview(){
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+        glDeleteFramebuffers(1, &mPreviewFbo);
+        glDeleteRenderbuffers(1, &mPreviewRbo);
+        glDeleteTextures(1, &mPreviewTex);
+    }
+
+    void RenderPreview(){
+        glBindFramebuffer(GL_FRAMEBUFFER, mPreviewFbo);
+        glBindRenderbuffer(GL_RENDERBUFFER, mPreviewRbo);
+
+        glViewport(0, 0, 640, 480);
+        glClearColor(0.100f, 0.261f, 0.402f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        auto scene = LEditorScene::GetEditorScene();
+        auto eye = scene->Camera.GetEye();
+        auto center = scene->Camera.GetCenter();
+        auto fov = scene->Camera.Fovy;
+        auto mode = scene->Camera.mCamMode;
+        scene->Camera.mCamMode = ECamMode::ANIMATION;
+
+        scene->Camera.SetEye(mEye);
+        scene->Camera.SetCenter(mCenter);
+        scene->Camera.Fovy = mFovY;
+
+        scene->RenderSubmit(640, 480);
+
+        scene->Camera.mCamMode = mode;
+        scene->Camera.SetEye(eye);
+        scene->Camera.SetCenter(center);
+        scene->Camera.Fovy = fov;
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    }
+    
+}
 
 LCameraAnimationDOMNode::LCameraAnimationDOMNode(std::string name) : Super(name)
 {
@@ -12,13 +91,13 @@ LCameraAnimationDOMNode::LCameraAnimationDOMNode(std::string name) : Super(name)
 
 void LCameraAnimationDOMNode::RenderDetailsUI(float dt, LSceneCamera* camera)
 {
+    
+    ImGui::Image(static_cast<uintptr_t>(mPreviewTex), ImVec2(640, 480), {0.0f, 1.0f}, {1.0f, 0.0f});
+
     if(ImGui::Button(">"))
     {
         mPlaying = true;
-        camera->mCamMode = ECamMode::ANIMATION;
 
-        camera->SetEye(glm::vec3(mPosFramesX.mFrames[mPosFramesX.mKeys[0]].value, mPosFramesY.mFrames[mPosFramesY.mKeys[0]].value, mPosFramesZ.mFrames[mPosFramesZ.mKeys[0]].value));
-        camera->SetCenter(glm::vec3(mTargetFramesX.mFrames[mTargetFramesX.mKeys[0]].value, mTargetFramesY.mFrames[mTargetFramesY.mKeys[0]].value, mTargetFramesZ.mFrames[mTargetFramesZ.mKeys[0]].value));
         mCurrentFrame = 0;
 
         //camera->Fovy = glm::radians(mFovFrames.mFrames[mFovFrames.mKeys[0]].value);
@@ -38,16 +117,10 @@ void LCameraAnimationDOMNode::RenderDetailsUI(float dt, LSceneCamera* camera)
 
     if(ImGui::Button("||")){
         mPlaying = false;
-        camera->mCamMode = ECamMode::FLY;
     }
 
     if(mPlaying)
     {
-        if(camera->mCamMode != ECamMode::ANIMATION)
-        {
-            camera->mCamMode = ECamMode::ANIMATION;
-        }
-
 
         if(mCurrentFrame++ > mFrameCount)
         {
@@ -119,13 +192,13 @@ void LCameraAnimationDOMNode::RenderDetailsUI(float dt, LSceneCamera* camera)
             }
 
             if(mNextFovKey < mFovFrames.mKeys.size()){
-                camera->Fovy = glm::radians(glm::mix(mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey - 1]].value, mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey]].value, (mCurrentFrame - mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey - 1]].frame) / (mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey]].frame - mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey - 1]].frame)));
+                mFovY = glm::radians(glm::mix(mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey - 1]].value, mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey]].value, (mCurrentFrame - mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey - 1]].frame) / (mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey]].frame - mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey - 1]].frame)));
             }
 
             //std::cout << eyePos.x << "," << eyePos.y << "," << eyePos.z << " | " << targetPos.x << "," << targetPos.y << "," << targetPos.z << std::endl;
 
-            camera->SetCenter(targetPos);
-            camera->SetEye(eyePos);
+            mEye = eyePos;
+            mCenter = targetPos;
         }
 
     }

@@ -3,6 +3,13 @@
 #include "io/KeyframeIO.hpp"
 #include "BGRenderDOMNode.hpp"
 #include "scene/Camera.hpp"
+#include "scene/EditorScene.hpp"
+
+namespace CameraAnimation {
+    void CleanupPreview();
+    void RenderPreview();
+    void InitPreview();
+}
 
 class LCameraAnimationDOMNode : public LBGRenderDOMNode 
 {

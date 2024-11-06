@@ -24,6 +24,8 @@
 
 #include <cstdlib>
 
+#include "DOM/CameraAnimationDOMNode.hpp"
+
 namespace {
 	char* patchErrorMsg { nullptr };
 	std::thread mapOperationThread {};
@@ -47,6 +49,8 @@ LBooldozerEditor::~LBooldozerEditor(){
 	glDeleteRenderbuffers(1, &mRbo);
 	glDeleteTextures(1, &mViewTex);
 	glDeleteTextures(1, &mPickTex);
+
+	CameraAnimation::CleanupPreview();
 }
 
 void LBooldozerEditor::LoadMap(std::string path, LEditorScene* scene){
@@ -107,6 +111,8 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+		CameraAnimation::InitPreview();
 
 		ImGui::DockBuilderRemoveNode(mMainDockSpaceID); // clear any previous layout
 		ImGui::DockBuilderAddNode(mMainDockSpaceID, dockFlags | ImGuiDockNodeFlags_DockSpace);
@@ -335,6 +341,8 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 	mGhostConfigs.RenderUI();
 	
+	CameraAnimation::RenderPreview();
+
 	ImGuiWindowClass mainWindowOverride;
 	mainWindowOverride.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
 	ImGui::SetNextWindowClass(&mainWindowOverride);
@@ -345,6 +353,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 
 	glBindFramebuffer(GL_FRAMEBUFFER, mFbo);
+	glBindRenderbuffer(GL_RENDERBUFFER, mRbo);
 
 	if(winSize.x != mPrevWinWidth || winSize.y != mPrevWinHeight){
 		glDeleteTextures(1, &mViewTex);

@@ -99,6 +99,15 @@ void LEventDataDOMNode::LoadEventArchive(std::shared_ptr<Archive::Rarc> arc, std
         mEventScript = LGenUtility::SjisToUtf8(std::string((char*)txtFile->GetData(), txtFile->GetSize()));
     }
 
+    for(auto file : arc->GetRoot()->GetFiles()){
+        if(std::filesystem::path(file->GetName()).extension().string() == ".cmn"){
+            auto cameraAnimNode = std::make_shared<LCameraAnimationDOMNode>(std::filesystem::path(file->GetName()).stem().string());
+            bStream::CMemoryStream camstream(file->GetData(), file->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+            cameraAnimNode->Load(&camstream);
+            AddChild(cameraAnimNode);
+        }
+    }
+
 }
 
 void LEventDataDOMNode::SaveEventArchive(){

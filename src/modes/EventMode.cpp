@@ -75,7 +75,7 @@ void LEventMode::RenderDetailsWindow(LSceneCamera* camera)
 
 			ImGui::End();
 		} else {
-			ImGui::Begin("bottomPanel");
+			ImGui::Begin("toolWindow");
 			ImGui::Text("Camera Animation");
 			ImGui::Separator();
 			std::static_pointer_cast<LCameraAnimationDOMNode>(mSelectionManager.GetPrimarySelection())->RenderDetailsUI(0, camera);
