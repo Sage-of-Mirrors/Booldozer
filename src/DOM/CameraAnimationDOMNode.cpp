@@ -68,7 +68,9 @@ namespace CameraAnimation {
         scene->Camera.SetCenter(mCenter);
         scene->Camera.Fovy = mFovY;
 
+        scene->Camera.UnRotate();
         scene->RenderSubmit(640, 480);
+        scene->Camera.ReRotate();
 
         scene->Camera.mCamMode = mode;
         scene->Camera.SetEye(eye);

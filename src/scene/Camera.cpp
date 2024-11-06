@@ -82,6 +82,21 @@ void LSceneCamera::Update(GLFWwindow* window, float dt)
 		mCenter = mEye - mForward;
 }
 
+void LSceneCamera::UnRotate(){
+	mOldForward = mForward;
+	mOldRight = mRight;
+	mOldUp = mUp;
+	mForward = glm::normalize(mEye - mCenter);
+	mRight = glm::normalize(glm::cross(mForward, UNIT_Y));
+	mUp = glm::normalize(glm::cross(mRight, mForward));
+}
+
+void LSceneCamera::ReRotate(){
+	mForward = mOldForward;
+	mRight = mOldRight;
+	mUp = mOldUp;
+}
+
 void LSceneCamera::Rotate(float deltaTime, glm::vec2 mouseDelta)
 {
 	if (mouseDelta.x == 0.f && mouseDelta.y == 0.f)

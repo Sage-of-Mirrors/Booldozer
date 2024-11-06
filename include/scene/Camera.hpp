@@ -32,6 +32,10 @@ class LSceneCamera
 	glm::vec3 mRight;
 	glm::vec3 mUp;
 
+	glm::vec3 mOldForward;
+	glm::vec3 mOldRight;
+	glm::vec3 mOldUp;
+
 /*=== Movement ===*/
 	bool mAllowUpdates;
 	float mMoveSpeed;
@@ -40,6 +44,10 @@ class LSceneCamera
 	void Rotate(float deltaTime, glm::vec2 mouseDelta);
 
 public:
+
+	void UnRotate();
+	void ReRotate();
+
 	float NearPlane;
 	float FarPlane;
 	float Fovy;
