@@ -878,9 +878,9 @@ void LRoomDOMNode::PreProcess(){
 		{
 			bStream::CFileStream binWriteStream(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::Out);
 			binWriteStream.seek(offset);
-			binWriteStream.writeFloat(mRoomModelDelta.z + z);
+			binWriteStream.writeFloat(mRoomModelDelta.z + x);
 			binWriteStream.writeFloat(mRoomModelDelta.y + y);
-			binWriteStream.writeFloat(mRoomModelDelta.x + x);
+			binWriteStream.writeFloat(mRoomModelDelta.x + z);
 		}
 
 	} else if(resPath.extension() == ".arc"){
@@ -916,9 +916,9 @@ void LRoomDOMNode::PreProcess(){
 			{
 				bStream::CMemoryStream stream(roomBin->GetData(), roomBin->GetSize(), bStream::Endianess::Big, bStream::OpenMode::Out);
 				stream.seek(offsets[12] + 0x24);
-				stream.writeFloat(mRoomModelDelta.x + x);
+				stream.writeFloat(mRoomModelDelta.z + x);
 				stream.writeFloat(mRoomModelDelta.y + y);
-				stream.writeFloat(mRoomModelDelta.z + z);
+				stream.writeFloat(mRoomModelDelta.x + z);
 			}
 		}
 
