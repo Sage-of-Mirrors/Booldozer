@@ -11,8 +11,22 @@ static uint32_t mPreviewFbo { 0 }, mPreviewRbo { 0 }, mPreviewTex { 0 };
 
 static glm::vec3 mEye, mCenter;
 static float mFovY { 90.0f }; 
+static bool Active { false };
 
 namespace CameraAnimation {
+    void SetPreviewActive(){
+        Active = true;
+    }
+
+    void SetPreviewInactive(){
+        Active = false;
+    }
+
+    bool GetPreviewActive(){
+        return Active;
+    }
+
+
     void InitPreview(){
 		glGenFramebuffers(1, &mPreviewFbo);
 		glBindFramebuffer(GL_FRAMEBUFFER, mPreviewFbo);
@@ -50,35 +64,37 @@ namespace CameraAnimation {
     }
 
     void RenderPreview(){
-        glBindFramebuffer(GL_FRAMEBUFFER, mPreviewFbo);
-        glBindRenderbuffer(GL_RENDERBUFFER, mPreviewRbo);
+        if(Active){
+            glBindFramebuffer(GL_FRAMEBUFFER, mPreviewFbo);
+            glBindRenderbuffer(GL_RENDERBUFFER, mPreviewRbo);
 
-        glViewport(0, 0, 640, 480);
-        glClearColor(0.100f, 0.261f, 0.402f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glViewport(0, 0, 640, 480);
+            glClearColor(0.100f, 0.261f, 0.402f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        auto scene = LEditorScene::GetEditorScene();
-        auto eye = scene->Camera.GetEye();
-        auto center = scene->Camera.GetCenter();
-        auto fov = scene->Camera.Fovy;
-        auto mode = scene->Camera.mCamMode;
-        scene->Camera.mCamMode = ECamMode::ANIMATION;
+            auto scene = LEditorScene::GetEditorScene();
+            auto eye = scene->Camera.GetEye();
+            auto center = scene->Camera.GetCenter();
+            auto fov = scene->Camera.Fovy;
+            auto mode = scene->Camera.mCamMode;
+            scene->Camera.mCamMode = ECamMode::ANIMATION;
 
-        scene->Camera.SetEye(mEye);
-        scene->Camera.SetCenter(mCenter);
-        scene->Camera.Fovy = mFovY;
+            scene->Camera.SetEye(mEye);
+            scene->Camera.SetCenter(mCenter);
+            scene->Camera.Fovy = mFovY;
 
-        scene->Camera.UnRotate();
-        scene->RenderSubmit(640, 480);
-        scene->Camera.ReRotate();
+            scene->Camera.UnRotate();
+            scene->RenderSubmit(640, 480);
+            scene->Camera.ReRotate();
 
-        scene->Camera.mCamMode = mode;
-        scene->Camera.SetEye(eye);
-        scene->Camera.SetCenter(center);
-        scene->Camera.Fovy = fov;
+            scene->Camera.mCamMode = mode;
+            scene->Camera.SetEye(eye);
+            scene->Camera.SetCenter(center);
+            scene->Camera.Fovy = fov;
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        }
     }
     
 }
@@ -90,7 +106,6 @@ LCameraAnimationDOMNode::LCameraAnimationDOMNode(std::string name) : Super(name)
 
 void LCameraAnimationDOMNode::RenderDetailsUI(float dt, LSceneCamera* camera)
 {
-    
     ImGui::Image(static_cast<uintptr_t>(mPreviewTex), ImVec2(640, 480), {0.0f, 1.0f}, {1.0f, 0.0f});
 
     if(ImGui::Button(">"))

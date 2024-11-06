@@ -107,11 +107,12 @@ void LEventMode::RenderGizmo(LEditorScene* renderer_scene){
 
 void LEventMode::OnBecomeActive()
 {
+	CameraAnimation::SetPreviewActive();
 	std::cout << "[Booldozer]: Event mode switching in" << std::endl;
-	
 }
 
 void LEventMode::OnBecomeInactive()
 {
+	CameraAnimation::SetPreviewInactive();
 	std::cout << "[Booldozer]: Event mode switching out" << std::endl;
 }

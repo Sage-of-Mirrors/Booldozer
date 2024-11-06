@@ -9,6 +9,9 @@ namespace CameraAnimation {
     void CleanupPreview();
     void RenderPreview();
     void InitPreview();
+    void SetPreviewActive();
+    void SetPreviewInactive();
+    bool GetPreviewActive();
 }
 
 class LCameraAnimationDOMNode : public LBGRenderDOMNode 
