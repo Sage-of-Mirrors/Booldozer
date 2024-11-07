@@ -23,6 +23,9 @@ private:
     
 	//Lines of text from event's csv file
 	std::vector<std::string> mEventText;
+
+	uint32_t mEventNo;
+
 public:
 	typedef LBGRenderDOMNode Super;
 
@@ -36,6 +39,8 @@ public:
 
     void RenderDetailsUI(float dt, TextEditor* event);
 	void RenderHierarchyUI(std::shared_ptr<LEventDataDOMNode> self, LEditorSelection* mode_selection);
+
+	uint32_t GetEventNo() { return mEventNo; }
 
 /*=== Type operations ===*/
 	// Returns whether this node is of the given type, or derives from a node of that type.

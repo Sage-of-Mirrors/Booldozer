@@ -64,6 +64,8 @@ public:
 	virtual void PostProcess() override;
 	virtual void PreProcess() override;
 
+	uint32_t GetEventNo(){ return mEventNo; }
+
 /*=== Type operations ===*/
 	// Returns whether this node is of the given type, or derives from a node of that type.
 	virtual bool IsNodeType(EDOMNodeType type) const override

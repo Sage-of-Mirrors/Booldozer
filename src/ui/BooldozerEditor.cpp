@@ -420,8 +420,20 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		glReadPixels(mousePos.x - cursorPos.x, ((uint32_t)winSize.y) - (mousePos.y - cursorPos.y), 1, 1, GL_RED_INTEGER, GL_INT, (void*)&id);
 
 		for(auto node : mLoadedMap->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)){
-			if(node->GetID() == id){
-				GetSelectionManager()->AddToSelection(node);
+			if(mCurrentMode == &mEventMode){
+				if(node->GetID() == id && node->GetNodeType() == EDOMNodeType::Event){
+					auto eventDataNodes = mLoadedMap->GetChildrenOfType<LEventDataDOMNode>(EDOMNodeType::EventData);
+					for (auto datanode : eventDataNodes){
+						if(datanode->GetEventNo() == std::static_pointer_cast<LEventDOMNode>(node)->GetEventNo()){
+							GetSelectionManager()->AddToSelection(datanode);
+							break;
+						}
+					}
+				}
+			} else {
+				if(node->GetID() == id){
+					GetSelectionManager()->AddToSelection(node);
+				}
 			}
 		}
 	}
@@ -515,6 +527,7 @@ void LBooldozerEditor::SetGizmo(ImGuizmo::OPERATION mode)
 
 void LBooldozerEditor::ChangeMode()
 {
+	GetSelectionManager()->ClearSelection();
 	if (mCurrentMode != nullptr)
 		mCurrentMode->OnBecomeInactive();
 	

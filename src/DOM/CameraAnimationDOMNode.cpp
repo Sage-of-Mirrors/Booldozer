@@ -122,19 +122,13 @@ void LCameraAnimationDOMNode::RenderDetailsUI(float dt, LSceneCamera* camera)
     if(ImGui::Button(">"))
     {
         mPlaying = true;
-
         mCurrentFrame = 0;
-
-        //camera->Fovy = glm::radians(mFovFrames.mFrames[mFovFrames.mKeys[0]].value);
-
         mNextPosKeyX = 1;
         mNextPosKeyY = 1;
         mNextPosKeyZ = 1;
-
         mNextTargetKeyX = 1;
         mNextTargetKeyY = 1;
         mNextTargetKeyZ = 1;
-
         mNextFovKey = 1;
     }
 
