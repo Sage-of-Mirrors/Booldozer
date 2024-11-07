@@ -102,6 +102,17 @@ namespace CameraAnimation {
 LCameraAnimationDOMNode::LCameraAnimationDOMNode(std::string name) : Super(name)
 {
 	mType = EDOMNodeType::CameraAnim;
+
+    mNextPosKeyX = 1;
+    mNextPosKeyY = 1;
+    mNextPosKeyZ = 1;
+
+    mNextTargetKeyX = 1;
+    mNextTargetKeyY = 1;
+    mNextTargetKeyZ = 1;
+
+    mNextFovKey = 1;
+
 }
 
 void LCameraAnimationDOMNode::RenderDetailsUI(float dt, LSceneCamera* camera)
@@ -139,6 +150,14 @@ void LCameraAnimationDOMNode::RenderDetailsUI(float dt, LSceneCamera* camera)
         if(mCurrentFrame++ > mFrameCount)
         {
             mPlaying = false;
+            mCurrentFrame = 0;
+            mNextPosKeyX = 1;
+            mNextPosKeyY = 1;
+            mNextPosKeyZ = 1;
+            mNextTargetKeyX = 1;
+            mNextTargetKeyY = 1;
+            mNextTargetKeyZ = 1;
+            mNextFovKey = 1;
         } 
         else 
         {
@@ -176,46 +195,95 @@ void LCameraAnimationDOMNode::RenderDetailsUI(float dt, LSceneCamera* camera)
             {
                 mNextFovKey++;
             }
-
-            glm::vec3 eyePos = camera->GetEye();
-
-            if(mNextPosKeyX < mPosFramesX.mKeys.size()){
-                eyePos.x = glm::mix(mPosFramesX.mFrames[mPosFramesX.mKeys[mNextPosKeyX - 1]].value, mPosFramesX.mFrames[mPosFramesX.mKeys[mNextPosKeyX]].value, (mCurrentFrame - mPosFramesX.mFrames[mPosFramesX.mKeys[mNextPosKeyX - 1]].frame) / (mPosFramesX.mFrames[mPosFramesX.mKeys[mNextPosKeyX]].frame - mPosFramesX.mFrames[mPosFramesX.mKeys[mNextPosKeyX - 1]].frame));
-            }
-
-            if(mNextPosKeyY < mPosFramesY.mKeys.size()){
-                eyePos.y = glm::mix(mPosFramesY.mFrames[mPosFramesY.mKeys[mNextPosKeyY - 1]].value, mPosFramesY.mFrames[mPosFramesY.mKeys[mNextPosKeyY]].value, (mCurrentFrame - mPosFramesY.mFrames[mPosFramesY.mKeys[mNextPosKeyY - 1]].frame) / (mPosFramesY.mFrames[mPosFramesY.mKeys[mNextPosKeyY]].frame - mPosFramesY.mFrames[mPosFramesY.mKeys[mNextPosKeyY - 1]].frame));
-            }
-
-            if(mNextPosKeyZ < mPosFramesZ.mKeys.size()){
-                eyePos.z = glm::mix(mPosFramesZ.mFrames[mPosFramesZ.mKeys[mNextPosKeyZ - 1]].value, mPosFramesZ.mFrames[mPosFramesZ.mKeys[mNextPosKeyZ]].value, (mCurrentFrame - mPosFramesZ.mFrames[mPosFramesZ.mKeys[mNextPosKeyZ - 1]].frame) / (mPosFramesZ.mFrames[mPosFramesZ.mKeys[mNextPosKeyZ]].frame - mPosFramesZ.mFrames[mPosFramesZ.mKeys[mNextPosKeyZ - 1]].frame));
-            }
-
-            glm::vec3 targetPos = camera->GetCenter();
-            
-            if(mNextTargetKeyX < mTargetFramesX.mKeys.size()){
-                targetPos.x = glm::mix(mTargetFramesX.mFrames[mTargetFramesX.mKeys[mNextTargetKeyX - 1]].value, mTargetFramesX.mFrames[mTargetFramesX.mKeys[mNextTargetKeyX]].value, (mCurrentFrame - mTargetFramesX.mFrames[mTargetFramesX.mKeys[mNextTargetKeyX - 1]].frame) / (mTargetFramesX.mFrames[mTargetFramesX.mKeys[mNextTargetKeyX]].frame - mTargetFramesX.mFrames[mTargetFramesX.mKeys[mNextTargetKeyX - 1]].frame));
-            }
-
-            if(mNextTargetKeyY < mTargetFramesY.mKeys.size()){
-                targetPos.y = glm::mix(mTargetFramesY.mFrames[mTargetFramesY.mKeys[mNextTargetKeyY - 1]].value, mTargetFramesY.mFrames[mTargetFramesY.mKeys[mNextTargetKeyY]].value, (mCurrentFrame - mTargetFramesY.mFrames[mTargetFramesY.mKeys[mNextTargetKeyY - 1]].frame) / (mTargetFramesY.mFrames[mTargetFramesY.mKeys[mNextTargetKeyY]].frame - mTargetFramesY.mFrames[mTargetFramesY.mKeys[mNextTargetKeyY - 1]].frame));
-            }
-
-            if(mNextTargetKeyZ < mTargetFramesZ.mKeys.size()){
-                targetPos.z = glm::mix(mTargetFramesZ.mFrames[mTargetFramesZ.mKeys[mNextTargetKeyZ - 1]].value, mTargetFramesZ.mFrames[mTargetFramesZ.mKeys[mNextTargetKeyZ]].value, (mCurrentFrame - mTargetFramesZ.mFrames[mTargetFramesZ.mKeys[mNextTargetKeyZ - 1]].frame) / (mTargetFramesZ.mFrames[mTargetFramesZ.mKeys[mNextTargetKeyZ]].frame - mTargetFramesZ.mFrames[mTargetFramesZ.mKeys[mNextTargetKeyZ - 1]].frame));
-            }
-
-            if(mNextFovKey < mFovFrames.mKeys.size()){
-                mFovY = glm::radians(glm::mix(mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey - 1]].value, mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey]].value, (mCurrentFrame - mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey - 1]].frame) / (mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey]].frame - mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey - 1]].frame)));
-            }
-
-            //std::cout << eyePos.x << "," << eyePos.y << "," << eyePos.z << " | " << targetPos.x << "," << targetPos.y << "," << targetPos.z << std::endl;
-
-            mEye = eyePos;
-            mCenter = targetPos;
+        }
+    } else {
+        if(mCurrentFrame >= mPosFramesX.mKeys[mNextPosKeyX]) 
+        {
+            mNextPosKeyX++;
+        } else if(mCurrentFrame < mPosFramesX.mKeys[mNextPosKeyX-1]){
+            mNextPosKeyX--;
         }
 
+        if(mCurrentFrame >= mPosFramesY.mKeys[mNextPosKeyY]) 
+        {
+            mNextPosKeyY++;
+        } else if(mCurrentFrame < mPosFramesY.mKeys[mNextPosKeyY-1]){
+            mNextPosKeyY--;
+        }
+
+        if(mCurrentFrame >= mPosFramesZ.mKeys[mNextPosKeyZ]) 
+        {
+            mNextPosKeyZ++;
+        } else if(mCurrentFrame < mPosFramesZ.mKeys[mNextPosKeyZ-1]){
+            mNextPosKeyZ--;
+        }
+
+        if(mCurrentFrame >= mTargetFramesX.mKeys[mNextTargetKeyX]) 
+        {
+            mNextTargetKeyX++;
+        } else if(mCurrentFrame < mTargetFramesX.mKeys[mNextTargetKeyX-1]){
+            mNextTargetKeyX--;
+        }
+
+        if(mCurrentFrame >= mTargetFramesY.mKeys[mNextTargetKeyY]) 
+        {
+            mNextTargetKeyY++;
+        } else if(mCurrentFrame < mTargetFramesY.mKeys[mNextTargetKeyY-1]){
+            mNextTargetKeyY--;
+        }
+
+        if(mCurrentFrame >= mTargetFramesZ.mKeys[mNextTargetKeyZ]) 
+        {
+            mNextTargetKeyZ++;
+        } else if(mCurrentFrame < mTargetFramesZ.mKeys[mNextTargetKeyZ-1]){
+            mNextTargetKeyZ--;
+        }
+
+        if(mCurrentFrame >= mFovFrames.mKeys[mNextFovKey]) 
+        {
+            mNextFovKey++;
+        } else if(mCurrentFrame < mFovFrames.mKeys[mNextFovKey-1]){
+            mNextFovKey--;
+        }
     }
+
+
+    glm::vec3 eyePos = camera->GetEye();
+
+    if(mNextPosKeyX < mPosFramesX.mKeys.size()){
+        eyePos.x = glm::mix(mPosFramesX.mFrames[mPosFramesX.mKeys[mNextPosKeyX - 1]].value, mPosFramesX.mFrames[mPosFramesX.mKeys[mNextPosKeyX]].value, (mCurrentFrame - mPosFramesX.mFrames[mPosFramesX.mKeys[mNextPosKeyX - 1]].frame) / (mPosFramesX.mFrames[mPosFramesX.mKeys[mNextPosKeyX]].frame - mPosFramesX.mFrames[mPosFramesX.mKeys[mNextPosKeyX - 1]].frame));
+    }
+
+    if(mNextPosKeyY < mPosFramesY.mKeys.size()){
+        eyePos.y = glm::mix(mPosFramesY.mFrames[mPosFramesY.mKeys[mNextPosKeyY - 1]].value, mPosFramesY.mFrames[mPosFramesY.mKeys[mNextPosKeyY]].value, (mCurrentFrame - mPosFramesY.mFrames[mPosFramesY.mKeys[mNextPosKeyY - 1]].frame) / (mPosFramesY.mFrames[mPosFramesY.mKeys[mNextPosKeyY]].frame - mPosFramesY.mFrames[mPosFramesY.mKeys[mNextPosKeyY - 1]].frame));
+    }
+
+    if(mNextPosKeyZ < mPosFramesZ.mKeys.size()){
+        eyePos.z = glm::mix(mPosFramesZ.mFrames[mPosFramesZ.mKeys[mNextPosKeyZ - 1]].value, mPosFramesZ.mFrames[mPosFramesZ.mKeys[mNextPosKeyZ]].value, (mCurrentFrame - mPosFramesZ.mFrames[mPosFramesZ.mKeys[mNextPosKeyZ - 1]].frame) / (mPosFramesZ.mFrames[mPosFramesZ.mKeys[mNextPosKeyZ]].frame - mPosFramesZ.mFrames[mPosFramesZ.mKeys[mNextPosKeyZ - 1]].frame));
+    }
+
+    glm::vec3 targetPos = camera->GetCenter();
+            
+    if(mNextTargetKeyX < mTargetFramesX.mKeys.size()){
+        targetPos.x = glm::mix(mTargetFramesX.mFrames[mTargetFramesX.mKeys[mNextTargetKeyX - 1]].value, mTargetFramesX.mFrames[mTargetFramesX.mKeys[mNextTargetKeyX]].value, (mCurrentFrame - mTargetFramesX.mFrames[mTargetFramesX.mKeys[mNextTargetKeyX - 1]].frame) / (mTargetFramesX.mFrames[mTargetFramesX.mKeys[mNextTargetKeyX]].frame - mTargetFramesX.mFrames[mTargetFramesX.mKeys[mNextTargetKeyX - 1]].frame));
+    }
+
+    if(mNextTargetKeyY < mTargetFramesY.mKeys.size()){
+        targetPos.y = glm::mix(mTargetFramesY.mFrames[mTargetFramesY.mKeys[mNextTargetKeyY - 1]].value, mTargetFramesY.mFrames[mTargetFramesY.mKeys[mNextTargetKeyY]].value, (mCurrentFrame - mTargetFramesY.mFrames[mTargetFramesY.mKeys[mNextTargetKeyY - 1]].frame) / (mTargetFramesY.mFrames[mTargetFramesY.mKeys[mNextTargetKeyY]].frame - mTargetFramesY.mFrames[mTargetFramesY.mKeys[mNextTargetKeyY - 1]].frame));
+    }
+
+    if(mNextTargetKeyZ < mTargetFramesZ.mKeys.size()){
+        targetPos.z = glm::mix(mTargetFramesZ.mFrames[mTargetFramesZ.mKeys[mNextTargetKeyZ - 1]].value, mTargetFramesZ.mFrames[mTargetFramesZ.mKeys[mNextTargetKeyZ]].value, (mCurrentFrame - mTargetFramesZ.mFrames[mTargetFramesZ.mKeys[mNextTargetKeyZ - 1]].frame) / (mTargetFramesZ.mFrames[mTargetFramesZ.mKeys[mNextTargetKeyZ]].frame - mTargetFramesZ.mFrames[mTargetFramesZ.mKeys[mNextTargetKeyZ - 1]].frame));
+    }
+
+    if(mNextFovKey < mFovFrames.mKeys.size()){
+        mFovY = glm::radians(glm::mix(mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey - 1]].value, mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey]].value, (mCurrentFrame - mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey - 1]].frame) / (mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey]].frame - mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey - 1]].frame)));
+    }
+
+        
+    mEye = eyePos;
+    mCenter = targetPos;
+
 
     if(ImGui::BeginNeoSequencer("Camera Animation", &mCurrentFrame, &mStartFrame, &mFrameCount))
     {
