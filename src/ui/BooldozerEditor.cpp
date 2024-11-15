@@ -67,7 +67,7 @@ void LBooldozerEditor::LoadMap(std::string path, LEditorScene* scene){
 void LBooldozerEditor::SaveMap(std::string path){
 	SaveMapToArchive(path);
 
-	OPTIONS.mLastOpenedMap = path;
+	OPTIONS.mLastSavedDirectory = path;
 	LResUtility::SaveUserSettings();
 	
 	loadLock.lock();
@@ -504,7 +504,7 @@ void LBooldozerEditor::onSaveMapCB()
 void LBooldozerEditor::onSaveMapArchiveCB()
 {
 	if (mLoadedMap != nullptr)
-		ImGuiFileDialog::Instance()->OpenDialog("SaveMapArchiveDlg", "Choose an Archive", "Archives (*.szp){.szp}", OPTIONS.mLastOpenedMap);
+		ImGuiFileDialog::Instance()->OpenDialog("SaveMapArchiveDlg", "Choose an Archive", "Archives (*.szp){.szp}", OPTIONS.mLastSavedDirectory);
 }
 
 

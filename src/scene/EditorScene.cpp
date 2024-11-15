@@ -281,7 +281,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 			if(roomLocked->GetSkyboxEnabled() && mSkyBox != nullptr){
 				mSkyBox->SetTranslation(roomLocked->GetPosition());
 				mSkyBox->SetRotation({0,0,0});
-				mSkyBox->SetScale({20,20,20});
+				mSkyBox->SetScale({10,10,10});
 				renderables.push_back(mSkyBox);
 				break;
 			}

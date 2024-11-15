@@ -10,6 +10,8 @@
 #include <mutex>
 #include "scene/EditorScene.hpp"
 
+#include <Options.hpp>
+
 namespace {
 	std::thread importModelThread {};
 	std::mutex importLock {};
@@ -70,7 +72,7 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 		if(ImGui::BeginTabItem("Mp")){
 			if(ImGui::Button("Import")){
 				LUIUtility::RenderTooltip("Import an existing col.mp");
-				ImGuiFileDialog::Instance()->OpenDialog("ImportMpDlg", "Import Mp", "LM Collision Map (*.mp){.mp}", std::filesystem::current_path().string());
+				ImGuiFileDialog::Instance()->OpenDialog("ImportMpDlg", "Import Mp", "LM Collision Map (*.mp){.mp}", (std::filesystem::path(OPTIONS.mRootPath) / "files").string());
 			}
 			ImGui::EndTabItem();
 		}
@@ -118,7 +120,7 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 			LUIUtility::RenderTooltip("Unsure?");
 
 			if(ImGui::Button("Import")){
-				ImGuiFileDialog::Instance()->OpenDialog("ImportObjColDlg", "Import OBJ", "Wavefront Obj (*.obj){.obj}", std::filesystem::current_path().string());
+				ImGuiFileDialog::Instance()->OpenDialog("ImportObjColDlg", "Import OBJ", "Wavefront Obj (*.obj){.obj}", (std::filesystem::path(OPTIONS.mRootPath) / "files").string());
 			}
 			ImGui::EndTabItem();
 		}

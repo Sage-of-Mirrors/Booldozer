@@ -85,7 +85,7 @@ void LPrmIO::LoadConfigs(std::shared_ptr<LMapDOMNode>& map)
 void LPrmIO::SaveConfigsToFile()
 {
     std::string paramsPth;
-    ImGuiFileDialog::Instance()->OpenDialog("SaveParamFilesDlg", "Choose a Folder", nullptr, OPTIONS.mLastSavedDirectory);
+    ImGuiFileDialog::Instance()->OpenDialog("SaveParamFilesDlg", "Choose a Folder", nullptr, (std::filesystem::path(OPTIONS.mRootPath) / "files").string());
     if (LUIUtility::RenderFileDialog("SaveParamFilesDlg", paramsPth))
 	{
         std::filesystem::path outFolder = paramsPth;
