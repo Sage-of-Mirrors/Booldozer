@@ -195,7 +195,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 
 				if(ImGui::IsItemHovered()){
 					if(ImGui::IsKeyDown(ImGuiKey_ModShift)){
-						PreviewWidget::DoRotate(ImGui::GetIO().MouseWheel * 0.05f);
+						PreviewWidget::DoRotate(ImGui::GetIO().MouseWheel * 0.1f);
 					} else {
 						PreviewWidget::DoZoom(ImGui::GetIO().MouseWheel*50);
 					}
