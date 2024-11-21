@@ -135,6 +135,9 @@ void LRoomDOMNode::RoomResourceManagerHandleType(std::shared_ptr<LDOMNodeBase> s
 			ImGui::Text(ICON_FK_MINUS_CIRCLE);
 			if(ImGui::IsItemClicked()) {
 				toDelete = file;
+				if(typeExt == ".bin"){
+					PreviewWidget::UnloadModel();
+				}
 			}
 		}
 		ImGui::TreePop();
