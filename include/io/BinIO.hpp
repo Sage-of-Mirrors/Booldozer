@@ -133,6 +133,7 @@ public:
 	void TranslateRoot(glm::vec3 translation);
 
 	float GetRootBoundingSphere() { return mRoot->mBoundingSphereRadius; }
+	glm::vec3 GetRootPosition() { return mRoot->transform[3]; }
 
 	std::shared_ptr<BinMesh> GetMesh(uint32_t id) { return mMeshes.at(id); }
 	std::shared_ptr<BinSampler> GetSampler(uint32_t id) { return mSamplers.at(id); }

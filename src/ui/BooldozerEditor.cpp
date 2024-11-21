@@ -25,6 +25,7 @@
 #include <cstdlib>
 
 #include "DOM/CameraAnimationDOMNode.hpp"
+#include "scene/ModelViewer.hpp"
 
 namespace {
 	char* patchErrorMsg { nullptr };
@@ -51,6 +52,7 @@ LBooldozerEditor::~LBooldozerEditor(){
 	glDeleteTextures(1, &mPickTex);
 
 	CameraAnimation::CleanupPreview();
+	PreviewWidget::CleanupPreview();
 }
 
 void LBooldozerEditor::LoadMap(std::string path, LEditorScene* scene){
@@ -113,6 +115,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
 		CameraAnimation::InitPreview();
+		PreviewWidget::InitPreview();
 
 		ImGui::DockBuilderRemoveNode(mMainDockSpaceID); // clear any previous layout
 		ImGui::DockBuilderAddNode(mMainDockSpaceID, dockFlags | ImGuiDockNodeFlags_DockSpace);
@@ -342,6 +345,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	mGhostConfigs.RenderUI();
 	
 	CameraAnimation::RenderPreview();
+	PreviewWidget::RenderPreview();
 
 	ImGuiWindowClass mainWindowOverride;
 	mainWindowOverride.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
