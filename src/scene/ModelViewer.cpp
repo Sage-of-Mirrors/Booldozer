@@ -118,7 +118,7 @@ namespace PreviewWidget {
             // TODO: Draw Grid somehow
 
             if(Model != nullptr){
-                Camera.SetEye({Model->GetRootPosition().x + Zoom + (sin(Rotate) * (Zoom * 2)), Model->GetRootPosition().y + Zoom, Model->GetRootPosition().z + Zoom - (cos(Rotate) * (Zoom * 2))});
+                Camera.SetEye({Model->GetRootPosition().x + (sin(Rotate) * (Zoom * 2)), Model->GetRootPosition().y + Zoom, Model->GetRootPosition().z - (cos(Rotate) * (Zoom * 2))});
                 
                 // Ow.
 	            J3DUniformBufferObject::SetProjAndViewMatrices(Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
