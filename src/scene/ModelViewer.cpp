@@ -12,8 +12,8 @@
 #include <J3D/Material/J3DUniformBufferObject.hpp>
 #include <J3D/J3DModelLoader.hpp>
 #include <J3D/Rendering/J3DRendering.hpp>
-
 #include "io/BinIO.hpp"
+#include "UGrid.hpp"
 
 namespace PreviewWidget {
     static bool Ready { false };
@@ -27,6 +27,7 @@ namespace PreviewWidget {
     static float Zoom { 500.0f };
 
     static BinModel* Model { nullptr };
+    static UGrid* Grid { nullptr };
 
     void SetActive(){
         Active = true;
@@ -53,6 +54,9 @@ namespace PreviewWidget {
     }
 
     void InitPreview(){
+        Grid = new UGrid();
+        Grid->Init();
+
 		glGenFramebuffers(1, &Fbo);
 		glBindFramebuffer(GL_FRAMEBUFFER, Fbo);
 
@@ -81,6 +85,7 @@ namespace PreviewWidget {
     }
 
     void CleanupPreview(){
+        delete Grid;
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
@@ -125,6 +130,11 @@ namespace PreviewWidget {
 	            J3DUniformBufferObject::SubmitUBO();
 
                 Model->Draw(&Identity, 0, false, false);
+                Grid->Render({Model->GetRootPosition().x + (sin(Rotate) * (Zoom * 2)), Model->GetRootPosition().y + Zoom, Model->GetRootPosition().z - (cos(Rotate) * (Zoom * 2))}, Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
+            } else {
+	            J3DUniformBufferObject::SetProjAndViewMatrices(Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
+	            J3DUniformBufferObject::SubmitUBO();
+                Grid->Render({(sin(Rotate) * (Zoom * 2)), Zoom, (cos(Rotate) * (Zoom * 2))}, Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
             }
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
