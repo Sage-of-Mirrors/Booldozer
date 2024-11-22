@@ -14,8 +14,8 @@ struct LKeyframeCommon
 {
     float frame;
     float value;
-    float inslope;
-    float outslope;
+    float inslope { 1.0f };
+    float outslope { 1.0f };
 };
 
 class LTrackCommon

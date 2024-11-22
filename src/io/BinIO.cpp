@@ -14,6 +14,22 @@
 *
 */
 
+// from https://github.com/Sage-of-Mirrors/libjstudio/blob/main/src/engine/value/interpolation.cpp
+float InterpolateHermite(float factor, float timeA, float valueA, float outTangent, float timeB, float valueB, float inTangent)
+{
+	float a = factor - timeA;
+	float b = a * (1.0f / (timeB - timeA));
+	float c = b - 1.0f;
+	float d = (3.0f + -2.0f * b) * (b * b);
+
+	float cab = c * a * b;
+	float coeffx3 = cab * inTangent;
+	float cca = c * c * a;
+	float coeffc2 = cca * outTangent;
+
+	return b * c * a * inTangent + a * c * c * outTangent + (1.0f - d) * valueA + d * valueB;
+}
+
 uint32_t mProgramID = -1; // on setup handle this
 
 uint32_t BinMaterial::RGB565toRGBA8(uint16_t data) {
@@ -560,12 +576,66 @@ void BinScenegraphNode::AddMesh(int16_t material, int16_t mesh){
     meshes.push_back(std::pair(material, mesh));
 }
 
-void BinScenegraphNode::Draw(glm::mat4 localTransform, glm::mat4* instance, BinModel* bin, bool bIgnoreTransforms){
-    if(!bIgnoreTransforms){
-        glUniformMatrix4fv(glGetUniformLocation(mProgramID, "transform"), 1, 0, &(*instance * localTransform * transform)[0][0]);
+float MixTrack(LTrackCommon* track, float curFrame, uint32_t& mNextKey){
+    if(mNextKey < track->mKeys.size()){
+        float v = InterpolateHermite(
+            (curFrame - track->mFrames[track->mKeys[mNextKey - 1]].frame) / (track->mFrames[track->mKeys[mNextKey]].frame - track->mFrames[track->mKeys[mNextKey - 1]].frame),
+            track->mFrames[track->mKeys[mNextKey - 1]].frame,
+            track->mFrames[track->mKeys[mNextKey - 1]].value,
+            track->mFrames[track->mKeys[mNextKey - 1]].outslope,
+            track->mFrames[track->mKeys[mNextKey]].frame,
+            track->mFrames[track->mKeys[mNextKey]].value,
+            track->mFrames[track->mKeys[mNextKey]].inslope
+        );
+        if(std::floor(curFrame) >= track->mKeys[mNextKey]){
+            mNextKey += 1;
+        }
+        return v;
     } else {
-        glUniformMatrix4fv(glGetUniformLocation(mProgramID, "transform"), 1, 0, &(*instance)[0][0]);
+        return track->mFrames[track->mKeys[mNextKey - 1]].value;
     }
+
+}
+
+void BinScenegraphNode::Draw(glm::mat4 localTransform, glm::mat4* instance, BinModel* bin, bool ignoreTransforms, bool animate){
+    glm::mat4 mtx;
+    
+    if(!ignoreTransforms){
+        // bin->mAnimationInformation.mCurrentFrame;
+        // Get Current frame xyz
+        if(animate && bin->mAnimationInformation.mLoaded && bin->mAnimationInformation.mPlaying){
+            //modify mtx based off of current frame 
+
+	        float sz = -MixTrack(&mXScaleTrack, bin->mAnimationInformation.mCurrentFrame, mNextScaleKeyX);
+	        float sy = MixTrack(&mYScaleTrack, bin->mAnimationInformation.mCurrentFrame, mNextScaleKeyY);
+	        float sx = MixTrack(&mZScaleTrack, bin->mAnimationInformation.mCurrentFrame, mNextScaleKeyZ);
+
+            float rz = std::radiansMixTrack(&mXRotTrack, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyX) * 0.0001533981;
+            float ry = std::radiansMixTrack(&mYRotTrack, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyY) * 0.0001533981;
+            float rx = std::radiansMixTrack(&mZRotTrack, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyZ) * 0.0001533981;
+
+            float pz = -MixTrack(&mXPosTrack, bin->mAnimationInformation.mCurrentFrame, mNextPosKeyX);
+            float py = MixTrack(&mYPosTrack, bin->mAnimationInformation.mCurrentFrame, mNextPosKeyY);
+            float px = MixTrack(&mZPosTrack, bin->mAnimationInformation.mCurrentFrame, mNextPosKeyZ);
+
+            glm::mat4 animTrasform(1.0f);
+            
+            //animTrasform = glm::scale(animTrasform, glm::vec3(sx, sy, sz));
+            animTrasform = glm::rotate(animTrasform, rx, glm::vec3(1, 0, 0));
+            animTrasform = glm::rotate(animTrasform, ry, glm::vec3(0, 1, 0));
+            animTrasform = glm::rotate(animTrasform, rz, glm::vec3(0, 0, 1));
+            animTrasform = glm::translate(animTrasform, glm::vec3(px, py, pz));
+
+            mtx = *instance * localTransform * (transform * animTrasform);
+        } else {
+            mtx = *instance * localTransform * transform;
+        }
+    } else {
+        mtx = *instance;
+    }
+
+    glUniformMatrix4fv(glGetUniformLocation(mProgramID, "transform"), 1, 0, &(mtx)[0][0]);
+    
     for (auto& mesh : meshes)
     {
         bin->BindMesh(mesh.first);
@@ -579,12 +649,59 @@ void BinScenegraphNode::Draw(glm::mat4 localTransform, glm::mat4* instance, BinM
     }
     
     if(child != nullptr){
-        child->Draw(localTransform * transform, instance, bin, bIgnoreTransforms);
+        child->Draw(localTransform * transform, instance, bin, ignoreTransforms, animate);
     }
 
     if(next != nullptr){
-        next->Draw(localTransform, instance, bin, bIgnoreTransforms);
+        next->Draw(localTransform, instance, bin, ignoreTransforms, animate);
     }
+}
+
+void BinScenegraphNode::ResetAnimation(){
+    mNextPosKeyX = 1;
+    mNextPosKeyY = 1;
+    mNextPosKeyZ = 1;
+    mNextRotKeyX = 1;
+    mNextRotKeyY = 1;
+    mNextRotKeyZ = 1;
+    mNextScaleKeyX = 1;
+    mNextScaleKeyY = 1;
+    mNextScaleKeyZ = 1;
+
+    if(child != nullptr){
+        child->ResetAnimation();
+    }
+
+    if(next != nullptr){
+        next->ResetAnimation();
+    }
+}
+
+void BinScenegraphNode::LoadNodeTracks(bStream::CStream* stream, uint32_t& idx, uint32_t groupOffset, uint32_t scaleKeysOffset, uint32_t rotateKeysOffset, uint32_t translateKeysOffset){
+    stream->seek(groupOffset + (idx * 0x36));
+
+	mXScaleTrack.LoadTrack(stream, scaleKeysOffset, ETrackType::ANM);
+	mYScaleTrack.LoadTrack(stream, scaleKeysOffset, ETrackType::ANM);
+	mZScaleTrack.LoadTrack(stream, scaleKeysOffset, ETrackType::ANM);
+
+	mXRotTrack.LoadTrack(stream, rotateKeysOffset, ETrackType::ANM);
+	mYRotTrack.LoadTrack(stream, rotateKeysOffset, ETrackType::ANM);
+	mZRotTrack.LoadTrack(stream, rotateKeysOffset, ETrackType::ANM);
+
+	mXPosTrack.LoadTrack(stream, translateKeysOffset, ETrackType::ANM);
+	mYPosTrack.LoadTrack(stream, translateKeysOffset, ETrackType::ANM);
+	mZPosTrack.LoadTrack(stream, translateKeysOffset, ETrackType::ANM);
+
+    idx += 1;
+
+    if(child != nullptr){
+        child->LoadNodeTracks(stream, idx, groupOffset, scaleKeysOffset, rotateKeysOffset, translateKeysOffset);
+    }
+
+    if(next != nullptr){
+        next->LoadNodeTracks(stream, idx, groupOffset, scaleKeysOffset, rotateKeysOffset, translateKeysOffset);
+    }
+
 }
 
 bool BinModel::BindMesh(uint16_t id){
@@ -735,7 +852,7 @@ void BinModel::TranslateRoot(glm::vec3 translation){
     mRoot->transform = glm::translate(mRoot->transform, translation);
 }
 
-void BinModel::Draw(glm::mat4* transform, int32_t id, bool selected, bool bIgnoreTransforms){
+void BinModel::Draw(glm::mat4* transform, int32_t id, bool selected, bool ignoreTransforms, bool animate){
     glFrontFace(GL_CW);
 
     glEnable(GL_DEPTH_TEST);
@@ -748,8 +865,40 @@ void BinModel::Draw(glm::mat4* transform, int32_t id, bool selected, bool bIgnor
     glUniform1i(glGetUniformLocation(mProgramID, "pickID"), id);
     glUniform1i(glGetUniformLocation(mProgramID, "selected"), selected);
     if(mRoot.get() != nullptr){
-        mRoot->Draw(glm::identity<glm::mat4>(), transform, this, bIgnoreTransforms);
+        mRoot->Draw(glm::identity<glm::mat4>(), transform, this, ignoreTransforms, animate);
     }
+
+    if(mAnimationInformation.mLoop && mAnimationInformation.mCurrentFrame >= mAnimationInformation.mFrameCount){
+        mAnimationInformation.mCurrentFrame = 0.0f;
+        mRoot->ResetAnimation();
+    }
+
+    if(mAnimationInformation.mLoaded && mAnimationInformation.mPlaying){
+        mAnimationInformation.mCurrentFrame += mAnimationInformation.mPlaybackSpeed;
+    }
+}
+
+void BinModel::LoadAnimation(bStream::CStream* stream){
+    mAnimationInformation.mLoaded = true;
+
+    stream->readUInt8(); // version
+    mAnimationInformation.mLoop = stream->readUInt8(); // loop
+
+    stream->readUInt16(); // padding
+    mAnimationInformation.mFrameCount = stream->readUInt32(); // frame count
+
+    uint32_t scaleKeyOffset = stream->readUInt32();
+    uint32_t rotateKeyOffset = stream->readUInt32();
+    uint32_t translateKeyOffset = stream->readUInt32();
+    uint32_t groupOffset = stream->readUInt32();
+    
+    uint32_t nodeIdx = 0;
+
+    mRoot->LoadNodeTracks(stream, nodeIdx, groupOffset, scaleKeyOffset, rotateKeyOffset, translateKeyOffset);
+}
+
+void BinModel::ClearAnimation(){
+    //mRoot->ClearAnimation();
 }
 
 BinModel::~BinModel(){

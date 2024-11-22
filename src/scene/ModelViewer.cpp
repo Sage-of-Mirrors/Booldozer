@@ -33,6 +33,18 @@ namespace PreviewWidget {
         Active = true;
     }
 
+    void PlayAnimation(){
+        if(Model != nullptr){
+            Model->mAnimationInformation.mPlaying = true;
+            Model->mAnimationInformation.mCurrentFrame = 0.0f;
+            Model->ResetAnimation();
+        }
+    }
+
+    void PauseAnimation(){
+        if(Model != nullptr) Model->mAnimationInformation.mPlaying = false;
+    }
+
     void SetInactive(){
         Active = false;
     }
@@ -100,7 +112,14 @@ namespace PreviewWidget {
             Model = nullptr;
         }
         Model = new BinModel(ModelStream);
+        Model->mAnimationInformation.mCurrentFrame = 0;
+        Model->ResetAnimation();
         Camera.SetCenter(Model->GetRootPosition());
+    }
+
+    void SetModelAnimation(bStream::CMemoryStream* AnimStream){
+        Model->LoadAnimation(AnimStream);
+        Model->ResetAnimation();
     }
 
     void UnloadModel(){
@@ -139,7 +158,7 @@ namespace PreviewWidget {
 	            J3DUniformBufferObject::SetProjAndViewMatrices(Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
 	            J3DUniformBufferObject::SubmitUBO();
 
-                Model->Draw(&Identity, 0, false, false);
+                Model->Draw(&Identity, 0, false, false, true);
                 Grid->Render({Model->GetRootPosition().x + (sin(Rotate) * (Zoom * 2)), Model->GetRootPosition().y + Zoom, Model->GetRootPosition().z - (cos(Rotate) * (Zoom * 2))}, Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
             } else {
 	            J3DUniformBufferObject::SetProjAndViewMatrices(Camera.GetProjectionMatrix(), Camera.GetViewMatrix());

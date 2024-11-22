@@ -14,6 +14,7 @@ namespace {
 	std::shared_ptr<Archive::Rarc> ActiveRoomArchive = nullptr;
 	std::shared_ptr<Archive::File> EditFileName = nullptr;
 	std::shared_ptr<Archive::File> SelectedFile = nullptr;
+	std::shared_ptr<Archive::File> SelectedAnimation = nullptr;
 	std::string FileName = "(null)";
 }
 
@@ -81,15 +82,22 @@ void LRoomDOMNode::RoomResourceManagerHandleType(std::shared_ptr<LDOMNodeBase> s
 				ImGui::SameLine();
 				ImGui::Text(typeExt.c_str());
 			} else {
-				if(SelectedFile == file){
+				if(SelectedFile == file || SelectedAnimation == file){
 					ImGui::TextColored({0x00, 0xFF, 0x00, 0xFF}, file->GetName().c_str());
 				} else {
 					ImGui::Text(file->GetName().c_str());
 					if(ImGui::IsItemClicked()){
-						SelectedFile = file;
-						bStream::CMemoryStream modelStream(file->GetData(), file->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
-						PreviewWidget::UnloadModel();
-						PreviewWidget::LoadModel(&modelStream);
+						if(typeExt == ".bin"){
+							SelectedAnimation = nullptr;
+							SelectedFile = file;
+							bStream::CMemoryStream modelStream(file->GetData(), file->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+							PreviewWidget::UnloadModel();
+							PreviewWidget::LoadModel(&modelStream);
+						} else if(typeExt == ".anm" && SelectedFile != nullptr && file->GetName().find(SelectedFile->GetName().substr(0, SelectedFile->GetName().size()-4)) != std::string::npos){
+							SelectedAnimation = file;
+							bStream::CMemoryStream animStream(file->GetData(), file->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+							PreviewWidget::SetModelAnimation(&animStream);
+						}
 					}
 				}
 			}
@@ -169,7 +177,6 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 					PreviewWidget::SetActive();
 				}
 
-
 				// show resources in room archive, allow add/delete of models
 				// notify when archive size is > 430kb!
 				ImGui::Text("Room Resource Files");
@@ -212,6 +219,21 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 					PreviewWidget::SetInactive();
 					ImGui::CloseCurrentPopup();
 				}
+				
+				if(SelectedAnimation != nullptr){
+					ImGui::SameLine();
+					ImGui::Text(ICON_FK_PLAY);
+					if(ImGui::IsItemClicked()){
+						PreviewWidget::PlayAnimation();
+					}
+					
+					ImGui::SameLine();
+					ImGui::Text(ICON_FK_STOP);
+					if(ImGui::IsItemClicked()){
+						PreviewWidget::PauseAnimation();
+					}
+				}
+
 				ImGui::EndPopup();
 			}
 		} 

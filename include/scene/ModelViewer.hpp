@@ -16,8 +16,12 @@ namespace PreviewWidget {
     void CleanupPreview();
     void RenderPreview();
 
+    void PlayAnimation();
+    void PauseAnimation();
+
     void UpdateCamera();
-    void LoadModel(bStream::CMemoryStream* modelStream);
+    void LoadModel(bStream::CMemoryStream* ModelStream);
+    void SetModelAnimation(bStream::CMemoryStream* AnimStream);
     void UnloadModel();
 
     void DoZoom(float amt);

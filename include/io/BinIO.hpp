@@ -3,6 +3,7 @@
 #include <map>
 #include <memory>
 #include "../lib/bStream/bstream.h"
+#include "io/KeyframeIO.hpp"
 
 enum class GXAttribute : int {
 	PositionMatrixIndex,
@@ -90,28 +91,64 @@ public:
 
 };
 
+struct BinAnimInfo {
+	bool mLoop { 0 };
+	bool mPlaying { false };
+	bool mLoaded { false };
+	float mCurrentFrame { 0.0f }; // float so that we can change speed more easily
+	float mPlaybackSpeed { 0.5f };
+	uint32_t mFrameCount { 0 };
+};
+
 class BinModel;
 
 class BinScenegraphNode {
+	friend BinModel;
     std::vector<std::pair<int16_t, int16_t>> meshes;
 
+	void LoadNodeTracks(bStream::CStream* stream, uint32_t& idx, uint32_t groupOffset, uint32_t scaleKeysOffset, uint32_t rotateKeysOffset, uint32_t translateKeysOffset);
 
+	uint32_t mNextScaleKeyX { 1 };
+    uint32_t mNextScaleKeyY { 1 };
+    uint32_t mNextScaleKeyZ { 1 };
+	LTrackCommon mXScaleTrack;
+	LTrackCommon mYScaleTrack;
+	LTrackCommon mZScaleTrack;
+
+	uint32_t mNextRotKeyX { 1 };
+    uint32_t mNextRotKeyY { 1 };
+    uint32_t mNextRotKeyZ { 1 };
+	LTrackCommon mXRotTrack;
+	LTrackCommon mYRotTrack;
+	LTrackCommon mZRotTrack;
+
+	uint32_t mNextPosKeyX { 1 };
+    uint32_t mNextPosKeyY { 1 };
+    uint32_t mNextPosKeyZ { 1 };
+	LTrackCommon mXPosTrack;
+	LTrackCommon mYPosTrack;
+	LTrackCommon mZPosTrack;
 public:
     std::shared_ptr<BinScenegraphNode> parent;
     std::shared_ptr<BinScenegraphNode> child;
     std::shared_ptr<BinScenegraphNode> next;
     std::shared_ptr<BinScenegraphNode> prev;
-    glm::mat4 transform;
+    
+
+	glm::mat4 transform;
 	float mBoundingSphereRadius;
 
+	void ResetAnimation();
+
     void AddMesh(int16_t material, int16_t mesh);
-    void Draw(glm::mat4 localTransform, glm::mat4* instance, BinModel* bin, bool bIgnoreTransforms = false);
+    void Draw(glm::mat4 localTransform, glm::mat4* instance, BinModel* bin, bool ignoreTransforms = false, bool animate = false);
     BinScenegraphNode();
     ~BinScenegraphNode();
 
 };
 
 class BinModel {
+	friend BinScenegraphNode;
     std::map<int16_t, std::shared_ptr<BinMesh>> mMeshes;
     std::map<int16_t, std::shared_ptr<BinSampler>> mSamplers;
 	std::vector<std::shared_ptr<BinMaterial>> mMaterials;
@@ -119,7 +156,9 @@ class BinModel {
 
     std::shared_ptr<BinScenegraphNode> ParseSceneraph(bStream::CStream* stream, uint32_t* offsets, uint16_t index, std::vector<glm::vec3>& vertexData, std::vector<glm::vec2>& texcoordData, std::shared_ptr<BinScenegraphNode> parent = nullptr, std::shared_ptr<BinScenegraphNode> previous = nullptr);
 
+
 public:
+	BinAnimInfo mAnimationInformation;
 
 	static void InitShaders();
 	static void DestroyShaders();
@@ -128,12 +167,18 @@ public:
 
 	bool BindMaterial(uint16_t id);
 
-    void Draw(glm::mat4* transform, int32_t id, bool selected, bool bIgnoreTransforms = false);
+    void Draw(glm::mat4* transform, int32_t id, bool selected, bool ignoreTransforms = false, bool animate = false);
+
+	void ResetAnimation(){ mRoot->ResetAnimation(); }
 
 	void TranslateRoot(glm::vec3 translation);
 
 	float GetRootBoundingSphere() { return mRoot->mBoundingSphereRadius; }
+
 	glm::vec3 GetRootPosition() { return mRoot->transform[3]; }
+
+	void LoadAnimation(bStream::CStream* stream);
+	void ClearAnimation();
 
 	std::shared_ptr<BinMesh> GetMesh(uint32_t id) { return mMeshes.at(id); }
 	std::shared_ptr<BinSampler> GetSampler(uint32_t id) { return mSamplers.at(id); }
