@@ -610,9 +610,9 @@ void BinScenegraphNode::Draw(glm::mat4 localTransform, glm::mat4* instance, BinM
 	        float sy = MixTrack(&mYScaleTrack, bin->mAnimationInformation.mCurrentFrame, mNextScaleKeyY);
 	        float sx = MixTrack(&mZScaleTrack, bin->mAnimationInformation.mCurrentFrame, mNextScaleKeyZ);
 
-            float rz = std::radiansMixTrack(&mXRotTrack, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyX) * 0.0001533981;
-            float ry = std::radiansMixTrack(&mYRotTrack, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyY) * 0.0001533981;
-            float rx = std::radiansMixTrack(&mZRotTrack, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyZ) * 0.0001533981;
+            float rz = MixTrack(&mXRotTrack, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyX) * 0.0001533981;
+            float ry = MixTrack(&mYRotTrack, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyY) * 0.0001533981;
+            float rx = MixTrack(&mZRotTrack, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyZ) * 0.0001533981;
 
             float pz = -MixTrack(&mXPosTrack, bin->mAnimationInformation.mCurrentFrame, mNextPosKeyX);
             float py = MixTrack(&mYPosTrack, bin->mAnimationInformation.mCurrentFrame, mNextPosKeyY);
