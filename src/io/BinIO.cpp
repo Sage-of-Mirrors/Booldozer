@@ -606,17 +606,17 @@ void BinScenegraphNode::Draw(glm::mat4 localTransform, glm::mat4* instance, BinM
         if(animate && bin->mAnimationInformation.mLoaded && bin->mAnimationInformation.mPlaying){
             //modify mtx based off of current frame 
 
-	        float sz = -MixTrack(&mXScaleTrack, bin->mAnimationInformation.mCurrentFrame, mNextScaleKeyX);
+	        float sx = -MixTrack(&mXScaleTrack, bin->mAnimationInformation.mCurrentFrame, mNextScaleKeyX);
 	        float sy = MixTrack(&mYScaleTrack, bin->mAnimationInformation.mCurrentFrame, mNextScaleKeyY);
-	        float sx = MixTrack(&mZScaleTrack, bin->mAnimationInformation.mCurrentFrame, mNextScaleKeyZ);
+	        float sz = MixTrack(&mZScaleTrack, bin->mAnimationInformation.mCurrentFrame, mNextScaleKeyZ);
 
-            float rz = MixTrack(&mXRotTrack, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyX) * 0.0001533981;
-            float ry = MixTrack(&mYRotTrack, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyY) * 0.0001533981;
-            float rx = MixTrack(&mZRotTrack, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyZ) * 0.0001533981;
+            float rz = MixTrack(&mXRotTrack, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyX) * 0.0001533981f;
+            float ry = MixTrack(&mYRotTrack, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyY) * 0.0001533981f;
+            float rx = MixTrack(&mZRotTrack, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyZ) * 0.0001533981f;
 
-            float pz = -MixTrack(&mXPosTrack, bin->mAnimationInformation.mCurrentFrame, mNextPosKeyX);
+            float px = -MixTrack(&mXPosTrack, bin->mAnimationInformation.mCurrentFrame, mNextPosKeyX);
             float py = MixTrack(&mYPosTrack, bin->mAnimationInformation.mCurrentFrame, mNextPosKeyY);
-            float px = MixTrack(&mZPosTrack, bin->mAnimationInformation.mCurrentFrame, mNextPosKeyZ);
+            float pz = MixTrack(&mZPosTrack, bin->mAnimationInformation.mCurrentFrame, mNextPosKeyZ);
 
             glm::mat4 animTrasform(1.0f);
             
@@ -794,13 +794,22 @@ std::shared_ptr<BinScenegraphNode> BinModel::ParseSceneraph(bStream::CStream* st
         current->parent = parent;
     }
 
-    stream->skip(4);
-    current->transform = glm::identity<glm::mat4>();
-    current->transform = glm::scale(current->transform, glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat())); 
-    glm::vec3 rotation(stream->readFloat(), stream->readFloat(), stream->readFloat());
-    glm::quat rotationQuat = glm::angleAxis(glm::radians(rotation.x), glm::vec3(1.0,0.0,0.0)) * glm::angleAxis(glm::radians(rotation.y), glm::vec3(0.0,1.0,0.0)) * glm::angleAxis(glm::radians(rotation.z), glm::vec3(0.0,0.0,1.0));
-    current->transform *= glm::toMat4(rotationQuat);
-    current->transform = glm::translate(current->transform, glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat()));
+
+    stream->readUInt8(); // padding
+    stream->readUInt8(); //  renderflags
+    stream->readUInt16();
+
+    current->transform = glm::mat4(1.0f);
+    glm::vec3 scale = glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat());
+    glm::vec3 rotation = glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat());
+    glm::vec3 translation = glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat());
+
+    
+    current->transform = glm::scale(current->transform, scale); 
+    current->transform = glm::rotate(current->transform, glm::radians(rotation.x) * 0.0001533981f, glm::vec3(1, 0, 0));
+    current->transform = glm::rotate(current->transform, glm::radians(rotation.y) * 0.0001533981f, glm::vec3(0, 1, 0));
+    current->transform = glm::rotate(current->transform, glm::radians(rotation.z) * 0.0001533981f, glm::vec3(0, 0, 1));
+    current->transform = glm::translate(current->transform, translation);
 
     stream->skip(4*7);
 
