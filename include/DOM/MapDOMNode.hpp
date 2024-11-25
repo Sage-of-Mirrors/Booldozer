@@ -41,6 +41,7 @@ public:
 	std::shared_ptr<LRoomDOMNode> GetRoomByID(int32_t id);
 	std::shared_ptr<LRoomDOMNode> GetRoomByIndex(int32_t index);
 	std::weak_ptr<Archive::Rarc> GetArchive() { return mMapArchive; };
+	void SetArchive(std::shared_ptr<Archive::Rarc> arc) { mMapArchive = arc; };
 
 /*=== Type operations ===*/
 	// Returns whether this node is of the given type, or derives from a node of that type.

@@ -26,6 +26,7 @@
 
 #include "DOM/CameraAnimationDOMNode.hpp"
 #include "scene/ModelViewer.hpp"
+#include <format>
 
 namespace {
 	char* patchErrorMsg { nullptr };
@@ -189,6 +190,119 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::EndPopup();
 	}
 
+	if(mClickedMapSelect){
+		ImGui::OpenPopup("Map Select");
+		mClickedMapSelect = false;
+	}
+	
+	if(mClickedMapClear){
+		ImGui::OpenPopup("Clear Map");
+		mClickedMapClear = false;
+	}
+
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize({ImGui::GetMainViewport()->Size.x * 0.25, ImGui::GetMainViewport()->Size.y * 0.75}, ImGuiCond_Appearing);
+	if (ImGui::BeginPopupModal("Map Select", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		for(int x = 0; x <= 13; x++){
+			ImGui::BeginChild(std::format("##map{}Select", x).data(), ImVec2(ImGui::GetContentRegionAvail().x, 80.0f), ImGuiChildFlags_Border);
+				if(ImGui::IsWindowHovered()){
+					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10);
+					if(ImGui::IsMouseClicked(ImGuiMouseButton_Left)){
+						ImGui::CloseCurrentPopup();
+						GetSelectionManager()->ClearSelection();
+						renderer_scene->Clear();
+						
+						loadLock.lock();
+						mapLoading = true;
+						loadLock.unlock();
+
+						mapOperationThread = std::thread(&LBooldozerEditor::LoadMap, std::ref(*this), (std::filesystem::path(OPTIONS.mRootPath) / "files" / "Map" / std::format("map{}.szp", x)).string(), renderer_scene);
+						ImGui::OpenPopup("Loading Map");
+					}
+				}
+				// TODO: thumbnails - from starforge
+				//uint32_t imgId = mCurrentProject->GetThumbnail(galaxy["internalName"].get<std::string>());
+				//if(imgId != 0xFFFFFFFF){
+				//	ImGui::Image((ImTextureID)imgId, ImVec2(84, 64));
+				//} else {
+				//	ImGui::Image((ImTextureID)mProjImageID, ImVec2(64, 64));
+				//}
+				ImGui::SameLine();
+				ImGui::BeginGroup();
+				ImGui::Text(std::format("Map {}", x).data()); // map config? so they can be named?
+				ImGui::EndGroup();
+			ImGui::EndChild();
+		}
+		ImGui::EndPopup();
+	}
+
+    center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal("Clear Map", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("You are about to clear *everything* from this map, including all room archives, are you sure?");
+
+		ImGui::Separator();
+		if (ImGui::Button("Yes")) {
+			renderer_scene->Clear();
+			auto rooms = mLoadedMap->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
+
+			std::shared_ptr<LRoomDOMNode> newRoom = std::make_shared<LRoomDOMNode>("Room 0");
+			std::shared_ptr<LRoomDataDOMNode> newRoomData = std::make_shared<LRoomDataDOMNode>("Room 0");
+
+			std::string resourcePathRoot = std::filesystem::path(rooms[0]->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0]->GetResourcePath()).parent_path().string();
+			newRoomData->SetRoomResourcePath(std::format("{}/room_00.arc", resourcePathRoot));
+
+			std::string resPathInRoot = std::format("{}/{}{}", OPTIONS.mRootPath, "files", newRoomData->GetResourcePath());
+
+			for(auto room : rooms){
+				mLoadedMap->RemoveChild(room);
+			}
+
+			for(auto door : mLoadedMap->GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door)){
+				mLoadedMap->RemoveChild(door);
+			}
+
+			// Clear all room resources
+			std::filesystem::remove_all(std::filesystem::path(resPathInRoot).parent_path());
+
+			if(!std::filesystem::exists(std::filesystem::path(resPathInRoot).parent_path())){
+				std::filesystem::create_directories(std::filesystem::path(resPathInRoot).parent_path());
+			}
+
+			std::cout << "[Editor]: Room resource path " << resPathInRoot << std::endl;
+			if(!std::filesystem::exists(resPathInRoot)){
+				std::shared_ptr<Archive::Rarc> arc = Archive::Rarc::Create();
+				std::shared_ptr<Archive::Folder> root = Archive::Folder::Create(arc);
+				arc->SetRoot(root);
+				// now before save, construct as path to replace directory seperators with proper system seps
+				arc->SaveToFile(std::filesystem::path(resPathInRoot).string());
+			}
+
+			// Setup default room
+			newRoomData->SetRoomID(0);
+			newRoomData->SetRoomIndex(0);
+
+			newRoomData->SetMin({-550, 0, 0});
+			newRoomData->SetMax({550, 500, 800});
+			newRoom->AddChild(newRoomData);
+			newRoom->SetRoomNumber(0);
+			newRoomData->GetAdjacencyList().push_back(newRoom);
+			
+			mLoadedMap->AddChild(newRoom);
+
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("No")) {
+			ImGui::CloseCurrentPopup();
+		} 
+		ImGui::EndPopup();
+	}
+
 	if (ImGui::BeginPopupModal("Unpatched DOL", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		ImGui::Text("This root has a clean DOL. Certain edits will not be reflected in game!");
@@ -255,7 +369,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::EndPopup();
 	}
 
-    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    center = ImGui::GetMainViewport()->GetCenter();
     ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 	if (ImGui::BeginPopupModal("Loading Map", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
 	{
@@ -487,11 +601,17 @@ void LBooldozerEditor::SaveMapToArchive(std::string file_path){
 void LBooldozerEditor::onOpenMapCB()
 {
 	ImGuiFileDialog::Instance()->OpenDialog("OpenMapDlg", "Open map archive", "Archives (*.arc *.szs *.szp){.arc,.szs,.szp}", OPTIONS.mLastOpenedMap);
+	//mClickedMapSelect = true;
 }
 
 void LBooldozerEditor::onAppendMapCB()
 {
-	ImGuiFileDialog::Instance()->OpenDialog("AppendMapDlg", "Open map archive", "Archives (*.arc *.szs *.szp){.arc,.szs,.szp}", OPTIONS.mLastOpenedMap);
+	ImGuiFileDialog::Instance()->OpenDialog("AppendMapDlg", "Append Map Archive to Current Map", "Archives (*.arc *.szs *.szp){.arc,.szs,.szp}", OPTIONS.mLastOpenedMap);
+}
+
+void LBooldozerEditor::onClearMapCB()
+{
+	mClickedMapClear = true;
 }
 
 void LBooldozerEditor::onOpenRoomsCB()

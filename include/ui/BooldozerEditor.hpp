@@ -52,6 +52,8 @@ class LBooldozerEditor
 	bool bInitialized { false };
 
 	bool mOnStartPopup { false };
+	bool mClickedMapSelect { false };
+	bool mClickedMapClear { false };
 
 	uint32_t mMainDockSpaceID { 0 };
 	uint32_t mDockNodeLeftID { 0 };
@@ -90,6 +92,8 @@ public:
 	void onOpenMapCB();
 
 	void onAppendMapCB();
+
+	void onClearMapCB();
 
 	// Callback for when the user requests to open one or more room arcs.
 	void onOpenRoomsCB();

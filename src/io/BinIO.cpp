@@ -576,10 +576,10 @@ void BinScenegraphNode::AddMesh(int16_t material, int16_t mesh){
     meshes.push_back(std::pair(material, mesh));
 }
 
-float MixTrack(LTrackCommon* track, float curFrame, uint32_t& mNextKey){
+float MixTrack(LTrackCommon* track, uint32_t frameCount, float curFrame, uint32_t& mNextKey){
     if(mNextKey < track->mKeys.size()){
         float v = InterpolateHermite(
-            (curFrame - track->mFrames[track->mKeys[mNextKey - 1]].frame) / (track->mFrames[track->mKeys[mNextKey]].frame - track->mFrames[track->mKeys[mNextKey - 1]].frame),
+            (uint32_t)(((uint32_t)curFrame - track->mFrames[track->mKeys[mNextKey - 1]].frame) / (track->mFrames[track->mKeys[mNextKey]].frame - track->mFrames[track->mKeys[mNextKey - 1]].frame)),
             track->mFrames[track->mKeys[mNextKey - 1]].frame,
             track->mFrames[track->mKeys[mNextKey - 1]].value,
             track->mFrames[track->mKeys[mNextKey - 1]].outslope,
@@ -587,7 +587,8 @@ float MixTrack(LTrackCommon* track, float curFrame, uint32_t& mNextKey){
             track->mFrames[track->mKeys[mNextKey]].value,
             track->mFrames[track->mKeys[mNextKey]].inslope
         );
-        if(std::floor(curFrame) >= track->mKeys[mNextKey]){
+
+        if(std::floor(curFrame) >= track->mFrames[track->mKeys[mNextKey]].frame){
             mNextKey += 1;
         }
         return v;
@@ -606,24 +607,24 @@ void BinScenegraphNode::Draw(glm::mat4 localTransform, glm::mat4* instance, BinM
         if(animate && bin->mAnimationInformation.mLoaded && bin->mAnimationInformation.mPlaying){
             //modify mtx based off of current frame 
 
-	        float sx = -MixTrack(&mXScaleTrack, bin->mAnimationInformation.mCurrentFrame, mNextScaleKeyX);
-	        float sy = MixTrack(&mYScaleTrack, bin->mAnimationInformation.mCurrentFrame, mNextScaleKeyY);
-	        float sz = MixTrack(&mZScaleTrack, bin->mAnimationInformation.mCurrentFrame, mNextScaleKeyZ);
+	        float sx = MixTrack(&mXScaleTrack, bin->mAnimationInformation.mFrameCount, bin->mAnimationInformation.mCurrentFrame, mNextScaleKeyX);
+	        float sy = MixTrack(&mYScaleTrack, bin->mAnimationInformation.mFrameCount, bin->mAnimationInformation.mCurrentFrame, mNextScaleKeyY);
+	        float sz = MixTrack(&mZScaleTrack, bin->mAnimationInformation.mFrameCount, bin->mAnimationInformation.mCurrentFrame, mNextScaleKeyZ);
 
-            float rz = MixTrack(&mXRotTrack, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyX) * 0.0001533981f;
-            float ry = MixTrack(&mYRotTrack, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyY) * 0.0001533981f;
-            float rx = MixTrack(&mZRotTrack, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyZ) * 0.0001533981f;
+            float rz = MixTrack(&mXRotTrack, bin->mAnimationInformation.mFrameCount, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyX);
+            float ry = MixTrack(&mYRotTrack, bin->mAnimationInformation.mFrameCount, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyY);
+            float rx = MixTrack(&mZRotTrack, bin->mAnimationInformation.mFrameCount, bin->mAnimationInformation.mCurrentFrame, mNextRotKeyZ);
 
-            float px = -MixTrack(&mXPosTrack, bin->mAnimationInformation.mCurrentFrame, mNextPosKeyX);
-            float py = MixTrack(&mYPosTrack, bin->mAnimationInformation.mCurrentFrame, mNextPosKeyY);
-            float pz = MixTrack(&mZPosTrack, bin->mAnimationInformation.mCurrentFrame, mNextPosKeyZ);
+            float pz = MixTrack(&mXPosTrack, bin->mAnimationInformation.mFrameCount, bin->mAnimationInformation.mCurrentFrame, mNextPosKeyX);
+            float py = MixTrack(&mYPosTrack, bin->mAnimationInformation.mFrameCount, bin->mAnimationInformation.mCurrentFrame, mNextPosKeyY);
+            float px = MixTrack(&mZPosTrack, bin->mAnimationInformation.mFrameCount, bin->mAnimationInformation.mCurrentFrame, mNextPosKeyZ);
 
             glm::mat4 animTrasform(1.0f);
             
             //animTrasform = glm::scale(animTrasform, glm::vec3(sx, sy, sz));
-            animTrasform = glm::rotate(animTrasform, rx, glm::vec3(1, 0, 0));
-            animTrasform = glm::rotate(animTrasform, ry, glm::vec3(0, 1, 0));
-            animTrasform = glm::rotate(animTrasform, rz, glm::vec3(0, 0, 1));
+            animTrasform = glm::rotate(animTrasform, glm::radians(rx * 0.0001533981f), glm::vec3(1, 0, 0));
+            animTrasform = glm::rotate(animTrasform, glm::radians(ry * 0.0001533981f), glm::vec3(0, 1, 0));
+            animTrasform = glm::rotate(animTrasform, glm::radians(rz * 0.0001533981f), glm::vec3(0, 0, 1));
             animTrasform = glm::translate(animTrasform, glm::vec3(px, py, pz));
 
             mtx = *instance * localTransform * (transform * animTrasform);
@@ -806,9 +807,9 @@ std::shared_ptr<BinScenegraphNode> BinModel::ParseSceneraph(bStream::CStream* st
 
     
     current->transform = glm::scale(current->transform, scale); 
-    current->transform = glm::rotate(current->transform, glm::radians(rotation.x) * 0.0001533981f, glm::vec3(1, 0, 0));
-    current->transform = glm::rotate(current->transform, glm::radians(rotation.y) * 0.0001533981f, glm::vec3(0, 1, 0));
-    current->transform = glm::rotate(current->transform, glm::radians(rotation.z) * 0.0001533981f, glm::vec3(0, 0, 1));
+    current->transform = glm::rotate(current->transform, glm::radians(rotation.x * 0.0001533981f), glm::vec3(1, 0, 0));
+    current->transform = glm::rotate(current->transform, glm::radians(rotation.y * 0.0001533981f), glm::vec3(0, 1, 0));
+    current->transform = glm::rotate(current->transform, glm::radians(rotation.z * 0.0001533981f), glm::vec3(0, 0, 1));
     current->transform = glm::translate(current->transform, translation);
 
     stream->skip(4*7);

@@ -182,17 +182,22 @@ void LBooldozerApp::RenderUI(float deltaTime) {
     // Menu bar
     if (ImGui::BeginMainMenuBar())
     {
-        if (ImGui::BeginMenu("File"))
+        if (ImGui::BeginMenu("Map"))
         {
-            if (ImGui::MenuItem("Open Map..."))
+            if (ImGui::MenuItem("Open..."))
                 mEditorContext.onOpenMapCB();
-            if (ImGui::MenuItem("Append Map..."))
+            if (ImGui::MenuItem("Append..."))
                 mEditorContext.onAppendMapCB();
 
             ImGui::Separator();
+			if (ImGui::MenuItem("Clear..."))
+                mEditorContext.onClearMapCB();
 
-			if (ImGui::MenuItem("Save Map..."))
+			ImGui::Separator();
+
+			if (ImGui::MenuItem("Save..."))
                 mEditorContext.onSaveMapArchiveCB();
+
 
             ImGui::EndMenu();
         }

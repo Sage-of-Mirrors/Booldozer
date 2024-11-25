@@ -217,7 +217,8 @@ void LEditorScene::UpdateRenderers(){
 		}
 	}
 	
-	if(auto firstRoom = mCurrentRooms[0].lock()){
+	if(!mCurrentRooms[0].expired()){
+		std::shared_ptr<LRoomDOMNode> firstRoom = mCurrentRooms[0].lock();
 		std::shared_ptr<LMapDOMNode> mapNode = firstRoom->GetParentOfType<LMapDOMNode>(EDOMNodeType::Map).lock();
 		std::shared_ptr<LMapCollisionDOMNode> col = mapNode->GetChildrenOfType<LMapCollisionDOMNode>(EDOMNodeType::MapCollision)[0];
 		if(col->GetIsRendered()){
@@ -297,7 +298,8 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	for(std::weak_ptr<LDoorDOMNode> doorRef : mRoomDoors){
-		if (std::shared_ptr<LDoorDOMNode> door = doorRef.lock())
+		std::shared_ptr<LDoorDOMNode> door = doorRef.lock();
+		if (!doorRef.expired())
 		{
 			EDoorModel doorType = door->GetModel();
 			if (doorType == EDoorModel::None)
@@ -438,8 +440,9 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 	//This is ensured to exist, but check it anyway
 	if(roomData.size() != 0)
 	{
+		mCurrentRooms.push_back(room);
 		mCurrentRooms = roomData.front()->GetAdjacencyList();
-			
+
 		mRoomDoors = roomData.front()->GetDoorList();
 
 		for (std::weak_ptr<LRoomDOMNode>& adjacentRoomRef :  roomData.front()->GetAdjacencyList())

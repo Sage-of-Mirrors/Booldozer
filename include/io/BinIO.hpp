@@ -136,6 +136,7 @@ public:
     
 
 	glm::mat4 transform;
+	glm::vec3 mScale, mRotation, mTranslation;
 	float mBoundingSphereRadius;
 
 	void ResetAnimation();

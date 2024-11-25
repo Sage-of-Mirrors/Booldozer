@@ -48,8 +48,8 @@ void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 			arc->SaveToFile(std::filesystem::path(resPathInRoot).string());
 		}
 
-		newRoomData->SetRoomID(rooms.size());
-		newRoomData->SetRoomIndex(rooms.size());
+		newRoomData->SetRoomID(rooms.size()-1);
+		newRoomData->SetRoomIndex(rooms.size()-1);
 		newRoom->AddChild(newRoomData);
 
 		newRoom->SetRoomNumber(rooms.size());
