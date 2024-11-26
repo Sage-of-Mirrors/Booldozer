@@ -529,16 +529,6 @@ bool LMapDOMNode::SaveMirrorData()
 
 	std::vector<std::shared_ptr<LMirrorDOMNode>> MirrorNodes = GetChildrenOfType<LMirrorDOMNode>(EDOMNodeType::Mirror);
 
-	if (MirrorNodes.size() == 0)
-	{
-		if (std::filesystem::exists(mirrorsPath))
-		{
-			std::filesystem::remove(mirrorsPath);
-		}
-
-		return true;
-	}
-
 	bStream::CMemoryStream memStream = bStream::CMemoryStream(8 + (MirrorNodes.size() * 0x38), bStream::Big, bStream::Out);
 	memStream.writeUInt32(MirrorNodes.size());
 	memStream.writeUInt32(0);

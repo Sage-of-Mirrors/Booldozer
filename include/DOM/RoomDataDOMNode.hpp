@@ -60,6 +60,7 @@ public:
 	void SetMin(glm::vec3 min) { bbmin = min; }
 	void SetMax(glm::vec3 max) { bbmax = max; }
 
+	uint32_t* GetCameraBehavior() { return &mCameraBehavior; }
 	float* GetDarkColor() { return &mDarkColor.r; }
 
 	int32_t GetRoomIndex() const { return mRoomIndex; }

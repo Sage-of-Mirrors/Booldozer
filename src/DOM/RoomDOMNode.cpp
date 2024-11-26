@@ -638,6 +638,9 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 	ImGui::InputInt("Sound Room Size", &mSoundRoomSize);
 	LUIUtility::RenderTooltip("???");
 
+	ImGui::InputInt("Camera Behavior", (int32_t*)dataNode->GetCameraBehavior());
+	LUIUtility::RenderTooltip("Behavior type the camera will use in this room.");
+
 	// Bounding Box
 	ImGui::Text("Bounding Box");
 	glm::vec3 min = dataNode->GetMin();
@@ -668,10 +671,7 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 	ImGui::NewLine();
 
 	auto chestData = GetChildrenOfType<LTreasureTableDOMNode>(EDOMNodeType::TreasureTable);
-	if (chestData.size() == 0)
-		return;
-
-	if (ImGui::TreeNode("Treasure Chest Settings"))
+	if (chestData.size() != 0 && ImGui::TreeNode("Treasure Chest Settings"))
 	{
 		chestData[0]->RenderDetailsUI(dt);
 		ImGui::TreePop();
@@ -681,8 +681,15 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 	{
 		int index = dataNode->GetRoomIndex();
 		int id = dataNode->GetRoomID();
-		ImGui::InputInt("Room Index", &index);
-		ImGui::InputInt("Room ID", &id);
+		
+		if(ImGui::InputInt("Room Index", &index)){
+			dataNode->SetRoomIndex(index);
+		}
+
+		if(ImGui::InputInt("Room ID", &id)){
+			dataNode->SetRoomID(id);
+		}
+
 		ImGui::TreePop();
 	}
 }

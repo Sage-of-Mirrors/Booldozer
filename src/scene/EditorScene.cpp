@@ -110,6 +110,8 @@ void LEditorScene::Init(){
 }
 
 void LEditorScene::Clear(){
+	mRoomDoors.clear();
+	mCurrentRooms.clear();
 	mPathRenderer.mPaths.clear();
 	mPointManager.mBillboards.clear();
 }

@@ -202,7 +202,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
     ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	ImGui::SetNextWindowSize({ImGui::GetMainViewport()->Size.x * 0.25, ImGui::GetMainViewport()->Size.y * 0.75}, ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize({ImGui::GetMainViewport()->Size.x * 0.25f, ImGui::GetMainViewport()->Size.y * 0.75f}, ImGuiCond_Appearing);
 	if (ImGui::BeginPopupModal("Map Select", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		for(int x = 0; x <= 13; x++){
@@ -247,6 +247,8 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::Separator();
 		if (ImGui::Button("Yes")) {
 			renderer_scene->Clear();
+			GetSelectionManager()->ClearSelection();
+			
 			auto rooms = mLoadedMap->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
 
 			std::shared_ptr<LRoomDOMNode> newRoom = std::make_shared<LRoomDOMNode>("Room 0");
@@ -257,12 +259,20 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 			std::string resPathInRoot = std::format("{}/{}{}", OPTIONS.mRootPath, "files", newRoomData->GetResourcePath());
 
-			for(auto room : rooms){
-				mLoadedMap->RemoveChild(room);
+			for(auto ent : mLoadedMap->GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Entity)){
+				mLoadedMap->RemoveChild(ent);
+			}
+			
+			for(auto mirror : mLoadedMap->GetChildrenOfType<LMirrorDOMNode>(EDOMNodeType::Mirror)){
+				mLoadedMap->RemoveChild(mirror);
 			}
 
 			for(auto door : mLoadedMap->GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door)){
 				mLoadedMap->RemoveChild(door);
+			}
+
+			for(auto room : rooms){
+				mLoadedMap->RemoveChild(room);
 			}
 
 			// Clear all room resources
@@ -285,8 +295,8 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 			newRoomData->SetRoomID(0);
 			newRoomData->SetRoomIndex(0);
 
-			newRoomData->SetMin({-550, 0, 0});
-			newRoomData->SetMax({550, 500, 800});
+			newRoomData->SetMin({-1000, 0, -1000});
+			newRoomData->SetMax({1000, 1000, 1000});
 			newRoom->AddChild(newRoomData);
 			newRoom->SetRoomNumber(0);
 			newRoomData->GetAdjacencyList().push_back(newRoom);
