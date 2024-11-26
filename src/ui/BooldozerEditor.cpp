@@ -28,6 +28,7 @@
 #include "scene/ModelViewer.hpp"
 #include <format>
 
+
 namespace {
 	char* patchErrorMsg { nullptr };
 	std::thread mapOperationThread {};
@@ -54,6 +55,9 @@ LBooldozerEditor::~LBooldozerEditor(){
 
 	CameraAnimation::CleanupPreview();
 	PreviewWidget::CleanupPreview();
+
+	LResUtility::CleanupThumbnails();
+
 }
 
 void LBooldozerEditor::LoadMap(std::string path, LEditorScene* scene){
@@ -137,6 +141,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 		GCResourceManager.Init();
 		renderer_scene->LoadResFromRoot();
+		LResUtility::LoadMapThumbnails();
 		
 		if (OPTIONS.mRootPath == "")
 		{
@@ -190,6 +195,121 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::EndPopup();
 	}
 
+
+	if (ImGui::BeginPopupModal("Unpatched DOL", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("This root has a clean DOL. Certain edits will not be reflected in game!");
+		ImGui::Text("Apply externalized map data patch?");
+		ImGui::Separator();
+		if (ImGui::Button("Yes")) {
+			std::filesystem::path patchPath = std::filesystem::current_path() / RES_BASE_PATH / "externalizemaps.patch";
+			std::filesystem::path dolPath = std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol";
+			std::filesystem::path patchedPath = std::filesystem::path(OPTIONS.mRootPath) / "sys" / "patched.dol";
+			std::filesystem::path backupPath = std::filesystem::path(OPTIONS.mRootPath) / "sys" / ".main_dol_backup";
+
+			if(std::filesystem::exists(patchedPath)){
+				std::filesystem::remove(patchedPath);
+			}
+
+			if(std::filesystem::exists(backupPath)){
+				std::filesystem::remove(backupPath);
+			}
+
+			//Copy DOL to a backup
+			std::filesystem::copy(dolPath, std::filesystem::path(OPTIONS.mRootPath) / "sys" / ".main_dol_backup");
+		
+			if(std::filesystem::exists(patchPath)){
+				patchErrorMsg = bspatch(dolPath.string().c_str(), patchedPath.string().c_str(), patchPath.string().c_str());
+				if(patchErrorMsg == NULL){
+					std::filesystem::remove(dolPath);
+					std::filesystem::copy(patchedPath, dolPath);
+					std::filesystem::remove(patchedPath);
+					OPTIONS.mIsDOLPatched = true;
+				} else {
+					ImGui::CloseCurrentPopup();
+					ImGui::OpenPopup("Patching Error");
+				}
+			} else {
+				ImGui::OpenPopup("Missing Patch File");
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("No")) {
+			ImGui::CloseCurrentPopup();
+		} 
+		ImGui::EndPopup();
+	}
+
+	if (ImGui::BeginPopupModal("Patching Error", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("Error Applying Patch: %s", patchErrorMsg);
+		ImGui::Separator();
+		if (ImGui::Button("Ok")) {
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+
+	if (ImGui::BeginPopupModal("Missing Patch File", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("Patch file not found!");
+		ImGui::Separator();
+		if (ImGui::Button("Ok")) {
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal("Loading Map", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
+	{
+        const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+		ImGui::AlignTextToFramePadding();
+		ImGui::Spinner("##loadmapSpinner", 5.0f, 2, col);
+		ImGui::SameLine();
+		ImGui::Text("Loading Map...");
+		
+		loadLock.lock();
+		if(mapLoading == false){
+			std::cout << "[BooldozerEditor]: Joining load/append thread" << std::endl;
+			mapOperationThread.join();
+
+			auto rooms = mLoadedMap->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
+			
+			if(rooms.size() > 0){
+				renderer_scene->SetRoom(rooms[0]);
+			}
+
+			ImGui::CloseCurrentPopup();
+		}
+		loadLock.unlock();
+
+		ImGui::EndPopup();
+	}
+
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal("Saving Map", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
+	{
+        const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+		ImGui::AlignTextToFramePadding();
+		ImGui::Spinner("##loadmapSpinner", 5.0f, 2, col);
+		ImGui::SameLine();
+		ImGui::Text("Saving Map...");
+
+		loadLock.lock();
+		if(mapLoading == false){
+			std::cout << "[BooldozerEditor]: Joining save thread" << std::endl;
+			mapOperationThread.join();
+			ImGui::CloseCurrentPopup();
+		}
+		loadLock.unlock();
+
+		ImGui::EndPopup();
+	}
+
 	if(mClickedMapSelect){
 		ImGui::OpenPopup("Map Select");
 		mClickedMapSelect = false;
@@ -200,11 +320,22 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		mClickedMapClear = false;
 	}
 
-    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+	if(mSaveMapClicked){
+		loadLock.lock();
+		mapLoading = true;
+		loadLock.unlock();
+
+		mapOperationThread = std::thread(&LBooldozerEditor::SaveMap, std::ref(*this), (std::filesystem::path(OPTIONS.mRootPath) / "files" / "Map" / std::format("map{}.szp", mSelectedMap)).string());
+		ImGui::OpenPopup("Saving Map");
+		// This gets set later after we save the thumbnail SaveMapClicked = false;
+	}
+
+    center = ImGui::GetMainViewport()->GetCenter();
     ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	ImGui::SetNextWindowSize({ImGui::GetMainViewport()->Size.x * 0.25f, ImGui::GetMainViewport()->Size.y * 0.75f}, ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize({ImGui::GetMainViewport()->Size.x * 0.32f, ImGui::GetMainViewport()->Size.y * 0.8f}, ImGuiCond_Appearing);
 	if (ImGui::BeginPopupModal("Map Select", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 	{
+		bool openedMap = false;
 		for(int x = 0; x <= 13; x++){
 			ImGui::BeginChild(std::format("##map{}Select", x).data(), ImVec2(ImGui::GetContentRegionAvail().x, 80.0f), ImGuiChildFlags_Border);
 				if(ImGui::IsWindowHovered()){
@@ -214,21 +345,13 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 						GetSelectionManager()->ClearSelection();
 						renderer_scene->Clear();
 						
-						loadLock.lock();
-						mapLoading = true;
-						loadLock.unlock();
-
-						mapOperationThread = std::thread(&LBooldozerEditor::LoadMap, std::ref(*this), (std::filesystem::path(OPTIONS.mRootPath) / "files" / "Map" / std::format("map{}.szp", x)).string(), renderer_scene);
-						ImGui::OpenPopup("Loading Map");
+						openedMap = true;
+						mSelectedMap = x;
 					}
 				}
 				// TODO: thumbnails - from starforge
-				//uint32_t imgId = mCurrentProject->GetThumbnail(galaxy["internalName"].get<std::string>());
-				//if(imgId != 0xFFFFFFFF){
-				//	ImGui::Image((ImTextureID)imgId, ImVec2(84, 64));
-				//} else {
-				//	ImGui::Image((ImTextureID)mProjImageID, ImVec2(64, 64));
-				//}
+				uint32_t imgId = LResUtility::GetMapThumbnail(x);
+				ImGui::Image((ImTextureID)imgId, ImVec2(84, 64), ImVec2(0.0, 1.0), ImVec2(1.0, 0.0));
 				ImGui::SameLine();
 				ImGui::BeginGroup();
 				ImGui::Text(std::format("Map {}", x).data()); // map config? so they can be named?
@@ -236,6 +359,14 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 			ImGui::EndChild();
 		}
 		ImGui::EndPopup();
+
+		if(openedMap){
+			loadLock.lock();
+			mapLoading = true;
+			loadLock.unlock();
+			mapOperationThread = std::thread(&LBooldozerEditor::LoadMap, std::ref(*this), (std::filesystem::path(OPTIONS.mRootPath) / "files" / "Map" / std::format("map{}.szp", mSelectedMap)).string(), renderer_scene);
+			ImGui::OpenPopup("Loading Map");
+		}
 	}
 
     center = ImGui::GetMainViewport()->GetCenter();
@@ -313,133 +444,6 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::EndPopup();
 	}
 
-	if (ImGui::BeginPopupModal("Unpatched DOL", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		ImGui::Text("This root has a clean DOL. Certain edits will not be reflected in game!");
-		ImGui::Text("Apply externalized map data patch?");
-		ImGui::Separator();
-		if (ImGui::Button("Yes")) {
-			std::filesystem::path patchPath = std::filesystem::current_path() / RES_BASE_PATH / "externalizemaps.patch";
-			std::filesystem::path dolPath = std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol";
-			std::filesystem::path patchedPath = std::filesystem::path(OPTIONS.mRootPath) / "sys" / "patched.dol";
-			std::filesystem::path backupPath = std::filesystem::path(OPTIONS.mRootPath) / "sys" / ".main_dol_backup";
-
-			if(std::filesystem::exists(patchedPath)){
-				std::filesystem::remove(patchedPath);
-			}
-
-			if(std::filesystem::exists(backupPath)){
-				std::filesystem::remove(backupPath);
-			}
-
-			//Copy DOL to a backup
-			std::filesystem::copy(dolPath, std::filesystem::path(OPTIONS.mRootPath) / "sys" / ".main_dol_backup");
-		
-			if(std::filesystem::exists(patchPath)){
-				patchErrorMsg = bspatch(dolPath.string().c_str(), patchedPath.string().c_str(), patchPath.string().c_str());
-				if(patchErrorMsg == NULL){
-					std::filesystem::remove(dolPath);
-					std::filesystem::copy(patchedPath, dolPath);
-					std::filesystem::remove(patchedPath);
-					OPTIONS.mIsDOLPatched = true;
-				} else {
-					ImGui::CloseCurrentPopup();
-					ImGui::OpenPopup("Patching Error");
-				}
-			} else {
-				ImGui::OpenPopup("Missing Patch File");
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::CloseCurrentPopup();
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("No")) {
-			ImGui::CloseCurrentPopup();
-		} 
-		ImGui::EndPopup();
-	}
-
-	if (ImGui::BeginPopupModal("Patching Error", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		ImGui::Text("Error Applying Patch: %s", patchErrorMsg);
-		ImGui::Separator();
-		if (ImGui::Button("Ok")) {
-			ImGui::CloseCurrentPopup();
-		}
-		ImGui::EndPopup();
-	}
-
-	if (ImGui::BeginPopupModal("Missing Patch File", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		ImGui::Text("Patch file not found!");
-		ImGui::Separator();
-		if (ImGui::Button("Ok")) {
-			ImGui::CloseCurrentPopup();
-		}
-		ImGui::EndPopup();
-	}
-
-    center = ImGui::GetMainViewport()->GetCenter();
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal("Loading Map", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
-	{
-        const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
-		ImGui::AlignTextToFramePadding();
-		ImGui::Spinner("##loadmapSpinner", 5.0f, 2, col);
-		ImGui::SameLine();
-		ImGui::Text("Loading Map...");
-		
-		loadLock.lock();
-		if(mapLoading == false){
-			std::cout << "[BooldozerEditor]: Joining load/append thread" << std::endl;
-			mapOperationThread.join();
-
-			auto rooms = mLoadedMap->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
-			
-			if(rooms.size() > 0){
-				renderer_scene->SetRoom(rooms[0]);
-			}
-
-			ImGui::CloseCurrentPopup();
-		}
-		loadLock.unlock();
-
-		ImGui::EndPopup();
-	}
-
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal("Saving Map", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
-	{
-        const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
-		ImGui::AlignTextToFramePadding();
-		ImGui::Spinner("##loadmapSpinner", 5.0f, 2, col);
-		ImGui::SameLine();
-		ImGui::Text("Saving Map...");
-
-		loadLock.lock();
-		if(mapLoading == false){
-			std::cout << "[BooldozerEditor]: Joining save thread" << std::endl;
-			mapOperationThread.join();
-			ImGui::CloseCurrentPopup();
-		}
-		loadLock.unlock();
-
-		ImGui::EndPopup();
-	}
-		
-	if (LUIUtility::RenderFileDialog("OpenMapDlg", path))
-	{
-		GetSelectionManager()->ClearSelection();
-		renderer_scene->Clear();
-		
-		loadLock.lock();
-		mapLoading = true;
-		loadLock.unlock();
-
-		mapOperationThread = std::thread(&LBooldozerEditor::LoadMap, std::ref(*this), path, renderer_scene);
-		ImGui::OpenPopup("Loading Map");
-	}
-
 	if (LUIUtility::RenderFileDialog("AppendMapDlg", path))
 	{
 		GetSelectionManager()->ClearSelection();
@@ -450,16 +454,6 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 		mapOperationThread = std::thread(&LBooldozerEditor::AppendMap, std::ref(*this), path);
 		ImGui::OpenPopup("Loading Map");
-	}
-
-	if (LUIUtility::RenderFileDialog("SaveMapArchiveDlg", path))
-	{
-		loadLock.lock();
-		mapLoading = true;
-		loadLock.unlock();
-
-		mapOperationThread = std::thread(&LBooldozerEditor::SaveMap, std::ref(*this), path);
-		ImGui::OpenPopup("Saving Map");
 	}
 
 
@@ -480,8 +474,18 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	ImVec2 winSize = ImGui::GetContentRegionAvail();
 	ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 
+
 	glBindFramebuffer(GL_FRAMEBUFFER, mFbo);
 	glBindRenderbuffer(GL_RENDERBUFFER, mRbo);
+
+	if(mSaveMapClicked){
+		LResUtility::SaveMapThumbnail(static_cast<uint32_t>(winSize.x), static_cast<uint32_t>(winSize.y), mSelectedMap);
+		// Reload Thumbnails
+		LResUtility::CleanupThumbnails();
+		LResUtility::LoadMapThumbnails();
+		
+		mSaveMapClicked = false;
+	}
 
 	if(winSize.x != mPrevWinWidth || winSize.y != mPrevWinHeight){
 		glDeleteTextures(1, &mViewTex);
@@ -594,7 +598,8 @@ void LBooldozerEditor::OpenMap(std::string file_path)
 	mGhostConfigs.LoadConfigs(mLoadedMap);
 }
 
-void LBooldozerEditor::AppendMap(std::string map_path){
+void LBooldozerEditor::AppendMap(std::string map_path)
+{
 	auto appendMap = std::make_shared<LMapDOMNode>();
 	if(appendMap->LoadMap(std::filesystem::path(map_path))){
 		mLoadedMap->AppendMap(appendMap);
@@ -604,14 +609,14 @@ void LBooldozerEditor::AppendMap(std::string map_path){
 	loadLock.unlock();
 }
 
-void LBooldozerEditor::SaveMapToArchive(std::string file_path){
+void LBooldozerEditor::SaveMapToArchive(std::string file_path)
+{
 	mLoadedMap->SaveMapToArchive(file_path);
 }
 
 void LBooldozerEditor::onOpenMapCB()
 {
-	ImGuiFileDialog::Instance()->OpenDialog("OpenMapDlg", "Open map archive", "Archives (*.arc *.szs *.szp){.arc,.szs,.szp}", OPTIONS.mLastOpenedMap);
-	//mClickedMapSelect = true;
+	mClickedMapSelect = true;
 }
 
 void LBooldozerEditor::onAppendMapCB()
@@ -631,14 +636,13 @@ void LBooldozerEditor::onOpenRoomsCB()
 
 void LBooldozerEditor::onSaveMapCB()
 {
-	if (mLoadedMap != nullptr)
-		ImGuiFileDialog::Instance()->OpenDialog("SaveMapFilesDlg", "Choose a Folder", nullptr, OPTIONS.mLastSavedDirectory);
 }
 
 void LBooldozerEditor::onSaveMapArchiveCB()
 {
-	if (mLoadedMap != nullptr)
-		ImGuiFileDialog::Instance()->OpenDialog("SaveMapArchiveDlg", "Choose an Archive", "Archives (*.szp){.szp}", OPTIONS.mLastSavedDirectory);
+	if(mSelectedMap != -1 && mLoadedMap != nullptr){
+		mSaveMapClicked = true;
+	}
 }
 
 

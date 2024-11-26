@@ -3,8 +3,20 @@
 #include "imgui.h"
 #include <format>
 
+#include <glad/glad.h>
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+#include <stb_image_resize2.h>
+
+#include <stb_image.h>
+
 LResUtility::LGCResourceManager GCResourceManager;
+
 std::map<std::string, nlohmann::ordered_json> LResUtility::NameMaps = {};
+std::array<uint32_t, 15> LResUtility::MapThumbnails = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
 
 void LResUtility::LGCResourceManager::Init()
 {
@@ -25,6 +37,11 @@ void LResUtility::LGCResourceManager::Init()
 	} else {
 		std::cout << "[ResUtil]: Couldn't find game archive" << std::endl;
 	}
+
+	for(int id = 0; id <= 14; id++){
+		MapThumbnails[id] = 0xFFFFFFFF;
+	}
+
 }
 
 void LResUtility::LGCResourceManager::Cleanup(){}
@@ -147,4 +164,66 @@ void LResUtility::SaveUserSettings()
 		destFile << serialize;
 	else
 		std::cout << std::format("[ResUtil]: Error saving user settings to {0}", fullPath.string());
+}
+
+// Thumbnails
+void LResUtility::LoadMapThumbnails(){
+    for(int id = 0; id <= 14; id++){
+		int w, h, c;
+		unsigned char* defaultProjImg = nullptr;
+		
+		if(id != 14){
+			if(!std::filesystem::exists(std::filesystem::current_path() / RES_BASE_PATH / "thumb" / std::format("map{}.png", id))){
+				continue;
+			}
+			defaultProjImg = stbi_load((std::filesystem::current_path() / RES_BASE_PATH / "thumb" / std::format("map{}.png", id)).string().c_str(), &w, &h, &c, 4);
+		} else {
+			defaultProjImg = stbi_load((std::filesystem::current_path() / RES_BASE_PATH / "thumb" / "default_thumb.png").string().c_str(), &w, &h, &c, 4);
+		}
+
+		uint32_t thumbId;
+		glGenTextures(1, &thumbId);
+		glBindTexture(GL_TEXTURE_2D, thumbId);
+				
+		MapThumbnails[id] = (thumbId);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 4);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, defaultProjImg);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		stbi_image_free(defaultProjImg);
+	}
+}
+
+uint32_t LResUtility::GetMapThumbnail(uint32_t map) {
+	return (MapThumbnails[map] == 0xFFFFFFFF ? MapThumbnails[14]: MapThumbnails[map]);
+}
+
+void LResUtility::SaveMapThumbnail(uint32_t w, uint32_t h, uint32_t map){
+	if(!std::filesystem::exists(std::filesystem::current_path() / RES_BASE_PATH / "thumb")){
+		std::filesystem::create_directory(std::filesystem::current_path() / RES_BASE_PATH / "thumb");
+	}
+
+	unsigned char* imgData = new unsigned char[w * h * 4]{0};
+	unsigned char* imgDataScaled = new unsigned char[84 * 64 *4] {0};
+
+	glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, imgData);
+
+	stbir_resize_uint8_linear(imgData, w, h, 0, imgDataScaled, 84, 64, 0, STBIR_RGBA_NO_AW);
+
+	stbi_write_png((std::filesystem::current_path() / RES_BASE_PATH / "thumb" / std::format("map{}.png", map)).string().c_str(), 84, 64, 4,  imgDataScaled, 84 * 4);
+	delete imgData;
+	delete imgDataScaled;
+}
+
+void LResUtility::CleanupThumbnails(){
+	for(int id = 0; id <= 14; id++){
+		glDeleteTextures(1, &MapThumbnails[id]);
+	}
 }

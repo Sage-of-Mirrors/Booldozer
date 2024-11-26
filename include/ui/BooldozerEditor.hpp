@@ -52,8 +52,10 @@ class LBooldozerEditor
 	bool bInitialized { false };
 
 	bool mOnStartPopup { false };
+	bool mSaveMapClicked { false };
 	bool mClickedMapSelect { false };
 	bool mClickedMapClear { false };
+	int32_t mSelectedMap { -1 };
 
 	uint32_t mMainDockSpaceID { 0 };
 	uint32_t mDockNodeLeftID { 0 };

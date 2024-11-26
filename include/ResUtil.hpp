@@ -16,6 +16,13 @@ namespace LResUtility
 {
 	extern std::map<std::string, nlohmann::ordered_json> NameMaps;
 
+	extern std::array<uint32_t, 15> MapThumbnails;
+
+	uint32_t GetMapThumbnail(uint32_t map);
+	void SaveMapThumbnail(uint32_t w, uint32_t h, uint32_t map);
+	void LoadMapThumbnails();
+	void CleanupThumbnails();
+
 	nlohmann::ordered_json DeserializeJSON(std::filesystem::path file_path);
 
 	nlohmann::ordered_json GetNameMap(std::string name);
