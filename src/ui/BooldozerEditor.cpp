@@ -17,6 +17,7 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
+#include "misc/cpp/imgui_stdlib.h"
 #include <glad/glad.h>
 
 #include <bzlib.h>
@@ -57,7 +58,6 @@ LBooldozerEditor::~LBooldozerEditor(){
 	PreviewWidget::CleanupPreview();
 
 	LResUtility::CleanupThumbnails();
-
 }
 
 void LBooldozerEditor::LoadMap(std::string path, LEditorScene* scene){
@@ -335,28 +335,67 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	ImGui::SetNextWindowSize({ImGui::GetMainViewport()->Size.x * 0.32f, ImGui::GetMainViewport()->Size.y * 0.8f}, ImGuiCond_Appearing);
 	if (ImGui::BeginPopupModal("Map Select", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 	{
+		auto mapNames = LResUtility::GetNameMap("MapNames");
 		bool openedMap = false;
+		bool hovered = false;
+		bool closeEdit = false;
 		for(int x = 0; x <= 13; x++){
 			ImGui::BeginChild(std::format("##map{}Select", x).data(), ImVec2(ImGui::GetContentRegionAvail().x, 80.0f), ImGuiChildFlags_Border);
 				if(ImGui::IsWindowHovered()){
 					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10);
-					if(ImGui::IsMouseClicked(ImGuiMouseButton_Left)){
-						ImGui::CloseCurrentPopup();
-						GetSelectionManager()->ClearSelection();
-						renderer_scene->Clear();
-						
-						openedMap = true;
-						mSelectedMap = x;
-					}
+					hovered = true;
 				}
 				// TODO: thumbnails - from starforge
 				uint32_t imgId = LResUtility::GetMapThumbnail(x);
 				ImGui::Image((ImTextureID)imgId, ImVec2(84, 64), ImVec2(0.0, 1.0), ImVec2(1.0, 0.0));
 				ImGui::SameLine();
 				ImGui::BeginGroup();
-				ImGui::Text(std::format("Map {}", x).data()); // map config? so they can be named?
+				std::string name = mapNames["names"][x].get<std::string>();
+				if(x != mMapNameDialogEditingNameIdx){
+					ImGui::Text(name.data()); // map config? so they can be named?
+					ImGui::SameLine();
+					ImGui::Text(ICON_FK_PENCIL);
+					if(ImGui::IsItemClicked()){
+						mMapNameDialogEditingNameIdx = x;
+						mMapNameDialogEditingNameStr = name;
+					}
+				} else {
+					ImGui::InputText("##mapName", &mMapNameDialogEditingNameStr);
+					if(ImGui::IsKeyDown(ImGuiKey_Enter)){
+						mapNames["names"][x] = nlohmann::json(mMapNameDialogEditingNameStr);
+						LResUtility::SetNameMap("MapNames", mapNames);
+						std::ofstream namesConfig((std::filesystem::current_path() / RES_BASE_PATH / "names" / "MapNames.json").string()); 
+						namesConfig << mapNames;
+						mMapNameDialogEditingNameIdx = -1;
+						mMapNameDialogEditingNameStr = "";
+					}
+					ImGui::SameLine();
+					ImGui::Text(ICON_FK_CHECK);
+					if (ImGui::IsItemClicked()){
+						closeEdit = true;
+					}
+					
+				}
+				
+				if(mMapNameDialogEditingNameIdx == -1 && (hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left, false))){
+					ImGui::CloseCurrentPopup();
+					GetSelectionManager()->ClearSelection();
+					renderer_scene->Clear();
+					
+					openedMap = true;
+					mSelectedMap = x;
+				}
+				
 				ImGui::EndGroup();
 			ImGui::EndChild();
+		}
+		if(closeEdit){
+			mapNames["names"][mMapNameDialogEditingNameIdx] = nlohmann::json(mMapNameDialogEditingNameStr);
+			LResUtility::SetNameMap("MapNames", mapNames);
+			std::ofstream namesConfig((std::filesystem::current_path() / RES_BASE_PATH / "names" / "MapNames.json").string()); 
+			namesConfig << mapNames;
+			mMapNameDialogEditingNameIdx = -1;
+			mMapNameDialogEditingNameStr = "";
 		}
 		ImGui::EndPopup();
 

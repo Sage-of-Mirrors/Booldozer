@@ -26,6 +26,7 @@ namespace LResUtility
 	nlohmann::ordered_json DeserializeJSON(std::filesystem::path file_path);
 
 	nlohmann::ordered_json GetNameMap(std::string name);
+	void SetNameMap(std::string name, nlohmann::ordered_json json);
 	nlohmann::ordered_json GetMirrorTemplate(std::string name);
 
 	uint32_t GetStaticMapDataOffset(std::string mapName, std::string region);

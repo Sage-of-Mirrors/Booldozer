@@ -38,6 +38,15 @@ void LResUtility::LGCResourceManager::Init()
 		std::cout << "[ResUtil]: Couldn't find game archive" << std::endl;
 	}
 
+	if(std::filesystem::exists(std::filesystem::current_path() / NAMES_BASE_PATH / "MapNames.json")){
+		GetNameMap("MapNames");
+	} else {
+		NameMaps["MapNames"] = nlohmann::json();
+		NameMaps["MapNames"]["names"] = nlohmann::json::array();
+		for(int id = 0; id <= 14; id++){
+			NameMaps["MapNames"]["names"][id] = std::format("Map {}", id);
+		}
+	}
 	for(int id = 0; id <= 14; id++){
 		MapThumbnails[id] = 0xFFFFFFFF;
 	}
@@ -63,6 +72,10 @@ nlohmann::ordered_json LResUtility::DeserializeJSON(std::filesystem::path file_p
 	}
 
 	return j;
+}
+
+void LResUtility::SetNameMap(std::string name, nlohmann::ordered_json json){
+	NameMaps[name] = json;
 }
 
 nlohmann::ordered_json LResUtility::GetNameMap(std::string name)
@@ -124,18 +137,17 @@ std::filesystem::path LResUtility::GetMirrorDataPath(std::string mapName)
 
 
 std::tuple<std::string, std::string, bool> LResUtility::GetActorModelFromName(std::string name){
-	std::filesystem::path fullPath = std::filesystem::current_path() / RES_BASE_PATH / "names" / "ActorNames.json";
-	nlohmann::json deserializedJson = DeserializeJSON(fullPath);
+	auto names = GetNameMap("ActorNames");
 
-	if (deserializedJson.find(name) == deserializedJson.end())
+	if (names.find(name) == names.end())
 	{
 		std::cout << std::format("[ResUtil]: Actor {0} not found in actor data\n", name);
 		return {name, "", false};
 	}
 
-	bool fromGameArchive = deserializedJson.at(name).size() == 3;
+	bool fromGameArchive = names.at(name).size() == 3;
 
-	return { deserializedJson.at(name)[0], deserializedJson.at(name)[1],  fromGameArchive };
+	return { names.at(name)[0], names.at(name)[1],  fromGameArchive };
 }
 
 void LResUtility::LoadUserSettings()

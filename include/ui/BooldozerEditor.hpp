@@ -56,6 +56,8 @@ class LBooldozerEditor
 	bool mClickedMapSelect { false };
 	bool mClickedMapClear { false };
 	int32_t mSelectedMap { -1 };
+	int32_t mMapNameDialogEditingNameIdx { -1 };
+	std::string mMapNameDialogEditingNameStr { "" };
 
 	uint32_t mMainDockSpaceID { 0 };
 	uint32_t mDockNodeLeftID { 0 };
