@@ -388,6 +388,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 				
 				ImGui::EndGroup();
 			ImGui::EndChild();
+			if(openedMap) break;
 		}
 		if(closeEdit){
 			mapNames["names"][mMapNameDialogEditingNameIdx] = nlohmann::json(mMapNameDialogEditingNameStr);

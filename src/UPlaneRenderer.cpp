@@ -1,0 +1,146 @@
+#include "UPlaneRenderer.hpp"
+#include "stb_image.h"
+
+struct PlaneVertex {
+    glm::vec3 pos;
+    glm::vec2 texcoord;
+
+};
+
+static std::vector<PlaneVertex> PlaneVertices = {
+	{{-1,  1, 0}, {0.0, 1.0}},
+	{{ 1,  1, 0}, {1.0, 1.0}},
+	{{-1, -1, 0}, {0.0, 0.0}},
+	{{ 1, -1, 0}, {1.0, 0.0}}
+};
+
+const char* plane_vtx_shader_source = "#version 460\n\
+    uniform mat4 transform;\n\
+    layout(location = 0) in vec3 inPosition;\n\
+    layout(location = 1) in vec2 inTexCoord;\n\
+    \
+    layout(location = 0) out vec2 fragTexCoord;\n\
+    \
+    void main()\n\
+    {\
+        gl_Position = Proj * View * transform * vec4(inPosition, 1.0);\n\
+        fragTexCoord = inTexCoord;\n\
+    }\
+";
+
+const char* plane_frg_shader_source = "#version 460\n\
+    #extension GL_ARB_separate_shader_objects : enable\n\
+    \
+    uniform sampler2D texSampler;\n\
+    uniform int selected;\n\
+    uniform int pickID;\n\
+    layout(location = 0) in vec2 fragTexCoord;\n\
+    \
+    layout(location = 0) out vec4 outColor;\n\
+    layout(location = 1) out int outPick;\n\
+    \
+    void main()\n\
+    {\n\
+        vec4 baseColor = texture(texSampler, vec2(fragTexCoord.y, fragTexCoord.x));\n\
+        if(selected == 1){\n\
+            outColor = baseColor * vec4(1.0, 1.0, 0.2, 1.0);\n\
+        } else {\n\
+            outColor = baseColor;\n\
+        }\n\
+        outPick = pickID;\n\
+        if(baseColor.a < 1.0 / 255.0) discard;\n\
+    }\
+";
+
+void CPlaneRenderer::Init(std::string texPath){
+
+    // Compile Shaders for mirror planes
+	char glErrorLogBuffer[4096];
+	GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+	GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+
+	glShaderSource(vs, 1, &plane_vtx_shader_source, nullptr);
+	glShaderSource(fs, 1, &plane_frg_shader_source, nullptr);
+
+	glCompileShader(vs);
+
+	GLint status;
+	glGetShaderiv(vs, GL_COMPILE_STATUS, &status);
+	if(status == GL_FALSE){
+		GLint infoLogLength;
+		glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &infoLogLength);
+
+		glGetShaderInfoLog(vs, infoLogLength, nullptr, glErrorLogBuffer);
+
+		printf("[Editor Scene]: Compile failure in mirror vertex shader:\n%s\n", glErrorLogBuffer);
+	}
+
+	glCompileShader(fs);
+
+	glGetShaderiv(fs, GL_COMPILE_STATUS, &status);
+	if(status == GL_FALSE){
+		GLint infoLogLength;
+		glGetShaderiv(fs, GL_INFO_LOG_LENGTH, &infoLogLength);
+		glGetShaderInfoLog(fs, infoLogLength, nullptr, glErrorLogBuffer);
+		printf("[EditorScene]: Compile failure in mirror fragment shader:\n%s\n", glErrorLogBuffer);
+	}
+
+	mProgramID = glCreateProgram();
+
+	glAttachShader(mProgramID, vs);
+	glAttachShader(mProgramID, fs);
+
+	glLinkProgram(mProgramID);
+
+	glGetProgramiv(mProgramID, GL_LINK_STATUS, &status); 
+	if(GL_FALSE == status) {
+		GLint logLen; 
+		glGetProgramiv(mProgramID, GL_INFO_LOG_LENGTH, &logLen); 
+		glGetProgramInfoLog(mProgramID, logLen, nullptr, glErrorLogBuffer); 
+		printf("[EditorScene]: Mirror Shader Program Linking Error:\n%s\n", glErrorLogBuffer);
+	} 
+
+	glDetachShader(mProgramID, vs);
+	glDetachShader(mProgramID, fs);
+
+	glDeleteShader(vs);
+	glDeleteShader(fs);
+
+	glGenVertexArrays(1, &mVao);
+    glBindVertexArray(mVao);
+
+    glGenBuffers(1, &mVbo);
+    glBindBuffer(GL_ARRAY_BUFFER, mVbo);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(PlaneVertex), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(PlaneVertex), (void*)12);
+
+    glBufferData(GL_ARRAY_BUFFER, PlaneVertices.size() * sizeof(PlaneVertex), PlaneVertices.data(), GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+	int x,y,n;
+	unsigned char* img = stbi_load(texPath.c_str(), &x, &y, &n, 0);
+
+    glGenTextures(1, &mTexture);
+
+    glBindTexture(GL_TEXTURE_2D, mTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, img);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    stbi_image_free(img);
+}
+
+void CPlaneRenderer::Draw(glm::mat4* transform, uint32_t id, uint32_t selected){
+
+}
+
+CPlaneRenderer::~CPlaneRenderer(){
+    glDeleteTextures(1, &mTexture);
+    glDeleteProgram(mProgramID);
+    glDeleteVertexArrays(1, &mVao);
+    glDeleteBuffers(1, &mVbo);
+}

@@ -327,7 +327,7 @@ std::vector<BinVertex> ReadGXPrimitives(bStream::CStream* stream, std::vector<gl
         std::vector<std::pair<uint16_t, uint16_t>> primVertices(count);
 
         //Read Primitives
-        for (size_t v = 0; v < count; v++)
+        for (std::size_t v = 0; v < count; v++)
         {
             for(auto& attribute : attributes)
             {
@@ -370,7 +370,7 @@ std::vector<BinVertex> ReadGXPrimitives(bStream::CStream* stream, std::vector<gl
         {
         case Triangles:
 
-            for (size_t v = 0; v < count; v++)
+            for (std::size_t v = 0; v < count; v++)
             {
                 pos = vertices.at(primVertices.at(v).first);
                 texcoord = texcoords.at(primVertices.at(v).second);
@@ -384,7 +384,7 @@ std::vector<BinVertex> ReadGXPrimitives(bStream::CStream* stream, std::vector<gl
             break;
         
         case TriangleStrip:
-            for (size_t v = 2; v < count; v++)
+            for (std::size_t v = 2; v < count; v++)
             {
 
                 pos = vertices.at(primVertices.at(v - 2).first);
@@ -437,7 +437,7 @@ BinMesh::BinMesh(bStream::CStream* stream, uint32_t offset, std::vector<glm::vec
     std::vector<GXAttribute> attributes;
     uint32_t mask = 1;
 
-    for (size_t i = 0; i < 26; i++)
+    for (std::size_t i = 0; i < 26; i++)
     {
         if((attr & mask) >> i)
         {
@@ -729,7 +729,7 @@ BinModel::BinModel(bStream::CStream* stream){
     uint32_t chunkOffsets[21];
     stream->seek(12);
 
-    for (size_t o = 0; o < 21; o++)
+    for (std::size_t o = 0; o < 21; o++)
     {
         chunkOffsets[o] = stream->readUInt32();
     }
@@ -737,14 +737,14 @@ BinModel::BinModel(bStream::CStream* stream){
 
     uint32_t vertexCount = 0;
 
-    for(size_t o = 3; o < 21; o++)
+    for(std::size_t o = 3; o < 21; o++)
     {
         vertexCount = (uint32_t)((chunkOffsets[o] - chunkOffsets[2]) / 6) + 5;
         if(chunkOffsets[o] != 0) break;
     }
 
     uint32_t texcoordCount = 0; //(uint32_t)((chunkOffsets[10] - chunkOffsets[6]) / 8);
-    for(size_t o = 7; o < 21; o++)
+    for(std::size_t o = 7; o < 21; o++)
     {
         texcoordCount = (uint32_t)((chunkOffsets[o] - chunkOffsets[6]) / 8);
         if(chunkOffsets[o] != 0) break;
@@ -758,18 +758,18 @@ BinModel::BinModel(bStream::CStream* stream){
     std::vector<glm::vec2> texcoords;
     
     stream->seek(chunkOffsets[2]);
-    for (size_t v = 0; v < vertexCount; v++)
+    for (std::size_t v = 0; v < vertexCount; v++)
     {
         vertices.push_back(glm::vec3(stream->readInt16(), stream->readInt16(), stream->readInt16()));
     }
     
     stream->seek(chunkOffsets[6]);
-    for (size_t tc = 0; tc < texcoordCount; tc++)
+    for (std::size_t tc = 0; tc < texcoordCount; tc++)
     {
         texcoords.push_back(glm::vec2(stream->readFloat(), stream->readFloat()));
     }
 
-    for (size_t m = 0; m < material_count; m++)
+    for (std::size_t m = 0; m < material_count; m++)
     {
         stream->seek(chunkOffsets[1] + (0x14 * m));
         mMaterials.push_back(std::make_shared<BinMaterial>(stream, chunkOffsets[0]));
@@ -819,13 +819,13 @@ std::shared_ptr<BinScenegraphNode> BinModel::ParseSceneraph(bStream::CStream* st
     uint32_t meshOffset = stream->readUInt32();
     stream->seek(offsets[12] + meshOffset);
 
-    for (size_t m = 0; m < meshCount; m++)
+    for (std::size_t m = 0; m < meshCount; m++)
     {
         int16_t matIndex = stream->readInt16();
         int16_t meshIndex = stream->readInt16();
         
         if(mMeshes.count(meshIndex) == 0){
-            size_t r = stream->tell();
+            std::size_t r = stream->tell();
             stream->seek(offsets[11] + 0x18 * meshIndex);
 
             mMeshes[meshIndex] = std::make_shared<BinMesh>(stream, offsets[11], vertexData, texcoordData);
@@ -834,7 +834,7 @@ std::shared_ptr<BinScenegraphNode> BinModel::ParseSceneraph(bStream::CStream* st
         }
 
         if(mSamplers.count(matIndex) == 0){
-            size_t r = stream->tell();
+            std::size_t r = stream->tell();
 
             stream->seek(offsets[10] + 0x28 * matIndex);
 
@@ -926,8 +926,8 @@ void BinModel::InitShaders(){
     GLuint vs = glCreateShader(GL_VERTEX_SHADER);
     GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
 
-    glShaderSource(vs, 1, &default_vtx_shader_source, NULL);
-    glShaderSource(fs, 1, &default_frg_shader_source, NULL);
+    glShaderSource(vs, 1, &default_vtx_shader_source, nullptr);
+    glShaderSource(fs, 1, &default_frg_shader_source, nullptr);
 
     glCompileShader(vs);
 
@@ -937,7 +937,7 @@ void BinModel::InitShaders(){
         GLint infoLogLength;
         glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &infoLogLength);
 
-        glGetShaderInfoLog(vs, infoLogLength, NULL, glErrorLogBuffer);
+        glGetShaderInfoLog(vs, infoLogLength, nullptr, glErrorLogBuffer);
 
         printf("[Bin Loader]: Compile failure in vertex shader:\n%s\n", glErrorLogBuffer);
     }
@@ -949,7 +949,7 @@ void BinModel::InitShaders(){
         GLint infoLogLength;
         glGetShaderiv(fs, GL_INFO_LOG_LENGTH, &infoLogLength);
 
-        glGetShaderInfoLog(fs, infoLogLength, NULL, glErrorLogBuffer);
+        glGetShaderInfoLog(fs, infoLogLength, nullptr, glErrorLogBuffer);
 
         printf("[Bin Loader]: Compile failure in fragment shader:\n%s\n", glErrorLogBuffer);
     }
@@ -965,7 +965,7 @@ void BinModel::InitShaders(){
     if(GL_FALSE == status) {
         GLint logLen; 
         glGetProgramiv(mProgramID, GL_INFO_LOG_LENGTH, &logLen); 
-        glGetProgramInfoLog(mProgramID, logLen, NULL, glErrorLogBuffer); 
+        glGetProgramInfoLog(mProgramID, logLen, nullptr, glErrorLogBuffer); 
         printf("[Bin Loader]: Shader Program Linking Error:\n%s\n", glErrorLogBuffer);
     } 
 

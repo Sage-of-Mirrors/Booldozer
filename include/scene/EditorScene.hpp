@@ -25,6 +25,7 @@
 
 #include "UPathRenderer.hpp"
 #include "UPointSpriteManager.hpp"
+#include "UPlaneRenderer.hpp"
 
 class LEditorScene {
     bool Initialized;
@@ -33,6 +34,7 @@ class LEditorScene {
     uint32_t mFbo, mRbo, mViewTex, mPickTex;
     uint32_t mPrevWidth, mPrevHeight;
 
+    CPlaneRenderer mMirrorRenderer;
     CPointSpriteManager mPointManager;
     CPathRenderer mPathRenderer;
     
