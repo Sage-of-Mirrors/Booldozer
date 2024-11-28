@@ -91,7 +91,7 @@ void LEditorScene::Init(){
 
 	mPathRenderer.Init();
 	mPointManager.Init(512, 9);
-	mMirrorRenderer.Init(std::filesystem::current_path() / "res" / "img" / "mirror.png");
+	mMirrorRenderer.Init((std::filesystem::current_path() / "res" / "img" / "mirror.png").string());
 	
 	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "ice_generator.png", 0);
 	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "fire_generator.png", 1);
