@@ -1,3 +1,4 @@
+#pragma once
 #include <glm/glm.hpp>
 #include <vector>
 #include <glad/glad.h>
@@ -6,6 +7,9 @@
 
 class CPlaneRenderer {
     uint32_t mVao, mVbo, mProgramID, mTexture;
+    uint32_t mMVPUniform;
+    uint32_t mSelectedUniform;
+    uint32_t mPickIDUniform;
 
 public:
     void Init(std::string texPath);

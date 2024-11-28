@@ -1,5 +1,6 @@
 #include "UPlaneRenderer.hpp"
 #include "stb_image.h"
+#include "scene/EditorScene.hpp"
 
 struct PlaneVertex {
     glm::vec3 pos;
@@ -106,6 +107,10 @@ void CPlaneRenderer::Init(std::string texPath){
 	glDeleteShader(vs);
 	glDeleteShader(fs);
 
+    mMVPUniform = glGetUniformLocation(mProgramID, "gpu_ModelViewProjectionMatrix");
+    mSelectedUniform = glGetUniformLocation(mProgramID, "selected");
+    mPickIDUniform = glGetUniformLocation(mProgramID, "pickID");
+
 	glGenVertexArrays(1, &mVao);
     glBindVertexArray(mVao);
 
@@ -135,7 +140,18 @@ void CPlaneRenderer::Init(std::string texPath){
 }
 
 void CPlaneRenderer::Draw(glm::mat4* transform, uint32_t id, uint32_t selected){
+    glBindTexture(GL_TEXTURE_2D, mTexture);
 
+	glm::mat4 mvp = LEditorScene::GetEditorScene()->Camera.GetProjectionMatrix() * LEditorScene::GetEditorScene()->Camera.GetViewMatrix() * (*transform);
+
+    glUseProgram(mProgramID);
+    glBindVertexArray(mVao);
+    glUniformMatrix4fv(mMVPUniform, 1, 0, (float*)&mvp[0]);
+    glUniform1i(mSelectedUniform, selected);
+    glUniform1i(mPickIDUniform, id);
+    glDrawArrays(GL_QUADS, 0, 1);
+    glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 CPlaneRenderer::~CPlaneRenderer(){

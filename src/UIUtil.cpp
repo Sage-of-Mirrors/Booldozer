@@ -56,7 +56,7 @@ bool LUIUtility::RenderNodeSelectable(LDOMNodeBase* node, const bool& highlight)
 {
     bool s = highlight;
 
-    ImGui::Selectable(node->GetName().c_str(), &s);
+    ImGui::Selectable(std::format("{}##{}", node->GetName(), node->GetID()).c_str(), &s);
 
     if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
     {

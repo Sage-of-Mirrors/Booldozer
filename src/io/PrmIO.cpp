@@ -84,24 +84,26 @@ void LPrmIO::LoadConfigs(std::shared_ptr<LMapDOMNode>& map)
 
 void LPrmIO::SaveConfigsToFile()
 {
-    std::string paramsPth;
-    ImGuiFileDialog::Instance()->OpenDialog("SaveParamFilesDlg", "Choose a Folder", nullptr, (std::filesystem::path(OPTIONS.mRootPath) / "files").string());
-    if (LUIUtility::RenderFileDialog("SaveParamFilesDlg", paramsPth))
-	{
-        std::filesystem::path outFolder = paramsPth;
+    if(GCResourceManager.mLoadedGameArchive){
+        std::shared_ptr<Archive::Folder> ctpFolder = GCResourceManager.mGameArchive->GetFolder("/param/ctp");
 
-        for (const auto& file : mLoadedConfigs)
-        {
-            bStream::CFileStream out((outFolder / file).string(), bStream::Endianess::Big, bStream::OpenMode::Out);
-            Save(file, &out);
+        if(ctpFolder != nullptr){
+            for(auto paramFile : ctpFolder->GetFiles()){
+                auto name = std::filesystem::path(paramFile->GetName()).filename().stem();
+                bStream::CMemoryStream prm(paramFile->GetData(), paramFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+                Save(name.string(), &prm); 
+
+            }
         }
-	}
+    	std::filesystem::path gameArcPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Game" / "game_usa.szp";
+        GCResourceManager.mGameArchive->SaveToFile(gameArcPath.string(), Compression::Format::YAY0);
+    }
     
 }
 
 // Because these properties are consistent, we can write all of them and the game wont really care, so long as the ones it is looking for are present.
 
-void WritePropertyInt32(bStream::CFileStream* stream, uint16_t hash, std::string name, uint32_t v){
+void WritePropertyInt32(bStream::CStream* stream, uint16_t hash, std::string name, uint32_t v){
     stream->writeUInt16(hash);
     stream->writeUInt16(name.size());
     stream->writeString(name);
@@ -109,7 +111,7 @@ void WritePropertyInt32(bStream::CFileStream* stream, uint16_t hash, std::string
     stream->writeUInt32(v);
 };
 
-void WritePropertyFloat(bStream::CFileStream* stream, uint16_t hash, std::string name, float v){
+void WritePropertyFloat(bStream::CStream* stream, uint16_t hash, std::string name, float v){
     stream->writeUInt16(hash);
     stream->writeUInt16(name.size());
     stream->writeString(name);
@@ -117,7 +119,7 @@ void WritePropertyFloat(bStream::CFileStream* stream, uint16_t hash, std::string
     stream->writeFloat(v);
 };
 
-void WritePropertyInt16(bStream::CFileStream* stream, uint16_t hash, std::string name, uint16_t v){
+void WritePropertyInt16(bStream::CStream* stream, uint16_t hash, std::string name, uint16_t v){
     stream->writeUInt16(hash);
     stream->writeUInt16(name.size());
     stream->writeString(name);
@@ -125,7 +127,7 @@ void WritePropertyInt16(bStream::CFileStream* stream, uint16_t hash, std::string
     stream->writeUInt16(v);
 };
 
-void LPrmIO::Save(std::string name, bStream::CFileStream* stream)
+void LPrmIO::Save(std::string name, bStream::CStream * stream)
 {
     auto itemFishingNodes = mMap.lock()->GetChildrenOfType<LItemFishingDOMNode>(EDOMNodeType::ItemFishing);
     auto itemAppearNodes = mMap.lock()->GetChildrenOfType<LItemAppearDOMNode>(EDOMNodeType::ItemAppear);
