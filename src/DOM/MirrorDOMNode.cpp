@@ -51,6 +51,7 @@ bool LMirrorDOMNode::Load(const nlohmann::ordered_json& jsonEntry)
 
 	auto rotation = jsonEntry.at("Rotation");
 	mRotation = glm::vec3(rotation[2], rotation[1], rotation[0]);
+	mRotation.y = -mRotation.y;
 	
 	auto scale = jsonEntry.at("Scale");
 	mScale = glm::vec3(scale[0], scale[1], scale[2]);
@@ -85,7 +86,7 @@ bool LMirrorDOMNode::Load(bStream::CFileStream* stream)
 
 		float rotX, rotY, rotZ;
 		rotX = stream->readInt32() * (180.0f / 32768.0f);
-		rotY = stream->readInt32() * (180.0f / 32768.0f);
+		rotY = -stream->readInt32() * (180.0f / 32768.0f);
 		rotZ = stream->readInt32() * (180.0f / 32768.0f);
 		mRotation = glm::vec3(rotZ, rotY, rotX);
 
@@ -120,7 +121,7 @@ bool LMirrorDOMNode::Save(bStream::CMemoryStream* stream)
 		stream->writeFloat(mScale.z);
 
 		stream->writeInt32(mRotation.z * (32678.0f / 180.0f));
-		stream->writeInt32(mRotation.y * (32678.0f / 180.0f));
+		stream->writeInt32(-mRotation.y * (32678.0f / 180.0f));
 		stream->writeInt32(mRotation.x * (32678.0f / 180.0f));
 
 		stream->writeInt32(mCameraHeightOffset);

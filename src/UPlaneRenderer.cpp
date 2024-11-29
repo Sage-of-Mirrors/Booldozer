@@ -2,17 +2,11 @@
 #include "stb_image.h"
 #include "scene/EditorScene.hpp"
 
-struct PlaneVertex {
-    glm::vec3 pos;
-    glm::vec2 texcoord;
-
-};
-
-static std::vector<PlaneVertex> PlaneVertices = {
-	{{-100,  100, 0}, {0.0, 1.0}},
-	{{ 100,  100, 0}, {1.0, 1.0}},
-	{{-100, -100, 0}, {0.0, 0.0}},
-	{{ 100, -100, 0}, {1.0, 0.0}}
+static float PlaneVertices[] = {
+	0.0,  2.0,  1.0,  0.0, 1.0,
+	0.0,  0.0,  1.0,  1.0, 1.0,
+	0.0,  2.0, -1.0,  0.0, 0.0,
+	0.0,  0.0, -1.0,  1.0, 0.0
 };
 
 const char* plane_vtx_shader_source = "#version 460\n\
@@ -35,6 +29,8 @@ const char* plane_frg_shader_source = "#version 460\n\
     uniform sampler2D texSampler;\n\
     uniform int selected;\n\
     uniform int pickID;\n\
+    uniform int resX;\n\
+    uniform int resY;\n\
     layout(location = 0) in vec2 fragTexCoord;\n\
     \
     layout(location = 0) out vec4 outColor;\n\
@@ -42,14 +38,8 @@ const char* plane_frg_shader_source = "#version 460\n\
     \
     void main()\n\
     {\n\
-        vec4 baseColor = texture(texSampler, vec2(fragTexCoord.y, fragTexCoord.x));\n\
-        if(selected == 1){\n\
-            outColor = baseColor * vec4(1.0, 1.0, 0.2, 1.0);\n\
-        } else {\n\
-            outColor = baseColor;\n\
-        }\n\
+        outColor = texture(texSampler, vec2(fragTexCoord.y * resY, fragTexCoord.x * resX) * vec2(0.05, 0.05));\n\
         outPick = pickID;\n\
-        if(baseColor.a < 1.0 / 255.0) discard;\n\
     }\
 ";
 
@@ -107,9 +97,12 @@ void CPlaneRenderer::Init(std::string texPath){
 	glDeleteShader(vs);
 	glDeleteShader(fs);
 
-    mMVPUniform = glGetUniformLocation(mProgramID, "gpu_ModelViewProjectionMatrix");
+    mMVPUniform = glGetUniformLocation(mProgramID, "gpu_ModelViewProjectionMatrix");    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     mSelectedUniform = glGetUniformLocation(mProgramID, "selected");
     mPickIDUniform = glGetUniformLocation(mProgramID, "pickID");
+    mResX = glGetUniformLocation(mProgramID, "resX");
+    mResY = glGetUniformLocation(mProgramID, "resY");
 
 	glGenVertexArrays(1, &mVao);
     glBindVertexArray(mVao);
@@ -118,11 +111,11 @@ void CPlaneRenderer::Init(std::string texPath){
     glBindBuffer(GL_ARRAY_BUFFER, mVbo);
 
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(PlaneVertex), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float[5]), (void*)0);
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(PlaneVertex), (void*)12);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float[5]), (void*)12);
 
-    glBufferData(GL_ARRAY_BUFFER, PlaneVertices.size() * sizeof(PlaneVertex), PlaneVertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(PlaneVertices), PlaneVertices, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -134,24 +127,33 @@ void CPlaneRenderer::Init(std::string texPath){
 
     glBindTexture(GL_TEXTURE_2D, mTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, img);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     stbi_image_free(img);
+    glUseProgram(0);
 }
 
-void CPlaneRenderer::Draw(glm::mat4* transform, uint32_t id, uint32_t selected){
+void CPlaneRenderer::Draw(glm::mat4* transform, uint32_t id, uint32_t selected, int32_t texScaleX, int32_t texScaleY){
     glBindTexture(GL_TEXTURE_2D, mTexture);
 
-	glm::mat4 mvp = LEditorScene::GetEditorScene()->Camera.GetProjectionMatrix() * LEditorScene::GetEditorScene()->Camera.GetViewMatrix() * (*transform);
+	glm::mat4 mvp = LEditorScene::GetEditorScene()->Camera.GetProjectionMatrix() * LEditorScene::GetEditorScene()->Camera.GetViewMatrix();
+    mvp *= glm::scale((*transform), glm::vec3(1.0, texScaleY, texScaleX));
 
     glUseProgram(mProgramID);
     glBindVertexArray(mVao);
     glUniformMatrix4fv(mMVPUniform, 1, 0, (float*)&mvp[0]);
     glUniform1i(mSelectedUniform, selected);
     glUniform1i(mPickIDUniform, id);
-    glDrawArrays(GL_QUADS, 0, 1);
+    glUniform1i(mResX, texScaleX);
+    glUniform1i(mResY, texScaleY);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
+    glUseProgram(0);
 }
 
 CPlaneRenderer::~CPlaneRenderer(){

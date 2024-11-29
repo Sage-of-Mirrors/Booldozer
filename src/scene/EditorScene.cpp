@@ -19,11 +19,11 @@
 #include "DOM/PathDOMNode.hpp"
 #include "DOM/EnemyDOMNode.hpp"
 #include "DOM/MapCollisionDOMNode.hpp"
+#include "DOM/MirrorDOMNode.hpp"
 
 #include <J3D/Material/J3DUniformBufferObject.hpp>
 #include <J3D/J3DModelLoader.hpp>
 #include <J3D/Rendering/J3DRendering.hpp>
-
 
 // This kind of sucks but the application code doesnt currently have a way to get EditorScene
 namespace {
@@ -391,7 +391,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 						}
 						break;
 					case EDOMNodeType::Mirror:
-						mMirrorRenderer.Draw(node->GetMat(), node->GetID(), node->GetIsSelected());
+						mMirrorRenderer.Draw(node->GetMat(), node->GetID(), node->GetIsSelected(), std::dynamic_pointer_cast<LMirrorDOMNode>(node)->GetResWidth(), std::dynamic_pointer_cast<LMirrorDOMNode>(node)->GetResHeight());
 						break;
 					case EDOMNodeType::Character:
 					case EDOMNodeType::Enemy:

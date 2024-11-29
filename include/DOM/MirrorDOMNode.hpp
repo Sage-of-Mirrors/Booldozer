@@ -28,6 +28,9 @@ public:
 
 	LMirrorDOMNode(std::string name);
 
+	int32_t GetResWidth() { return mResolutionWidth; }
+	int32_t GetResHeight() { return mResolutionHeight; }
+
 	virtual std::string GetName() override;
 	virtual void RenderDetailsUI(float dt) override;
 
