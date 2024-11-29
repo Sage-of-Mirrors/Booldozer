@@ -9,14 +9,14 @@ struct PlaneVertex {
 };
 
 static std::vector<PlaneVertex> PlaneVertices = {
-	{{-1,  1, 0}, {0.0, 1.0}},
-	{{ 1,  1, 0}, {1.0, 1.0}},
-	{{-1, -1, 0}, {0.0, 0.0}},
-	{{ 1, -1, 0}, {1.0, 0.0}}
+	{{-100,  100, 0}, {0.0, 1.0}},
+	{{ 100,  100, 0}, {1.0, 1.0}},
+	{{-100, -100, 0}, {0.0, 0.0}},
+	{{ 100, -100, 0}, {1.0, 0.0}}
 };
 
 const char* plane_vtx_shader_source = "#version 460\n\
-    uniform mat4 transform;\n\
+    uniform mat4 gpu_ModelViewProjectionMatrix;\n\
     layout(location = 0) in vec3 inPosition;\n\
     layout(location = 1) in vec2 inTexCoord;\n\
     \
@@ -24,7 +24,7 @@ const char* plane_vtx_shader_source = "#version 460\n\
     \
     void main()\n\
     {\
-        gl_Position = Proj * View * transform * vec4(inPosition, 1.0);\n\
+        gl_Position = gpu_ModelViewProjectionMatrix * vec4(inPosition, 1.0);\n\
         fragTexCoord = inTexCoord;\n\
     }\
 ";

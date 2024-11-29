@@ -89,7 +89,9 @@ void LEventDataDOMNode::LoadEventArchive(std::shared_ptr<Archive::Rarc> arc, std
         std::string msg = "";
         for(std::string::iterator c = messages.begin(); c < messages.end(); c++){
             if(*c == '\n' && c != messages.begin() && *(c-1) == '\r'){
-                mEventText.push_back(LGenUtility::SjisToUtf8(msg.substr(0,msg.size()-2)));
+                std::erase(msg, '\n');
+                std::erase(msg, '\r');
+                mEventText.push_back(LGenUtility::SjisToUtf8(msg));
                 msg = "";
             } else {
                 msg += (*c);
