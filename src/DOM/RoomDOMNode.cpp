@@ -92,7 +92,7 @@ void LRoomDOMNode::RoomResourceManagerHandleType(std::shared_ptr<LDOMNodeBase> s
 							SelectedFile = file;
 							bStream::CMemoryStream modelStream(file->GetData(), file->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 							PreviewWidget::UnloadModel();
-							PreviewWidget::LoadModel(&modelStream);
+							PreviewWidget::LoadModel(&modelStream, EModelType::Furniture);
 						} else if(typeExt == ".anm" && SelectedFile != nullptr && file->GetName().find(SelectedFile->GetName().substr(0, SelectedFile->GetName().size()-4)) != std::string::npos){
 							SelectedAnimation = file;
 							bStream::CMemoryStream animStream(file->GetData(), file->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);

@@ -7,8 +7,14 @@
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
 #include "stb_image.h"
 #include <glad/glad.h>
+#include "scene/ModelViewer.hpp"
+#include "GhostImg.h"
 
 constexpr float pi = 3.14159f;
+
+namespace {
+    uint32_t mGhostImg = 0;
+}
 
 void SwapVec4(glm::vec4* s)
 {
@@ -20,7 +26,7 @@ void SwapVec4(glm::vec4* s)
     s->b = a;
 }
 
-bool AngleVisualizer(const char* label, float* angle, uint32_t sGhostImg)
+bool AngleVisualizer(const char* label, float* angle)
 {
 	ImGuiIO& io = ImGui::GetIO();
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -37,7 +43,7 @@ bool AngleVisualizer(const char* label, float* angle, uint32_t sGhostImg)
     //TODO: figure out why this breaks the combo box
     //draw_list->PathArcTo(ImVec2(center.x, center.y), 30.0f, 0.0f, -((*angle) * (pi / 180)), 10);
 
-	draw_list->AddImage(static_cast<intptr_t>(sGhostImg), ImVec2(center.x - 8, center.y - 8), ImVec2(center.x + 8, center.y + 8));
+	draw_list->AddImage(static_cast<uintptr_t>(mGhostImg), ImVec2(center.x - 8, center.y - 8), ImVec2(center.x + 8, center.y + 8));
 
 
     pos.y += 80;
@@ -46,7 +52,7 @@ bool AngleVisualizer(const char* label, float* angle, uint32_t sGhostImg)
 	return true;
 }
 
-LPrmIO::LPrmIO() : mConfigsLoaded(false), mSelectedConfig(0), mGhostImg(0) {
+LPrmIO::LPrmIO() : mConfigsLoaded(false), mSelectedConfig(0) {
 }
 LPrmIO::~LPrmIO() {
     glDeleteTextures(1, &mGhostImg);
@@ -54,15 +60,6 @@ LPrmIO::~LPrmIO() {
 
 void LPrmIO::LoadConfigs(std::shared_ptr<LMapDOMNode>& map)
 {
-    int x, y, n;
-	uint8_t* data = stbi_load_from_memory(&ghostImgData[0], ghostImgData_size, &x, &y, &n, 4);
-	
-    glCreateTextures(GL_TEXTURE_2D, 1, &mGhostImg);
-    glTextureStorage2D(mGhostImg, 1, GL_RGBA8, x, y);
-    glTextureSubImage2D(mGhostImg, 0, 0, 0, x, y, GL_RGBA, GL_UNSIGNED_BYTE, data);
-
-    stbi_image_free(data);
-
     mMap = map;
 
     if(GCResourceManager.mLoadedGameArchive){
@@ -297,22 +294,83 @@ void LPrmIO::Load(std::string name, bStream::CStream* stream)
 
 bool LPrmIO::RenderUI()
 {
+    if(mGhostImg == 0){
+        int x, y, n;
+        uint8_t* data = stbi_load_from_memory(&ghostImgData[0], ghostImgData_size, &x, &y, &n, 4);
+        
+        glCreateTextures(GL_TEXTURE_2D, 1, &mGhostImg);
+        glTextureStorage2D(mGhostImg, 1, GL_RGBA8, x, y);
+        glTextureSubImage2D(mGhostImg, 0, 0, 0, x, y, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+        stbi_image_free(data);
+    }
+
     bool shouldSave = false;
     if(!mConfigsLoaded || mLoadedConfigs.empty()) return shouldSave;
 	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
     ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	ImGui::SetNextWindowSize({ImGui::GetMainViewport()->Size.x * 0.4f, ImGui::GetMainViewport()->Size.y * 0.9f}, ImGuiCond_Appearing);
-    if(ImGui::BeginPopupModal("ActorEditor", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize)){
+    if(ImGui::BeginPopupModal("ActorEditor", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiChildFlags_AlwaysAutoResize)){
         ImGui::Text("Actor Editor");
         ImGui::Separator();
+
+        ImGui::BeginChild("##actorPropertiesWin", {250, 500});
         
         if (ImGui::BeginCombo("Ghost", mLoadedConfigs[mSelectedConfig].data(), 0))
         {
             for (int n = 0; n < mLoadedConfigs.size(); n++)
             {
                 const bool is_selected = (mSelectedConfig == n);
-                if (ImGui::Selectable(mLoadedConfigs[n].data(), is_selected))
+                if (ImGui::Selectable(mLoadedConfigs[n].data(), is_selected)){
                     mSelectedConfig = n;
+
+                    PreviewWidget::UnloadModel();
+
+                    std::tuple<std::string, std::string, bool> actorRef = LResUtility::GetActorModelFromName(mLoadedConfigs[mSelectedConfig]);
+                    
+                    std::filesystem::path modelPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "model" / (std::get<0>(actorRef) + ".szp");
+                    
+                    if(!std::get<2>(actorRef) && std::filesystem::exists(modelPath)){
+                        std::string actorName = std::get<0>(actorRef);
+                        std::string txpName = std::get<1>(actorRef);
+
+                        std::shared_ptr<Archive::Rarc> modelArchive = Archive::Rarc::Create();
+                        bStream::CFileStream modelArchiveStream(modelPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
+                        if(!modelArchive->Load(&modelArchiveStream)){
+                            std::cout << "[PRMIO]: Unable to load model archive " << modelPath.string() << std::endl;
+                        } else {
+                            std::shared_ptr<Archive::File> modelFile = modelArchive->GetFile(std::filesystem::path("model") / (actorName + ".mdl"));
+                            if(modelFile == nullptr){
+                                std::cout << "[PRMIO]: Couldn't find model/" << actorName << ".mdl in archive" << std::endl;
+                            } else {
+                                bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+                                PreviewWidget::LoadModel(&modelData, EModelType::Actor);
+                            }
+                            if(txpName != ""){
+                                std::shared_ptr<Archive::File> txpFile = modelArchive->GetFile(std::filesystem::path("txp") / (txpName + ".txp"));
+                                if(txpFile == nullptr){
+                                    std::cout << "[PRMIO]: Couldn't find txp/" << txpName << ".txp in archive" << std::endl;
+                                } else {
+                                    std::cout << "[PRMIO]: Loading txp " << txpName << std::endl;
+                                    bStream::CMemoryStream txpData(txpFile->GetData(), txpFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+                                    PreviewWidget::SetModelAnimation(&txpData);
+                                }
+                            }
+                        }
+                    } else {
+                        std::filesystem::path fullModelPath = std::filesystem::path("model") / (std::get<0>(actorRef) + ".arc") / "model" / (std::get<0>(actorRef) + ".mdl");
+                        
+                        if(GCResourceManager.mLoadedGameArchive){
+                            std::shared_ptr<Archive::File> modelFile = GCResourceManager.mGameArchive->GetFile(fullModelPath);
+                            
+                            if(modelFile == nullptr){
+                                std::cout << "[PRMIO]: Couldn't find " << std::get<0>(actorRef) << ".mdl in game archive" << std::endl;
+                            } else {
+                                bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+                                PreviewWidget::LoadModel(&modelData, EModelType::Actor);
+                            }
+                        }
+                    }
+                }
 
                 if (is_selected)
                     ImGui::SetItemDefaultFocus();
@@ -358,7 +416,7 @@ bool LPrmIO::RenderUI()
 
         ImGui::SliderFloat("Effective Pull Range", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mEffectiveDegree, 0.0f, 180.0f);
         LUIUtility::RenderTooltip("Sets a minimum for the difference in angle between the direction a ghost is moving and the direction luigi is pulling (the control stick direction).");
-        AngleVisualizer("effectivedegree", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mEffectiveDegree, mGhostImg);
+        AngleVisualizer("effectivedegree", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mEffectiveDegree);
 
 
         ImGui::InputFloat("Flee Height", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mTsuriHeight);
@@ -392,8 +450,23 @@ bool LPrmIO::RenderUI()
         ImGui::InputInt("Num Ground", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mNumGround);
         LUIUtility::RenderCheckBox("Check", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mCheckbox);
 
+		ImGui::EndChild();
+
+		ImGui::SameLine();
+        
+		ImGui::Image(static_cast<uintptr_t>(PreviewWidget::PreviewID()), {600, 500},  {0.0f, 1.0f}, {1.0f, 0.0f});
+		if(ImGui::IsItemHovered()){
+			if(ImGui::IsKeyDown(ImGuiKey_ModShift)){
+				PreviewWidget::DoRotate(ImGui::GetIO().MouseWheel * 0.1f);
+			} else {
+				PreviewWidget::DoZoom(ImGui::GetIO().MouseWheel*50);
+			}
+		}
+
         if(ImGui::Button("Save All")){
             ImGui::CloseCurrentPopup();
+            PreviewWidget::UnloadModel();
+            PreviewWidget::SetInactive();
             ImGui::OpenPopup("SavingConfigsModal");
             shouldSave = true;
         }
@@ -401,6 +474,8 @@ bool LPrmIO::RenderUI()
         ImGui::SameLine();
         if(ImGui::Button("Close")){
             ImGui::CloseCurrentPopup();
+            PreviewWidget::UnloadModel();
+            PreviewWidget::SetInactive();
         }
 
         ImGui::End();

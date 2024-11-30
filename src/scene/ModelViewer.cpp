@@ -13,6 +13,7 @@
 #include <J3D/J3DModelLoader.hpp>
 #include <J3D/Rendering/J3DRendering.hpp>
 #include "io/BinIO.hpp"
+#include "io/MdlIO.hpp"
 #include "UGrid.hpp"
 
 namespace PreviewWidget {
@@ -26,7 +27,10 @@ namespace PreviewWidget {
     static float Rotate { 0.0f };
     static float Zoom { 500.0f };
 
-    static BinModel* Model { nullptr };
+    static EModelType CurrentEModelType { EModelType::None };
+    static BinModel* ModelFurniture { nullptr };
+    static MDL::Model* ModelActor { nullptr };
+    static TXP::Animation* ActorTxp { nullptr };
     static UGrid* Grid { nullptr };
 
     void SetActive(){
@@ -34,15 +38,17 @@ namespace PreviewWidget {
     }
 
     void PlayAnimation(){
-        if(Model != nullptr){
-            Model->mAnimationInformation.mPlaying = true;
-            Model->mAnimationInformation.mCurrentFrame = 0.0f;
-            Model->ResetAnimation();
+        if(CurrentEModelType == EModelType::Furniture && ModelFurniture != nullptr){
+            ModelFurniture->mAnimationInformation.mPlaying = true;
+            ModelFurniture->mAnimationInformation.mCurrentFrame = 0.0f;
+            ModelFurniture->ResetAnimation();
         }
     }
 
     void PauseAnimation(){
-        if(Model != nullptr) Model->mAnimationInformation.mPlaying = false;
+        if(CurrentEModelType == EModelType::Furniture && ModelFurniture != nullptr){
+            ModelFurniture->mAnimationInformation.mPlaying = false;
+        }
     }
 
     void SetInactive(){
@@ -98,6 +104,9 @@ namespace PreviewWidget {
 
     void CleanupPreview(){
         delete Grid;
+        if(ModelFurniture != nullptr) delete ModelFurniture;
+        if(ModelActor != nullptr) delete ModelActor;
+        if(ActorTxp != nullptr) delete ActorTxp;
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
@@ -106,27 +115,55 @@ namespace PreviewWidget {
         glDeleteTextures(1, &Tex);
     }
 
-    void LoadModel(bStream::CMemoryStream* ModelStream){
-        if(Model != nullptr){
-            delete Model;
-            Model = nullptr;
+    void LoadModel(bStream::CMemoryStream* ModelStream, EModelType Type){
+        if(ModelFurniture != nullptr){
+            delete ModelFurniture;
+            ModelFurniture = nullptr;
         }
-        Model = new BinModel(ModelStream);
-        Model->mAnimationInformation.mCurrentFrame = 0;
-        Model->ResetAnimation();
-        Camera.SetCenter(Model->GetRootPosition());
+        if(ModelActor != nullptr){
+            delete ModelActor;
+            ModelActor = nullptr;
+        }
+        if(Type == EModelType::Furniture){
+            ModelFurniture = new BinModel(ModelStream);
+            ModelFurniture->mAnimationInformation.mCurrentFrame = 0;
+            ModelFurniture->ResetAnimation();
+            Camera.SetCenter(ModelFurniture->GetRootPosition());
+            CurrentEModelType = Type;
+        } else if(Type == EModelType::Actor){
+            ModelActor = new MDL::Model();
+            ModelActor->Load(ModelStream);
+            Camera.SetCenter(glm::vec3(0,0,0));
+            CurrentEModelType = Type;
+        }
     }
 
     void SetModelAnimation(bStream::CMemoryStream* AnimStream){
-        Model->LoadAnimation(AnimStream);
-        Model->ResetAnimation();
+        if(CurrentEModelType == EModelType::Furniture && ModelFurniture != nullptr){
+            ModelFurniture->LoadAnimation(AnimStream);
+            ModelFurniture->ResetAnimation();
+        } else if(CurrentEModelType == EModelType::Actor && ModelActor != nullptr){
+            ActorTxp = new TXP::Animation();
+            ActorTxp->Load(AnimStream);
+        }
     }
 
     void UnloadModel(){
-        if(Model != nullptr){
-            delete Model;
+        if(ModelFurniture != nullptr){
+            delete ModelFurniture;
+            ModelFurniture = nullptr;
         }
-        Model = nullptr;
+        if(ModelActor != nullptr){
+            delete ModelActor;
+            ModelActor = nullptr;
+        }
+
+        if(ActorTxp != nullptr){
+            delete ActorTxp;
+            ActorTxp = nullptr;
+        }
+
+        CurrentEModelType = EModelType::None;
     }
 
     void RenderPreview(){
@@ -151,15 +188,24 @@ namespace PreviewWidget {
 
             // TODO: Draw Grid somehow
 
-            if(Model != nullptr){
-                Camera.SetEye({Model->GetRootPosition().x + (sin(Rotate) * (Zoom * 2)), Model->GetRootPosition().y + Zoom, Model->GetRootPosition().z - (cos(Rotate) * (Zoom * 2))});
+            if(CurrentEModelType == EModelType::Furniture && ModelFurniture != nullptr){
+                Camera.SetEye({ModelFurniture->GetRootPosition().x + (sin(Rotate) * (Zoom * 2)), ModelFurniture->GetRootPosition().y + Zoom, ModelFurniture->GetRootPosition().z - (cos(Rotate) * (Zoom * 2))});
                 
                 // Ow.
 	            J3DUniformBufferObject::SetProjAndViewMatrices(Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
 	            J3DUniformBufferObject::SubmitUBO();
 
-                Model->Draw(&Identity, 0, false, false, true);
-                Grid->Render({Model->GetRootPosition().x + (sin(Rotate) * (Zoom * 2)), Model->GetRootPosition().y + Zoom, Model->GetRootPosition().z - (cos(Rotate) * (Zoom * 2))}, Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
+                ModelFurniture->Draw(&Identity, 0, false, false, true);
+                Grid->Render({ModelFurniture->GetRootPosition().x + (sin(Rotate) * (Zoom * 2)), ModelFurniture->GetRootPosition().y + Zoom, ModelFurniture->GetRootPosition().z - (cos(Rotate) * (Zoom * 2))}, Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
+            } else if(CurrentEModelType == EModelType::Actor && ModelActor != nullptr) {
+                Camera.SetEye({sin(Rotate) * (Zoom * 2), Zoom, cos(Rotate) * (Zoom * 2)});
+
+
+	            J3DUniformBufferObject::SetProjAndViewMatrices(Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
+	            J3DUniformBufferObject::SubmitUBO();
+                
+                ModelActor->Draw(&Identity, 0, false, ActorTxp);
+                Grid->Render({(sin(Rotate) * (Zoom * 2)), Zoom, (cos(Rotate) * (Zoom * 2))}, Camera.GetProjectionMatrix(), Camera.GetViewMatrix());     
             } else {
 	            J3DUniformBufferObject::SetProjAndViewMatrices(Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
 	            J3DUniformBufferObject::SubmitUBO();

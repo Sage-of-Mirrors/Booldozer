@@ -5,6 +5,12 @@
 #include "bstream.h"
 #include "imgui.h"
 
+enum class EModelType {
+    Actor,
+    Furniture,
+    None
+};
+
 namespace PreviewWidget {
 
     void SetActive();
@@ -20,7 +26,7 @@ namespace PreviewWidget {
     void PauseAnimation();
 
     void UpdateCamera();
-    void LoadModel(bStream::CMemoryStream* ModelStream);
+    void LoadModel(bStream::CMemoryStream* ModelStream, EModelType Type);
     void SetModelAnimation(bStream::CMemoryStream* AnimStream);
     void UnloadModel();
 

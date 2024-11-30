@@ -5,7 +5,6 @@
 #include "DOM/MapDOMNode.hpp"
 #include "DOM/ItemAppearDOMNode.hpp"
 #include "DOM/ItemFishingDOMNode.hpp"
-#include "GhostImg.h"
 #include <memory>
 #include <map>
 
@@ -82,7 +81,6 @@ struct LCTPrm {
 class LPrmIO {
     bool mConfigsLoaded { false };
     int mSelectedConfig;
-    uint32_t mGhostImg;
     std::weak_ptr<LMapDOMNode> mMap;
     std::vector<std::string> mLoadedConfigs;
     std::map<std::string, std::shared_ptr<LCTPrm>> mCtpParams;

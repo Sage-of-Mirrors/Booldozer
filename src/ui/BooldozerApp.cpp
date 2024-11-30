@@ -184,18 +184,18 @@ void LBooldozerApp::RenderUI(float deltaTime) {
     {
         if (ImGui::BeginMenu("Map"))
         {
-            if (ImGui::MenuItem("Open..."))
+            if (ImGui::MenuItem(ICON_FK_MAP "  Open"))
                 mEditorContext.onOpenMapCB();
-            if (ImGui::MenuItem("Append..."))
+            if (ImGui::MenuItem(ICON_FK_PLUS "  Append"))
                 mEditorContext.onAppendMapCB();
 
             ImGui::Separator();
-			if (ImGui::MenuItem("Clear..."))
+			if (ImGui::MenuItem(ICON_FK_ERASER "  Clear"))
                 mEditorContext.onClearMapCB();
 
 			ImGui::Separator();
 
-			if (ImGui::MenuItem("Save..."))
+			if (ImGui::MenuItem(ICON_FK_FLOPPY_O "  Save"))
                 mEditorContext.onSaveMapArchiveCB();
 
 
@@ -203,7 +203,7 @@ void LBooldozerApp::RenderUI(float deltaTime) {
         }
         if (ImGui::BeginMenu("Edit"))
         {
-            if (ImGui::MenuItem("Options"))
+            if (ImGui::MenuItem(ICON_FK_COG "  Options"))
                 openOptionsMenu = true;
 
 
@@ -211,16 +211,16 @@ void LBooldozerApp::RenderUI(float deltaTime) {
         }
         if (ImGui::BeginMenu("Tools"))
         {
-			if	(ImGui::MenuItem("Ghost Config Editor"))
+			if	(ImGui::MenuItem(ICON_FK_C "  Ghost Config Editor"))
 				mEditorContext.mOpenActorEditor = true;
-            if (ImGui::MenuItem("Playtest"))
+            if (ImGui::MenuItem(ICON_FK_PLAY "  Playtest"))
                 mEditorContext.onPlaytestCB();
 
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Help"))
         {
-            if(ImGui::MenuItem("Controls")){
+            if(ImGui::MenuItem(ICON_FK_GAMEPAD "  Controls")){
 				mEditorContext.mOpenControlsDialog = true;
 			}
             ImGui::EndMenu();

@@ -99,7 +99,7 @@ void LEditorScene::Init(){
 
 	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "event.png", 3);
 	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "observer.png", 4);
-	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "enemy_placeholder.png", 5);
+	//mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "enemy_placeholder.png", 5);
 
 	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "soundobj.png", 6);
 

@@ -111,7 +111,7 @@
     "rat1" : ["rat", "rat1"],
     "rat2" : ["rat", "rat2"],
     "rat3" : ["rat", "rat3"],
-
+    
     "mgyapoo1" : ["obake01", "obake011"],
     "banana" : ["banana", "", true],
     "key01" : ["ed07key", ""],

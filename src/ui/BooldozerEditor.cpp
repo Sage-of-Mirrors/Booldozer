@@ -384,6 +384,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 	if(mOpenActorEditor){
 		ImGui::OpenPopup("ActorEditor");
+		PreviewWidget::SetActive();
 		mOpenActorEditor = false;
 	}
 
