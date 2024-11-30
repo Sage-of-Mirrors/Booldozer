@@ -4,12 +4,44 @@
 #include "ImGuizmo.h"
 #include "UIUtil.hpp"
 
-void LEnemyMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
+void LEnemyMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map, EEditorMode& mode)
 {
 
 	ImGui::Begin("sceneHierarchy");
-	ImGui::Text("Rooms");
-	ImGui::Separator();
+	//ImGui::Text("Rooms");
+	//ImGui::Separator();
+	
+	if(ImGui::BeginTabBar("##modeTabs")){
+		if(ImGui::BeginTabItem("Actors")){
+			mode = EEditorMode::Actor_Mode;
+			ImGui::EndTabItem();
+		}
+		if(ImGui::BeginTabItem("Waves")){
+			mode = EEditorMode::Enemy_Mode;
+			ImGui::EndTabItem();
+		}
+		if(ImGui::BeginTabItem("Doors")){
+			mode = EEditorMode::Door_Mode;
+			ImGui::EndTabItem();
+		}
+		if(ImGui::BeginTabItem("Paths")){
+			mode = EEditorMode::Path_Mode;
+			ImGui::EndTabItem();
+		}
+		if(ImGui::BeginTabItem("Items")){
+			mode = EEditorMode::Item_Mode;
+			ImGui::EndTabItem();
+		}
+		if(ImGui::BeginTabItem("Events")){
+			mode = EEditorMode::Event_Mode;
+			ImGui::EndTabItem();
+		}
+		if(ImGui::BeginTabItem("Boos")){
+			mode = EEditorMode::Boo_Mode;
+			ImGui::EndTabItem();
+		}
+		ImGui::EndTabBar();
+	}
 
 	auto rooms = current_map->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
 	for (uint32_t i = 0; i < rooms.size(); i++)
@@ -38,13 +70,13 @@ void LEnemyMode::RenderDetailsWindow()
 	ImGui::End();
 }
 
-void LEnemyMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene)
+void LEnemyMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene, EEditorMode& mode)
 {
 
 	ImGuiWindowClass mainWindowOverride;
 	mainWindowOverride.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
 	ImGui::SetNextWindowClass(&mainWindowOverride);
-	RenderSceneHierarchy(current_map);
+	RenderSceneHierarchy(current_map, mode);
 
 	ImGui::SetNextWindowClass(&mainWindowOverride);
 	RenderDetailsWindow();
@@ -61,6 +93,13 @@ void LEnemyMode::RenderGizmo(LEditorScene* renderer_scene){
 		glm::mat4 view = renderer_scene->getCameraView();
 		glm::mat4 proj = renderer_scene->getCameraProj();
 		ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::LOCAL, &(*m)[0][0], NULL, NULL);
+		
+		if(mPreviousSelection == nullptr || mPreviousSelection != mSelectionManager.GetPrimarySelection()){
+			mPreviousSelection = mSelectionManager.GetPrimarySelection();
+			if(!mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).expired() && !renderer_scene->HasRoomLoaded(mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock()->GetRoomNumber())){
+				renderer_scene->SetRoom(mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock());
+			}
+		}
 	}
 }
 

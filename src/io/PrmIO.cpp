@@ -295,19 +295,15 @@ void LPrmIO::Load(std::string name, bStream::CStream* stream)
     }
 }
 
-void LPrmIO::RenderUI()
+bool LPrmIO::RenderUI()
 {
-    if(!mConfigsLoaded || mLoadedConfigs.empty()) return;
-
-    if(mParamToolOpen){
-
-        ImGuiWindowClass mainWindowOverride;
-        mainWindowOverride.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
-        ImGui::SetNextWindowClass(&mainWindowOverride);
-
-        ImGui::Begin("toolWindow", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
-
-        ImGui::Text("Ghost Config Editor");
+    bool shouldSave = false;
+    if(!mConfigsLoaded || mLoadedConfigs.empty()) return shouldSave;
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize({ImGui::GetMainViewport()->Size.x * 0.4f, ImGui::GetMainViewport()->Size.y * 0.9f}, ImGuiCond_Appearing);
+    if(ImGui::BeginPopupModal("ActorEditor", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize)){
+        ImGui::Text("Actor Editor");
         ImGui::Separator();
         
         if (ImGui::BeginCombo("Ghost", mLoadedConfigs[mSelectedConfig].data(), 0))
@@ -396,14 +392,18 @@ void LPrmIO::RenderUI()
         ImGui::InputInt("Num Ground", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mNumGround);
         LUIUtility::RenderCheckBox("Check", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mCheckbox);
 
-        if(ImGui::Button("Save All Configs")){
-            SaveConfigsToFile();
-            mParamToolOpen = false;
+        if(ImGui::Button("Save All")){
+            ImGui::CloseCurrentPopup();
+            ImGui::OpenPopup("SavingConfigsModal");
+            shouldSave = true;
         }
 
         ImGui::SameLine();
-        if(ImGui::Button("Close")) mParamToolOpen = false;
+        if(ImGui::Button("Close")){
+            ImGui::CloseCurrentPopup();
+        }
 
         ImGui::End();
     }
+    return shouldSave;
 }

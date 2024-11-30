@@ -17,14 +17,45 @@ LActorMode::LActorMode()
 	mRoomChanged = false;
 }
 
-void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
+void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map, EEditorMode& mode)
 {
 	
 	ImGui::Begin("sceneHierarchy", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
 
+	if(ImGui::BeginTabBar("##modeTabs")){
+		if(ImGui::BeginTabItem("Actors")){
+			mode = EEditorMode::Actor_Mode;
+			ImGui::EndTabItem();
+		}
+		if(ImGui::BeginTabItem("Waves")){
+			mode = EEditorMode::Enemy_Mode;
+			ImGui::EndTabItem();
+		}
+		if(ImGui::BeginTabItem("Doors")){
+			mode = EEditorMode::Door_Mode;
+			ImGui::EndTabItem();
+		}
+		if(ImGui::BeginTabItem("Paths")){
+			mode = EEditorMode::Path_Mode;
+			ImGui::EndTabItem();
+		}
+		if(ImGui::BeginTabItem("Items")){
+			mode = EEditorMode::Item_Mode;
+			ImGui::EndTabItem();
+		}
+		if(ImGui::BeginTabItem("Events")){
+			mode = EEditorMode::Event_Mode;
+			ImGui::EndTabItem();
+		}
+		if(ImGui::BeginTabItem("Boos")){
+			mode = EEditorMode::Boo_Mode;
+			ImGui::EndTabItem();
+		}
+		ImGui::EndTabBar();
+	}
+
 	ImGui::Text("Rooms");
 	ImGui::SameLine();
-	
 
 	ImGui::Text(ICON_FK_PLUS_CIRCLE);
 	if(ImGui::IsItemClicked(0)){
@@ -75,11 +106,10 @@ void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map)
 	}
 
 	LUIUtility::RenderTooltip("EXPERIMENTAL: Please *backup rooms.map*, as room ids/indicies may get shuffled by accident!");
-	
-	ImGui::Separator();
+	//ImGui::Separator();
 
-	ImGui::Text("Current Room");
-	mRoomChanged = LUIUtility::RenderNodeReferenceCombo("##selectedRoom", EDOMNodeType::Room, current_map, mManualRoomSelect);
+	//ImGui::Text("Current Room");
+	//mRoomChanged = LUIUtility::RenderNodeReferenceCombo("##selectedRoom", EDOMNodeType::Room, current_map, mManualRoomSelect);
 
 	uint32_t i = 0;
 	current_map->ForEachChildOfType<LRoomDOMNode>(EDOMNodeType::Room, [i, this](std::shared_ptr<LRoomDOMNode> room) mutable {
@@ -115,7 +145,7 @@ void LActorMode::RenderDetailsWindow()
 	ImGui::End();
 }
 
-void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene)
+void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene, EEditorMode& mode)
 {
 
 	//LUIUtility::RenderGizmoToggle();
@@ -123,7 +153,7 @@ void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 	ImGuiWindowClass mainWindowOverride;
 	mainWindowOverride.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
 	ImGui::SetNextWindowClass(&mainWindowOverride);
-	RenderSceneHierarchy(current_map);
+	RenderSceneHierarchy(current_map, mode);
 
 	if(roomsUpdated){
 		renderer_scene->SetRoom(current_map->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room).front());

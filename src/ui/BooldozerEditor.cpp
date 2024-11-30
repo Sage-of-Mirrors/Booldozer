@@ -82,6 +82,15 @@ void LBooldozerEditor::SaveMap(std::string path){
 	loadLock.unlock();
 }
 
+void LBooldozerEditor::SaveActorConfigs(){
+
+	mGhostConfigs.SaveConfigsToFile();
+
+	loadLock.lock();
+	mapLoading = false;
+	loadLock.unlock();
+}
+
 void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 {
 	std::string path = "";
@@ -127,7 +136,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::DockBuilderSetNodeSize(mMainDockSpaceID, mainViewport->Size);
 
 
-		mDockNodeLeftID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Left, 0.25f, nullptr, &mMainDockSpaceID);
+		mDockNodeLeftID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Left, 0.27f, nullptr, &mMainDockSpaceID);
 		mDockNodeRightID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Right, 0.25f, nullptr, &mMainDockSpaceID);
 		mDockNodeDownLeftID = ImGui::DockBuilderSplitNode(mDockNodeLeftID, ImGuiDir_Down, 0.5f, nullptr, &mDockNodeUpLeftID);
 
@@ -310,6 +319,59 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::EndPopup();
 	}
 
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal("SavingConfigsModal", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
+	{
+        const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+		ImGui::AlignTextToFramePadding();
+		ImGui::Spinner("##loadmapSpinner", 5.0f, 2, col);
+		ImGui::SameLine();
+		ImGui::Text("Saving Actor Configurations...");
+
+		loadLock.lock();
+		if(mapLoading == false){
+			std::cout << "[BooldozerEditor]: Joining save thread" << std::endl;
+			mapOperationThread.join();
+			ImGui::CloseCurrentPopup();
+		}
+		loadLock.unlock();
+
+		ImGui::EndPopup();
+	}
+
+
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal("ControlsDialog", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
+	{
+        const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+		ImGui::AlignTextToFramePadding();
+		ImGui::Text("Controls");
+
+		ImGui::BulletText("Change Gizmo");
+		ImGui::Spacing();
+		ImGui::SameLine();
+		ImGui::BulletText("1: Translation");
+
+		ImGui::Spacing();
+		ImGui::SameLine();
+		ImGui::BulletText("2: Rotation");
+
+		ImGui::Spacing();
+		ImGui::SameLine();
+		ImGui::BulletText("3: Scale");
+
+		if(ImGui::Button("Close")){
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+
+	if(mOpenControlsDialog){
+		ImGui::OpenPopup("ControlsDialog");
+		mOpenControlsDialog = false;
+	}
+
 	if(mClickedMapSelect){
 		ImGui::OpenPopup("Map Select");
 		mClickedMapSelect = false;
@@ -318,6 +380,20 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	if(mClickedMapClear){
 		ImGui::OpenPopup("Clear Map");
 		mClickedMapClear = false;
+	}
+
+	if(mOpenActorEditor){
+		ImGui::OpenPopup("ActorEditor");
+		mOpenActorEditor = false;
+	}
+
+	if(mSaveConfigsClicked){
+		loadLock.lock();
+		mapLoading = true;
+		loadLock.unlock();
+
+		mapOperationThread = std::thread(&LBooldozerEditor::SaveActorConfigs, std::ref(*this));
+		ImGui::OpenPopup("SavingConfigsModal");
 	}
 
 	if(mSaveMapClicked){
@@ -497,10 +573,16 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	}
 
 
-	if (mapLoading == false && mLoadedMap != nullptr && !mLoadedMap->Children.empty() && mCurrentMode != nullptr)
-		mCurrentMode->Render(mLoadedMap, renderer_scene);
+	if (mapLoading == false && mLoadedMap != nullptr && !mLoadedMap->Children.empty() && mCurrentMode != nullptr){
+		EEditorMode mode;
+		mCurrentMode->Render(mLoadedMap, renderer_scene, mode);
+		if(mode != CurrentMode){
+			CurrentMode = mode;
+			ChangeMode();
+		}
+	}
 
-	mGhostConfigs.RenderUI();
+	mSaveConfigsClicked = mGhostConfigs.RenderUI();
 	
 	CameraAnimation::RenderPreview();
 	PreviewWidget::RenderPreview();
@@ -624,7 +706,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	ImGuizmo::SetDrawlist(ImGui::GetWindowDrawList());
     ImGuizmo::SetRect(cursorPos.x, cursorPos.y, winSize.x, winSize.y);
 
-	mCurrentMode->RenderGizmo(renderer_scene);
+	if(mCurrentMode != nullptr) mCurrentMode->RenderGizmo(renderer_scene);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
@@ -725,8 +807,6 @@ void LBooldozerEditor::ChangeMode()
 	{
 		case EEditorMode::Actor_Mode:
 			mCurrentMode = &mActorMode;
-			break;
-		case EEditorMode::Collision_Mode:
 			break;
 		case EEditorMode::Door_Mode:
 			mCurrentMode = &mDoorMode;

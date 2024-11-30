@@ -92,7 +92,7 @@ public:
     void SaveConfigsToFile();
     void Load(std::string name, bStream::CStream* stream);
     void Save(std::string name, bStream::CStream* stream);
-    void RenderUI();
+    bool RenderUI();
 
     LPrmIO();
     ~LPrmIO();

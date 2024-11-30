@@ -203,40 +203,6 @@ void LBooldozerApp::RenderUI(float deltaTime) {
         }
         if (ImGui::BeginMenu("Edit"))
         {
-			if(ImGui::MenuItem("Actors")){
-				mEditorContext.CurrentMode = EEditorMode::Actor_Mode;
-				mEditorContext.ChangeMode();
-			}
-			if(ImGui::MenuItem("Doors")){
-				mEditorContext.CurrentMode = EEditorMode::Door_Mode;
-				mEditorContext.ChangeMode();
-			}
-			if(ImGui::MenuItem("Items")){
-				mEditorContext.CurrentMode = EEditorMode::Item_Mode;
-				mEditorContext.ChangeMode();
-			}
-			if(ImGui::MenuItem("Waves")){
-				mEditorContext.CurrentMode = EEditorMode::Enemy_Mode;
-				mEditorContext.ChangeMode();
-			}
-
-			if(ImGui::MenuItem("Paths")){
-				mEditorContext.CurrentMode = EEditorMode::Path_Mode;
-				mEditorContext.ChangeMode();
-			}
-
-			if(ImGui::MenuItem("Events")){
-				mEditorContext.CurrentMode = EEditorMode::Event_Mode;
-				mEditorContext.ChangeMode();
-			}
-
-			if(ImGui::MenuItem("Boos")){
-				mEditorContext.CurrentMode = EEditorMode::Boo_Mode;
-				mEditorContext.ChangeMode();
-			}
-
-
-			ImGui::Separator();
             if (ImGui::MenuItem("Options"))
                 openOptionsMenu = true;
 
@@ -246,7 +212,7 @@ void LBooldozerApp::RenderUI(float deltaTime) {
         if (ImGui::BeginMenu("Tools"))
         {
 			if	(ImGui::MenuItem("Ghost Config Editor"))
-				mEditorContext.mGhostConfigs.mParamToolOpen = true; //bad
+				mEditorContext.mOpenActorEditor = true;
             if (ImGui::MenuItem("Playtest"))
                 mEditorContext.onPlaytestCB();
 
@@ -254,7 +220,9 @@ void LBooldozerApp::RenderUI(float deltaTime) {
         }
         if (ImGui::BeginMenu("Help"))
         {
-            ImGui::Text("Help Stuff");
+            if(ImGui::MenuItem("Controls")){
+				mEditorContext.mOpenControlsDialog = true;
+			}
             ImGui::EndMenu();
         }
 

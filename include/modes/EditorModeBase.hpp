@@ -6,6 +6,17 @@
 #include "history/EditorHistory.hpp"
 #include "ImGuizmo.h"
 
+enum class EEditorMode : uint32_t
+{
+	Actor_Mode,
+	Enemy_Mode,
+	Door_Mode,
+	Path_Mode,
+	Item_Mode,
+	Event_Mode,
+	Boo_Mode
+};
+
 class LEditorModeBase
 {
 protected:
@@ -21,7 +32,7 @@ public:
 	// The Gizmo's current operation mode (translate, rotate, scale)
 	ImGuizmo::OPERATION mGizmoMode { ImGuizmo::OPERATION::TRANSLATE };
 	
-	virtual void Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene) = 0;
+	virtual void Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene, EEditorMode& mode) = 0;
 
 	virtual void RenderGizmo(LEditorScene* renderer_scene) = 0;
 

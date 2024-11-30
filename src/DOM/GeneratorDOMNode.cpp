@@ -39,7 +39,9 @@ void LGeneratorDOMNode::RenderDetailsUI(float dt)
     LUIUtility::RenderTransformUI(mTransform.get(), mPosition, mRotation, mScale);
 
     // Strings
-    LUIUtility::RenderTextInput("Type", &mGenType);
+    if(LUIUtility::RenderTextInput("Type", &mGenType)){
+        LEditorScene::GetEditorScene()->LoadActor(mGenType, false);
+    }
     LUIUtility::RenderTooltip("What kind of actor this generator spawns.");
 
     LUIUtility::RenderTextInput("Path Name", &mPathName);

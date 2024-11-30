@@ -16,18 +16,6 @@
 #include <memory>
 #include <json.hpp>
 
-enum class EEditorMode : uint32_t
-{
-	Actor_Mode,
-	Enemy_Mode,
-	Door_Mode,
-	Path_Mode,
-	Item_Mode,
-	Event_Mode,
-	Boo_Mode,
-	Collision_Mode,
-};
-
 // Backend for the main window's UI.
 class LBooldozerEditor
 {
@@ -55,6 +43,7 @@ class LBooldozerEditor
 	bool mSaveMapClicked { false };
 	bool mClickedMapSelect { false };
 	bool mClickedMapClear { false };
+	bool mSaveConfigsClicked { false };
 	int32_t mSelectedMap { -1 };
 	int32_t mMapNameDialogEditingNameIdx { -1 };
 	std::string mMapNameDialogEditingNameStr { "" };
@@ -106,6 +95,8 @@ public:
 	void onSaveMapCB();
 	void onSaveMapArchiveCB();
 
+	void SaveActorConfigs();
+
 	void onPlaytestCB();
 
 	LEditorSelection* GetSelectionManager() { return mCurrentMode->GetSelectionManager(); }
@@ -116,5 +107,7 @@ public:
 	void ChangeMode();
 
 	bool mOpenRootFlag { false };
+	bool mOpenActorEditor { false };
+	bool mOpenControlsDialog { false };
 
 };

@@ -7,7 +7,7 @@ extern bool isRoomDirty;
 class LActorMode : public LEditorModeBase
 {
 
-	void RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map);
+	void RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map, EEditorMode& mode);
 	void RenderDetailsWindow();
 	std::weak_ptr<LRoomDOMNode> mManualRoomSelect;
 
@@ -16,7 +16,7 @@ class LActorMode : public LEditorModeBase
 public:
 	LActorMode();
 
-	virtual void Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene) override;
+	virtual void Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* renderer_scene, EEditorMode& mode) override;
 	virtual void RenderGizmo(LEditorScene* renderer_scene) override;
 
 	// Called when this mode becomes the active (currently interactable) mode.

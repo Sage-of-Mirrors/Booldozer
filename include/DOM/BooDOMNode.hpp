@@ -22,6 +22,8 @@ public:
 
 	LBooDOMNode(std::string name);
 
+	int32_t GetInitialRoom() { return mInitialRoom; }
+
 	virtual void RenderDetailsUI(float dt) override;
 
 	// Writes the data this JMP node into the given LJmpIO instance at the specified entry.

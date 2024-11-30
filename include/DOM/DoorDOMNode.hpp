@@ -69,6 +69,7 @@ public:
 
 	void AssignJmpIdAndIndex(std::vector<std::shared_ptr<LDoorDOMNode>> doors);
 	bool HasRoomReference(std::shared_ptr<LRoomDOMNode> room);
+	std::pair<std::shared_ptr<LRoomDOMNode>, std::shared_ptr<LRoomDOMNode>> GetRoomReferences() { return { mWestSouthRoom.lock(), mEastNorthRoom.lock() }; }
 
 	int32_t GetJmpId() const { return mJmpId; }
 	int32_t GetIndex() const { return mDoorEntryNumber; }
