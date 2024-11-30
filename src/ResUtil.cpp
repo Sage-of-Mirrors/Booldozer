@@ -136,12 +136,12 @@ std::filesystem::path LResUtility::GetMirrorDataPath(std::string mapName)
 }
 
 
-std::tuple<std::string, std::string, bool> LResUtility::GetActorModelFromName(std::string name){
+std::tuple<std::string, std::string, bool> LResUtility::GetActorModelFromName(std::string name, bool log){
 	auto names = GetNameMap("ActorNames");
 
 	if (names.find(name) == names.end())
 	{
-		std::cout << std::format("[ResUtil]: Actor {0} not found in actor data\n", name);
+		if(log) std::cout << std::format("[ResUtil]: Actor {0} not found in actor data\n", name);
 		return {name, "", false};
 	}
 
@@ -225,6 +225,7 @@ void LResUtility::SaveMapThumbnail(uint32_t w, uint32_t h, uint32_t map){
 	unsigned char* imgData = new unsigned char[w * h * 4]{0};
 	unsigned char* imgDataScaled = new unsigned char[84 * 64 *4] {0};
 
+	glReadBuffer(GL_COLOR_ATTACHMENT0);
 	glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, imgData);
 
 	stbir_resize_uint8_linear(imgData, w, h, 0, imgDataScaled, 84, 64, 0, STBIR_RGBA_NO_AW);

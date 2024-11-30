@@ -68,6 +68,7 @@ public:
 
     void SetRoom(std::shared_ptr<LRoomDOMNode> room);
     bool HasRoomLoaded(int32_t roomNumber);
+    void LoadActor(std::string name, bool log = true);
 
     void UpdateRenderers();
     void RenderSubmit(uint32_t m_width, uint32_t m_height);

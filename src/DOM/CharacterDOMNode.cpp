@@ -22,7 +22,9 @@ void LCharacterDOMNode::RenderDetailsUI(float dt)
 	LUIUtility::RenderTransformUI(mTransform.get(), mPosition, mRotation, mScale);
 
 	// Strings
-	LUIUtility::RenderTextInput("Character Name", &mName);
+	if(LUIUtility::RenderTextInput("Character Name", &mName)){
+		LEditorScene::GetEditorScene()->LoadActor(mName, false);
+	}
 	LUIUtility::RenderTooltip("What character this entity is.");
 
 	LUIUtility::RenderTextInput("Spawn Group", &mCreateName);

@@ -421,6 +421,61 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 	J3D::Rendering::Render(1, view, proj, packets);
 }
 
+void LEditorScene::LoadActor(std::string name, bool log){
+	std::tuple<std::string, std::string, bool> actorRef = LResUtility::GetActorModelFromName(name, log);
+	
+	if(mActorModels.count(name) != 0 && (mMaterialAnimations.count(name) != 0 && std::get<1>(actorRef) != "")) return;
+	
+	std::filesystem::path modelPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "model" / (std::get<0>(actorRef) + ".szp");
+	
+	if(!std::get<2>(actorRef) && std::filesystem::exists(modelPath)){
+		std::string actorName = std::get<0>(actorRef);
+		std::string txpName = std::get<1>(actorRef);
+		std::shared_ptr<Archive::Rarc> modelArchive = Archive::Rarc::Create();
+		bStream::CFileStream modelArchiveStream(modelPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
+		if(!modelArchive->Load(&modelArchiveStream)){
+			std::cout << "[Editor Scene]: Unable to load model archive " << modelPath.string() << std::endl;
+			return;
+		}
+		if(mActorModels.count(name) == 0){
+			std::shared_ptr<Archive::File> modelFile = modelArchive->GetFile(std::filesystem::path("model") / (actorName + ".mdl"));
+			if(modelFile == nullptr){
+				std::cout << "[Editor Scene]: Couldn't find model/" << actorName << ".mdl in archive" << std::endl;
+			} else {
+				bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+				mActorModels[name] = std::make_unique<MDL::Model>();
+				mActorModels[name]->Load(&modelData);
+			}
+		}
+		if(mMaterialAnimations.count(name) == 0 && txpName != ""){
+			
+			std::shared_ptr<Archive::File> txpFile = modelArchive->GetFile(std::filesystem::path("txp") / (txpName + ".txp"));
+			if(txpFile == nullptr){
+				std::cout << "[Editor Scene]: Couldn't find txp/" << txpName << ".txp in archive" << std::endl;
+			} else {
+				std::cout << "[Editor Scene]: Loading txp " << txpName << std::endl;
+				bStream::CMemoryStream txpData(txpFile->GetData(), txpFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+				mMaterialAnimations[name] = std::make_unique<TXP::Animation>();
+				mMaterialAnimations[name]->Load(&txpData);
+			}
+		}
+	} else {
+		std::filesystem::path fullModelPath = std::filesystem::path("model") / (std::get<0>(actorRef) + ".arc") / "model" / (std::get<0>(actorRef) + ".mdl");
+		
+		if(GCResourceManager.mLoadedGameArchive){
+			std::shared_ptr<Archive::File> modelFile = GCResourceManager.mGameArchive->GetFile(fullModelPath);
+			
+			if(modelFile == nullptr){
+				if(log) std::cout << "[Editor Scene]: Couldn't find " << std::get<0>(actorRef) << ".mdl in game archive" << std::endl;
+			} else {
+				bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+				mActorModels[name] = std::make_unique<MDL::Model>();
+				mActorModels[name]->Load(&modelData);
+			}
+		}
+	}
+}
+
 bool LEditorScene::HasRoomLoaded(int32_t roomNumber){
 	for (std::weak_ptr<LRoomDOMNode>& room : mCurrentRooms)
 	{
@@ -461,66 +516,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 
 			adjacentRoom->ForEachChildOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender, [&](auto node){
 				if(node->GetNodeType() == EDOMNodeType::Character || node->GetNodeType() == EDOMNodeType::Enemy || node->GetNodeType() == EDOMNodeType::Observer || node->GetNodeType() == EDOMNodeType::Generator || node->GetNodeType() == EDOMNodeType::Key){
-					std::string name = node->GetName();
-					
-					std::tuple<std::string, std::string, bool> actorRef = LResUtility::GetActorModelFromName(name);
-
-					if(mActorModels.count(name) != 0 && (mMaterialAnimations.count(name) != 0 && std::get<1>(actorRef) != "")) return;
-
-					std::filesystem::path modelPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "model" / (std::get<0>(actorRef) + ".szp");
-
-					if(!std::get<2>(actorRef) && std::filesystem::exists(modelPath)){
-						std::string actorName = std::get<0>(actorRef);
-						std::string txpName = std::get<1>(actorRef);
-
-						std::shared_ptr<Archive::Rarc> modelArchive = Archive::Rarc::Create();
-						bStream::CFileStream modelArchiveStream(modelPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
-						if(!modelArchive->Load(&modelArchiveStream)){
-							std::cout << "[Editor Scene]: Unable to load model archive " << modelPath.string() << std::endl;
-							return;
-						}
-
-						if(mActorModels.count(name) == 0){
-
-							std::shared_ptr<Archive::File> modelFile = modelArchive->GetFile(std::filesystem::path("model") / (actorName + ".mdl"));
-
-							if(modelFile == nullptr){
-								std::cout << "[Editor Scene]: Couldn't find model/" << actorName << ".mdl in archive" << std::endl;
-							} else {
-								bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
-								mActorModels[name] = std::make_unique<MDL::Model>();
-								mActorModels[name]->Load(&modelData);
-							}
-						}
-
-						if(mMaterialAnimations.count(name) == 0 && txpName != ""){
-							
-							std::shared_ptr<Archive::File> txpFile = modelArchive->GetFile(std::filesystem::path("txp") / (txpName + ".txp"));
-
-							if(txpFile == nullptr){
-								std::cout << "[Editor Scene]: Couldn't find txp/" << txpName << ".txp in archive" << std::endl;
-							} else {
-								std::cout << "[Editor Scene]: Loading txp " << txpName << std::endl;
-								bStream::CMemoryStream txpData(txpFile->GetData(), txpFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
-								mMaterialAnimations[name] = std::make_unique<TXP::Animation>();
-								mMaterialAnimations[name]->Load(&txpData);
-							}
-						}
-					} else {
-						std::filesystem::path fullModelPath = std::filesystem::path("model") / (std::get<0>(actorRef) + ".arc") / "model" / (std::get<0>(actorRef) + ".mdl");
-						
-						if(GCResourceManager.mLoadedGameArchive){
-							std::shared_ptr<Archive::File> modelFile = GCResourceManager.mGameArchive->GetFile(fullModelPath);
-							
-							if(modelFile == nullptr){
-								std::cout << "[Editor Scene]: Couldn't find " << std::get<0>(actorRef) << ".mdl in game archive" << std::endl;
-							} else {
-								bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
-								mActorModels[name] = std::make_unique<MDL::Model>();
-								mActorModels[name]->Load(&modelData);
-							}
-						}
-					}
+					LoadActor(node->GetName());
 				}
 			});
 
@@ -575,7 +571,8 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 
 void LEditorScene::Update(GLFWwindow* window, float dt, LEditorSelection* selection)
 {
-	if(mActive) Camera.Update(window, dt);
-
+	if(mActive){
+		Camera.Update(window, dt);
+	}
 	// Easter egg where luigi occasionally blinks
 }

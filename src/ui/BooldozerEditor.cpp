@@ -579,10 +579,17 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 	ImGui::Image(static_cast<uintptr_t>(mViewTex), winSize, {0.0f, 1.0f}, {1.0f, 0.0f});
 
-	renderer_scene->SetActive(ImGui::IsItemHovered());
+	if(ImGui::IsItemHovered() && (ImGui::IsMouseDown(ImGuiMouseButton_Left) || ImGui::IsMouseDown(ImGuiMouseButton_Right))){
+		ImGui::SetWindowFocus(nullptr);
+		renderer_scene->SetActive(true);
+	} else {
+		renderer_scene->SetActive(false);
+	}
 
-	if(ImGui::IsItemClicked(0) || ImGui::IsItemClicked(1)) ImGui::FocusItem();
-
+	if(ImGui::IsKeyPressed(ImGuiKey_Escape)){
+		GetSelectionManager()->ClearSelection();
+	}
+	
 	if(ImGui::IsItemClicked() && mLoadedMap != nullptr && !ImGuizmo::IsOver()){
 		int32_t id;
 		ImVec2 mousePos = ImGui::GetMousePos();
@@ -591,20 +598,24 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		glReadBuffer(GL_COLOR_ATTACHMENT1);
 		glReadPixels(mousePos.x - cursorPos.x, ((uint32_t)winSize.y) - (mousePos.y - cursorPos.y), 1, 1, GL_RED_INTEGER, GL_INT, (void*)&id);
 
-		for(auto node : mLoadedMap->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)){
-			if(mCurrentMode == &mEventMode){
-				if(node->GetID() == id && node->GetNodeType() == EDOMNodeType::Event){
-					auto eventDataNodes = mLoadedMap->GetChildrenOfType<LEventDataDOMNode>(EDOMNodeType::EventData);
-					for (auto datanode : eventDataNodes){
-						if(datanode->GetEventNo() == std::static_pointer_cast<LEventDOMNode>(node)->GetEventNo()){
-							GetSelectionManager()->AddToSelection(datanode);
-							break;
+		if(id == -1){
+			GetSelectionManager()->ClearSelection();
+		} else {
+			for(auto node : mLoadedMap->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)){
+				if(mCurrentMode == &mEventMode){
+					if(node->GetID() == id && node->GetNodeType() == EDOMNodeType::Event){
+						auto eventDataNodes = mLoadedMap->GetChildrenOfType<LEventDataDOMNode>(EDOMNodeType::EventData);
+						for (auto datanode : eventDataNodes){
+							if(datanode->GetEventNo() == std::static_pointer_cast<LEventDOMNode>(node)->GetEventNo()){
+								GetSelectionManager()->AddToSelection(datanode);
+								break;
+							}
 						}
 					}
-				}
-			} else {
-				if(node->GetID() == id){
-					GetSelectionManager()->AddToSelection(node);
+				} else {
+					if(node->GetID() == id){
+						GetSelectionManager()->AddToSelection(node);
+					}
 				}
 			}
 		}
@@ -616,6 +627,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	mCurrentMode->RenderGizmo(renderer_scene);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
 	ImGui::End();
 
