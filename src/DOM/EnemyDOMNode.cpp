@@ -59,7 +59,9 @@ void LEnemyDOMNode::RenderDetailsUI(float dt)
 
     ImGui::InputInt("Room Number", &mRoomNumber);
 
-    LUIUtility::RenderComboBox("Enemy Type", LResUtility::GetNameMap("enemies"), mName);
+    if(LUIUtility::RenderComboBox("Enemy Type", LResUtility::GetNameMap("enemies"), mName)){
+        LEditorScene::GetEditorScene()->LoadActor(mName, false);
+    }
     LUIUtility::RenderTooltip("What kind of enemy this actor is.");
 
     // Strings
