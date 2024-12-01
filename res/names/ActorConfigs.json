@@ -1,0 +1,583 @@
+{
+    "baby": {
+        "name": "Chauncey"
+    },
+    "ball1": {
+        "name": "Beta Ball Ghost 1",
+        "model": "star"
+    },
+    "ball2": {
+        "name": "Beta Ball Ghost 2",
+        "model": "star"
+    },
+    "banaoba": {
+        "name": "Garbage Can Ghost"
+    },
+    "bat1": {
+        "name": "Purple Bat"
+    },
+    "bat2": {
+        "name": "Yellow Bat"
+    },
+    "bbaby": {
+        "name": "Boss Chauncey"
+    },
+    "bfire": {
+        "name": "Bogmire"
+    },
+    "bomb1": {
+        "name": "Spark",
+        "model": "bomb",
+        "material": "bomb1"
+    },
+    "bone1": {
+        "name": "Bone Attack",
+        "model": "bone"
+    },
+    "boy": {
+        "name": "Orville"
+    },
+    "boy2": {
+        "name": "Henry"
+    },
+    "bshadow2": {
+        "name": "Small Bogmire Shadow"
+    },
+    "builder": {
+        "name": "Biff Atlas"
+    },
+    "dancer": {
+        "name": "Floating Whirlinda (Male)"
+    },
+    "dancer2": {
+        "name": "Floating Whirlinda (Female)"
+    },
+    "demobak1": {
+        "name": "Cutscene Gold Ghost"
+    },
+    "denwa": {
+        "name": "Uncle Grimmly"
+    },
+    "dog01": {
+        "name": "Spooky",
+        "model": "dog"
+    },
+    "doll1": {
+        "name": "Blue Clockwork Soldier",
+        "model": "doll",
+        "material": "doll1"
+    },
+    "doll2": {
+        "name": "Pink Clockwork Soldier",
+        "model": "doll",
+        "material": "doll2"
+    },
+    "doll3": {
+        "name": "Green Clockwork Soldier",
+        "model": "doll",
+        "material": "doll3"
+    },
+    "eater": {
+        "name": "Mr. Luggs"
+    },
+    "ebone": {
+        "name": "Spooky's Bone",
+        "model": "bone"
+    },
+    "eldoor01": {
+        "name": "Fire Door 1",
+        "model": "door"
+    },
+    "eldoor02": {
+        "name": "Fire Door 2",
+        "model": "door"
+    },
+    "elfire": {
+        "name": "Fire Elemental Ghost"
+    },
+    "elice": {
+        "name": "Ice Elemental Ghost"
+    },
+    "elwater": {
+        "name": "Water Elemental Ghost"
+    },
+    "eskul": {
+        "name": "Mr. Bones",
+        "model": "skul"
+    },
+    "fakedoor": {
+        "name": "Fake Door 1",
+        "model": "door"
+    },
+    "fat": {
+        "name": "Miss Petunia"
+    },
+    "father": {
+        "name": "Neville"
+    },
+    "fkdoor2": {
+        "name": "Fake Door 2",
+        "model": "door2"
+    },
+    "fkdoor3": {
+        "name": "Fake Door 3",
+        "model": "door3"
+    },
+    "gaka": {
+        "name": "Vincent Van Gore"
+    },
+    "girl": {
+        "name": "Sue Pea"
+    },
+    "goldrat0": {
+        "name": "Gold Mouse 1",
+        "model": "rat",
+        "material": "rat4"
+    },
+    "goldrat1": {
+        "name": "Gold Mouse 2",
+        "model": "rat",
+        "material": "rat4"
+    },
+    "goldrat2": {
+        "name": "Gold Mouse 3",
+        "model": "rat",
+        "material": "rat4"
+    },
+    "goldrat3": {
+        "name": "Gold Mouse 4",
+        "model": "rat",
+        "material": "rat4"
+    },
+    "goldrat4": {
+        "name": "Gold Mouse 5",
+        "model": "rat",
+        "material": "rat4"
+    },
+    "goldrat5": {
+        "name": "Gold Mouse 6",
+        "model": "rat",
+        "material": "rat4"
+    },
+    "goldrat6": {
+        "name": "Gold Mouse 7",
+        "model": "rat",
+        "material": "rat4"
+    },
+    "goldrat7": {
+        "name": "Gold Mouse 8",
+        "model": "rat",
+        "material": "rat4"
+    },
+    "goldrat8": {
+        "name": "Gold Mouse 9",
+        "model": "rat",
+        "material": "rat4"
+    },
+    "goldrat9": {
+        "name": "Gold Mouse 10",
+        "model": "rat",
+        "material": "rat4"
+    },
+    "heymask": {
+        "name": "Ghost Guy Mask (solo version)",
+        "model": "heymask",
+        "material": "heymask1"
+    },
+    "heymask2": {
+        "name": "Ghost Guy Mask (dancer version)",
+        "model": "heymask",
+        "material": "heymask2"
+    },
+    "heypo1": {
+        "name": "Red Ghost Guy (solo)",
+        "model": "heypo",
+        "material": "heypo1"
+    },
+    "heypo2": {
+        "name": "Green Ghost Guy (solo)",
+        "model": "heypo",
+        "material": "heypo2"
+    },
+    "heypo3": {
+        "name": "White Ghost Guy (dancer)",
+        "model": "heypo",
+        "material": "heypo3"
+    },
+    "heypo4": {
+        "name": "Brown Ghost Guy (dancer)",
+        "model": "heypo",
+        "material": "heypo4"
+    },
+    "heypo5": {
+        "name": "Orange Ghost Guy (dancer)",
+        "model": "heypo",
+        "material": "heypo5"
+    },
+    "heypo6": {
+        "name": "Yellow Ghost Guy (dancer)",
+        "model": "heypo",
+        "material": "heypo6"
+    },
+    "heypo7": {
+        "name": "Pink Ghost Guy (dancer)",
+        "model": "heypo",
+        "material": "heypo7"
+    },
+    "heypo8": {
+        "name": "Purple Ghost Guy (dancer)",
+        "model": "heypo",
+        "material": "heypo8"
+    },
+    "heypo9": {
+        "name": "Blue Ghost Guy",
+        "model": "heypo",
+        "material": "heypo9"
+    },
+    "heypo10": {
+        "name": "Cyan Ghost Guy",
+        "model": "heypo",
+        "material": "heypo10"
+    },
+    "htama1": {
+        "name": "Yellow Billiard's Ball",
+        "model": "htama",
+        "material": "htama1"
+    },
+    "htama2": {
+        "name": "Red Billiard's Ball",
+        "model": "htama",
+        "material": "htama2"
+    },
+    "htama3": {
+        "name": "Purple Billiard's Ball",
+        "model": "htama",
+        "material": "htama3"
+    },
+    "htama4": {
+        "name": "Cue Ball",
+        "model": "htama",
+        "material": "htama4"
+    },
+    "htubone": {
+        "name": "Red Jarvis (Enemy)",
+        "model": "tubone",
+        "material": "tubone1"
+    },
+    "hustler": {
+        "name": "Slim Bankshot"
+    },
+    "ibookb": {
+        "name": "Haunted Blue Book",
+        "model": "ibook",
+        "material": "ibookb"
+    },
+    "ibookr": {
+        "name": "Haunted Red Book",
+        "model": "ibook",
+        "material": "ibookr"
+    },
+    "ifly": {
+        "name": "Haunted Frying Pan",
+        "model": "ifly"
+    },
+    "ikuma1": {
+        "name": "Haunted Teddy Bear",
+        "model": "ikuma"
+    },
+    "inabe": {
+        "name": "Haunted Small Cooking Pot",
+        "model": "inabe"
+    },
+    "itembomb": {
+        "name": "Big Bomb",
+        "model": "bomb",
+        "material": "bomb1"
+    },
+    "itemboms": {
+        "name": "Small Bomb",
+        "model": "bomb",
+        "material": "bomb2"
+    },
+    "iyapoo1": {
+        "name": "Speedy Spirit 1",
+        "model": "obake01",
+        "material": "obake013"
+    },
+    "iyapoo2": {
+        "name": "Speedy Spirit 2",
+        "model": "obake01",
+        "material": "obake013"
+    },
+    "iyapoo3": {
+        "name": "Speedy Spirit 3",
+        "model": "obake01",
+        "material": "obake013"
+    },
+    "iyapoo4": {
+        "name": "Speedy Spirit 4",
+        "model": "obake01",
+        "material": "obake013"
+    },
+    "iyapoo5": {
+        "name": "Speedy Spirit 5",
+        "model": "obake01",
+        "material": "obake013"
+    },
+    "iyapoo6": {
+        "name": "Speedy Spirit 6",
+        "model": "obake01",
+        "material": "obake013"
+    },
+    "iyapoo7": {
+        "name": "Speedy Spirit 7",
+        "model": "obake01",
+        "material": "obake013"
+    },
+    "iyapoo8": {
+        "name": "Speedy Spirit 8",
+        "model": "obake01",
+        "material": "obake013"
+    },
+    "iyapoo9": {
+        "name": "Speedy Spirit 9",
+        "model": "obake01",
+        "material": "obake013"
+    },
+    "iyapoo10": {
+        "name": "Speedy Spirit 10",
+        "model": "obake01",
+        "material": "obake013"
+    },
+    "iyapoo11": {
+        "name": "Speedy Spirit 11",
+        "model": "obake01",
+        "material": "obake013"
+    },
+    "iyapoo12": {
+        "name": "Speedy Spirit 12",
+        "model": "obake01",
+        "material": "obake013"
+    },
+    "iyapoo13": {
+        "name": "Speedy Spirit 13",
+        "model": "obake01",
+        "material": "obake013"
+    },
+    "iyapoo14": {
+        "name": "Speedy Spirit 14",
+        "model": "obake01",
+        "material": "obake013"
+    },
+    "iyapoo15": {
+        "name": "Speedy Spirit 15",
+        "model": "obake01",
+        "material": "obake013"
+    },
+    "iyapoo16": {
+        "name": "Speedy Spirit 16",
+        "model": "obake01",
+        "material": "obake013"
+    },
+    "iyapoo17": {
+        "name": "Speedy Spirit 17",
+        "model": "obake01",
+        "material": "obake013"
+    },
+    "iyapoo18": {
+        "name": "Speedy Spirit 18",
+        "model": "obake01",
+        "material": "obake013"
+    },
+    "iyapoo19": {
+        "name": "Speedy Spirit 19",
+        "model": "obake01",
+        "material": "obake013"
+    },
+    "iyapoo20": {
+        "name": "Speedy Spirit 20",
+        "model": "obake01",
+        "material": "obake013"
+    },
+    "kopabom": {
+        "name": "Bowser Bomb"
+    },
+    "kptelesa": {
+        "name": "King Boo",
+        "model": "ltelesa"
+    },
+    "lheart": {
+        "name": "Large Heart"
+    },
+    "mapoo1": {
+        "name": "Purple Puncher",
+        "model": "obake02",
+        "material": "obake021"
+    },
+    "mapoo2": {
+        "name": "Flash",
+        "model": "obake02",
+        "material": "obake022"
+    },
+    "mgyapoo1": {
+        "name": "Training Room Gold Ghost",
+        "model": "obake01",
+        "material": "obake011"
+    },
+    "mkinoko": {
+        "name": "Poison Mushroom"
+    },
+    "mopoo1": {
+        "name": "Blue Twirler",
+        "model": "obake03",
+        "material": "obake031"
+    },
+    "mopoo2": {
+        "name": "Blue Blaze",
+        "model": "obake03",
+        "material": "obake032"
+    },
+    "mother": {
+        "name": "Lydia"
+    },
+    "obaasan": {
+        "name": "Nana"
+    },
+    "okami1": {
+        "name": "Haunted Piano Sheet"
+    },
+    "otub1": {
+        "name": "Haunted Jar 1"
+    },
+    "otub2": {
+        "name": "Haunted Jar 2"
+    },
+    "otub3": {
+        "name": "Haunted Jar 3"
+    },
+    "otub4": {
+        "name": "Haunted Jar 4"
+    },
+    "otub5": {
+        "name": "Haunted Jar 5"
+    },
+    "oufo1": {
+        "name": "Haunted Plate 1"
+    },
+    "oufo2": {
+        "name": "Haunted Plate 2"
+    },
+    "painist": {
+        "name": "Melody Pianissima"
+    },
+    "piero1": {
+        "name": "Red Clown Doll"
+    },
+    "piero2": {
+        "name": "Blue Clown Doll"
+    },
+    "poo1": {
+        "name": "Purple Flying Fish"
+    },
+    "poo2": {
+        "name": "Green Flying Fish"
+    },
+    "putcher1": {
+        "name": "Bowling Ghost",
+        "model": "obake04"
+    },
+    "rat1": {
+        "name": "Blue Mouse",
+        "model": "rat",
+        "material": "rat1"
+    },
+    "rat2": {
+        "name": "Pink Mouse",
+        "model": "rat",
+        "material": "rat2"
+    },
+    "rat3": {
+        "name": "Purple Mouse",
+        "model": "rat",
+        "material": "rat3"
+    },
+    "sheart": {
+        "name": "Small Heart"
+    },
+    "situji": {
+        "name": "Shivers"
+    },
+    "skul": {
+        "name": "Mr. Bones"
+    },
+    "snowman": {
+        "name": "Sir Weston"
+    },
+    "star": {
+        "name": "Meteor Ghost"
+    },
+    "tabemono": {
+        "name": "Plate of Rice"
+    },
+    "telesa": {
+        "name": "Boo"
+    },
+    "telesa1": {
+        "name": "Boo 1",
+        "model": "telesa2"
+    },
+    "tenjyo": {
+        "name": "Purple Bomber",
+        "model": "tenjyo",
+        "material": "tenjyo1"
+    },
+    "tenjyo2": {
+        "name": "Ceiling Suprise",
+        "model": "tenjyo",
+        "material": "tenjyo2"
+    },
+    "tomato": {
+        "name": "Bowling Ball"
+    },
+    "topoo1": {
+        "name": "Red Grabbing Ghost",
+        "model": "topoo",
+        "material": "topoo1"
+    },
+    "topoo2": {
+        "name": "Cyan Grabbing Ghost (invisible)",
+        "model": "topoo",
+        "material": "topoo2"
+    },
+    "topoo3": {
+        "name": "Purple Grabbing Ghost (invisible)",
+        "model": "topoo",
+        "material": "topoo3"
+    },
+    "topoo4": {
+        "name": "White Grabbing Ghost",
+        "model": "topoo",
+        "material": "topoo4"
+    },
+    "tubone": {
+        "name": "Minigame Jarvis",
+        "model": "tubone",
+        "material": "tubone2"
+    },
+    "uranai": {
+        "name": "Madame Clairvoya"
+    },
+    "waiter": {
+        "name": "Waiter Ghost"
+    },
+    "yapoo1": {
+        "name": "Gold Ghost",
+        "model":"obake01",
+        "material":"obake011"
+    },
+    "yapoo2": {
+        "name": "Temper Terror",
+        "model":"obake01",
+        "material":"obake012"
+    }
+}

@@ -438,6 +438,15 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 
 	}
 
+	// save events
+	std::filesystem::path eventPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Event";
+	if(std::filesystem::exists(eventPath))
+	{
+		for(auto event : GetChildrenOfType<LEventDataDOMNode>(EDOMNodeType::EventData)){
+			event->SaveEventArchive();
+		}
+	}
+
 
 	mMapArchive->SaveToFile(file_path, Compression::Format::YAY0);
 

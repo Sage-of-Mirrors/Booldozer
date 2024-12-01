@@ -314,56 +314,78 @@ bool LPrmIO::RenderUI()
         ImGui::Separator();
 
         ImGui::BeginChild("##actorPropertiesWin", {250, 500});
-        
-        if (ImGui::BeginCombo("Ghost", mLoadedConfigs[mSelectedConfig].data(), 0))
+
+        auto actorNameMap = LResUtility::GetNameMap("ActorConfigs");
+        std::string name = mLoadedConfigs[mSelectedConfig];
+        if(actorNameMap.contains(mLoadedConfigs[mSelectedConfig])){
+            name = actorNameMap[mLoadedConfigs[mSelectedConfig]]["name"].get<std::string>();
+        }
+
+        if (ImGui::BeginCombo("Ghost", name.data(), 0))
         {
             for (int n = 0; n < mLoadedConfigs.size(); n++)
             {
                 const bool is_selected = (mSelectedConfig == n);
-                if (ImGui::Selectable(mLoadedConfigs[n].data(), is_selected)){
+
+                std::string name = mLoadedConfigs[n];
+                if(actorNameMap.contains(mLoadedConfigs[n])){
+                    name = actorNameMap[mLoadedConfigs[n]]["name"].get<std::string>();
+                }
+
+                if (ImGui::Selectable(name.data(), is_selected)){
                     mSelectedConfig = n;
 
                     PreviewWidget::UnloadModel();
 
-                    std::tuple<std::string, std::string, bool> actorRef = LResUtility::GetActorModelFromName(mLoadedConfigs[mSelectedConfig]);
+                    std::string modelName = "";
+                    std::string materialName = "";
+                    bool fromGameArchive = false;
+                    if(actorNameMap.contains(mLoadedConfigs[n]) && actorNameMap[mLoadedConfigs[n]].contains("model")){
+                        modelName = actorNameMap[mLoadedConfigs[n]]["model"].get<std::string>();
+                        if(actorNameMap[mLoadedConfigs[n]].contains("material")){
+                            materialName = actorNameMap[mLoadedConfigs[n]]["material"].get<std::string>();
+                        }
+                    } else {
+                        std::tuple<std::string, std::string, bool> actorRef = LResUtility::GetActorModelFromName(mLoadedConfigs[mSelectedConfig]);
+                        modelName = std::get<0>(actorRef);
+                        materialName = std::get<1>(actorRef);
+                        fromGameArchive = std::get<2>(actorRef);
+                    }
                     
-                    std::filesystem::path modelPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "model" / (std::get<0>(actorRef) + ".szp");
+                    std::filesystem::path modelPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "model" / (modelName + ".szp");
                     
-                    if(!std::get<2>(actorRef) && std::filesystem::exists(modelPath)){
-                        std::string actorName = std::get<0>(actorRef);
-                        std::string txpName = std::get<1>(actorRef);
-
+                    if(!fromGameArchive && std::filesystem::exists(modelPath)){
                         std::shared_ptr<Archive::Rarc> modelArchive = Archive::Rarc::Create();
                         bStream::CFileStream modelArchiveStream(modelPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
                         if(!modelArchive->Load(&modelArchiveStream)){
                             std::cout << "[PRMIO]: Unable to load model archive " << modelPath.string() << std::endl;
                         } else {
-                            std::shared_ptr<Archive::File> modelFile = modelArchive->GetFile(std::filesystem::path("model") / (actorName + ".mdl"));
+                            std::shared_ptr<Archive::File> modelFile = modelArchive->GetFile(std::filesystem::path("model") / (modelName + ".mdl"));
                             if(modelFile == nullptr){
-                                std::cout << "[PRMIO]: Couldn't find model/" << actorName << ".mdl in archive" << std::endl;
+                                std::cout << "[PRMIO]: Couldn't find model/" << modelName << ".mdl in archive" << std::endl;
                             } else {
                                 bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
                                 PreviewWidget::LoadModel(&modelData, EModelType::Actor);
                             }
-                            if(txpName != ""){
-                                std::shared_ptr<Archive::File> txpFile = modelArchive->GetFile(std::filesystem::path("txp") / (txpName + ".txp"));
+                            if(materialName != ""){
+                                std::shared_ptr<Archive::File> txpFile = modelArchive->GetFile(std::filesystem::path("txp") / (materialName + ".txp"));
                                 if(txpFile == nullptr){
-                                    std::cout << "[PRMIO]: Couldn't find txp/" << txpName << ".txp in archive" << std::endl;
+                                    std::cout << "[PRMIO]: Couldn't find txp/" << materialName << ".txp in archive" << std::endl;
                                 } else {
-                                    std::cout << "[PRMIO]: Loading txp " << txpName << std::endl;
+                                    std::cout << "[PRMIO]: Loading txp " << materialName << std::endl;
                                     bStream::CMemoryStream txpData(txpFile->GetData(), txpFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
                                     PreviewWidget::SetModelAnimation(&txpData);
                                 }
                             }
                         }
                     } else {
-                        std::filesystem::path fullModelPath = std::filesystem::path("model") / (std::get<0>(actorRef) + ".arc") / "model" / (std::get<0>(actorRef) + ".mdl");
+                        std::filesystem::path fullModelPath = std::filesystem::path("model") / (modelName + ".arc") / "model" / (modelName + ".mdl");
                         
                         if(GCResourceManager.mLoadedGameArchive){
                             std::shared_ptr<Archive::File> modelFile = GCResourceManager.mGameArchive->GetFile(fullModelPath);
                             
                             if(modelFile == nullptr){
-                                std::cout << "[PRMIO]: Couldn't find " << std::get<0>(actorRef) << ".mdl in game archive" << std::endl;
+                                std::cout << "[PRMIO]: Couldn't find " << modelName<< ".mdl in game archive" << std::endl;
                             } else {
                                 bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
                                 PreviewWidget::LoadModel(&modelData, EModelType::Actor);
