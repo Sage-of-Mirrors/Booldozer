@@ -85,13 +85,13 @@ void LEventDataDOMNode::LoadEventArchive(std::shared_ptr<Archive::Rarc> arc, std
     std::sscanf(eventScriptName.data(), "event%02d", &mEventNo);
 
     if(msgFile != nullptr){
-        std::string messages = std::string((char*)msgFile->GetData(), msgFile->GetSize());
+        std::string messages = LGenUtility::SjisToUtf8(std::string((char*)msgFile->GetData(), msgFile->GetSize()));
         std::string msg = "";
         for(std::string::iterator c = messages.begin(); c < messages.end(); c++){
-            if(*c == '\n' && c != messages.begin() && *(c-1) == '\r'){
-                std::erase(msg, '\n');
+            if(*c == '\r' && c != messages.begin()){
                 std::erase(msg, '\r');
-                mEventText.push_back(LGenUtility::SjisToUtf8(msg));
+                mEventText.push_back(msg);
+                if(*(c+1) == '\n') c++; // strip uselesss newlines from the front of things
                 msg = "";
             } else {
                 msg += (*c);
@@ -120,15 +120,14 @@ void LEventDataDOMNode::SaveEventArchive(){
 
 
     std::string msg = "";
-    for(auto str : mEventText){
-        msg += str;
+    for(std::size_t msgIdx = 0; msgIdx < mEventText.size(); msgIdx++){
+        msg += mEventText[msgIdx];
         msg += "\r\n";
     }
 
     std::string msgFileData = LGenUtility::Utf8ToSjis(msg);
-    
     std::string txtFileData = LGenUtility::Utf8ToSjis(mEventScript);
-    
+
     if(msgFile != nullptr){
         msgFile->SetData((uint8_t*)msgFileData.data(), msgFileData.size());
     } else {
