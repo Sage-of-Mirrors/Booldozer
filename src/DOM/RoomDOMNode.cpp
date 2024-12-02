@@ -12,6 +12,8 @@
 #include "io/BtiIO.hpp"
 #include "ResUtil.hpp"
 
+#include "stb_image.h"
+
 namespace {
 	std::shared_ptr<Archive::Rarc> ActiveRoomArchive = nullptr;
 	std::shared_ptr<Archive::File> EditFileName = nullptr;
@@ -20,7 +22,7 @@ namespace {
 	std::string FileName = "(null)";
 	uint32_t PreviousRoomID = 0xFFFFFFFF;
 	uint32_t CurRoomNameImgID = 0x00000000;
-	uint32_t CurRoomNameWidth = 0;
+	Bti RoomTitlecard;
 }
 
 std::string const LRoomEntityTreeNodeNames[LRoomEntityType_Max] = {
@@ -183,12 +185,11 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 			auto fileData = GCResourceManager.mGameArchive->GetFile(std::format("/kawano/roomname/{}", LResUtility::GetNameMap("MapTitlecards")["titlecards"][mRoomNumber].get<std::string>()));
 			bStream::CMemoryStream file(fileData->GetData(), fileData->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 
-			uint32_t h;
-			uint8_t* roomImage = Bti::DecodeImage(&file, CurRoomNameWidth, h);
+			uint8_t* roomImage = RoomTitlecard.DecodeImage(&file);
 
 			glCreateTextures(GL_TEXTURE_2D, 1, &CurRoomNameImgID);
-			glTextureStorage2D(CurRoomNameImgID, 1, GL_RGBA8, CurRoomNameWidth, h);
-			glTextureSubImage2D(CurRoomNameImgID, 0, 0, 0, CurRoomNameWidth, h, GL_RGBA, GL_UNSIGNED_BYTE, roomImage);
+			glTextureStorage2D(CurRoomNameImgID, 1, GL_RGBA8, RoomTitlecard.mWidth, RoomTitlecard.mHeight);
+			glTextureSubImage2D(CurRoomNameImgID, 0, 0, 0, RoomTitlecard.mWidth, RoomTitlecard.mHeight, GL_RGBA, GL_UNSIGNED_BYTE, roomImage);
 			delete[] roomImage;
 
 		}
@@ -643,11 +644,29 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 {
 	std::shared_ptr<LRoomDataDOMNode> dataNode = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
 
-	ImGui::Image(static_cast<uintptr_t>(CurRoomNameImgID), ImVec2(CurRoomNameWidth, 32));
+	ImGui::Image(static_cast<uintptr_t>(CurRoomNameImgID), ImVec2(RoomTitlecard.mWidth, RoomTitlecard.mHeight));
 	ImGui::SameLine();
 	ImGui::Text(ICON_FK_FOLDER_OPEN);
 	if(ImGui::IsItemClicked()){
-		// open file
+		ImGuiFileDialog::Instance()->OpenModal("openNewRoomTitlecard", "Select New Room Titlecard", "Image (*.png){.png}", ".");
+	}
+
+	std::string imgPath;
+	if(LUIUtility::RenderFileDialog("openNewRoomTitlecard", imgPath)){
+		int x,y,n;
+		unsigned char* img = stbi_load(imgPath.c_str(), &x, &y, &n, 0);
+		
+		auto fileData = GCResourceManager.mGameArchive->GetFile(std::format("/kawano/roomname/{}", LResUtility::GetNameMap("MapTitlecards")["titlecards"][mRoomNumber].get<std::string>()));
+		bStream::CMemoryStream file(0x1C + (x * y), bStream::Endianess::Big, bStream::OpenMode::Out);
+
+		RoomTitlecard.mWidth = x;
+		RoomTitlecard.mHeight = y;
+		RoomTitlecard.EncodeImage(&file, img);
+
+		fileData->SetData(file.getBuffer(), file.getSize());
+
+    	std::filesystem::path gameArcPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Game" / "game_usa.szp";
+        GCResourceManager.mGameArchive->SaveToFile(gameArcPath.string(), Compression::Format::YAY0);
 	}
 
 	// Integers

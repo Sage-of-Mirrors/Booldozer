@@ -11,6 +11,24 @@ uint16_t toGreyscale(uint32_t color){
     return std::round(((r * 30) + (g * 59) + (b * 11)) / 100);
 }
 
+uint8_t RGBA8toI4(uint32_t color){
+    uint16_t greyscale = toGreyscale(color);
+    return (greyscale >> 4) & 0xF;
+}
+
+uint8_t RGBA8toIA4(uint32_t color){
+    uint16_t greyscale = toGreyscale(color);
+    uint8_t output = 0;
+    output |= (greyscale >> 4) & 0xF;
+    output |= ((color << 24) & 0xFF) & 0xF0;
+    return output;
+}
+
+uint8_t RGBA8toI8(uint32_t color){
+    uint16_t greyscale = toGreyscale(color);
+    return greyscale & 0xFF;
+}
+
 uint16_t RGBA8toIA8(uint32_t color){
     uint16_t greyscale = toGreyscale(color);
     uint16_t output = 0x0000;
@@ -373,6 +391,85 @@ namespace Encode {
     void RGB5A3(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData){}
     void RGB565(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData){}
 
+    void I4(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData){
+        if(imageData == nullptr) return;
+
+        uint32_t numBlocksW = width / 8;
+        uint32_t numBlocksH = height / 8;
+                
+        // Iterate the blocks in the image
+        for (int blockY = 0; blockY < numBlocksH; blockY++) {
+            for (int blockX = 0; blockX < numBlocksW; blockX++) {
+                // Iterate the pixels in the current block
+                for (int pixelY = 0; pixelY < 8; pixelY++) {
+                    for (int pixelX = 0; pixelX < 8; pixelX += 2) {
+                        // Bounds check to ensure the pixel is within the image.
+                        if ((blockX * 8 + pixelX >= width) || (blockY * 8 + pixelY >= height))
+                            continue;
+
+                        uint32_t srcIndex = (width * ((blockY * 4) + pixelY) + (blockX * 8) + pixelX) * 4;
+                        uint8_t color1 = ColorFormat::RGBA8toI4(*reinterpret_cast<uint32_t*>(&imageData[srcIndex]));
+                        uint8_t color2 = ColorFormat::RGBA8toI4(*(reinterpret_cast<uint32_t*>(&imageData[srcIndex]) + 1));
+
+                        stream->writeUInt8((color1 & 0xF) << 4 | (color2 & 0xF));
+                    }
+                }
+            }
+        }
+    }
+
+    void IA4(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData){
+        if(imageData == nullptr) return;
+
+        uint32_t numBlocksW = width / 8;
+        uint32_t numBlocksH = height / 4;
+
+        // Iterate the blocks in the image
+        for (int blockY = 0; blockY < numBlocksH; blockY++) {
+            for (int blockX = 0; blockX < numBlocksW; blockX++) {
+                // Iterate the pixels in the current block
+                for (int pixelY = 0; pixelY < 4; pixelY++) {
+                    for (int pixelX = 0; pixelX < 8; pixelX++) {
+                        // Bounds check to ensure the pixel is within the image.
+                        if ((blockX * 8 + pixelX >= width) || (blockY * 4 + pixelY >= height))
+                            continue;
+
+                        uint32_t srcIndex = (width * ((blockY * 4) + pixelY) + (blockX * 8) + pixelX) * 4;
+                        uint32_t data = *reinterpret_cast<uint32_t*>(&imageData[srcIndex]);
+
+                        stream->writeUInt8(ColorFormat::RGBA8toIA4(data));
+                    }
+                }
+            }
+        }
+    }
+
+    void I8(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData){
+        if(imageData == nullptr) return;
+
+        uint32_t numBlocksW = width / 8;
+        uint32_t numBlocksH = height / 4;
+
+        // Iterate the blocks in the image
+        for (int blockY = 0; blockY < numBlocksH; blockY++) {
+            for (int blockX = 0; blockX < numBlocksW; blockX++) {
+                // Iterate the pixels in the current block
+                for (int pixelY = 0; pixelY < 4; pixelY++) {
+                    for (int pixelX = 0; pixelX < 8; pixelX++) {
+                        // Bounds check to ensure the pixel is within the image.
+                        if ((blockX * 8 + pixelX >= width) || (blockY * 4 + pixelY >= height))
+                            continue;
+
+                        uint32_t srcIndex = (width * ((blockY * 4) + pixelY) + (blockX * 8) + pixelX) * 4;
+                        uint32_t data = *reinterpret_cast<uint32_t*>(&imageData[srcIndex]);
+
+                        stream->writeUInt8(ColorFormat::RGBA8toI8(data));
+                    }
+                }
+            }
+        }
+    }
+
     void IA8(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData){
         if(imageData == nullptr) return;
 
@@ -401,65 +498,115 @@ namespace Encode {
 }
 };
 
-namespace Bti {
+void Bti::EncodeImage(bStream::CStream* stream, uint8_t* imageData){
+    stream->writeUInt8(mFormat);
+    stream->writeUInt8(mEnableAlpha);
+    stream->writeUInt16(mWidth);
+    stream->writeUInt16(mHeight);
+    stream->writeUInt8(mWrapS);
+    stream->writeUInt8(mWrapT);
+    stream->writeUInt8(mPaletteFormat);
+    stream->writeUInt8(mNumPaletteEntries);
+    stream->writeUInt32(mPaletteOffsetData);
+    stream->writeUInt8(mMipMapEnabled);
+    stream->writeUInt8(mMipMapEnabled);
+    stream->writeUInt8(mEdgeLODEnabled);
+    stream->writeUInt8(mClampLODBias);
+    stream->writeUInt8(mMaxAnisotropy);
+    stream->writeUInt8(mMinFilterType);
+    stream->writeUInt8(mMagFilterType);
+    stream->writeUInt8(mMinLOD);
+    stream->writeUInt8(mMaxLOD);
+    stream->writeUInt8(mNumImages); // should be 1?
+    stream->writeUInt8(0);
+    stream->writeUInt16(mLODBias);
 
-uint8_t* DecodeImage(bStream::CStream* stream, uint32_t& w, uint32_t& h){
-    uint8_t format = stream->readUInt8();
-    uint8_t enableAlpha = stream->readUInt8();
-    
-    w = stream->readUInt16();
-    h = stream->readUInt16();
-    
-    uint8_t wrapS = stream->readUInt8();
-    uint8_t wrapT = stream->readUInt8();
-    uint16_t paletteFormat = stream->readUInt8();
-    uint16_t numPaletteEntries = stream->readUInt8();
-    uint32_t paletteOffsetData = stream->readUInt32();
-    uint8_t mipMapEnabled = stream->readUInt8();
-    uint8_t edgeLODEnabled = stream->readUInt8();
-    uint8_t clampLODBias = stream->readUInt8();
-    uint8_t maxAnisotropy = stream->readUInt8();
-    uint8_t minFilterType = stream->readUInt8();
-    uint8_t magFilterType = stream->readUInt8();
-    uint8_t minLOD = stream->readUInt8();
-    uint8_t maxLOD = stream->readUInt8();
-    uint8_t numImages = stream->readUInt8();
+    stream->writeUInt32(stream->tell() + sizeof(uint32_t));
+
+    switch (mFormat){
+    case 0x00:
+        ImageFormat::Encode::I4(stream, mWidth, mHeight, imageData);
+        break;
+    case 0x01:
+        ImageFormat::Encode::I8(stream, mWidth, mHeight, imageData);
+        break;
+    case 0x02:
+        ImageFormat::Encode::IA4(stream, mWidth, mHeight, imageData);
+        break;
+    case 0x03:
+        ImageFormat::Encode::IA8(stream, mWidth, mHeight, imageData);
+        break;
+    case 0x04:
+        //ImageFormat::Encode::RGB565(stream, mWidth, mHeight, imageData);
+        break;
+    case 0x05:
+        //ImageFormat::Encode::RGB5A3(stream, mWidth, mHeight, imageData);
+        break;
+    case 0x0E:
+        //ImageFormat::Encode::CMPR(stream, mWidth, mHeight, imageData);
+        break;
+    default:
+        break;
+    }
+}
+
+uint8_t* Bti::DecodeImage(bStream::CStream* stream){
+    mFormat = stream->readUInt8();
+    mEnableAlpha = stream->readUInt8();
+
+    mWidth = stream->readUInt16();
+    mHeight = stream->readUInt16();
+
+    mWrapS = stream->readUInt8();
+    mWrapT = stream->readUInt8();
+    mPaletteFormat = stream->readUInt8();
+    mNumPaletteEntries = stream->readUInt8();
+    mPaletteOffsetData = stream->readUInt32();
+    mMipMapEnabled = stream->readUInt8();
+    mEdgeLODEnabled = stream->readUInt8();
+    mClampLODBias = stream->readUInt8();
+    mMaxAnisotropy = stream->readUInt8();
+    mMinFilterType = stream->readUInt8();
+    mMagFilterType = stream->readUInt8();
+    mMinLOD = stream->readUInt8();
+    mMaxLOD = stream->readUInt8();
+    mNumImages = stream->readUInt8();
+
     stream->skip(1);
-    uint16_t LODBias = stream->readUInt16();
+
+    mLODBias = stream->readUInt16();
     uint32_t imageDataOffset = stream->readUInt32();
 
 
     stream->seek(imageDataOffset);
 
-    uint8_t* imageData = new uint8_t[w * h * 4](0);
+    uint8_t* imageData = new uint8_t[mWidth * mHeight * 4](0);
 
-    switch (format){
+    switch (mFormat){
     case 0x00:
-        ImageFormat::Decode::I4(stream, w, h, imageData);
+        ImageFormat::Decode::I4(stream, mWidth, mHeight, imageData);
         break;
     case 0x01:
-        ImageFormat::Decode::I8(stream, w, h, imageData);
+        ImageFormat::Decode::I8(stream, mWidth, mHeight, imageData);
         break;
     case 0x02:
-        ImageFormat::Decode::IA4(stream, w, h, imageData);
+        ImageFormat::Decode::IA4(stream, mWidth, mHeight, imageData);
         break;
     case 0x03:
-        ImageFormat::Decode::IA8(stream, w, h, imageData);
+        ImageFormat::Decode::IA8(stream, mWidth, mHeight, imageData);
         break;
     case 0x04:
-        ImageFormat::Decode::RGB565(stream, w, h, imageData);
+        ImageFormat::Decode::RGB565(stream, mWidth, mHeight, imageData);
         break;
     case 0x05:
-        ImageFormat::Decode::RGB5A3(stream, w, h, imageData);
+        ImageFormat::Decode::RGB5A3(stream, mWidth, mHeight, imageData);
         break;
     case 0x0E:
-        ImageFormat::Decode::CMPR(stream, w, h, imageData);
+        ImageFormat::Decode::CMPR(stream, mWidth, mHeight, imageData);
         break;
     default:
         break;
     }
 
     return imageData;
-}
-
 }

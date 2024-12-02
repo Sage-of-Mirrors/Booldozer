@@ -29,6 +29,30 @@ namespace ImageFormat {
     }
 };
 
-namespace Bti {
-    uint8_t* DecodeImage(bStream::CStream* stream, uint32_t& w, uint32_t& h);
-}
+class Bti {
+    uint8_t mFormat { 0 };
+    uint8_t mEnableAlpha { 0 };
+    uint8_t mWrapS { 0 };
+    uint8_t mWrapT { 0 };
+    uint16_t mPaletteFormat { 0 };
+    uint16_t mNumPaletteEntries { 0 };
+    uint32_t mPaletteOffsetData { 0 };
+    uint8_t mMipMapEnabled { 0 };
+    uint8_t mEdgeLODEnabled { 0 };
+    uint8_t mClampLODBias { 0 };
+    uint8_t mMaxAnisotropy { 0 };
+    uint8_t mMinFilterType { 0 };
+    uint8_t mMagFilterType { 0 };
+    uint8_t mMinLOD { 0 };
+    uint8_t mMaxLOD { 0 };
+    uint8_t mNumImages { 0 };
+    uint16_t mLODBias { 0 };
+
+public:
+    uint16_t mWidth { 0 };
+    uint16_t mHeight { 0 };
+
+    uint8_t* DecodeImage(bStream::CStream* stream);
+    void EncodeImage(bStream::CStream* stream, uint8_t* imageData);
+
+};
