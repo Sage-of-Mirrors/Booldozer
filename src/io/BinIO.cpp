@@ -7,6 +7,7 @@
 
 #include <J3D/Texture/J3DTexture.hpp>
 #include <GXGeometryEnums.hpp>
+#include "io/BtiIO.hpp"
 
 /*
 *
@@ -31,219 +32,6 @@ float InterpolateHermite(float factor, float timeA, float valueA, float outTange
 }
 
 uint32_t mProgramID = -1; // on setup handle this
-
-uint32_t BinMaterial::RGB565toRGBA8(uint16_t data) {
-	uint8_t r = (data & 0xF100) >> 11;
-	uint8_t g = (data & 0x07E0) >> 5;
-	uint8_t b = (data & 0x001F);
-
-	uint32_t output = 0x000000FF;
-	output |= (r << 3) << 24;
-	output |= (g << 2) << 16;
-	output |= (b << 3) << 8;
-
-	return output;
-}
-
-uint32_t BinMaterial::RGB5A3toRGBA8(uint16_t data) {
-	uint8_t r, g, b, a;
-
-	// No alpha bits to extract.
-	if (data & 0x8000) {
-		a = 0xFF;
-
-		r = (data & 0x7C00) >> 10;
-		g = (data & 0x03E0) >> 5;
-		b = (data & 0x001F);
-
-		r = (r << (8 - 5)) | (r >> (10 - 8));
-		g = (g << (8 - 5)) | (g >> (10 - 8));
-		b = (b << (8 - 5)) | (b >> (10 - 8));
-	}
-	// Alpha bits present.
-	else {
-		a = (data & 0x7000) >> 12;
-		r = (data & 0x0F00) >> 8;
-		g = (data & 0x00F0) >> 4;
-		b = (data & 0x000F);
-
-		a = (a << (8 - 3)) | (a << (8 - 6)) | (a >> (9 - 8));
-		r = (r << (8 - 4)) | r;
-		g = (g << (8 - 4)) | g;
-		b = (b << (8 - 4)) | b;
-	}
-
-	uint32_t output = a;
-	output |= r << 24;
-	output |= g << 16;
-	output |= b << 8;
-
-	return output;
-}
-
-void BinMaterial::DecodeCMPR(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData) {
-	if (imageData == nullptr)
-		return;
-
-	uint32_t numBlocksW = (width + 7) / 8;
-	uint32_t numBlocksH = (height + 7) / 8;
-
-	// Iterate the blocks in the image
-	for (int blockY = 0; blockY < numBlocksH; blockY++) {
-		for (int blockX = 0; blockX < numBlocksW; blockX++) {
-			// Each block has a set of 2x2 sub-blocks.
-			for (int subBlockY = 0; subBlockY < 2; subBlockY++) {
-				for (int subBlockX = 0; subBlockX < 2; subBlockX++) {
-					uint32_t subBlockWidth = std::max(0, std::min(4, width - (subBlockX * 4 + blockX * 8)));
-					uint32_t subBlockHeight = std::max(0, std::min(4, height - (subBlockY * 4 + blockY * 8)));
-
-					uint8_t* subBlockData = BinMaterial::DecodeCMPRSubBlock(stream);
-
-					for (int pixelY = 0; pixelY < subBlockHeight; pixelY++) {
-						uint32_t destX = blockX * 8 + subBlockX * 4;
-						uint32_t destY = blockY * 8 + (subBlockY * 4) + pixelY;
-
-						if (destX >= width || destY >= height)
-							continue;
-
-						uint32_t destOffset = (destY * width + destX) * 4;
-						memcpy(imageData + destOffset, subBlockData + (pixelY * 4 * 4), subBlockWidth * 4);
-					}
-
-					delete[] subBlockData;
-				}
-			}
-		}
-	}
-}
-
-uint8_t* BinMaterial::DecodeCMPRSubBlock(bStream::CStream* stream) {
-	uint8_t* data = new uint8_t[4 * 4 * 4]{};
-
-	uint16_t color0 = stream->readUInt16();
-	uint16_t color1 = stream->readUInt16();
-	uint32_t bits = stream->readUInt32();
-
-	uint32_t colorTable[4]{};
-	colorTable[0] = BinMaterial::RGB565toRGBA8(color0);
-	colorTable[1] = BinMaterial::RGB565toRGBA8(color1);
-
-	uint8_t r0, g0, b0, a0, r1, g1, b1, a1;
-	r0 = (colorTable[0] & 0xFF000000) >> 24;
-	g0 = (colorTable[0] & 0x00FF0000) >> 16;
-	b0 = (colorTable[0] & 0x0000FF00) >> 8;
-	a0 = (colorTable[0] & 0x000000FF);
-
-	r1 = (colorTable[1] & 0xFF000000) >> 24;
-	g1 = (colorTable[1] & 0x00FF0000) >> 16;
-	b1 = (colorTable[1] & 0x0000FF00) >> 8;
-	a1 = (colorTable[1] & 0x000000FF);
-
-	if (color0 > color1) {
-		colorTable[2] |= ((2 * r0 + r1) / 3) << 24;
-		colorTable[2] |= ((2 * g0 + g1) / 3) << 16;
-		colorTable[2] |= ((2 * b0 + b1) / 3) << 8;
-		colorTable[2] |= 0xFF;
-
-		colorTable[3] |= ((r0 + 2 * r1) / 3) << 24;
-		colorTable[3] |= ((g0 + 2 * g1) / 3) << 16;
-		colorTable[3] |= ((b0 + 2 * b1) / 3) << 8;
-		colorTable[3] |= 0xFF;
-	}
-	else {
-		colorTable[2] |= ((r0 + r1) / 2) << 24;
-		colorTable[2] |= ((g0 + g1) / 2) << 16;
-		colorTable[2] |= ((b0 + b1) / 2) << 8;
-		colorTable[2] |= 0xFF;
-
-		colorTable[3] |= ((r0 + 2 * r1) / 3) << 24;
-		colorTable[3] |= ((g0 + 2 * g1) / 3) << 16;
-		colorTable[3] |= ((b0 + 2 * b1) / 3) << 8;
-		colorTable[3] |= 0x00;
-	}
-
-	for (int pixelY = 0; pixelY < 4; pixelY++) {
-		for (int pixelX = 0; pixelX < 4; pixelX++) {
-			uint32_t i = pixelY * 4 + pixelX;
-			uint32_t bitOffset = (15 - i) * 2;
-			uint32_t di = i * 4;
-			uint32_t si = (bits >> bitOffset) & 3;
-
-			data[di + 0] = (colorTable[si] & 0xFF000000) >> 24;
-			data[di + 1] = (colorTable[si] & 0x00FF0000) >> 16;
-			data[di + 2] = (colorTable[si] & 0x0000FF00) >> 8;
-			data[di + 3] = (colorTable[si] & 0x000000FF);
-		}
-	}
-
-	return data;
-}
-
-void BinMaterial::DecodeRGB565(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData) {
-	if (imageData == nullptr)
-		return;
-
-	uint32_t numBlocksW = width / 4;
-	uint32_t numBlocksH = height / 4;
-
-	// Iterate the blocks in the image
-	for (int blockY = 0; blockY < numBlocksH; blockY++) {
-		for (int blockX = 0; blockX < numBlocksW; blockX++) {
-			// Iterate the pixels in the current block
-			for (int pixelY = 0; pixelY < 4; pixelY++) {
-				for (int pixelX = 0; pixelX < 4; pixelX++) {
-					// Bounds check to ensure the pixel is within the image.
-					if ((blockX * 4 + pixelX >= width) || (blockY * 4 + pixelY >= height))
-						continue;
-
-					// RGB values for this pixel are stored in a 16-bit integer.
-					uint16_t data = stream->readUInt16();
-					uint32_t rgba8 = BinMaterial::RGB565toRGBA8(data);
-
-					uint32_t destIndex = (width * ((blockY * 4) + pixelY) + (blockX * 4) + pixelX) * 4;
-
-					imageData[destIndex] = (rgba8 & 0xFF000000) >> 24;
-					imageData[destIndex + 1] = (rgba8 & 0x00FF0000) >> 16;
-					imageData[destIndex + 2] = (rgba8 & 0x0000FF00) >> 8;
-					imageData[destIndex + 3] = rgba8 & 0x000000FF;
-				}
-			}
-		}
-	}
-}
-
-void BinMaterial::DecodeRGB5A3(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData) {
-	if (imageData == nullptr)
-		return;
-
-	uint32_t numBlocksW = width / 4;
-	uint32_t numBlocksH = height / 4;
-
-	// Iterate the blocks in the image
-	for (int blockY = 0; blockY < numBlocksH; blockY++) {
-		for (int blockX = 0; blockX < numBlocksW; blockX++) {
-			// Iterate the pixels in the current block
-			for (int pixelY = 0; pixelY < 4; pixelY++) {
-				for (int pixelX = 0; pixelX < 4; pixelX++) {
-					// Bounds check to ensure the pixel is within the image.
-					if ((blockX * 4 + pixelX >= width) || (blockY * 4 + pixelY >= height))
-						continue;
-
-					// RGB values for this pixel are stored in a 16-bit integer.
-					uint16_t data = stream->readUInt16();
-					uint32_t rgba8 = BinMaterial::RGB5A3toRGBA8(data);
-
-					uint32_t destIndex = (width * ((blockY * 4) + pixelY) + (blockX * 4) + pixelX) * 4;
-
-					imageData[destIndex] = (rgba8 & 0xFF000000) >> 24;
-					imageData[destIndex + 1] = (rgba8 & 0x00FF0000) >> 16;
-					imageData[destIndex + 2] = (rgba8 & 0x0000FF00) >> 8;
-					imageData[destIndex + 3] = rgba8 & 0x000000FF;
-				}
-			}
-		}
-	}
-}
 
 const char* default_vtx_shader_source = "#version 460\n\
     #extension GL_ARB_separate_shader_objects : enable\n\
@@ -527,15 +315,13 @@ BinMaterial::BinMaterial(bStream::CStream* stream, uint32_t textureOffset){
 
 	switch ((EGXTextureFormat)format) {
 		case EGXTextureFormat::RGB565:
-			//DecodeRGB565(stream, w, h, textureData);
-            BinMaterial::DecodeRGB565(stream, w, h, textureData);
+            ImageFormat::Decode::RGB565(stream, w, h, textureData);
 			break;
 		case EGXTextureFormat::RGB5A3:
-			//DecodeRGB5A3(stream, w, h, textureData);
-            BinMaterial::DecodeRGB5A3(stream, w, h, textureData);
+            ImageFormat::Decode::RGB5A3(stream, w, h, textureData);
 			break;
 		case EGXTextureFormat::CMPR:
-			BinMaterial::DecodeCMPR(stream, w, h, textureData);
+			ImageFormat::Decode::CMPR(stream, w, h, textureData);
 			break;
 	}
 

@@ -35,7 +35,7 @@ public:
 	LEventDataDOMNode(std::string name);
 
 	void LoadEventArchive(std::shared_ptr<Archive::Rarc> arc, std::filesystem::path eventPath, std::string eventScriptName, std::string eventCsvName);
-	void SaveEventArchive();
+	void SaveEventArchive(bool createIfNotExist=true);
 
     void RenderDetailsUI(float dt, TextEditor* event);
 	void RenderHierarchyUI(std::shared_ptr<LEventDataDOMNode> self, LEditorSelection* mode_selection);

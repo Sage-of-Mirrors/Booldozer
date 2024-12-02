@@ -9,6 +9,8 @@
 #include "IconsForkAwesome.h"
 #include "modes/ActorMode.hpp"
 #include "scene/ModelViewer.hpp"
+#include "io/BtiIO.hpp"
+#include "ResUtil.hpp"
 
 namespace {
 	std::shared_ptr<Archive::Rarc> ActiveRoomArchive = nullptr;
@@ -16,6 +18,9 @@ namespace {
 	std::shared_ptr<Archive::File> SelectedFile = nullptr;
 	std::shared_ptr<Archive::File> SelectedAnimation = nullptr;
 	std::string FileName = "(null)";
+	uint32_t PreviousRoomID = 0xFFFFFFFF;
+	uint32_t CurRoomNameImgID = 0x00000000;
+	uint32_t CurRoomNameWidth = 0;
 }
 
 std::string const LRoomEntityTreeNodeNames[LRoomEntityType_Max] = {
@@ -168,6 +173,25 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 
 	bool openRoomRes = false;
 	if(GetIsSelected()){
+		if(PreviousRoomID != mRoomNumber && GCResourceManager.mLoadedGameArchive){
+			PreviousRoomID = mRoomNumber;
+
+			if(CurRoomNameImgID != 0){
+				glDeleteTextures(1, &CurRoomNameImgID);
+			}
+			std::cout << std::format("/kawano/roomname/{}", LResUtility::GetNameMap("MapTitlecards")["titlecards"][mRoomNumber].get<std::string>()) << std::endl;
+			auto fileData = GCResourceManager.mGameArchive->GetFile(std::format("/kawano/roomname/{}", LResUtility::GetNameMap("MapTitlecards")["titlecards"][mRoomNumber].get<std::string>()));
+			bStream::CMemoryStream file(fileData->GetData(), fileData->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+
+			uint32_t h;
+			uint8_t* roomImage = Bti::DecodeImage(&file, CurRoomNameWidth, h);
+
+			glCreateTextures(GL_TEXTURE_2D, 1, &CurRoomNameImgID);
+			glTextureStorage2D(CurRoomNameImgID, 1, GL_RGBA8, CurRoomNameWidth, h);
+			glTextureSubImage2D(CurRoomNameImgID, 0, 0, 0, CurRoomNameWidth, h, GL_RGBA, GL_UNSIGNED_BYTE, roomImage);
+			delete[] roomImage;
+
+		}
 		ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 		ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 		if(ImGui::BeginPopupModal("##roomResources", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
@@ -618,6 +642,13 @@ void LRoomDOMNode::RenderWaveHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEd
 void LRoomDOMNode::RenderDetailsUI(float dt)
 {
 	std::shared_ptr<LRoomDataDOMNode> dataNode = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
+
+	ImGui::Image(static_cast<uintptr_t>(CurRoomNameImgID), ImVec2(CurRoomNameWidth, 32));
+	ImGui::SameLine();
+	ImGui::Text(ICON_FK_FOLDER_OPEN);
+	if(ImGui::IsItemClicked()){
+		// open file
+	}
 
 	// Integers
 	ImGui::InputInt("Lightning Direction", &mThunder);

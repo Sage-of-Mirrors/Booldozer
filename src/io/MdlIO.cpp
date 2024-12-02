@@ -1,6 +1,7 @@
 #include "io/MdlIO.hpp"
 #include "io/TxpIO.hpp"
 #include "io/BinIO.hpp"
+#include "io/BtiIO.hpp"
 #include <glad/glad.h>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <format>
@@ -99,80 +100,20 @@ namespace MDL {
         switch (Format)
         {
         case 0x07:
-            BinMaterial::DecodeRGB565(stream, Width, Height, imageData);
+            ImageFormat::Decode::RGB565(stream, Width, Height, imageData);
             break;
         case 0x08:
-            BinMaterial::DecodeRGB5A3(stream, Width, Height, imageData);
+            ImageFormat::Decode::RGB5A3(stream, Width, Height, imageData);
             break;
         case 0x0A:
-            BinMaterial::DecodeCMPR(stream, Width, Height, imageData);
+            ImageFormat::Decode::CMPR(stream, Width, Height, imageData);
             break;
         case 0x03:
-            {
-                uint32_t numBlocksW = Width / 8;
-                uint32_t numBlocksH = Height / 8;
-                
-                // Iterate the blocks in the image
-                for (int blockY = 0; blockY < numBlocksH; blockY++) {
-                    for (int blockX = 0; blockX < numBlocksW; blockX++) {
-                        // Iterate the pixels in the current block
-                        for (int pixelY = 0; pixelY < 8; pixelY++) {
-                            for (int pixelX = 0; pixelX < 8; pixelX += 2) {
-                                // Bounds check to ensure the pixel is within the image.
-                                if ((blockX * 8 + pixelX >= Width) || (blockY * 8 + pixelY >= Height))
-                                    continue;
-
-                                uint8_t data = stream->readUInt8();
-
-                                // Each byte represents two pixels.
-                                uint8_t pixel0 = (data & 0xF0) >> 4;
-                                uint8_t pixel1 = (data & 0x0F);
-
-                                uint32_t destIndex = (Width * ((blockY * 8) + pixelY) + (blockX * 8) + pixelX) * 4;
-
-                                imageData[destIndex] = pixel0 * 0x11;
-                                imageData[destIndex + 1] = pixel0 * 0x11;
-                                imageData[destIndex + 2] = pixel0 * 0x11;
-                                imageData[destIndex + 3] = pixel0 * 0x11;
-
-                                imageData[destIndex + 4] = pixel1 * 0x11;
-                                imageData[destIndex + 5] = pixel1 * 0x11;
-                                imageData[destIndex + 6] = pixel1 * 0x11;
-                                imageData[destIndex + 7] = pixel1 * 0x11;
-                            }
-                        }
-                    }
-                }
-                break;
-            }
+            ImageFormat::Decode::I4(stream, Width, Height, imageData);
+            break;
         case 0x04:
-            {
-            	uint32_t numBlocksW = Width / 8;
-                uint32_t numBlocksH = Height / 4;
-
-                // Iterate the blocks in the image
-                for (int blockY = 0; blockY < numBlocksH; blockY++) {
-                    for (int blockX = 0; blockX < numBlocksW; blockX++) {
-                        // Iterate the pixels in the current block
-                        for (int pixelY = 0; pixelY < 4; pixelY++) {
-                            for (int pixelX = 0; pixelX < 8; pixelX++) {
-                                // Bounds check to ensure the pixel is within the image.
-                                if ((blockX * 8 + pixelX >= Width) || (blockY * 4 + pixelY >= Height))
-                                    continue;
-
-                                uint8_t data = stream->readUInt8();
-
-                                uint32_t destIndex = (Width * ((blockY * 4) + pixelY) + (blockX * 8) + pixelX) * 4;
-
-                                imageData[destIndex] = data;
-                                imageData[destIndex + 1] = data;
-                                imageData[destIndex + 2] = data;
-                                imageData[destIndex + 3] = data;
-                            }
-                        }
-                    }
-                }
-            }
+            ImageFormat::Decode::I8(stream, Width, Height, imageData);
+            break;
         default:
             std::cout << "[MDL Loader]: No Decoder for 0x" << (int)Format << std::endl;
             break;

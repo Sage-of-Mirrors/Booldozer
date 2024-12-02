@@ -114,7 +114,7 @@ void LEventDataDOMNode::LoadEventArchive(std::shared_ptr<Archive::Rarc> arc, std
 
 }
 
-void LEventDataDOMNode::SaveEventArchive(){
+void LEventDataDOMNode::SaveEventArchive(bool createIfNotExist){
     std::shared_ptr<Archive::File> msgFile = mEventArchive->GetFile(std::filesystem::path("message") / std::string(mEventMessagePath + ".csv"));
     std::shared_ptr<Archive::File> txtFile = mEventArchive->GetFile(std::filesystem::path("text") / std::string(mEventScriptPath + ".txt"));
 
@@ -130,7 +130,7 @@ void LEventDataDOMNode::SaveEventArchive(){
 
     if(msgFile != nullptr){
         msgFile->SetData((uint8_t*)msgFileData.data(), msgFileData.size());
-    } else {
+    } else if(createIfNotExist){
         msgFile = Archive::File::Create();
         msgFile->SetName(std::string(mEventMessagePath + ".csv"));
         msgFile->SetData((uint8_t*)msgFileData.data(), msgFileData.size());
@@ -146,7 +146,7 @@ void LEventDataDOMNode::SaveEventArchive(){
 
     if(txtFile != nullptr){
         txtFile->SetData((uint8_t*)txtFileData.data(), txtFileData.size());
-    } else {
+    } else if(createIfNotExist){
         txtFile = Archive::File::Create();
         txtFile->SetName(std::string(mEventScriptPath + ".txt"));
         txtFile->SetData((uint8_t*)txtFileData.data(), txtFileData.size());

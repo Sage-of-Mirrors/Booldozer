@@ -443,7 +443,7 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 	if(std::filesystem::exists(eventPath))
 	{
 		for(auto event : GetChildrenOfType<LEventDataDOMNode>(EDOMNodeType::EventData)){
-			event->SaveEventArchive();
+			event->SaveEventArchive(false);
 		}
 	}
 
