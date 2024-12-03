@@ -157,10 +157,14 @@ void LPathMode::RenderDetailsWindow()
 	// Show path details
 	else
 	{
-		if (mSelectionManager.IsMultiSelection())
-			ImGui::Text("[Multiple Selection]");
-		else if (mSelectionManager.GetPrimarySelection() != nullptr)
-			std::static_pointer_cast<LUIRenderDOMNode>(mSelectionManager.GetPrimarySelection())->RenderDetailsUI(0);
+		if(mPreviousSelection == mSelectionManager.GetPrimarySelection()){
+			if (mSelectionManager.IsMultiSelection())
+				ImGui::Text("[Multiple Selection]");
+			else if (mSelectionManager.GetPrimarySelection() != nullptr)
+				std::static_pointer_cast<LUIRenderDOMNode>(mSelectionManager.GetPrimarySelection())->RenderDetailsUI(0);
+		} else if(mPreviousSelection != nullptr){
+			std::static_pointer_cast<LUIRenderDOMNode>(mPreviousSelection)->RenderDetailsUI(0);
+		}
 	}
 
 	ImGui::End();

@@ -12,7 +12,9 @@ class LActorMode : public LEditorModeBase
 	std::weak_ptr<LRoomDOMNode> mManualRoomSelect;
 
 	bool mRoomChanged { false };
-	
+	bool mGizmoWasUsing { false };
+	glm::mat4 mGizmoDelta { 1.0f };
+
 public:
 	LActorMode();
 

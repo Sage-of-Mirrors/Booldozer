@@ -5,6 +5,7 @@
 #include "IconsForkAwesome.h"
 #include "UIUtil.hpp"
 #include "Options.hpp"
+#include "history/Mat4HistoryItem.hpp"
 
 //#include <DiscordIntegration.hpp>
 
@@ -138,8 +139,21 @@ void LActorMode::RenderDetailsWindow()
 	ImGui::Separator();
 
 	if(mPreviousSelection == mSelectionManager.GetPrimarySelection()){
-		if (mSelectionManager.IsMultiSelection())
+		if (mSelectionManager.IsMultiSelection()){
 			ImGui::Text("[Multiple Selection]");
+			/* Some WIP multi selection
+			ImGui::BeginTabBar("##multiSelectionTabs");
+
+			for(auto item : mSelectionManager.GetSelection()){
+				if(ImGui::BeginTabItem(std::format("{}##{}", item->GetName(), item->GetID()).c_str())){
+					std::static_pointer_cast<LUIRenderDOMNode>(item)->RenderDetailsUI(0);
+					ImGui::EndTabItem();
+				}
+			}
+
+			ImGui::EndTabBar();
+			*/
+		}
 		else if (mSelectionManager.GetPrimarySelection() != nullptr)
 			std::static_pointer_cast<LUIRenderDOMNode>(mSelectionManager.GetPrimarySelection())->RenderDetailsUI(0);
 	} else if(mPreviousSelection != nullptr){
@@ -197,11 +211,12 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 		
 		if(mSelectionManager.GetPrimarySelection()->GetNodeType() != EDOMNodeType::Room){
 			glm::mat4* m = static_cast<LBGRenderDOMNode*>(mSelectionManager.GetPrimarySelection().get())->GetMat();
-			glm::mat4 delta(1.0);
+			glm::mat4 delta(1.0f);
 			if(ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::WORLD, &(*m)[0][0], &delta[0][0], NULL)){
+				mGizmoDelta *= delta;
 				for(auto node : mSelectionManager.GetSelection()){
 					if(node != mSelectionManager.GetPrimarySelection()){
-						(*dynamic_pointer_cast<LBGRenderDOMNode>(node)->GetMat()) = (*dynamic_pointer_cast<LBGRenderDOMNode>(node)->GetMat()) * delta;
+						(*dynamic_pointer_cast<LBGRenderDOMNode>(node)->GetMat()) = (*dynamic_pointer_cast<LBGRenderDOMNode>(node)->GetMat()) * mGizmoDelta;
 					}
 					EDOMNodeType type = node->GetNodeType();
 					if(type == EDOMNodeType::PathPoint || type == EDOMNodeType::Event  || type == EDOMNodeType::Observer || type == EDOMNodeType::Object){
@@ -209,7 +224,15 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 						break;
 					}
 				}
+				mGizmoWasUsing = true;
 			}
+
+			if(!ImGuizmo::IsUsing() && mGizmoWasUsing){
+				mHistoryManager.AddUndoItem(std::make_shared<LMat4HistoryItem>(std::static_pointer_cast<LBGRenderDOMNode>(mSelectionManager.GetPrimarySelection()), mGizmoDelta));
+				mGizmoDelta = glm::mat4(1.0f);
+				mGizmoWasUsing = false;
+			}
+
 		} else {
 			std::shared_ptr<LRoomDOMNode> curRoom = dynamic_pointer_cast<LRoomDOMNode>(mSelectionManager.GetPrimarySelection());
 			if(prevRoom != curRoom){
@@ -259,6 +282,16 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 				}
 			}
 
+		}
+	}
+
+	if(!ImGui::GetIO().WantTextInput){
+		if(ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && ImGui::IsKeyPressed(ImGuiKey_Z)){
+			mHistoryManager.PerformUndo();
+		}
+
+		if(ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && ImGui::IsKeyPressed(ImGuiKey_Y)){
+			mHistoryManager.PerformRedo();
 		}
 	}
 }
