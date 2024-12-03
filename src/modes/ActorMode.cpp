@@ -6,6 +6,8 @@
 #include "UIUtil.hpp"
 #include "Options.hpp"
 #include "history/Mat4HistoryItem.hpp"
+#include "history/QuatHistoryItem.hpp"
+#include <glm/gtx/matrix_decompose.hpp>
 
 //#include <DiscordIntegration.hpp>
 
@@ -213,7 +215,16 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 			glm::mat4* m = static_cast<LBGRenderDOMNode*>(mSelectionManager.GetPrimarySelection().get())->GetMat();
 			glm::mat4 delta(1.0f);
 			if(ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::WORLD, &(*m)[0][0], &delta[0][0], NULL)){
-				mGizmoDelta *= delta;
+				if(mGizmoMode == ImGuizmo::OPERATION::ROTATE){
+					glm::quat rotQuat;
+					glm::vec3 scale, trans, skew;
+					glm::vec4 persp;
+					glm::decompose(delta, scale, rotQuat, trans, skew, persp);
+					mRotationDelta *= rotQuat;
+				} else {
+					mGizmoDelta *= delta;
+				}
+				
 				for(auto node : mSelectionManager.GetSelection()){
 					if(node != mSelectionManager.GetPrimarySelection()){
 						(*dynamic_pointer_cast<LBGRenderDOMNode>(node)->GetMat()) = (*dynamic_pointer_cast<LBGRenderDOMNode>(node)->GetMat()) * mGizmoDelta;
@@ -228,9 +239,17 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 			}
 
 			if(!ImGuizmo::IsUsing() && mGizmoWasUsing){
-				mHistoryManager.AddUndoItem(std::make_shared<LMat4HistoryItem>(std::static_pointer_cast<LBGRenderDOMNode>(mSelectionManager.GetPrimarySelection()), mGizmoDelta));
-				mGizmoDelta = glm::mat4(1.0f);
-				mGizmoWasUsing = false;
+				if(mGizmoMode == ImGuizmo::OPERATION::ROTATE){
+					mHistoryManager.AddUndoItem(std::make_shared<LQuatHistoryItem>(std::static_pointer_cast<LBGRenderDOMNode>(mSelectionManager.GetPrimarySelection()), mRotationDelta));
+					mGizmoDelta = glm::mat4(1.0f);
+					mRotationDelta = glm::identity<glm::quat>();
+					mGizmoWasUsing = false;
+				} else {
+					mHistoryManager.AddUndoItem(std::make_shared<LMat4HistoryItem>(std::static_pointer_cast<LBGRenderDOMNode>(mSelectionManager.GetPrimarySelection()), mGizmoDelta));
+					mGizmoDelta = glm::mat4(1.0f);
+					mRotationDelta = glm::identity<glm::quat>();
+					mGizmoWasUsing = false;
+				}
 			}
 
 		} else {

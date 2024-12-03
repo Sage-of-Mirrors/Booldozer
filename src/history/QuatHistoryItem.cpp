@@ -11,9 +11,7 @@ void LQuatHistoryItem::Undo()
 	if (mAffectedNode == nullptr)
 		return;
 
-	glm::quat curQuat = mAffectedNode->GetRotation();
-	curQuat -= mDelta;
-	//mAffectedNode->SetRotation(curQuat);
+	*mAffectedNode->GetMat() *= glm::inverse(glm::toMat4(mDelta));
 }
 
 void LQuatHistoryItem::Redo()
@@ -21,7 +19,5 @@ void LQuatHistoryItem::Redo()
 	if (mAffectedNode == nullptr)
 		return;
 
-	glm::quat curQuat = mAffectedNode->GetRotation();
-	curQuat += mDelta;
-	//mAffectedNode->SetRotation(curQuat);
+	*mAffectedNode->GetMat() *= glm::toMat4(mDelta);
 }
