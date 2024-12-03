@@ -79,8 +79,15 @@ void LEventDataDOMNode::LoadEventArchive(std::shared_ptr<Archive::Rarc> arc, std
     mEventMessagePath = eventCsvName;
     mEventScriptPath = eventScriptName;
 
-    std::shared_ptr<Archive::File> msgFile = mEventArchive->GetFile(std::filesystem::path("message") / std::string(eventCsvName + ".csv"));
-    std::shared_ptr<Archive::File> txtFile = mEventArchive->GetFile(std::filesystem::path("text") / std::string(eventScriptName + ".txt"));
+    std::shared_ptr<Archive::File> msgFile = nullptr;
+    if(mEventArchive->GetFolder("message") != nullptr){
+       msgFile =  mEventArchive->GetFolder("message")->GetFiles()[0];
+    }
+
+    std::shared_ptr<Archive::File> txtFile = nullptr;
+    if(mEventArchive->GetFolder("text") != nullptr){
+        txtFile = mEventArchive->GetFolder("text")->GetFiles()[0];
+    }
 
     std::sscanf(eventScriptName.data(), "event%02d", &mEventNo);
 
@@ -115,8 +122,15 @@ void LEventDataDOMNode::LoadEventArchive(std::shared_ptr<Archive::Rarc> arc, std
 }
 
 void LEventDataDOMNode::SaveEventArchive(bool createIfNotExist){
-    std::shared_ptr<Archive::File> msgFile = mEventArchive->GetFile(std::filesystem::path("message") / std::string(mEventMessagePath + ".csv"));
-    std::shared_ptr<Archive::File> txtFile = mEventArchive->GetFile(std::filesystem::path("text") / std::string(mEventScriptPath + ".txt"));
+    std::shared_ptr<Archive::File> msgFile = nullptr;
+    if(mEventArchive->GetFolder("message") != nullptr){
+       msgFile =  mEventArchive->GetFolder("message")->GetFiles()[0];
+    }
+
+    std::shared_ptr<Archive::File> txtFile = nullptr;
+    if(mEventArchive->GetFolder("text") != nullptr){
+        txtFile = mEventArchive->GetFolder("text")->GetFiles()[0];
+    }
 
 
     std::string msg = "";

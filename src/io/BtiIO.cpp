@@ -4,21 +4,21 @@
 namespace ColorFormat {
 
 // a few of these are based off of wwlib texture utils by LagoLunatic
-uint8_t toGreyscale8(uint8_t r, uint8_t g, uint8_t  b){
+uint8_t toGrayscale8(uint8_t r, uint8_t g, uint8_t  b){
     return std::round(((r * 30) + (g * 59) + (b * 11)) / 100);
 }
 
-uint16_t toGreyscale(uint8_t r, uint8_t g, uint8_t  b){
+uint16_t toGrayscale(uint8_t r, uint8_t g, uint8_t  b){
     return std::round(((r * 30) + (g * 59) + (b * 11)) / 100);
 }
 
 uint8_t RGBA8toI4(uint8_t r, uint8_t g, uint8_t  b, uint8_t a){
-    uint8_t greyscale = toGreyscale8(r, g, b);
+    uint8_t greyscale = toGrayscale8(r, g, b);
     return (greyscale >> 4) & 0xF;
 }
 
 uint8_t RGBA8toIA4(uint8_t r, uint8_t g, uint8_t  b, uint8_t a){
-    uint16_t greyscale = toGreyscale(r, g, b);
+    uint16_t greyscale = toGrayscale(r, g, b);
     uint8_t output = 0;
     output |= (greyscale >> 4) & 0xF;
     output |= (a & 0xF0);
@@ -26,12 +26,12 @@ uint8_t RGBA8toIA4(uint8_t r, uint8_t g, uint8_t  b, uint8_t a){
 }
 
 uint8_t RGBA8toI8(uint8_t r, uint8_t g, uint8_t  b, uint8_t a){
-    uint16_t greyscale = toGreyscale(r, g, b);
+    uint16_t greyscale = toGrayscale(r, g, b);
     return greyscale & 0xFF;
 }
 
 uint16_t RGBA8toIA8(uint8_t r, uint8_t g, uint8_t  b, uint8_t a){
-    uint16_t greyscale = toGreyscale(r, g, b);
+    uint16_t greyscale = toGrayscale(r, g, b);
     uint16_t output = 0x0000;
     output |= greyscale & 0x00FF;
     output |= (a << 8) & 0xFF00;
