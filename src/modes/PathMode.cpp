@@ -179,13 +179,13 @@ void LPathMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* r
 	for(auto& node : current_map.get()->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)){
 		node->RenderBG(0);
 	}
+	mPreviousSelection = mPointSelection.GetPrimarySelection();
 }
 
 void LPathMode::RenderGizmo(LEditorScene* renderer_scene){
 	if (mPointSelection.GetPrimarySelection() != nullptr)
 	{
-		if (mPreviousSelection == nullptr || mPreviousSelection != mPointSelection.GetPrimarySelection()) {
-			mPreviousSelection = mPointSelection.GetPrimarySelection();
+		if (mPreviousSelection != nullptr && mPreviousSelection != mPointSelection.GetPrimarySelection()) {
 			if (!mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).expired() && !renderer_scene->HasRoomLoaded(mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock()->GetRoomNumber())) {
 				renderer_scene->SetRoom(mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock());
 			}

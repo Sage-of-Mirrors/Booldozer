@@ -669,6 +669,16 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		renderer_scene->SetActive(false);
 	}
 
+	if(!ImGui::GetIO().WantTextInput){
+		if(ImGui::IsKeyPressed(ImGuiKey_T)){
+			mCurrentMode->mGizmoMode = ImGuizmo::OPERATION::TRANSLATE;
+		} else if (ImGui::IsKeyPressed(ImGuiKey_R)){
+			mCurrentMode->mGizmoMode = ImGuizmo::OPERATION::ROTATE;
+		} else if (ImGui::IsKeyPressed(ImGuiKey_S)){
+			mCurrentMode->mGizmoMode = ImGuizmo::OPERATION::SCALE;
+		}
+	}
+
 	if(ImGui::IsKeyPressed(ImGuiKey_Escape)){
 		GetSelectionManager()->ClearSelection();
 	}

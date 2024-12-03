@@ -63,10 +63,14 @@ void LBooMode::RenderDetailsWindow()
 	ImGui::Text("Boo Details");
 	ImGui::Separator();
 
-	if (mSelectionManager.IsMultiSelection())
-		ImGui::Text("[Multiple Selection]");
-	else if (mSelectionManager.GetPrimarySelection() != nullptr)
-		std::static_pointer_cast<LUIRenderDOMNode>(mSelectionManager.GetPrimarySelection())->RenderDetailsUI(0);
+	if(mPreviousSelection == mSelectionManager.GetPrimarySelection()){
+		if (mSelectionManager.IsMultiSelection())
+			ImGui::Text("[Multiple Selection]");
+		else if (mSelectionManager.GetPrimarySelection() != nullptr)
+			std::static_pointer_cast<LUIRenderDOMNode>(mSelectionManager.GetPrimarySelection())->RenderDetailsUI(0);
+	} else if(mPreviousSelection != nullptr){
+		std::static_pointer_cast<LUIRenderDOMNode>(mPreviousSelection)->RenderDetailsUI(0);
+	}
 
 	ImGui::End();
 }
@@ -86,6 +90,7 @@ void LBooMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* re
 		node->RenderBG(0);
 	}
 
+	mPreviousSelection = mSelectionManager.GetPrimarySelection();
 }
 
 void LBooMode::RenderGizmo(LEditorScene* renderer_scene){
@@ -94,7 +99,6 @@ void LBooMode::RenderGizmo(LEditorScene* renderer_scene){
 			mSelectionManager.ClearSelection();
 		} else {
 			if(mPreviousSelection == nullptr || mPreviousSelection != mSelectionManager.GetPrimarySelection()){
-				mPreviousSelection = mSelectionManager.GetPrimarySelection();
 				uint32_t roomNumber = std::dynamic_pointer_cast<LBooDOMNode>(mPreviousSelection)->GetInitialRoom();
 				if(!renderer_scene->HasRoomLoaded(roomNumber)){
 					std::cout << "[Boo Mode]: Room Number trying to load " << roomNumber << std::endl;

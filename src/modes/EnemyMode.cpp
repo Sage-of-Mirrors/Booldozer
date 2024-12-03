@@ -62,11 +62,14 @@ void LEnemyMode::RenderDetailsWindow()
 	ImGui::Text("Selected Object Details");
 	ImGui::Separator();
 
-	if (mSelectionManager.IsMultiSelection())
-		ImGui::Text("[Multiple Selection]");
-	else if (mSelectionManager.GetPrimarySelection() != nullptr)
-		std::static_pointer_cast<LUIRenderDOMNode>(mSelectionManager.GetPrimarySelection())->RenderDetailsUI(0);
-
+	if(mPreviousSelection == mSelectionManager.GetPrimarySelection()){
+		if (mSelectionManager.IsMultiSelection())
+			ImGui::Text("[Multiple Selection]");
+		else if (mSelectionManager.GetPrimarySelection() != nullptr)
+			std::static_pointer_cast<LUIRenderDOMNode>(mSelectionManager.GetPrimarySelection())->RenderDetailsUI(0);
+	} else if(mPreviousSelection != nullptr){
+		std::static_pointer_cast<LUIRenderDOMNode>(mPreviousSelection)->RenderDetailsUI(0);
+	}
 	ImGui::End();
 }
 
@@ -85,6 +88,7 @@ void LEnemyMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 		node->RenderBG(0);
 	}
 
+	mPreviousSelection = mSelectionManager.GetPrimarySelection();
 }
 
 void LEnemyMode::RenderGizmo(LEditorScene* renderer_scene){
@@ -95,7 +99,6 @@ void LEnemyMode::RenderGizmo(LEditorScene* renderer_scene){
 		ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::LOCAL, &(*m)[0][0], NULL, NULL);
 		
 		if(mPreviousSelection == nullptr || mPreviousSelection != mSelectionManager.GetPrimarySelection()){
-			mPreviousSelection = mSelectionManager.GetPrimarySelection();
 			if(!mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).expired() && !renderer_scene->HasRoomLoaded(mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock()->GetRoomNumber())){
 				renderer_scene->SetRoom(mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock());
 			}

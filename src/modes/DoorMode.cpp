@@ -105,10 +105,14 @@ void LDoorMode::RenderDetailsWindow()
 {
 	ImGui::Begin("detailWindow");
 
-	if (mSelectionManager.IsMultiSelection())
-		ImGui::Text("[Multiple Selection]");
-	else if (mSelectionManager.GetPrimarySelection() != nullptr)
-		std::static_pointer_cast<LUIRenderDOMNode>(mSelectionManager.GetPrimarySelection())->RenderDetailsUI(0);
+	if(mPreviousSelection == mSelectionManager.GetPrimarySelection()){
+		if (mSelectionManager.IsMultiSelection())
+			ImGui::Text("[Multiple Selection]");
+		else if (mSelectionManager.GetPrimarySelection() != nullptr)
+			std::static_pointer_cast<LUIRenderDOMNode>(mSelectionManager.GetPrimarySelection())->RenderDetailsUI(0);
+	} else if(mPreviousSelection != nullptr){
+		std::static_pointer_cast<LUIRenderDOMNode>(mPreviousSelection)->RenderDetailsUI(0);
+	}
 
 	ImGui::End();
 }
@@ -127,6 +131,7 @@ void LDoorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* r
 		node->RenderBG(0);
 	}
 
+	mPreviousSelection = mSelectionManager.GetPrimarySelection();
 }
 
 void LDoorMode::RenderGizmo(LEditorScene* renderer_scene){
@@ -142,7 +147,6 @@ void LDoorMode::RenderGizmo(LEditorScene* renderer_scene){
 			ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::WORLD, &(*m)[0][0], NULL, NULL);
 			
 			if(mPreviousSelection == nullptr || mPreviousSelection != mSelectionManager.GetPrimarySelection()){
-				mPreviousSelection = mSelectionManager.GetPrimarySelection();
 				auto rooms = std::dynamic_pointer_cast<LDoorDOMNode>(mPreviousSelection)->GetRoomReferences();
 				if(rooms.first != nullptr && !renderer_scene->HasRoomLoaded(rooms.first->GetRoomNumber())){
 					renderer_scene->SetRoom(rooms.first);

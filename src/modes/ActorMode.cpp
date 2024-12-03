@@ -137,10 +137,14 @@ void LActorMode::RenderDetailsWindow()
 	ImGui::Text("Object Details");
 	ImGui::Separator();
 
-	if (mSelectionManager.IsMultiSelection())
-		ImGui::Text("[Multiple Selection]");
-	else if (mSelectionManager.GetPrimarySelection() != nullptr)
-		std::static_pointer_cast<LUIRenderDOMNode>(mSelectionManager.GetPrimarySelection())->RenderDetailsUI(0);
+	if(mPreviousSelection == mSelectionManager.GetPrimarySelection()){
+		if (mSelectionManager.IsMultiSelection())
+			ImGui::Text("[Multiple Selection]");
+		else if (mSelectionManager.GetPrimarySelection() != nullptr)
+			std::static_pointer_cast<LUIRenderDOMNode>(mSelectionManager.GetPrimarySelection())->RenderDetailsUI(0);
+	} else if(mPreviousSelection != nullptr){
+		std::static_pointer_cast<LUIRenderDOMNode>(mPreviousSelection)->RenderDetailsUI(0);
+	}
 
 	ImGui::End();
 }
@@ -161,8 +165,9 @@ void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 	}
 
 	ImGui::SetNextWindowClass(&mainWindowOverride);
+	
 	RenderDetailsWindow();
-
+	
 	for(auto& node : current_map.get()->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)){
 		node->RenderBG(0);
 	}
@@ -173,21 +178,14 @@ void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 			isRoomDirty = false;
 		}
 	}
+	mPreviousSelection = mSelectionManager.GetPrimarySelection();
 
 }
 
 void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
-	if(ImGui::IsKeyPressed(ImGuiKey_1)){
-		mGizmoMode = ImGuizmo::OPERATION::TRANSLATE;
-	} else if (ImGui::IsKeyPressed(ImGuiKey_2)){
-		mGizmoMode = ImGuizmo::OPERATION::ROTATE;
-	} else if (ImGui::IsKeyPressed(ImGuiKey_3)){
-		mGizmoMode = ImGuizmo::OPERATION::SCALE;
-	}
-
 	if(mSelectionManager.GetPrimarySelection() != nullptr){
-		if(mPreviousSelection == nullptr || mPreviousSelection != mSelectionManager.GetPrimarySelection()){
-			mPreviousSelection = mSelectionManager.GetPrimarySelection();
+		if(mPreviousSelection != nullptr && mPreviousSelection != mSelectionManager.GetPrimarySelection()){
+			ImGui::SetWindowFocus(nullptr);
 			if(!mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).expired() && !renderer_scene->HasRoomLoaded(mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock()->GetRoomNumber())){
 				renderer_scene->SetRoom(mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock());				
 				mManualRoomSelect = mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room);
