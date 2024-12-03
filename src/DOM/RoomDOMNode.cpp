@@ -657,7 +657,7 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 		unsigned char* img = stbi_load(imgPath.c_str(), &x, &y, &n, 0);
 		
 		auto fileData = GCResourceManager.mGameArchive->GetFile(std::format("/kawano/roomname/{}", LResUtility::GetNameMap("MapTitlecards")["titlecards"][mRoomNumber].get<std::string>()));
-		bStream::CMemoryStream file(0x1C + (x * y), bStream::Endianess::Big, bStream::OpenMode::Out);
+		bStream::CMemoryStream file(0x20 + (x * y), bStream::Endianess::Big, bStream::OpenMode::Out);
 
 		RoomTitlecard.mWidth = x;
 		RoomTitlecard.mHeight = y;
