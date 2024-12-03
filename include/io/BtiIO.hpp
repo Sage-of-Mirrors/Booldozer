@@ -1,5 +1,6 @@
 #pragma once
 #include "bstream.h"
+#include <vector>
 
 namespace ImageFormat {
     namespace Decode {
@@ -48,11 +49,18 @@ class Bti {
     uint8_t mNumImages { 0 };
     uint16_t mLODBias { 0 };
 
+    uint8_t* mImageData { nullptr };
+
 public:
     uint16_t mWidth { 0 };
     uint16_t mHeight { 0 };
 
-    uint8_t* DecodeImage(bStream::CStream* stream);
-    void EncodeImage(bStream::CStream* stream, uint8_t* imageData);
+    uint8_t* GetData() { return mImageData; }
+
+    uint8_t* Load(bStream::CStream* stream);
+    void Save(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData);
+
+    Bti(){}
+    ~Bti(){ if(mImageData != nullptr) delete[] mImageData; }
 
 };

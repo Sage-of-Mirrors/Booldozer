@@ -388,12 +388,12 @@ namespace Decode {
 }
 
 namespace Encode {
-    void CMPR(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData){}
-    void RGB5A3(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData){}
-    void RGB565(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData){}
+    void CMPR(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData){}
+    void RGB5A3(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData){}
+    void RGB565(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData){}
 
-    void I4(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData){
-        if(imageData == nullptr) return;
+    void I4(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData){
+        if(imageData.size() == 0) return;
 
         uint32_t numBlocksW = width / 8;
         uint32_t numBlocksH = height / 8;
@@ -420,8 +420,8 @@ namespace Encode {
         }
     }
 
-    void IA4(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData){
-        if(imageData == nullptr) return;
+    void IA4(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData){
+        if(imageData.size() == 0) return;
 
         uint32_t numBlocksW = width / 8;
         uint32_t numBlocksH = height / 4;
@@ -445,8 +445,8 @@ namespace Encode {
         }
     }
 
-    void I8(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData){
-        if(imageData == nullptr) return;
+    void I8(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData){
+        if(imageData.size() == 0) return;
 
         uint32_t numBlocksW = width / 8;
         uint32_t numBlocksH = height / 4;
@@ -470,8 +470,8 @@ namespace Encode {
         }
     }
 
-    void IA8(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData){
-        if(imageData == nullptr) return;
+    void IA8(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData){
+        if(imageData.size() == 0) return;
 
         uint32_t numBlocksW = width / 8;
         uint32_t numBlocksH = height / 4;
@@ -497,7 +497,17 @@ namespace Encode {
 }
 };
 
-void Bti::EncodeImage(bStream::CStream* stream, uint8_t* imageData){
+void Bti::Save(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData){
+    if(mWidth != width || mHeight != height){
+        delete[] mImageData;
+        mImageData = new uint8_t[width*height*4](0);
+    }
+
+    mWidth = width;
+    mHeight = height;
+
+    std::memcpy(mImageData, imageData.data(), (mWidth*mHeight*4));
+
     stream->writeUInt8(mFormat);
     stream->writeUInt8(mEnableAlpha);
 
@@ -522,7 +532,7 @@ void Bti::EncodeImage(bStream::CStream* stream, uint8_t* imageData){
     stream->writeUInt16(mLODBias);
 
     stream->writeUInt32(stream->tell()+sizeof(uint32_t));
-    
+
     switch (mFormat){
     case 0x00:
         ImageFormat::Encode::I4(stream, mWidth, mHeight, imageData);
@@ -550,7 +560,7 @@ void Bti::EncodeImage(bStream::CStream* stream, uint8_t* imageData){
     }
 }
 
-uint8_t* Bti::DecodeImage(bStream::CStream* stream){
+uint8_t* Bti::Load(bStream::CStream* stream){
     mFormat = stream->readUInt8();
     mEnableAlpha = stream->readUInt8();
 
@@ -580,33 +590,37 @@ uint8_t* Bti::DecodeImage(bStream::CStream* stream){
 
     stream->seek(imageDataOffset);
 
-    uint8_t* imageData = new uint8_t[mWidth * mHeight * 4](0);
+    if(mImageData != nullptr){
+        delete[] mImageData;
+    }
+
+    mImageData = new uint8_t[mWidth * mHeight * 4](0);
 
     switch (mFormat){
     case 0x00:
-        ImageFormat::Decode::I4(stream, mWidth, mHeight, imageData);
+        ImageFormat::Decode::I4(stream, mWidth, mHeight, mImageData);
         break;
     case 0x01:
-        ImageFormat::Decode::I8(stream, mWidth, mHeight, imageData);
+        ImageFormat::Decode::I8(stream, mWidth, mHeight, mImageData);
         break;
     case 0x02:
-        ImageFormat::Decode::IA4(stream, mWidth, mHeight, imageData);
+        ImageFormat::Decode::IA4(stream, mWidth, mHeight, mImageData);
         break;
     case 0x03:
-        ImageFormat::Decode::IA8(stream, mWidth, mHeight, imageData);
+        ImageFormat::Decode::IA8(stream, mWidth, mHeight, mImageData);
         break;
     case 0x04:
-        ImageFormat::Decode::RGB565(stream, mWidth, mHeight, imageData);
+        ImageFormat::Decode::RGB565(stream, mWidth, mHeight, mImageData);
         break;
     case 0x05:
-        ImageFormat::Decode::RGB5A3(stream, mWidth, mHeight, imageData);
+        ImageFormat::Decode::RGB5A3(stream, mWidth, mHeight, mImageData);
         break;
     case 0x0E:
-        ImageFormat::Decode::CMPR(stream, mWidth, mHeight, imageData);
+        ImageFormat::Decode::CMPR(stream, mWidth, mHeight, mImageData);
         break;
     default:
         break;
     }
 
-    return imageData;
+    return mImageData;
 }
