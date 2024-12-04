@@ -326,9 +326,11 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 				std::shared_ptr<LRoomDOMNode> oldRoom = sharedNode->Parent.lock()->GetSharedPtr<LRoomDOMNode>(EDOMNodeType::Room);
 
 				LRoomEntityType nodeType = DOMToEntityType(sharedNode->GetNodeType());
+
 				// Skip if source and destination groups are the same
 				if (nodeType != LRoomEntityType_Max && oldRoom.get() != this)
 				{
+
 					AddChild(sharedNode);
 					mRoomEntities[nodeType].push_back(sharedNode);
 
@@ -342,6 +344,70 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 					}
 
 					oldRoom->RemoveChild(sharedNode);
+					
+					if(nodeType == LRoomEntityType_Furniture){
+						std::shared_ptr<LFurnitureDOMNode> furnitureNode = std::static_pointer_cast<LFurnitureDOMNode>(sharedNode);
+						std::shared_ptr<LRoomDataDOMNode> oldRoomData = oldRoom->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
+						std::shared_ptr<LRoomDataDOMNode> newRoomData = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
+
+						std::filesystem::path oldResPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(oldRoomData->GetResourcePath()).relative_path();
+						std::filesystem::path newResPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(newRoomData->GetResourcePath()).relative_path();
+
+						std::cout << "[RoomDOMNode]: copying furniture resource from " << oldResPath.string() << " to " << newResPath.string() << std::endl;
+						if(std::filesystem::exists(oldResPath) && std::filesystem::exists(newResPath)){
+							std::shared_ptr<Archive::Rarc> oldResArc = Archive::Rarc::Create();
+							std::shared_ptr<Archive::Rarc> newResArc = Archive::Rarc::Create();
+							if(oldResPath.extension() == ".arc" && newResPath.extension() == ".arc"){
+								{
+									bStream::CFileStream oldArcFile(oldResPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
+									if(!oldResArc->Load(&oldArcFile)){
+										std::cout << "[RoomDOMNode]: Failed to load room archive " << oldResPath.string() << std::endl;
+									}
+									bStream::CFileStream newArcFile(newResPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
+									if(!newResArc->Load(&newArcFile)){
+										std::cout << "[RoomDOMNode]: Failed to load room archive " << newResPath.string() << std::endl;
+									}
+								}
+
+								if(newResArc->GetFile(furnitureNode->GetModelName()+".bin") == nullptr && oldResArc->GetFile(furnitureNode->GetModelName()+".bin") != nullptr){
+									newResArc->GetRoot()->AddFile(oldResArc->GetFile(furnitureNode->GetModelName()+".bin"));
+									newResArc->SaveToFile(newResPath);
+								}
+							} else if(oldResPath.extension() == ".arc" && newResPath.extension() == ".bin") {
+
+								auto rootFolder = Archive::Folder::Create(newResArc);
+								rootFolder->SetName(newResPath.filename().stem().string());
+
+								newResArc->SetRoot(rootFolder);
+								
+								auto roomModel = Archive::File::Create();
+								roomModel->SetName("room.bin");
+
+								bStream::CFileStream modelFile(newResPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
+								std::size_t modelFileSize = modelFile.getSize();
+
+								uint8_t* modelData = new uint8_t[modelFileSize];
+
+								modelFile.readBytesTo(modelData, modelFileSize);
+								roomModel->SetData(modelData, modelFileSize);
+								
+								ActiveRoomArchive->GetRoot()->AddFile(roomModel);
+
+								delete[] modelData;
+
+								std::filesystem::path path(newRoomData->GetResourcePath());
+								
+								path.replace_extension(".arc");
+
+								newRoomData->SetRoomResourcePath(path.string());
+							
+								newResArc->GetRoot()->AddFile(oldResArc->GetFile(furnitureNode->GetModelName()));
+								newResArc->SaveToFile(path.string());
+
+							}
+						}						
+
+					}
 				}
 			}
 
