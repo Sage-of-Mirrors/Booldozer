@@ -350,15 +350,15 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::BulletText("Change Gizmo");
 		ImGui::Spacing();
 		ImGui::SameLine();
-		ImGui::BulletText("1: Translation");
+		ImGui::BulletText("T: Translation");
 
 		ImGui::Spacing();
 		ImGui::SameLine();
-		ImGui::BulletText("2: Rotation");
+		ImGui::BulletText("R: Rotation");
 
 		ImGui::Spacing();
 		ImGui::SameLine();
-		ImGui::BulletText("3: Scale");
+		ImGui::BulletText("S: Scale");
 
 		if(ImGui::Button("Close")){
 			ImGui::CloseCurrentPopup();

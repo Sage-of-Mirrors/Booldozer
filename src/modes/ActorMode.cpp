@@ -222,18 +222,29 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 				
 				for(auto node : mSelectionManager.GetSelection()){
 					if(node != mSelectionManager.GetPrimarySelection()){
-						(*dynamic_pointer_cast<LBGRenderDOMNode>(node)->GetMat()) = (*dynamic_pointer_cast<LBGRenderDOMNode>(node)->GetMat()) * mOriginalTransform;
+						(*dynamic_pointer_cast<LBGRenderDOMNode>(node)->GetMat()) *= delta;
 					}
+
 					EDOMNodeType type = node->GetNodeType();
 					if(type == EDOMNodeType::PathPoint || type == EDOMNodeType::Event  || type == EDOMNodeType::Observer || type == EDOMNodeType::Object){
-						renderer_scene->UpdateRenderers();
+						renderer_scene->SetDirty();
 						break;
 					}
 				}
+
 				mGizmoWasUsing = true;
 			}
 
 			if(!ImGuizmo::IsUsing() && mGizmoWasUsing){ //finished using the gizmo, add a history item
+
+				std::shared_ptr<LRoomDataDOMNode> curRoom = mSelectionManager.GetPrimarySelection()->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock()->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
+				for(auto node : mSelectionManager.GetSelection()){
+					glm::mat4* transform = dynamic_pointer_cast<LBGRenderDOMNode>(node)->GetMat();
+					if((*transform)[3].y < curRoom->GetMin().y){
+						(*transform)[3].y = curRoom->GetMin().y + 0.01f;
+					}
+				}
+
 				mHistoryManager.AddUndoItem(std::make_shared<LMat4HistoryItem>(std::static_pointer_cast<LBGRenderDOMNode>(mSelectionManager.GetPrimarySelection()), mOriginalTransform));
 				mGizmoWasUsing = false;
 			}
@@ -262,7 +273,7 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 			}
 
 			if(ImGuizmo::Manipulate(&view[0][0], &proj[0][0], ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::WORLD, &(mat)[0][0], &(deltaMat)[0][0], NULL)){
-				renderer_scene->UpdateRenderers();
+				renderer_scene->SetDirty();
 				
 				if(ImGui::IsKeyDown(ImGuiKey_LeftAlt)){
 					if(!mGizmoWasUsing){
