@@ -13,8 +13,10 @@ class LActorMode : public LEditorModeBase
 
 	bool mRoomChanged { false };
 	bool mGizmoWasUsing { false };
+	bool mOriginalRoomBoundMin { false };
+	bool mRoomBoundEdited { false };
+	glm::vec3 mGizmoTranslationDelta {0,0,0};
 	glm::mat4 mOriginalTransform { 1.0f };
-	glm::quat mRotationDelta { glm::identity<glm::quat>() };
 
 public:
 	LActorMode();

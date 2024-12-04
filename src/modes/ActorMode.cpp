@@ -6,7 +6,8 @@
 #include "UIUtil.hpp"
 #include "Options.hpp"
 #include "history/Mat4HistoryItem.hpp"
-#include "history/QuatHistoryItem.hpp"
+#include "history/RoomBoundsHistoryItem.hpp"
+#include "history/RoomMoveHistoryItem.hpp"
 #include <glm/gtx/matrix_decompose.hpp>
 
 //#include <DiscordIntegration.hpp>
@@ -264,12 +265,24 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 				renderer_scene->UpdateRenderers();
 				
 				if(ImGui::IsKeyDown(ImGuiKey_LeftAlt)){
+					if(!mGizmoWasUsing){
+						mGizmoTranslationDelta = data->GetMin();
+						mOriginalRoomBoundMin = true;
+						mRoomBoundEdited = true;
+					}
 					data->SetMin(mat[3]);
 				}
 				else if(ImGui::IsKeyDown(ImGuiKey_LeftCtrl)){
+					if(!mGizmoWasUsing){
+						mGizmoTranslationDelta = data->GetMax();
+						mOriginalRoomBoundMin = false;
+						mRoomBoundEdited = true;
+					}
 					data->SetMax(mat[3]);
 				} else {
+					mRoomBoundEdited = false;
 					glm::vec3 translation = glm::vec3(deltaMat[3]);
+					mGizmoTranslationDelta += translation;
 					// add delta to max and min
 					data->SetMax(data->GetMax() + translation);
 					data->SetMin(data->GetMin() + translation);
@@ -284,6 +297,17 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 						child->SetPosition(child->GetPosition() + translation);
 					}
 				}
+				mGizmoWasUsing = true;
+			}
+
+			if(!ImGuizmo::IsUsing() && mGizmoWasUsing){ 
+				if(mRoomBoundEdited){
+					mHistoryManager.AddUndoItem(std::make_shared<LRoomBoundsHistoryItem>(data, mGizmoTranslationDelta, mOriginalRoomBoundMin, renderer_scene));
+				} else {
+					mHistoryManager.AddUndoItem(std::make_shared<LRoomMoveHistoryItem>(std::static_pointer_cast<LRoomDOMNode>(mSelectionManager.GetPrimarySelection()), mGizmoTranslationDelta, renderer_scene));
+				}
+				mGizmoTranslationDelta = {0,0,0};
+				mGizmoWasUsing = false;
 			}
 
 		}
