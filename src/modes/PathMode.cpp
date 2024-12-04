@@ -113,7 +113,7 @@ void LPathMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map, E
 
 						if (LUIUtility::RenderNodeSelectable(point.get(), point->GetIsSelected() && bLastClickedWasPoint))
 						{
-							mPointSelection.AddToSelection(point);
+							mSelectionManager.AddToSelection(point);
 							bLastClickedWasPoint = true;
 						}
 						if (ImGui::BeginPopupContextItem(std::format("pointctx###{0}", j).c_str()))
@@ -149,10 +149,10 @@ void LPathMode::RenderDetailsWindow()
 	// Show point details
 	if (bLastClickedWasPoint)
 	{
-		if (mPointSelection.IsMultiSelection())
+		if (mSelectionManager.IsMultiSelection())
 			ImGui::Text("[Multiple Selection]");
-		else if (mPointSelection.GetPrimarySelection() != nullptr)
-			std::static_pointer_cast<LUIRenderDOMNode>(mPointSelection.GetPrimarySelection())->RenderDetailsUI(0);
+		else if (mSelectionManager.GetPrimarySelection() != nullptr)
+			std::static_pointer_cast<LUIRenderDOMNode>(mSelectionManager.GetPrimarySelection())->RenderDetailsUI(0);
 	}
 	// Show path details
 	else
@@ -183,26 +183,24 @@ void LPathMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* r
 	for(auto& node : current_map.get()->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)){
 		node->RenderBG(0);
 	}
-	mPreviousSelection = mPointSelection.GetPrimarySelection();
+	mPreviousSelection = mSelectionManager.GetPrimarySelection();
 }
 
 void LPathMode::RenderGizmo(LEditorScene* renderer_scene){
-	if (mPointSelection.GetPrimarySelection() != nullptr)
+	if (mSelectionManager.GetPrimarySelection() != nullptr)
 	{
-		if (mPreviousSelection != nullptr && mPreviousSelection != mPointSelection.GetPrimarySelection()) {
-			if (!mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).expired() && !renderer_scene->HasRoomLoaded(mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock()->GetRoomNumber())) {
-				renderer_scene->SetRoom(mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock());
-			}
+		if (!renderer_scene->HasRoomLoaded(mSelectionManager.GetPrimarySelection()->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock()->GetRoomNumber())) {
+			renderer_scene->SetRoom(mSelectionManager.GetPrimarySelection()->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock());
 		}
 
-		glm::mat4* m = ((LBGRenderDOMNode*)(mPointSelection.GetPrimarySelection().get()))->GetMat();
+		glm::mat4* m = ((LBGRenderDOMNode*)(mSelectionManager.GetPrimarySelection().get()))->GetMat();
 		glm::mat4 view = renderer_scene->getCameraView();
 		glm::mat4 proj = renderer_scene->getCameraProj();
 
 		bool moved = ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::WORLD, &(*m)[0][0], NULL, NULL);
 
-		if(mPointSelection.GetPrimarySelection()->GetNodeType() == EDOMNodeType::PathPoint && moved){
-			renderer_scene->UpdateRenderers();
+		if(mSelectionManager.GetPrimarySelection()->GetNodeType() == EDOMNodeType::PathPoint && moved){
+			renderer_scene->SetDirty();
 		}
 	}
 }
@@ -229,8 +227,8 @@ bool LPathMode::RenderPointContextMenu(std::shared_ptr<LPathDOMNode> path, std::
 	{
 		path->RemoveChild(point);
 
-		if (mPointSelection.GetPrimarySelection() == point)
-			mPointSelection.ClearSelection();
+		if (mSelectionManager.GetPrimarySelection() == point)
+			mSelectionManager.ClearSelection();
 
 		deleted = true;
 	}

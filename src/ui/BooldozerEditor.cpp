@@ -350,15 +350,15 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::BulletText("Change Gizmo");
 		ImGui::Spacing();
 		ImGui::SameLine();
-		ImGui::BulletText("T: Translation");
+		ImGui::BulletText("1: Translation");
 
 		ImGui::Spacing();
 		ImGui::SameLine();
-		ImGui::BulletText("R: Rotation");
+		ImGui::BulletText("2: Rotation");
 
 		ImGui::Spacing();
 		ImGui::SameLine();
-		ImGui::BulletText("S: Scale");
+		ImGui::BulletText("3: Scale");
 
 		if(ImGui::Button("Close")){
 			ImGui::CloseCurrentPopup();
@@ -670,11 +670,11 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	}
 
 	if(!ImGui::GetIO().WantTextInput){
-		if(ImGui::IsKeyPressed(ImGuiKey_T)){
+		if(ImGui::IsKeyPressed(ImGuiKey_1)){
 			mCurrentMode->mGizmoMode = ImGuizmo::OPERATION::TRANSLATE;
-		} else if (ImGui::IsKeyPressed(ImGuiKey_R)){
+		} else if (ImGui::IsKeyPressed(ImGuiKey_2)){
 			mCurrentMode->mGizmoMode = ImGuizmo::OPERATION::ROTATE;
-		} else if (ImGui::IsKeyPressed(ImGuiKey_S)){
+		} else if (ImGui::IsKeyPressed(ImGuiKey_3)){
 			mCurrentMode->mGizmoMode = ImGuizmo::OPERATION::SCALE;
 		}
 	}
