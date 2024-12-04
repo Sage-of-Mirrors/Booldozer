@@ -197,10 +197,11 @@ void LPathMode::RenderGizmo(LEditorScene* renderer_scene){
 		glm::mat4 view = renderer_scene->getCameraView();
 		glm::mat4 proj = renderer_scene->getCameraProj();
 
-		bool moved = ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::WORLD, &(*m)[0][0], NULL, NULL);
-
-		if(mSelectionManager.GetPrimarySelection()->GetNodeType() == EDOMNodeType::PathPoint && moved){
-			renderer_scene->SetDirty();
+		if(mSelectionManager.GetPrimarySelection()->GetNodeType() != EDOMNodeType::PathPoint){
+			bool moved = ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::WORLD, &(*m)[0][0], NULL, NULL);
+			if(mSelectionManager.GetPrimarySelection()->GetNodeType() == EDOMNodeType::PathPoint && moved){
+				renderer_scene->SetDirty();
+			}
 		}
 	}
 }

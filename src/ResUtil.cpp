@@ -51,6 +51,14 @@ void LResUtility::LGCResourceManager::Init()
 		MapThumbnails[id] = 0xFFFFFFFF;
 	}
 
+	std::filesystem::path bannerPath(std::filesystem::path(OPTIONS.mRootPath) / "files" / "opening.bnr");
+	if(std::filesystem::exists(bannerPath)){
+		bStream::CFileStream bnr(bannerPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
+		bnr.readBytesTo((uint8_t*)&mBanner, sizeof(mBanner));
+		bnr.seek(0x20);
+		ImageFormat::Decode::RGB5A3(&bnr, 96, 32, mBannerImage);
+	}
+
 }
 
 void LResUtility::LGCResourceManager::Cleanup(){}

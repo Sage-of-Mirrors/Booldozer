@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GenUtil.hpp"
+#include "io/BtiIO.hpp"
 #include "constants.hpp"
 
 #include <json.hpp>
@@ -11,6 +12,17 @@
 #include <filesystem>
 #include <string>
 #include <map>
+
+struct GCBanner {
+	uint32_t mMagic;
+	uint8_t mPadding[28];
+	uint8_t mImage[0x1800];
+	char mGameTitle[0x20];
+	char mDeveloper[0x20];
+	char mGameTitleFull[0x40];
+	char mDeveloperFull[0x40];
+	char mGameDescription[0x80];
+};
 
 namespace LResUtility
 {
@@ -41,6 +53,8 @@ namespace LResUtility
 		public:
 			bool mLoadedGameArchive = false;
 			std::shared_ptr<Archive::Rarc> mGameArchive { nullptr };
+			GCBanner mBanner;
+			uint8_t mBannerImage[96*32*4] { 0 };
 			void Init();
 			void Cleanup();
 	};

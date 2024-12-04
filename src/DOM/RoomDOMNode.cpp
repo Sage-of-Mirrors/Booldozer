@@ -674,10 +674,6 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 	}
 
 	if(LUIUtility::RenderFileDialog("saveRoomTitlecard", imgPath)){
-		int x,y,n;
-		unsigned char* img = stbi_load(imgPath.c_str(), &x, &y, &n, 0);
-		
-		auto fileData = GCResourceManager.mGameArchive->GetFile(std::format("/kawano/roomname/{}", LResUtility::GetNameMap("MapTitlecards")["titlecards"][mRoomNumber].get<std::string>()));
 		stbi_write_png(imgPath.c_str(), RoomTitlecard.mWidth, RoomTitlecard.mHeight, 4, RoomTitlecard.GetData(), RoomTitlecard.mWidth*4);
 	}
 

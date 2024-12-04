@@ -146,11 +146,9 @@ void LDoorMode::RenderGizmo(LEditorScene* renderer_scene){
 			glm::mat4 proj = renderer_scene->getCameraProj();
 			ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::WORLD, &(*m)[0][0], NULL, NULL);
 			
-			if(mPreviousSelection == nullptr || mPreviousSelection != mSelectionManager.GetPrimarySelection()){
-				auto rooms = std::dynamic_pointer_cast<LDoorDOMNode>(mPreviousSelection)->GetRoomReferences();
-				if(rooms.first != nullptr && !renderer_scene->HasRoomLoaded(rooms.first->GetRoomNumber())){
-					renderer_scene->SetRoom(rooms.first);
-				}
+			auto rooms = std::dynamic_pointer_cast<LDoorDOMNode>(mSelectionManager.GetPrimarySelection())->GetRoomReferences();
+			if(rooms.first != nullptr && rooms.second != nullptr && (!renderer_scene->HasRoomLoaded(rooms.first->GetRoomNumber())|| !renderer_scene->HasRoomLoaded(rooms.second->GetRoomNumber()))){
+				renderer_scene->SetRoom(rooms.first);
 			}
 		}
 	}

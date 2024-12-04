@@ -29,12 +29,15 @@
 #include "scene/ModelViewer.hpp"
 #include <format>
 
+#include "stb_image.h"
+#include "stb_image_write.h"
 
 namespace {
 	char* patchErrorMsg { nullptr };
 	std::thread mapOperationThread {};
 	std::mutex loadLock {};
 	bool mapLoading { false };
+	uint32_t bannerEditorTexPreview { 0 };
 }
 
 LBooldozerEditor::LBooldozerEditor()
@@ -388,6 +391,16 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		mOpenActorEditor = false;
 	}
 
+	if(mOpenBannerEditor){
+
+		glCreateTextures(GL_TEXTURE_2D, 1, &bannerEditorTexPreview);
+		glTextureStorage2D(bannerEditorTexPreview, 1, GL_RGBA8, 96, 32);
+		glTextureSubImage2D(bannerEditorTexPreview, 0, 0, 0, 96, 32, GL_RGBA, GL_UNSIGNED_BYTE, GCResourceManager.mBannerImage);
+
+		ImGui::OpenPopup("BannerEditor");
+		mOpenBannerEditor = false;
+	}
+
 	if(mSaveConfigsClicked){
 		loadLock.lock();
 		mapLoading = true;
@@ -561,6 +574,83 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::EndPopup();
 	}
 
+	center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal("BannerEditor", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiChildFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("Banner");
+		ImGui::Separator();
+
+		ImGui::Image(static_cast<uintptr_t>(bannerEditorTexPreview), {96, 32});
+		ImGui::SameLine();
+		ImGui::BeginGroup();
+		ImGui::Text(ICON_FK_FOLDER_OPEN);
+		if(ImGui::IsItemClicked()){
+			ImGuiFileDialog::Instance()->OpenModal("openNewBanner", "Open Banner Image", "Image (*.png){.png}", ".");
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::Text(ICON_FK_FLOPPY_O);
+		if(ImGui::IsItemClicked()){
+			ImGuiFileDialog::Instance()->OpenModal("saveBannerImage", "Save Banner Image Titlecard", "Image (*.png){.png}", ".");
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndGroup();
+		ImGui::BeginGroup();
+		ImGui::InputText("Short Title", GCResourceManager.mBanner.mGameTitle, sizeof(GCResourceManager.mBanner.mGameTitle));
+		ImGui::InputText("Short Developer", GCResourceManager.mBanner.mDeveloper, sizeof(GCResourceManager.mBanner.mDeveloper));
+		ImGui::InputText("Title", GCResourceManager.mBanner.mGameTitleFull, sizeof(GCResourceManager.mBanner.mGameTitleFull));
+		ImGui::InputText("Developer", GCResourceManager.mBanner.mDeveloperFull, sizeof(GCResourceManager.mBanner.mDeveloperFull));
+		ImGui::InputTextMultiline("Description", GCResourceManager.mBanner.mGameDescription, sizeof(GCResourceManager.mBanner.mGameDescription));
+		ImGui::EndGroup();
+
+		if(ImGui::Button("Save")){
+			bStream::CMemoryStream bnrImgStream(GCResourceManager.mBanner.mImage, sizeof(GCResourceManager.mBanner.mImage), bStream::Endianess::Big, bStream::OpenMode::Out);
+
+			std::vector<uint8_t> bnrImgData(96*32*4);
+			std::memcpy(bnrImgData.data(), GCResourceManager.mBannerImage, sizeof(GCResourceManager.mBannerImage));
+
+			ImageFormat::Encode::RGB5A3(&bnrImgStream, 96, 32, bnrImgData);
+			
+			std::filesystem::path bannerPath(std::filesystem::path(OPTIONS.mRootPath) / "files" / "opening.bnr");
+			bStream::CFileStream bnr(bannerPath.string(), bStream::Endianess::Big, bStream::OpenMode::Out);
+			bnr.writeBytes((uint8_t*)&GCResourceManager.mBanner, sizeof(GCResourceManager.mBanner));
+
+			ImGui::CloseCurrentPopup();
+			glDeleteTextures(1, &bannerEditorTexPreview);
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("No")) {
+			ImGui::CloseCurrentPopup();
+			glDeleteTextures(1, &bannerEditorTexPreview);
+		} 
+
+		ImGui::EndPopup();
+	}
+
+	std::string imgPath;
+	if(LUIUtility::RenderFileDialog("openNewBanner", imgPath)){
+		int x,y,n;
+		unsigned char* img = stbi_load(imgPath.c_str(), &x, &y, &n, 0);
+		
+		std::cout << n << std::endl;
+
+		if(x == 96 && y == 32 && n == 4){
+			std::memcpy(GCResourceManager.mBannerImage, img, 96*32*4);
+		}
+
+		glTextureSubImage2D(bannerEditorTexPreview, 0, 0, 0, 96, 32, GL_RGBA, GL_UNSIGNED_BYTE, img);
+
+		delete img;
+
+		ImGui::OpenPopup("BannerEditor");
+	}
+
+	if(LUIUtility::RenderFileDialog("saveBannerImage", imgPath)){
+		stbi_write_png(imgPath.c_str(), 96, 32, 4, GCResourceManager.mBannerImage, 96*4);
+		ImGui::OpenPopup("BannerEditor");
+	}
+	
 	if (LUIUtility::RenderFileDialog("AppendMapDlg", path))
 	{
 		GetSelectionManager()->ClearSelection();
@@ -578,6 +668,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		EEditorMode mode;
 		mCurrentMode->Render(mLoadedMap, renderer_scene, mode);
 		if(mode != CurrentMode){
+			mCurrentMode->GetSelectionManager()->ClearSelection();
 			CurrentMode = mode;
 			ChangeMode();
 		}
@@ -705,7 +796,19 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 							}
 						}
 					}
-				} else {
+				} else if(mCurrentMode == &mPathMode){
+					if(node->GetID() == id && (node->GetNodeType() == EDOMNodeType::Path || node->GetNodeType() == EDOMNodeType::PathPoint)){
+						GetSelectionManager()->AddToSelection(node);
+					}
+				} else if(mCurrentMode == &mDoorMode){
+					if(node->GetID() == id && node->GetNodeType() == EDOMNodeType::Door){
+						GetSelectionManager()->AddToSelection(node);
+					}
+				} else if(mCurrentMode == &mEnemyMode){
+					if(node->GetID() == id && node->GetNodeType() == EDOMNodeType::Enemy){
+						GetSelectionManager()->AddToSelection(node);
+					}
+				} else if(mCurrentMode == &mActorMode) {
 					if(node->GetID() == id){
 						GetSelectionManager()->AddToSelection(node);
 					}

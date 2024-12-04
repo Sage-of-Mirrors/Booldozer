@@ -213,6 +213,8 @@ void LBooldozerApp::RenderUI(float deltaTime) {
         {
 			if	(ImGui::MenuItem(ICON_FK_C "  Ghost Config Editor"))
 				mEditorContext.mOpenActorEditor = true;
+			if	(ImGui::MenuItem(ICON_FK_DATABASE "  Banner Editor"))
+				mEditorContext.mOpenBannerEditor = true;
             if (ImGui::MenuItem(ICON_FK_PLAY "  Playtest"))
                 mEditorContext.onPlaytestCB();
 

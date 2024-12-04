@@ -17,16 +17,16 @@ namespace ImageFormat {
     }
 
     namespace Encode {
-        void CMPR(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData);
-        void RGB5A3(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData);
-        void RGB565(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData);
+        void CMPR(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData);
+        void RGB5A3(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData);
+        void RGB565(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData);
 
 
-        void I4(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData);
-        void I8(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData);
+        void I4(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData);
+        void I8(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData);
 
-        void IA4(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData);
-        void IA8(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData);
+        void IA4(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData);
+        void IA8(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData);
     }
 };
 

@@ -38,6 +38,30 @@ uint16_t RGBA8toIA8(uint8_t r, uint8_t g, uint8_t  b, uint8_t a){
     return output;
 }
 
+uint16_t RGBA8toRGB5A3(uint8_t r, uint8_t g, uint8_t  b, uint8_t a){
+    uint16_t color = 0x0000;
+    if(a != 0xFF){
+        a >>= 5;
+        r >>= 4;
+        g >>= 4;
+        b >>= 4;
+        color = 0x0000;
+        color |= ((a & 0x7) << 12);
+        color |= ((r & 0xF) << 8);
+        color |= ((g & 0xF) << 4);
+        color |= ((b & 0xF) << 0);
+    } else {
+        r >>= 3;
+        g >>= 3;
+        b >>= 3;
+        color = 0x8000;
+        color |= ((r & 0x1F) << 10);
+        color |= ((g & 0x1F) << 5);
+        color |= ((b & 0x1F) << 0);
+    }
+    return color;
+}
+
 uint32_t RGB565toRGBA8(uint16_t data) {
 	uint8_t r = (data & 0xF100) >> 11;
 	uint8_t g = (data & 0x07E0) >> 5;
@@ -389,8 +413,40 @@ namespace Decode {
 
 namespace Encode {
     void CMPR(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData){}
-    void RGB5A3(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData){}
     void RGB565(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData){}
+
+    void RGB5A3(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData){
+        if (imageData.size() == 0)
+            return;
+
+        uint32_t numBlocksW = width / 4;
+        uint32_t numBlocksH = height / 4;
+
+        // Iterate the blocks in the image
+        for (int blockY = 0; blockY < numBlocksH; blockY++) {
+            for (int blockX = 0; blockX < numBlocksW; blockX++) {
+                // Iterate the pixels in the current block
+                for (int pixelY = 0; pixelY < 4; pixelY++) {
+                    for (int pixelX = 0; pixelX < 4; pixelX++) {
+                        // Bounds check to ensure the pixel is within the image.
+                        if ((blockX * 4 + pixelX >= width) || (blockY * 4 + pixelY >= height))
+                            continue;
+
+                        // RGB values for this pixel are stored in a 16-bit integer.
+                        uint32_t destIndex = (width * ((blockY * 4) + pixelY) + (blockX * 4) + pixelX) * 4;
+                        uint8_t r = imageData[destIndex];
+                        uint8_t g = imageData[destIndex + 1];
+                        uint8_t b = imageData[destIndex + 2];
+                        uint8_t a = imageData[destIndex + 3];
+
+                        uint16_t rgb5a3 = ColorFormat::RGBA8toRGB5A3(r,g,b,a);
+                        stream->writeUInt16(rgb5a3);
+
+                    }
+                }
+            }
+        }
+    }
 
     void I4(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData){
         if(imageData.size() == 0) return;

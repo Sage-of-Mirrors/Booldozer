@@ -138,6 +138,14 @@ void CPlaneRenderer::Init(std::string texPath){
 }
 
 void CPlaneRenderer::Draw(glm::mat4* transform, uint32_t id, uint32_t selected, int32_t texScaleX, int32_t texScaleY){
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glEnable(GL_PROGRAM_POINT_SIZE);
+
     glBindTexture(GL_TEXTURE_2D, mTexture);
 
 	glm::mat4 mvp = LEditorScene::GetEditorScene()->Camera.GetProjectionMatrix() * LEditorScene::GetEditorScene()->Camera.GetViewMatrix();

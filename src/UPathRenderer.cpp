@@ -169,14 +169,14 @@ void CPathRenderer::Draw(LSceneCamera *Camera) {
 
  
     uint32_t start = 0;
-    glUniform1i(mPointModeUniform, GL_TRUE);
+    glUniform1i(mPointModeUniform, 1);
     for(auto& line : mPaths){
         glDrawArrays(GL_POINTS, start, line.size());
         start += line.size();
     }
 
     start = 0;
-    glUniform1i(mPointModeUniform, GL_FALSE);
+    glUniform1i(mPointModeUniform, 0);
     for(auto& line : mPaths){
         glDrawArrays(GL_LINE_STRIP, start, line.size());
         start += line.size();
