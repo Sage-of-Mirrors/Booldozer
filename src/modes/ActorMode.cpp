@@ -195,7 +195,6 @@ void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 			isRoomDirty = false;
 		}
 	}
-	mPreviousSelection = mSelectionManager.GetPrimarySelection();
 
 }
 
@@ -346,6 +345,7 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 			mHistoryManager.PerformRedo();
 		}
 	}
+	mPreviousSelection = mSelectionManager.GetPrimarySelection();
 }
 
 void LActorMode::OnBecomeActive()

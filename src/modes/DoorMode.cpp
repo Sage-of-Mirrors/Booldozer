@@ -131,7 +131,6 @@ void LDoorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* r
 		node->RenderBG(0);
 	}
 
-	mPreviousSelection = mSelectionManager.GetPrimarySelection();
 }
 
 void LDoorMode::RenderGizmo(LEditorScene* renderer_scene){
@@ -152,6 +151,7 @@ void LDoorMode::RenderGizmo(LEditorScene* renderer_scene){
 			}
 		}
 	}
+	mPreviousSelection = mSelectionManager.GetPrimarySelection();
 }
 
 void LDoorMode::OnBecomeActive()

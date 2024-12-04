@@ -88,7 +88,6 @@ void LEnemyMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 		node->RenderBG(0);
 	}
 
-	mPreviousSelection = mSelectionManager.GetPrimarySelection();
 }
 
 void LEnemyMode::RenderGizmo(LEditorScene* renderer_scene){
@@ -102,6 +101,7 @@ void LEnemyMode::RenderGizmo(LEditorScene* renderer_scene){
 			renderer_scene->SetRoom(mSelectionManager.GetPrimarySelection()->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock());
 		}
 	}
+	mPreviousSelection = mSelectionManager.GetPrimarySelection();
 }
 
 void LEnemyMode::OnBecomeActive()

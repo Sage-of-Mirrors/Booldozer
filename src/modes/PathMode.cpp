@@ -183,7 +183,6 @@ void LPathMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* r
 	for(auto& node : current_map.get()->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)){
 		node->RenderBG(0);
 	}
-	mPreviousSelection = mSelectionManager.GetPrimarySelection();
 }
 
 void LPathMode::RenderGizmo(LEditorScene* renderer_scene){
@@ -204,6 +203,7 @@ void LPathMode::RenderGizmo(LEditorScene* renderer_scene){
 			}
 		}
 	}
+	mPreviousSelection = mSelectionManager.GetPrimarySelection();
 }
 
 bool LPathMode::RenderPointContextMenu(std::shared_ptr<LPathDOMNode> path, std::shared_ptr<LPathPointDOMNode> point)
