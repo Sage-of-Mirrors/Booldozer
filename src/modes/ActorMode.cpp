@@ -237,11 +237,24 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 
 			if(!ImGuizmo::IsUsing() && mGizmoWasUsing){ //finished using the gizmo, add a history item
 
+				// snap objects to room bounds
 				std::shared_ptr<LRoomDataDOMNode> curRoom = mSelectionManager.GetPrimarySelection()->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock()->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
 				for(auto node : mSelectionManager.GetSelection()){
 					glm::mat4* transform = dynamic_pointer_cast<LBGRenderDOMNode>(node)->GetMat();
+					if((*transform)[3].x < curRoom->GetMin().x){
+						(*transform)[3].x = curRoom->GetMin().x + 0.01f;
+					} else if((*transform)[3].x > curRoom->GetMax().x){
+						(*transform)[3].x = curRoom->GetMax().x - 0.01f;
+					}
 					if((*transform)[3].y < curRoom->GetMin().y){
 						(*transform)[3].y = curRoom->GetMin().y + 0.01f;
+					} else if((*transform)[3].y > curRoom->GetMax().y){
+						(*transform)[3].y = curRoom->GetMax().y - 0.01f;
+					}
+					if((*transform)[3].z < curRoom->GetMin().z){
+						(*transform)[3].z = curRoom->GetMin().z + 0.01f;
+					} else if((*transform)[3].z > curRoom->GetMax().z){
+						(*transform)[3].z = curRoom->GetMax().z - 0.01f;
 					}
 				}
 
