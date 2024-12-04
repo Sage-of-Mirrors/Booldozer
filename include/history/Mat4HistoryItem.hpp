@@ -10,10 +10,10 @@ private:
 	// The node that this history item affects.
 	std::shared_ptr<LBGRenderDOMNode> mAffectedNode;
 	// The delta that will be applied on undo/redo.
-	glm::mat4 mDelta;
+	glm::mat4 mOther;
 
 public:
-	LMat4HistoryItem(std::shared_ptr<LBGRenderDOMNode> node, glm::mat4 delta);
+	LMat4HistoryItem(std::shared_ptr<LBGRenderDOMNode> node, glm::mat4 other);
 
 	virtual void Undo() override;
 	virtual void Redo() override;

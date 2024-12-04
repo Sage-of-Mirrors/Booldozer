@@ -666,9 +666,7 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 
 		auto fileData = GCResourceManager.mGameArchive->GetFile(std::format("/kawano/roomname/{}", LResUtility::GetNameMap("MapTitlecards")["titlecards"][mRoomNumber].get<std::string>()));
 		bStream::CMemoryStream file(0x20 + (x * y), bStream::Endianess::Big, bStream::OpenMode::Out);
-
 		RoomTitlecard.Save(&file, x, y, imgData);
-
 		fileData->SetData(file.getBuffer(), file.getSize());
 
     	std::filesystem::path gameArcPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Game" / "game_usa.szp";
@@ -680,9 +678,7 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 		unsigned char* img = stbi_load(imgPath.c_str(), &x, &y, &n, 0);
 		
 		auto fileData = GCResourceManager.mGameArchive->GetFile(std::format("/kawano/roomname/{}", LResUtility::GetNameMap("MapTitlecards")["titlecards"][mRoomNumber].get<std::string>()));
-
 		stbi_write_png(imgPath.c_str(), RoomTitlecard.mWidth, RoomTitlecard.mHeight, 4, RoomTitlecard.GetData(), RoomTitlecard.mWidth*4);
-
 	}
 
 	// Integers

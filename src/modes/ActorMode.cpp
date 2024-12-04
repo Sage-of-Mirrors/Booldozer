@@ -215,19 +215,13 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 			glm::mat4* m = static_cast<LBGRenderDOMNode*>(mSelectionManager.GetPrimarySelection().get())->GetMat();
 			glm::mat4 delta(1.0f);
 			if(ImGuizmo::Manipulate(&view[0][0], &proj[0][0], mGizmoMode, ImGuizmo::WORLD, &(*m)[0][0], &delta[0][0], NULL)){
-				if(mGizmoMode == ImGuizmo::OPERATION::ROTATE){
-					glm::quat rotQuat;
-					glm::vec3 scale, trans, skew;
-					glm::vec4 persp;
-					glm::decompose(delta, scale, rotQuat, trans, skew, persp);
-					mRotationDelta *= rotQuat;
-				} else {
-					mGizmoDelta *= delta;
+				if(!mGizmoWasUsing){ // if we we arent already using the gizmo, invert the transform this just did and set that as the original transform
+					mOriginalTransform = *m * glm::inverse(delta);
 				}
 				
 				for(auto node : mSelectionManager.GetSelection()){
 					if(node != mSelectionManager.GetPrimarySelection()){
-						(*dynamic_pointer_cast<LBGRenderDOMNode>(node)->GetMat()) = (*dynamic_pointer_cast<LBGRenderDOMNode>(node)->GetMat()) * mGizmoDelta;
+						(*dynamic_pointer_cast<LBGRenderDOMNode>(node)->GetMat()) = (*dynamic_pointer_cast<LBGRenderDOMNode>(node)->GetMat()) * mOriginalTransform;
 					}
 					EDOMNodeType type = node->GetNodeType();
 					if(type == EDOMNodeType::PathPoint || type == EDOMNodeType::Event  || type == EDOMNodeType::Observer || type == EDOMNodeType::Object){
@@ -238,18 +232,9 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 				mGizmoWasUsing = true;
 			}
 
-			if(!ImGuizmo::IsUsing() && mGizmoWasUsing){
-				if(mGizmoMode == ImGuizmo::OPERATION::ROTATE){
-					mHistoryManager.AddUndoItem(std::make_shared<LQuatHistoryItem>(std::static_pointer_cast<LBGRenderDOMNode>(mSelectionManager.GetPrimarySelection()), mRotationDelta));
-					mGizmoDelta = glm::mat4(1.0f);
-					mRotationDelta = glm::identity<glm::quat>();
-					mGizmoWasUsing = false;
-				} else {
-					mHistoryManager.AddUndoItem(std::make_shared<LMat4HistoryItem>(std::static_pointer_cast<LBGRenderDOMNode>(mSelectionManager.GetPrimarySelection()), mGizmoDelta));
-					mGizmoDelta = glm::mat4(1.0f);
-					mRotationDelta = glm::identity<glm::quat>();
-					mGizmoWasUsing = false;
-				}
+			if(!ImGuizmo::IsUsing() && mGizmoWasUsing){ //finished using the gizmo, add a history item
+				mHistoryManager.AddUndoItem(std::make_shared<LMat4HistoryItem>(std::static_pointer_cast<LBGRenderDOMNode>(mSelectionManager.GetPrimarySelection()), mOriginalTransform));
+				mGizmoWasUsing = false;
 			}
 
 		} else {
