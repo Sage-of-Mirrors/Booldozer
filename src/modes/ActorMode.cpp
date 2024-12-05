@@ -341,7 +341,7 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 			mHistoryManager.PerformUndo();
 		}
 
-		if(ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && ImGui::IsKeyPressed(ImGuiKey_Y)){
+		if(ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && ImGui::IsKeyDown(ImGuiKey_LeftShift) && ImGui::IsKeyPressed(ImGuiKey_Z)){
 			mHistoryManager.PerformRedo();
 		}
 	}
