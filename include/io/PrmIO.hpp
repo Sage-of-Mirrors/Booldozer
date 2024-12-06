@@ -76,6 +76,7 @@ struct LCTPrm {
     float mKiryuCount;
     float mNumGround;
     uint8_t mFlag;
+    std::vector<uint16_t> mEnabledProperties;
 };
 
 class LPrmIO {

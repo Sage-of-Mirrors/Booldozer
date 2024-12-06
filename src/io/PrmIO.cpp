@@ -143,41 +143,108 @@ void LPrmIO::Save(std::string name, bStream::CStream * stream)
     ambColor |= ((uint32_t)(prm->mAmbColor.a*255));
 
     stream->writeUInt32(28);
-    WritePropertyInt32(stream, 0xa62f, "mLife", prm->mLife);
-    WritePropertyInt32(stream, 0x2528, "mHitDamage", prm->mHitDamage);
-    WritePropertyInt32(stream, 0xad88, "mSpeed", prm->mSpeed);
-    WritePropertyInt32(stream, 0x93d1, "mSpeedUnseen", prm->mSpeedUnseen);
-    WritePropertyInt32(stream, 0x4b45, "mSpeedFight", prm->mSpeedFight);
-    WritePropertyInt32(stream, 0x5f6a, "mEyesight", prm->mEyesight);
-    WritePropertyInt32(stream, 0xd9f9, "mLightBindFrame", prm->mLightBindFrame);
-    WritePropertyFloat(stream, 0x29fe, "mMinLightBindRange", prm->mMinLightBindRange);
-    WritePropertyFloat(stream, 0xac49, "mMaxLightBindRange", prm->mMaxLightBindRange);
-    WritePropertyInt32(stream, 0x30aa, "mNumAtkKarakai", prm->mNumAtkKarakai);
-    WritePropertyInt32(stream, 0x560a, "mNumAtkOrooro", prm->mNumAtkOrooro);
-    WritePropertyFloat(stream, 0xcc48, "mHikiPower", prm->mHikiPower);
-    WritePropertyFloat(stream, 0xc42e, "mEffectiveDeg", prm->mEffectiveDegree);
-    WritePropertyFloat(stream, 0x7a1c, "mTsuriHeight", prm->mTsuriHeight);
-    WritePropertyInt32(stream, 0xe753, "mDissapearFrame", prm->mDissapearFrame);
-    WritePropertyInt32(stream, 0x11db, "mActAfterSu", prm->mActAfterSu);
-    WritePropertyInt32(stream, 0x04a9, "mActAfterFa", prm->mActAfterFa);
-    WritePropertyInt32(stream, 0x3960, "mTsuriType", (uint32_t)prm->mTsuriType);
-    WritePropertyInt32(stream, 0x1f58, "mAttackPattern1", (uint32_t)prm->mAttackPattern);
-    WritePropertyInt32(stream, 0xf8f2, "mElement", (uint32_t)prm->mElement);
-    ptrdiff_t tsuriTblId = LGenUtility::VectorIndexOf(itemFishingNodes, prm->mTsuriItemTblId.lock());
-    ptrdiff_t normalTblId = LGenUtility::VectorIndexOf(itemAppearNodes, prm->mNormalItemTblId.lock());
-    WritePropertyInt32(stream, 0x55a0, "mTsuriItemTblId", tsuriTblId);
-    WritePropertyInt32(stream, 0x7d81, "mNormalItemTblId", normalTblId);
-    WritePropertyFloat(stream, 0x9b49, "mPointerRange", prm->mPointerRange);
-    WritePropertyInt32(stream, 0x61f8, "mBrightColor", brightColor);
-    WritePropertyInt32(stream, 0xcf8a, "mAmbColor", ambColor);
-    WritePropertyInt32(stream, 0x97f5, "mKiryuCount", prm->mKiryuCount);
-    WritePropertyInt32(stream, 0xc135, "mNumGround", prm->mNumGround);
-    WritePropertyInt16(stream, 0x31d1, "mCheckbox", prm->mCheckbox);
+
+    for(int m = 0; m < mCtpParams[name]->mEnabledProperties.size(); m++){
+        switch(mCtpParams[name]->mEnabledProperties[m]){
+        case 0xa62f:
+            WritePropertyInt32(stream, 0xa62f, "mLife", prm->mLife);
+            break;
+        case 0x2528:
+            WritePropertyInt32(stream, 0x2528, "mHitDamage", prm->mHitDamage);
+            break;
+        case 0xad88:
+            WritePropertyInt32(stream, 0xad88, "mSpeed", prm->mSpeed);
+            break;
+        case 0x93d1:
+            WritePropertyInt32(stream, 0x93d1, "mSpeedUnseen", prm->mSpeedUnseen);
+            break;
+        case 0x4b45:
+            WritePropertyInt32(stream, 0x4b45, "mSpeedFight", prm->mSpeedFight);
+            break;
+        case 0x5f6a:
+            WritePropertyInt32(stream, 0x5f6a, "mEyesight", prm->mEyesight);
+            break;
+        case 0xd9f9:
+            WritePropertyInt32(stream, 0xd9f9, "mLightBindFrame", prm->mLightBindFrame);
+            break;
+        case 0x29fe:
+            WritePropertyFloat(stream, 0x29fe, "mMinLightBindRange", prm->mMinLightBindRange);
+            break;
+        case 0xac49:
+            WritePropertyFloat(stream, 0xac49, "mMaxLightBindRange", prm->mMaxLightBindRange);
+            break;
+        case 0x30aa:
+            WritePropertyInt32(stream, 0x30aa, "mNumAtkKarakai", prm->mNumAtkKarakai);
+            break;
+        case 0x560a:
+            WritePropertyInt32(stream, 0x560a, "mNumAtkOrooro", prm->mNumAtkOrooro);
+            break;
+        case 0xcc48:
+            WritePropertyFloat(stream, 0xcc48, "mHikiPower", prm->mHikiPower);
+            break;
+        case 0xc42e:
+            WritePropertyFloat(stream, 0xc42e, "mEffectiveDeg", prm->mEffectiveDegree);
+            break;
+        case 0x7a1c:
+            WritePropertyFloat(stream, 0x7a1c, "mTsuriHeight", prm->mTsuriHeight);
+            break;
+        case 0xe753:
+            WritePropertyInt32(stream, 0xe753, "mDissapearFrame", prm->mDissapearFrame);
+            break;
+        case 0x11db:
+            WritePropertyInt32(stream, 0x11db, "mActAfterSu", prm->mActAfterSu);
+            break;
+        case 0x04a9:
+            WritePropertyInt32(stream, 0x04a9, "mActAfterFa", prm->mActAfterFa);
+            break;
+        case 0x3960:
+            WritePropertyInt32(stream, 0x3960, "mTsuriType", (uint32_t)prm->mTsuriType);
+            break;
+        case 0x1f58:
+            WritePropertyInt32(stream, 0x1f58, "mAttackPattern1", (uint32_t)prm->mAttackPattern);
+            break;
+        case 0xf8f2:
+            WritePropertyInt32(stream, 0xf8f2, "mElement", (uint32_t)prm->mElement);
+            break;
+        case 0x55a0:
+            {
+                std::ptrdiff_t tsuriTblId = LGenUtility::VectorIndexOf(itemFishingNodes, prm->mTsuriItemTblId.lock());
+                WritePropertyInt32(stream, 0x55a0, "mTsuriItemTblId", tsuriTblId);
+            }
+            break;
+        case 0x7d81:
+            {
+                std::ptrdiff_t normalTblId = LGenUtility::VectorIndexOf(itemAppearNodes, prm->mNormalItemTblId.lock());
+                WritePropertyInt32(stream, 0x7d81, "mNormalItemTblId", normalTblId);
+            }
+            break;
+        case 0x9b49:
+            WritePropertyFloat(stream, 0x9b49, "mPointerRange", prm->mPointerRange);
+            break;
+        case 0x61f8:
+            WritePropertyInt32(stream, 0x61f8, "mBrightColor", brightColor);
+            break;
+        case 0xcf8a:
+            WritePropertyInt32(stream, 0xcf8a, "mAmbColor", ambColor);
+            break;
+        case 0x97f5:
+            WritePropertyInt32(stream, 0x97f5, "mKiryuCount", prm->mKiryuCount);
+            break;
+        case 0xc135:
+            WritePropertyInt32(stream, 0xc135, "mNumGround", prm->mNumGround);
+            break;
+        case 0x31d1:
+            WritePropertyInt16(stream, 0x31d1, "mCheckbox", prm->mCheckbox);
+            break;
+        }
+    }
+
 }
 
 void LPrmIO::Load(std::string name, bStream::CStream* stream)
 {
     mCtpParams[name] = std::make_shared<LCTPrm>();
+    mCtpParams[name]->mEnabledProperties.reserve(32);
 
     auto itemFishingNodes = mMap.lock()->GetChildrenOfType<LItemFishingDOMNode>(EDOMNodeType::ItemFishing);
     auto itemAppearNodes = mMap.lock()->GetChildrenOfType<LItemAppearDOMNode>(EDOMNodeType::ItemAppear);
@@ -187,6 +254,7 @@ void LPrmIO::Load(std::string name, bStream::CStream* stream)
         uint16_t hash = stream->readUInt16(); //skip hash
         std::string memberName = stream->readString(stream->readUInt16());
         stream->skip(4);
+        mCtpParams[name]->mEnabledProperties.push_back(hash);
         switch(hash){
         case 0xa62f:
             mCtpParams[name]->mLife = stream->readUInt32();
@@ -250,7 +318,7 @@ void LPrmIO::Load(std::string name, bStream::CStream* stream)
             break;
         case 0x55a0:
             {
-                size_t fid = stream->readUInt32();
+                std::size_t fid = stream->readUInt32();
                 if(fid < itemFishingNodes.size() && itemFishingNodes.size() > 0){
                     mCtpParams[name]->mTsuriItemTblId = itemFishingNodes.at(fid < itemFishingNodes.size() ? fid : itemFishingNodes.size() - 1);
                 }
@@ -258,7 +326,7 @@ void LPrmIO::Load(std::string name, bStream::CStream* stream)
             break;
         case 0x7d81:
             {
-                size_t nid = stream->readUInt32();
+                std::size_t nid = stream->readUInt32();
                 if(nid < itemAppearNodes.size() && itemAppearNodes.size() > 0){
                     mCtpParams[name]->mNormalItemTblId = itemAppearNodes.at(nid < itemAppearNodes.size() ? nid : itemAppearNodes.size() - 1);
                 }
