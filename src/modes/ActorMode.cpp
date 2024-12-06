@@ -74,7 +74,7 @@ void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map, 
 
 		// for some reason filesystem path wasnt working to build this path so for now just build it manually...
 		std::string resPathInRoot = std::format("{}/{}/{}", OPTIONS.mRootPath, "files", newRoomData->GetResourcePath());
-		std::cout << "[ActorMode]: Room resource path " << resPathInRoot << std::endl;
+		LGenUtility::Log << "[ActorMode]: Room resource path " << resPathInRoot << std::endl;
 		if(!std::filesystem::exists(resPathInRoot)){
 			std::shared_ptr<Archive::Rarc> arc = Archive::Rarc::Create();
 			std::shared_ptr<Archive::Folder> root = Archive::Folder::Create(arc);
@@ -350,10 +350,10 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 
 void LActorMode::OnBecomeActive()
 {
-	std::cout << "[Booldozer]: Actor mode switching in!\n" << std::endl;
+	LGenUtility::Log << "[Booldozer]: Actor mode switching in!\n" << std::endl;
 }
 
 void LActorMode::OnBecomeInactive()
 {
-	std::cout << "[Booldozer]: Actor mode switching out!\n" << std::endl;
+	LGenUtility::Log << "[Booldozer]: Actor mode switching out!\n" << std::endl;
 }

@@ -10,6 +10,7 @@
 
 namespace LGenUtility
 {
+    extern std::fstream Log;
     // Returns the index of the given element in the given vector, or -1 if the element is not in that vector.
     template<typename T>
     ptrdiff_t VectorIndexOf(const std::vector<T>& vec, const T& elem)
@@ -71,4 +72,5 @@ namespace LGenUtility
     std::string SjisToUtf8(const std::string& value);
 
     bool TriBoxIntersect(glm::vec3 tri[3], glm::vec3 boxCenter, glm::vec3 boxExtents);
+
 }

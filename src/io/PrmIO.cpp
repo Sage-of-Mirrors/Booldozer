@@ -86,7 +86,6 @@ void LPrmIO::SaveConfigsToFile()
 
         if(ctpFolder != nullptr){
             for(auto paramFile : ctpFolder->GetFiles()){
-                std::cout << paramFile->GetName() << std::endl;
                 auto name = std::filesystem::path(paramFile->GetName()).filename().stem();
                 bStream::CMemoryStream prm(700, bStream::Endianess::Big, bStream::OpenMode::Out);
                 Save(name.string(), &prm); 
@@ -286,7 +285,7 @@ void LPrmIO::Load(std::string name, bStream::CStream* stream)
             mCtpParams[name]->mCheckbox = stream->readUInt16();
             break;
         default:
-            std::cout << name << std::endl;
+            LGenUtility::Log << name << std::endl;
             stream->skip(4);
         }
     }
@@ -358,11 +357,11 @@ bool LPrmIO::RenderUI()
                         std::shared_ptr<Archive::Rarc> modelArchive = Archive::Rarc::Create();
                         bStream::CFileStream modelArchiveStream(modelPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
                         if(!modelArchive->Load(&modelArchiveStream)){
-                            std::cout << "[PRMIO]: Unable to load model archive " << modelPath.string() << std::endl;
+                            LGenUtility::Log << "[PRMIO]: Unable to load model archive " << modelPath.string() << std::endl;
                         } else {
                             std::shared_ptr<Archive::File> modelFile = modelArchive->GetFile(std::filesystem::path("model") / (modelName + ".mdl"));
                             if(modelFile == nullptr){
-                                std::cout << "[PRMIO]: Couldn't find model/" << modelName << ".mdl in archive" << std::endl;
+                                LGenUtility::Log << "[PRMIO]: Couldn't find model/" << modelName << ".mdl in archive" << std::endl;
                             } else {
                                 bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
                                 PreviewWidget::LoadModel(&modelData, EModelType::Actor);
@@ -370,9 +369,9 @@ bool LPrmIO::RenderUI()
                             if(materialName != ""){
                                 std::shared_ptr<Archive::File> txpFile = modelArchive->GetFile(std::filesystem::path("txp") / (materialName + ".txp"));
                                 if(txpFile == nullptr){
-                                    std::cout << "[PRMIO]: Couldn't find txp/" << materialName << ".txp in archive" << std::endl;
+                                    LGenUtility::Log << "[PRMIO]: Couldn't find txp/" << materialName << ".txp in archive" << std::endl;
                                 } else {
-                                    std::cout << "[PRMIO]: Loading txp " << materialName << std::endl;
+                                    LGenUtility::Log << "[PRMIO]: Loading txp " << materialName << std::endl;
                                     bStream::CMemoryStream txpData(txpFile->GetData(), txpFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
                                     PreviewWidget::SetModelAnimation(&txpData);
                                 }
@@ -385,7 +384,7 @@ bool LPrmIO::RenderUI()
                             std::shared_ptr<Archive::File> modelFile = GCResourceManager.mGameArchive->GetFile(fullModelPath);
                             
                             if(modelFile == nullptr){
-                                std::cout << "[PRMIO]: Couldn't find " << modelName<< ".mdl in game archive" << std::endl;
+                                LGenUtility::Log << "[PRMIO]: Couldn't find " << modelName<< ".mdl in game archive" << std::endl;
                             } else {
                                 bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
                                 PreviewWidget::LoadModel(&modelData, EModelType::Actor);

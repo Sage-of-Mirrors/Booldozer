@@ -10,7 +10,7 @@ void LTrackCommon::LoadTrack(bStream::CStream* stream, uint32_t keyframeDataOffs
 
     size_t group = stream->tell();
 
-    //std::cout << "Track Properties:\nKey Count: " << std::dec << keyCount << "\nBegin Index: " << beginIndex << "\nElement Count/Flags: " << elementCountFlags << std::endl;
+    //LGenUtility::Log << "Track Properties:\nKey Count: " << std::dec << keyCount << "\nBegin Index: " << beginIndex << "\nElement Count/Flags: " << elementCountFlags << std::endl;
 
     if(mType == ETrackType::CMN || mType == ETrackType::PTH)
     {
@@ -19,7 +19,7 @@ void LTrackCommon::LoadTrack(bStream::CStream* stream, uint32_t keyframeDataOffs
         mUnifiedSlope = (elementCountFlags == 0x80);
     }
 
-    //std::cout << "Reading keyframe at " << std::hex << keyframeDataOffset + (4 * beginIndex) << std::endl;
+    //LGenUtility::Log << "Reading keyframe at " << std::hex << keyframeDataOffset + (4 * beginIndex) << std::endl;
 
     stream->seek(keyframeDataOffset + (4 * beginIndex));
     for (size_t frame = 0; frame < keyCount; frame++)
@@ -31,16 +31,16 @@ void LTrackCommon::LoadTrack(bStream::CStream* stream, uint32_t keyframeDataOffs
 
         if(mType == ETrackType::CMN || mType == ETrackType::PTH)
         {
-            //std::cout << "uh" << std::endl;
+            //LGenUtility::Log << "uh" << std::endl;
             if(elementCountFlags == 1) {
                 keyframe.frame = 0;
                 keyframe.value = keyframe.frame;
 
-                //std::cout << "Single frame track value: " << keyframe.value << std::endl;
+                //LGenUtility::Log << "Single frame track value: " << keyframe.value << std::endl;
             } else {
                 keyframe.value = stream->readFloat();
 
-                //std::cout << "Frame: " << keyframe.frame << "\nValue: " << keyframe.value << std::endl;
+                //LGenUtility::Log << "Frame: " << keyframe.frame << "\nValue: " << keyframe.value << std::endl;
             }
 
             if(elementCountFlags == 3){
@@ -49,13 +49,13 @@ void LTrackCommon::LoadTrack(bStream::CStream* stream, uint32_t keyframeDataOffs
                 keyframe.inslope = slope;
                 keyframe.outslope = slope;
 
-                //std::cout << "Slope: " << slope << std::endl;
+                //LGenUtility::Log << "Slope: " << slope << std::endl;
             } else if (elementCountFlags == 4) {
                 keyframe.inslope = stream->readFloat();
                 keyframe.outslope = stream->readFloat();
 
-                //std::cout << "In Slope: " << keyframe.inslope << std::endl;
-                //std::cout << "Out Slope: " << keyframe.outslope << std::endl;
+                //LGenUtility::Log << "In Slope: " << keyframe.inslope << std::endl;
+                //LGenUtility::Log << "Out Slope: " << keyframe.outslope << std::endl;
             }
         } else if(mType == ETrackType::ANM && keyCount > 1) {
             keyframe.value = stream->readFloat();

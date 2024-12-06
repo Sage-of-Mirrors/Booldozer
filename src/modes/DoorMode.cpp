@@ -156,10 +156,10 @@ void LDoorMode::RenderGizmo(LEditorScene* renderer_scene){
 
 void LDoorMode::OnBecomeActive()
 {
-	std::cout << "[Booldozer]: Door mode switching in" << std::endl;
+	LGenUtility::Log << "[Booldozer]: Door mode switching in" << std::endl;
 }
 
 void LDoorMode::OnBecomeInactive()
 {
-	std::cout << "[Booldozer]: Door mode switching out" << std::endl;
+	LGenUtility::Log << "[Booldozer]: Door mode switching out" << std::endl;
 }

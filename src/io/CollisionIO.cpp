@@ -173,7 +173,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
         map.lock()->ForEachChildOfType<LRoomDOMNode>(EDOMNodeType::Room, [&](std::shared_ptr<LRoomDOMNode> room){
             std::vector<std::shared_ptr<LFurnitureDOMNode>> roomFurniture = room->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
             for(std::shared_ptr<LFurnitureDOMNode> furniture : roomFurniture){
-                std::cout << "Adding Furniture " << furniture->GetName() << std::endl;
+                LGenUtility::Log << "Adding Furniture " << furniture->GetName() << std::endl;
 
                 glm::ivec3 scanbox = furniture->GetScanbox();
                 glm::vec3 position = furniture->GetPosition();
@@ -274,7 +274,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
         bbmax = glm::vec3(glm::max(bbmax.x, vtx.x), glm::max(bbmax.y, vtx.y), glm::max(bbmax.z, vtx.z));
     }
 
-    std::cout << "[CollisionIO:ObjImport]: Bounding Box ["
+    LGenUtility::Log << "[CollisionIO:ObjImport]: Bounding Box ["
         << bbmin.x << ", " << bbmin.y << ", " << bbmin.z << "] ["
         << bbmax.x << ", " << bbmax.y << ", " << bbmax.z << "]" << std::endl; 
 
@@ -513,7 +513,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
         for(int x = 0; x < delta; x++) polygoninfo.writeUInt8(0x40);
 
         polygoninfo.setSize(polygoninfo.tell());
-        std::cout << "[CollisionIO:ObjImport]: polygoninfo size is " << polygoninfo.getSize() << std::endl;
+        LGenUtility::Log << "[CollisionIO:ObjImport]: polygoninfo size is " << polygoninfo.getSize() << std::endl;
         auto polygoninfoFile = mapArc->GetFolder("jmp")->GetFile("polygoninfo");
         if(polygoninfoFile == nullptr){
             polygoninfoFile = Archive::File::Create();
@@ -554,7 +554,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
         for(int x = 0; x < delta; x++) sndpolygoninfo.writeUInt8(0x40);
 
         sndpolygoninfo.setSize(sndpolygoninfo.tell());
-        std::cout << "[CollisionIO:ObjImport]: soundpolygoninfo size is " << sndpolygoninfo.getSize() << std::endl;
+        LGenUtility::Log << "[CollisionIO:ObjImport]: soundpolygoninfo size is " << sndpolygoninfo.getSize() << std::endl;
         auto sndpolygoninfoFile = mapArc->GetFolder("jmp")->GetFile("soundpolygoninfo");
         if(sndpolygoninfoFile == nullptr){
             sndpolygoninfoFile = Archive::File::Create();

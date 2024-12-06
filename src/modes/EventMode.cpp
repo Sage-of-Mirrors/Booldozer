@@ -100,7 +100,7 @@ void LEventMode::RenderDetailsWindow(LSceneCamera* camera)
 			ImGui::Separator();
 
 			if(ImGui::Button("Save")){
-				std::cout << "[EventMode]: Saving Event Archive" << std::endl;
+				LGenUtility::Log << "[EventMode]: Saving Event Archive" << std::endl;
 				selection->mEventScript = mEditorScript.GetText();
 				selection->SaveEventArchive();
 			}
@@ -140,11 +140,11 @@ void LEventMode::RenderGizmo(LEditorScene* renderer_scene){
 void LEventMode::OnBecomeActive()
 {
 	CameraAnimation::SetPreviewActive();
-	std::cout << "[Booldozer]: Event mode switching in" << std::endl;
+	LGenUtility::Log << "[Booldozer]: Event mode switching in" << std::endl;
 }
 
 void LEventMode::OnBecomeInactive()
 {
 	CameraAnimation::SetPreviewInactive();
-	std::cout << "[Booldozer]: Event mode switching out" << std::endl;
+	LGenUtility::Log << "[Booldozer]: Event mode switching out" << std::endl;
 }

@@ -205,7 +205,7 @@ void LPathDOMNode::PostProcess(std::shared_ptr<Archive::Rarc> mapArchive)
 
 	
 	if(pathFile == nullptr){
-		std::cout << "[PathDOMNode]: Unable to load path file " << mName << " !" << std::endl;
+		LGenUtility::Log << "[PathDOMNode]: Unable to load path file " << mName << " !" << std::endl;
 		return;
 	}
 

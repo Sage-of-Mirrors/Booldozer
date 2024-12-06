@@ -174,7 +174,7 @@ void LEventDOMNode::PostProcess()
 
 		if (containingRoom != nullptr)
 		{
-			//std::cout << LGenUtility::Format("Event ", mEventNo, " going to ", containingRoom->GetName(), mEventIf == EEventIfType::Repeatedly_from_Anywhere ? " (Anywhere)" : " (In range)") << std::endl;
+			//LGenUtility::Log << LGenUtility::Format("Event ", mEventNo, " going to ", containingRoom->GetName(), mEventIf == EEventIfType::Repeatedly_from_Anywhere ? " (Anywhere)" : " (In range)") << std::endl;
 			containingRoom->AddChild(GetSharedPtr<LEventDOMNode>(EDOMNodeType::Event));
 		}
 	}

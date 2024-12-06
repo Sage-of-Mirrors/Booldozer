@@ -286,7 +286,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		
 		loadLock.lock();
 		if(mapLoading == false){
-			std::cout << "[BooldozerEditor]: Joining load/append thread" << std::endl;
+			LGenUtility::Log << "[BooldozerEditor]: Joining load/append thread" << std::endl;
 			mapOperationThread.join();
 
 			auto rooms = mLoadedMap->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
@@ -313,7 +313,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 		loadLock.lock();
 		if(mapLoading == false){
-			std::cout << "[BooldozerEditor]: Joining save thread" << std::endl;
+			LGenUtility::Log << "[BooldozerEditor]: Joining save thread" << std::endl;
 			mapOperationThread.join();
 			ImGui::CloseCurrentPopup();
 		}
@@ -333,7 +333,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 		loadLock.lock();
 		if(mapLoading == false){
-			std::cout << "[BooldozerEditor]: Joining save thread" << std::endl;
+			LGenUtility::Log << "[BooldozerEditor]: Joining save thread" << std::endl;
 			mapOperationThread.join();
 			ImGui::CloseCurrentPopup();
 		}
@@ -543,7 +543,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 				std::filesystem::create_directories(std::filesystem::path(resPathInRoot).parent_path());
 			}
 
-			std::cout << "[Editor]: Room resource path " << resPathInRoot << std::endl;
+			LGenUtility::Log << "[Editor]: Room resource path " << resPathInRoot << std::endl;
 			if(!std::filesystem::exists(resPathInRoot)){
 				std::shared_ptr<Archive::Rarc> arc = Archive::Rarc::Create();
 				std::shared_ptr<Archive::Folder> root = Archive::Folder::Create(arc);
@@ -633,7 +633,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		int x,y,n;
 		unsigned char* img = stbi_load(imgPath.c_str(), &x, &y, &n, 0);
 		
-		std::cout << n << std::endl;
+		LGenUtility::Log << n << std::endl;
 
 		if(x == 96 && y == 32 && n == 4){
 			std::memcpy(GCResourceManager.mBannerImage, img, 96*32*4);
@@ -840,7 +840,7 @@ void LBooldozerEditor::OpenMap(std::string file_path)
 {
 
 	mLoadedMap = std::make_shared<LMapDOMNode>();
-	std::cout << "[MapDOMNode] Starting Load Map" << std::endl;
+	LGenUtility::Log << "[MapDOMNode] Starting Load Map" << std::endl;
 	mLoadedMap->LoadMap(std::filesystem::path(file_path));
 
 	mGhostConfigs.LoadConfigs(mLoadedMap);
@@ -879,7 +879,7 @@ void LBooldozerEditor::onClearMapCB()
 
 void LBooldozerEditor::onOpenRoomsCB()
 {
-	std::cout << "[Booldozer]: User selected open room(s)!" << std::endl;
+	LGenUtility::Log << "[Booldozer]: User selected open room(s)!" << std::endl;
 }
 
 void LBooldozerEditor::onSaveMapCB()

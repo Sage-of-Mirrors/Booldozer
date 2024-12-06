@@ -236,7 +236,7 @@ public:
 	typedef LEntityDOMNode Super;
 
 	LFurnitureDOMNode(std::string name);
-	~LFurnitureDOMNode() { /*std::cout << "cleaned up furniture node " << mModelName << std::endl;*/ }
+	~LFurnitureDOMNode() { /*LGenUtility::Log << "cleaned up furniture node " << mModelName << std::endl;*/ }
 
 	virtual std::string GetName() override { return mAccessName == "(null)" ? mModelName : mModelName + " [" + mAccessName + "]"; }
 	std::string GetModelName() { return mModelName; }

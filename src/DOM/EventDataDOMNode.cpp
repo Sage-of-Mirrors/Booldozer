@@ -174,6 +174,6 @@ void LEventDataDOMNode::SaveEventArchive(bool createIfNotExist){
         }
     }
 
-    std::cout << "[EventDOMNode]: Writing event to " << mEventPath << std::endl;
+    LGenUtility::Log << "[EventDOMNode]: Writing event to " << mEventPath << std::endl;
     mEventArchive->SaveToFile(mEventPath, Compression::Format::YAY0);
 }

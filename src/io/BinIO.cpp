@@ -8,6 +8,7 @@
 #include <J3D/Texture/J3DTexture.hpp>
 #include <GXGeometryEnums.hpp>
 #include "io/BtiIO.hpp"
+#include "GenUtil.hpp"
 
 /*
 *
@@ -144,7 +145,7 @@ std::vector<BinVertex> ReadGXPrimitives(bStream::CStream* stream, std::vector<gl
         for (auto& vtx : primVertices)
         {
             if(vtx.first > vertices.size() || vtx.second > texcoords.size()){
-                std::cout << "[Bin Loader]: Error Loading Model! Primitives are wrong? Vertex " << vtx.first << " out of range " << vertices.size() << " or TexCoord " << vtx.second << " out of range " << texcoords.size() << std::endl;
+                LGenUtility::Log << "[Bin Loader]: Error Loading Model! Primitives are wrong? Vertex " << vtx.first << " out of range " << vertices.size() << " or TexCoord " << vtx.second << " out of range " << texcoords.size() << std::endl;
                 return vd_out;
             }
         }
@@ -242,7 +243,7 @@ BinMesh::BinMesh(bStream::CStream* stream, uint32_t offset, std::vector<glm::vec
     uint32_t ret = stream->tell();
 
     stream->seek(offset + primitiveOffset);
-    ////std::cout << "Reading Primitives at " << std::hex << stream->tell() << std::endl;
+    ////LGenUtility::Log << "Reading Primitives at " << std::hex << stream->tell() << std::endl;
     
     std::vector<BinVertex> buffer = ReadGXPrimitives(stream, vertexData, texcoordData, attributes, useNbt, listSize + offset + primitiveOffset);
 
@@ -293,7 +294,7 @@ BinMaterial::~BinMaterial(){
 }
 
 BinMaterial::BinMaterial(bStream::CStream* stream, uint32_t textureOffset){
-    ////std::cout << "Reading Material at " << std::hex << stream->tell() << std::endl;
+    ////LGenUtility::Log << "Reading Material at " << std::hex << stream->tell() << std::endl;
     int16_t textureID = stream->readInt16();
     if(textureID == -1) return;
 
@@ -505,7 +506,7 @@ bool BinModel::BindMaterial(uint16_t id){
         mMaterials[mSamplers[id]->mTextureID]->Bind();
         return true;
     } else {
-        //std::cout << "Couldn't bind material " << mSamplers[id]->mTextureID << std::endl;
+        //LGenUtility::Log << "Couldn't bind material " << mSamplers[id]->mTextureID << std::endl;
         return false;
     }
 }

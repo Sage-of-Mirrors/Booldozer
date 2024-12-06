@@ -255,7 +255,7 @@ void LEnemyDOMNode::PreProcess()
             ptrdiff_t furnitureIndex = LGenUtility::VectorIndexOf(furnitureNodes, furnitureShared);
             if (furnitureIndex == -1)
             {
-                std::cout << "[EnemyDOMNode]: Tried to set furniture access name to nonexistent furniture node!";
+                LGenUtility::Log << "[EnemyDOMNode]: Tried to set furniture access name to nonexistent furniture node!";
                 return;
             }
 

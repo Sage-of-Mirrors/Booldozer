@@ -24,18 +24,18 @@ void LResUtility::LGCResourceManager::Init()
 	mGameArchive = Archive::Rarc::Create();
 
 	std::filesystem::path gameArcPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Game" / "game_usa.szp";
-	std::cout << "[ResUtil] Loading Game Archive " << gameArcPath.string() << std::endl;
+	LGenUtility::Log << "[ResUtil] Loading Game Archive " << gameArcPath.string() << std::endl;
 	if(std::filesystem::exists(gameArcPath)){
 		bStream::CFileStream gameArchiveFileStream(gameArcPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
 		if(!mGameArchive->Load(&gameArchiveFileStream)){
-			std::cout << "[ResUtil]: Unable to load Game Archive " << gameArcPath.string() << std::endl;
+			LGenUtility::Log << "[ResUtil]: Unable to load Game Archive " << gameArcPath.string() << std::endl;
 			mLoadedGameArchive = false;
 		} else {
-			std::cout << "[ResUtil] Loaded Game Archive" << std::endl;
+			LGenUtility::Log << "[ResUtil] Loaded Game Archive" << std::endl;
 			mLoadedGameArchive = true;
 		}
 	} else {
-		std::cout << "[ResUtil]: Couldn't find game archive" << std::endl;
+		LGenUtility::Log << "[ResUtil]: Couldn't find game archive" << std::endl;
 	}
 
 	if(std::filesystem::exists(std::filesystem::current_path() / NAMES_BASE_PATH / "MapNames.json")){
@@ -69,7 +69,7 @@ nlohmann::ordered_json LResUtility::DeserializeJSON(std::filesystem::path file_p
 
 	if (file_path.empty() || !std::filesystem::exists(file_path))
 	{
-		std::cout << std::format("[ResUtil]: Unable to load JSON file from {0}", file_path.string()) << std::endl;
+		LGenUtility::Log << std::format("[ResUtil]: Unable to load JSON file from {0}", file_path.string()) << std::endl;
 		return j;
 	}
 
@@ -114,13 +114,13 @@ uint32_t LResUtility::GetStaticMapDataOffset(std::string mapName, std::string re
 
 	if (deserializedJson.find(mapName) == deserializedJson.end())
 	{
-		std::cout << std::format("[ResUtil]: Map {0} not found in static room data at {1}\n", mapName, fullPath.string());
+		LGenUtility::Log << std::format("[ResUtil]: Map {0} not found in static room data at {1}\n", mapName, fullPath.string());
 		return 0;
 	}
 
 	if (deserializedJson[mapName].find(region) == deserializedJson[mapName].end())
 	{
-		std::cout << std::format("[ResUtil]: Map {0} does not have static room data for region {1}\n", mapName, region);
+		LGenUtility::Log << std::format("[ResUtil]: Map {0} does not have static room data for region {1}\n", mapName, region);
 		return 0;
 	}
 
@@ -149,7 +149,7 @@ std::tuple<std::string, std::string, bool> LResUtility::GetActorModelFromName(st
 
 	if (names.find(name) == names.end())
 	{
-		if(log) std::cout << std::format("[ResUtil]: Actor {0} not found in actor data\n", name);
+		if(log) LGenUtility::Log << std::format("[ResUtil]: Actor {0} not found in actor data\n", name);
 		return {name, "", false};
 	}
 
@@ -183,7 +183,7 @@ void LResUtility::SaveUserSettings()
 	if (destFile.is_open())
 		destFile << serialize;
 	else
-		std::cout << std::format("[ResUtil]: Error saving user settings to {0}", fullPath.string());
+		LGenUtility::Log << std::format("[ResUtil]: Error saving user settings to {0}", fullPath.string());
 }
 
 // Thumbnails

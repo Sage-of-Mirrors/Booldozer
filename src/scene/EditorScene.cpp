@@ -65,22 +65,22 @@ void LEditorScene::LoadResFromRoot(){
 		bStream::CFileStream skyboxArchiveFile((std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp").string(), bStream::Endianess::Big, bStream::OpenMode::In);
 
 		if(!skyboxArchive->Load(&skyboxArchiveFile)){
-			std::cout << "[EditorScene] Failed to load SkyBox Archive" << std::endl;
+			LGenUtility::Log << "[EditorScene] Failed to load SkyBox Archive" << std::endl;
 			return;
 		}
 		
 		std::shared_ptr<Archive::File> skyboxModelFile = skyboxArchive->GetFile("vrball01.bmd");
 		
 		if(skyboxModelFile != nullptr){
-			std::cout << "[EditorScene] Loaded SkyBox Model" << std::endl;
+			LGenUtility::Log << "[EditorScene] Loaded SkyBox Model" << std::endl;
 			bStream::CMemoryStream modelData(skyboxModelFile->GetData(), skyboxModelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 			mSkyboxModel = Loader.Load(&modelData, 0);
 			mSkyBox = mSkyboxModel->CreateInstance();
 		} else {
-			std::cout << "[EditorScene] Failed to load SkyBox Model" << std::endl;
+			LGenUtility::Log << "[EditorScene] Failed to load SkyBox Model" << std::endl;
 		}
 	} else {
-		std::cout << "[EditorScene] Couldn't find Skybox archive " << (std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp").string() << std::endl;
+		LGenUtility::Log << "[EditorScene] Couldn't find Skybox archive " << (std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp").string() << std::endl;
 	}
 }
 
@@ -126,7 +126,7 @@ glm::mat4 LEditorScene::getCameraProj(){
 }
 
 void LEditorScene::UpdateRenderers(){
-	//std::cout << "calling update renderers. this should only happen a few times!" << std::endl;
+	//LGenUtility::Log << "calling update renderers. this should only happen a few times!" << std::endl;
 	mPathRenderer.mPaths.clear();
 	mPointManager.mBillboards.clear();
 
@@ -434,13 +434,13 @@ void LEditorScene::LoadActor(std::string name, bool log){
 		std::shared_ptr<Archive::Rarc> modelArchive = Archive::Rarc::Create();
 		bStream::CFileStream modelArchiveStream(modelPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
 		if(!modelArchive->Load(&modelArchiveStream)){
-			std::cout << "[Editor Scene]: Unable to load model archive " << modelPath.string() << std::endl;
+			LGenUtility::Log << "[Editor Scene]: Unable to load model archive " << modelPath.string() << std::endl;
 			return;
 		}
 		if(mActorModels.count(name) == 0){
 			std::shared_ptr<Archive::File> modelFile = modelArchive->GetFile(std::filesystem::path("model") / (actorName + ".mdl"));
 			if(modelFile == nullptr){
-				std::cout << "[Editor Scene]: Couldn't find model/" << actorName << ".mdl in archive" << std::endl;
+				LGenUtility::Log << "[Editor Scene]: Couldn't find model/" << actorName << ".mdl in archive" << std::endl;
 			} else {
 				bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 				mActorModels[name] = std::make_unique<MDL::Model>();
@@ -451,9 +451,9 @@ void LEditorScene::LoadActor(std::string name, bool log){
 			
 			std::shared_ptr<Archive::File> txpFile = modelArchive->GetFile(std::filesystem::path("txp") / (txpName + ".txp"));
 			if(txpFile == nullptr){
-				std::cout << "[Editor Scene]: Couldn't find txp/" << txpName << ".txp in archive" << std::endl;
+				LGenUtility::Log << "[Editor Scene]: Couldn't find txp/" << txpName << ".txp in archive" << std::endl;
 			} else {
-				std::cout << "[Editor Scene]: Loading txp " << txpName << std::endl;
+				LGenUtility::Log << "[Editor Scene]: Loading txp " << txpName << std::endl;
 				bStream::CMemoryStream txpData(txpFile->GetData(), txpFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 				mMaterialAnimations[name] = std::make_unique<TXP::Animation>();
 				mMaterialAnimations[name]->Load(&txpData);
@@ -466,7 +466,7 @@ void LEditorScene::LoadActor(std::string name, bool log){
 			std::shared_ptr<Archive::File> modelFile = GCResourceManager.mGameArchive->GetFile(fullModelPath);
 			
 			if(modelFile == nullptr){
-				if(log) std::cout << "[Editor Scene]: Couldn't find " << std::get<0>(actorRef) << ".mdl in game archive" << std::endl;
+				if(log) LGenUtility::Log << "[Editor Scene]: Couldn't find " << std::get<0>(actorRef) << ".mdl in game archive" << std::endl;
 			} else {
 				bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 				mActorModels[name] = std::make_unique<MDL::Model>();
@@ -531,7 +531,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 				std::shared_ptr<Archive::Rarc> roomArc = Archive::Rarc::Create();
 				bStream::CFileStream roomArchiveStream(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
 				if(!roomArc->Load(&roomArchiveStream)){
-					std::cout << "[Editor Scene]: Unable to load room archive " << resPath << std::endl;
+					LGenUtility::Log << "[Editor Scene]: Unable to load room archive " << resPath << std::endl;
 					continue;
 				}
 
@@ -545,10 +545,10 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 					if (modelName != "room.bin")
 					{
 						mRoomFurniture[modelName.substr(0, modelNameExtIter)] = std::make_shared<BinModel>(&bin);
-						std::cout << "[Editor Scene]: completed loading " << modelName.substr(0, modelNameExtIter) << std::endl;
+						LGenUtility::Log << "[Editor Scene]: completed loading " << modelName.substr(0, modelNameExtIter) << std::endl;
 					} else {
 						mRoomModels.insert({curRoomData->GetResourcePath(), std::make_shared<BinModel>(&bin)});
-						std::cout << "[Editor Scene]: completed loading room model" << std::endl;
+						LGenUtility::Log << "[Editor Scene]: completed loading room model" << std::endl;
 					}					
 				}
 			} else {

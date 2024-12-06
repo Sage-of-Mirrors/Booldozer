@@ -162,7 +162,7 @@ void LMirrorDOMNode::PostProcess()
 
 		if (containingRoom != nullptr)
 		{
-			std::cout << std::format("[MirrorDOMNode]: Mirror going to {0}", containingRoom->GetName()) << std::endl;
+			LGenUtility::Log << std::format("[MirrorDOMNode]: Mirror going to {0}", containingRoom->GetName()) << std::endl;
 			containingRoom->AddChild(GetSharedPtr<LMirrorDOMNode>(EDOMNodeType::Mirror));
 			mapNodeLocked->RemoveChild(GetSharedPtr<LMirrorDOMNode>(EDOMNodeType::Mirror));
 		}

@@ -53,8 +53,10 @@ namespace LResUtility
 		public:
 			bool mLoadedGameArchive = false;
 			std::shared_ptr<Archive::Rarc> mGameArchive { nullptr };
+			
 			GCBanner mBanner;
 			uint8_t mBannerImage[96*32*4] { 0 };
+			
 			void Init();
 			void Cleanup();
 	};

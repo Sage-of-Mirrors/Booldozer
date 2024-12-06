@@ -33,9 +33,9 @@ bool DOL::LoadDOLFile(std::filesystem::path dolPath)
 
 	// 0699f1c279ea4a505d3f7cdfb73d79c07e153d02da8571b7bc5f500349c32499 <- Clean patched!
 
-	std::cout << "[DOL]: SHA256 of executable is " << mChecksum << std::endl;
+	LGenUtility::Log << "[DOL]: SHA256 of executable is " << mChecksum << std::endl;
 	if(mChecksum == "4e233ab2509e055894dbfef9cf4c5c07668b312ee2c2c44362b7d952308ce95a"){
-		std::cout << "[DOL]: Executable is clean" << std::endl;
+		LGenUtility::Log << "[DOL]: Executable is clean" << std::endl;
 		mPatched = false;
 		OPTIONS.mIsDOLPatched = false;
 	} else {

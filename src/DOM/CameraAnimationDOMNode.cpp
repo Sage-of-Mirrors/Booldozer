@@ -338,30 +338,30 @@ void LCameraAnimationDOMNode::Load(bStream::CStream* stream)
 
     // Frame Data for Camera Animations always starts at offset 68
 
-    //std::cout << "==Reading Track Pos X==" << std::endl;
+    //LGenUtility::Log << "==Reading Track Pos X==" << std::endl;
     mPosFramesZ.LoadTrack(stream, 68, ETrackType::CMN);
-    //std::cout << "==Reading Track Pos Y==" << std::endl;
+    //LGenUtility::Log << "==Reading Track Pos Y==" << std::endl;
     mPosFramesY.LoadTrack(stream, 68, ETrackType::CMN);
-    //std::cout << "==Reading Track Pos Z==" << std::endl;
+    //LGenUtility::Log << "==Reading Track Pos Z==" << std::endl;
     mPosFramesX.LoadTrack(stream, 68, ETrackType::CMN);
 
-    //std::cout << "==Reading Track Target X==" << std::endl;
+    //LGenUtility::Log << "==Reading Track Target X==" << std::endl;
     mTargetFramesZ.LoadTrack(stream, 68, ETrackType::CMN);
-    //std::cout << "==Reading Track Target Y==" << std::endl;
+    //LGenUtility::Log << "==Reading Track Target Y==" << std::endl;
     mTargetFramesY.LoadTrack(stream, 68, ETrackType::CMN);
-    //std::cout << "==Reading Track Target Z==" << std::endl;
+    //LGenUtility::Log << "==Reading Track Target Z==" << std::endl;
     mTargetFramesX.LoadTrack(stream, 68, ETrackType::CMN);
     
-    //std::cout << "==Reading Track Unk Data==" << std::endl;
+    //LGenUtility::Log << "==Reading Track Unk Data==" << std::endl;
     mUnkownDataFrames.LoadTrack(stream, 68, ETrackType::CMN);
 
-    //std::cout << "==Reading Track FOV==" << std::endl;
+    //LGenUtility::Log << "==Reading Track FOV==" << std::endl;
     mFovFrames.LoadTrack(stream, 68, ETrackType::CMN);
 
-    //std::cout << "==Reading Track ZNear==" << std::endl;
+    //LGenUtility::Log << "==Reading Track ZNear==" << std::endl;
     mZNearFrames.LoadTrack(stream, 68, ETrackType::CMN);
     
-    //std::cout << "==Reading Track ZFar==" << std::endl;
+    //LGenUtility::Log << "==Reading Track ZFar==" << std::endl;
     mZFarFrames.LoadTrack(stream, 68, ETrackType::CMN);
 
     mUnknownFloat = stream->readFloat();

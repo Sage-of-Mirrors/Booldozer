@@ -129,7 +129,7 @@ bool LRoomDataDOMNode::CheckPointInBounds(const glm::vec3& point)
 void LRoomDataDOMNode::RemoveAdjacent(std::shared_ptr<LRoomDOMNode> remove){
 	for(std::vector<std::weak_ptr<LRoomDOMNode>>::iterator room = mAdjacentRooms.begin(); room != mAdjacentRooms.end(); room++){
 		if(!room->expired() && room->lock() == remove){
-			std::cout << "[RoomDataDOMNode]: Removing adjacent room" << std::endl;
+			LGenUtility::Log << "[RoomDataDOMNode]: Removing adjacent room" << std::endl;
 			mAdjacentRooms.erase(room, room+1);
 			break;
 		}

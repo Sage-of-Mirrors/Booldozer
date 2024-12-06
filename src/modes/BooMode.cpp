@@ -101,7 +101,7 @@ void LBooMode::RenderGizmo(LEditorScene* renderer_scene){
 			if(mPreviousSelection == nullptr || mPreviousSelection != mSelectionManager.GetPrimarySelection()){
 				uint32_t roomNumber = std::dynamic_pointer_cast<LBooDOMNode>(mPreviousSelection)->GetInitialRoom();
 				if(!renderer_scene->HasRoomLoaded(roomNumber)){
-					std::cout << "[Boo Mode]: Room Number trying to load " << roomNumber << std::endl;
+					LGenUtility::Log << "[Boo Mode]: Room Number trying to load " << roomNumber << std::endl;
 					renderer_scene->SetRoom(mPreviousSelection->GetParentOfType<LMapDOMNode>(EDOMNodeType::Map).lock()->GetRoomByNumber(roomNumber));
 				}
 			}
@@ -111,10 +111,10 @@ void LBooMode::RenderGizmo(LEditorScene* renderer_scene){
 
 void LBooMode::OnBecomeActive()
 {
-	std::cout << "[Booldozer]: Boo mode switching in!\n" << std::endl;
+	LGenUtility::Log << "[Booldozer]: Boo mode switching in!\n" << std::endl;
 }
 
 void LBooMode::OnBecomeInactive()
 {
-	std::cout << "[Booldozer]: Boo mode switching out!\n" << std::endl;
+	LGenUtility::Log << "[Booldozer]: Boo mode switching out!\n" << std::endl;
 }

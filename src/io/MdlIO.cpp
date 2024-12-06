@@ -115,7 +115,7 @@ namespace MDL {
             ImageFormat::Decode::I8(stream, Width, Height, imageData);
             break;
         default:
-            std::cout << "[MDL Loader]: No Decoder for 0x" << (int)Format << std::endl;
+            LGenUtility::Log << "[MDL Loader]: No Decoder for 0x" << (int)Format << std::endl;
             break;
         }
 
@@ -254,7 +254,7 @@ namespace MDL {
     void Model::Load(bStream::CStream* stream){
         stream->readBytesTo((uint8_t*)&mHeader, sizeof(mHeader));
 
-        std::cout << "[MDL Loader]: Reading Model Start" << std::endl;
+        LGenUtility::Log << "[MDL Loader]: Reading Model Start" << std::endl;
 
         mTexturesHeaders = ReadSection<TextureHeader>(stream, mHeader.TextureOffsetArray, mHeader.TextureCount);
         mSamplers = ReadSection<Sampler>(stream, mHeader.SamplerOffset, mHeader.SamplerCount);
@@ -513,7 +513,7 @@ namespace MDL {
                         break;
 
                     default:
-                        std::cout << "[MDL Loader]: Unimplemented primitive " << std::format("{0}", opcode) << std::endl; 
+                        LGenUtility::Log << "[MDL Loader]: Unimplemented primitive " << std::format("{0}", opcode) << std::endl; 
                         break;
                     }
                 }

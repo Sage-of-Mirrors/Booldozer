@@ -129,7 +129,7 @@ void LRoomDOMNode::RoomResourceManagerHandleType(std::shared_ptr<LDOMNodeBase> s
 					}
 					EditFileName = file;
 					FileName = std::filesystem::path(file->GetName()).stem().string();
-					std::cout << "[RoomDOMNode]: Original Filename is " << FileName << std::endl;
+					LGenUtility::Log << "[RoomDOMNode]: Original Filename is " << FileName << std::endl;
 				} else if(EditFileName == file){
 					if(typeExt == ".bin"){
 						auto furniture = self->GetChildrenOfType<LFurnitureDOMNode>(EDOMNodeType::Furniture);
@@ -267,7 +267,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 			auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
 
 			std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
-			std::cout << "[RoomDOMNode]: Loading arc " << resPath.string() << std::endl;
+			LGenUtility::Log << "[RoomDOMNode]: Loading arc " << resPath.string() << std::endl;
 			if(std::filesystem::exists(resPath) && resPath.extension().string() == ".arc"){
 				if(ActiveRoomArchive != nullptr){
 					bStream::CFileStream modelFile(modelPath, bStream::Endianess::Big, bStream::OpenMode::In);
@@ -278,7 +278,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 
 					std::string ext = std::filesystem::path(modelPath).extension().string();
 
-					std::cout << "[RoomDOMNode]: Adding model " << std::filesystem::path(modelPath).filename().string() << " to archive" << resPath.string() << std::endl;
+					LGenUtility::Log << "[RoomDOMNode]: Adding model " << std::filesystem::path(modelPath).filename().string() << " to archive" << resPath.string() << std::endl;
 					if(ext == ".bin"){
 						mRoomModels.push_back(std::filesystem::path(modelPath).filename().stem().string());
 					}
@@ -353,7 +353,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 						std::filesystem::path oldResPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(oldRoomData->GetResourcePath()).relative_path();
 						std::filesystem::path newResPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(newRoomData->GetResourcePath()).relative_path();
 
-						std::cout << "[RoomDOMNode]: copying furniture resource from " << oldResPath.string() << " to " << newResPath.string() << std::endl;
+						LGenUtility::Log << "[RoomDOMNode]: copying furniture resource from " << oldResPath.string() << " to " << newResPath.string() << std::endl;
 						if(std::filesystem::exists(oldResPath) && std::filesystem::exists(newResPath)){
 							std::shared_ptr<Archive::Rarc> oldResArc = Archive::Rarc::Create();
 							std::shared_ptr<Archive::Rarc> newResArc = Archive::Rarc::Create();
@@ -361,11 +361,11 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 								{
 									bStream::CFileStream oldArcFile(oldResPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
 									if(!oldResArc->Load(&oldArcFile)){
-										std::cout << "[RoomDOMNode]: Failed to load room archive " << oldResPath.string() << std::endl;
+										LGenUtility::Log << "[RoomDOMNode]: Failed to load room archive " << oldResPath.string() << std::endl;
 									}
 									bStream::CFileStream newArcFile(newResPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
 									if(!newResArc->Load(&newArcFile)){
-										std::cout << "[RoomDOMNode]: Failed to load room archive " << newResPath.string() << std::endl;
+										LGenUtility::Log << "[RoomDOMNode]: Failed to load room archive " << newResPath.string() << std::endl;
 									}
 								}
 
@@ -426,13 +426,13 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 				openRoomRes = true;
 				auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
 				std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
-				std::cout << "[RoomDOMNode]: Loading room archive " << resPath.string() << std::endl;
+				LGenUtility::Log << "[RoomDOMNode]: Loading room archive " << resPath.string() << std::endl;
 				if(std::filesystem::exists(resPath)){
 					if(resPath.extension() == ".arc"){
 						ActiveRoomArchive = Archive::Rarc::Create();
 						bStream::CFileStream arcFile(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
 						if(!ActiveRoomArchive->Load(&arcFile)){
-							std::cout << "[RoomDOMNode]: Failed to load room archive " << resPath.string() << std::endl;
+							LGenUtility::Log << "[RoomDOMNode]: Failed to load room archive " << resPath.string() << std::endl;
 							ActiveRoomArchive = nullptr;
 						}
 					} else {
@@ -676,7 +676,7 @@ void LRoomDOMNode::RenderWaveHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEd
 							Groups[i].EntityNodes.push_back(sharedNode);
 							sharedNode->SetCreateName(Groups[i].CreateName);
 
-							std::cout << "[RoomDOMNode]: Moved " << dragDropNode->GetName() << " from group " << originGroup->CreateName << " to group " << sharedNode->GetCreateName() << std::endl;
+							LGenUtility::Log << "[RoomDOMNode]: Moved " << dragDropNode->GetName() << " from group " << originGroup->CreateName << " to group " << sharedNode->GetCreateName() << std::endl;
 						}
 					}
 
@@ -823,7 +823,7 @@ void LRoomDOMNode::Deserialize(LJmpIO* JmpIO, uint32_t entry_index)
 	mInternalName = JmpIO->GetString(entry_index, "name");
 
 	mRoomNumber = JmpIO->GetSignedInt(entry_index, "RoomNo");
-	std::cout << "[RoomDOMNode] Read Room Number " << mRoomNumber << std::endl;
+	LGenUtility::Log << "[RoomDOMNode] Read Room Number " << mRoomNumber << std::endl;
 	mThunder = JmpIO->GetSignedInt(entry_index, "Thunder");
 
 	mShouldRenderSkybox = JmpIO->GetBoolean(entry_index, "VRbox");
@@ -846,7 +846,7 @@ void LRoomDOMNode::Serialize(LJmpIO* JmpIO, uint32_t entry_index) const
 {
 	JmpIO->SetString(entry_index, "name", mInternalName);
 
-	std::cout << "[RoomDOMNode] Writing Room Number " << mRoomNumber << std::endl;
+	LGenUtility::Log << "[RoomDOMNode] Writing Room Number " << mRoomNumber << std::endl;
 	JmpIO->SetUnsignedInt(entry_index, "RoomNo", mRoomNumber);
 	JmpIO->SetUnsignedInt(entry_index, "Thunder", mThunder);
 
@@ -875,7 +875,7 @@ bool LRoomDOMNode::CompleteLoad()
 	std::filesystem::path fullResPath = basePath / t.relative_path();
 
 	if (std::filesystem::exists(fullResPath))
-		//std::cout << std::format(mName, "{0} has resource at {1}", fullResPath) << std::endl;
+		//LGenUtility::Log << std::format(mName, "{0} has resource at {1}", fullResPath) << std::endl;
 
 	// Load models here
 
@@ -1006,7 +1006,7 @@ LEntityDOMNode* LRoomDOMNode::GetSpawnGroupDragDropNode()
 }
 
 void LRoomDOMNode::PostProcess(){
-	std::cout << "[RoomDOMNode]: Post Processing Room" << std::endl;
+	LGenUtility::Log << "[RoomDOMNode]: Post Processing Room" << std::endl;
 	auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
 	std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
 	if(resPath.extension() == ".arc"){
@@ -1015,13 +1015,13 @@ void LRoomDOMNode::PostProcess(){
 		if(arc->Load(&arcFile)){
 			for(auto file : arc->GetRoot()->GetFiles()){
 				std::string filename = std::filesystem::path(file->GetName()).filename().stem().string();
-				std::cout << "[RoomDOMNode]: Loading room model " << filename << std::endl;
+				LGenUtility::Log << "[RoomDOMNode]: Loading room model " << filename << std::endl;
 				if(std::filesystem::path(file->GetName()).extension() == ".bin"){
 					mRoomModels.push_back(filename);
 				}
 			}
 		} else {
-			std::cout << "[RoomDOMNode]: Couldn't load archive " << resPath.string() << std::endl;
+			LGenUtility::Log << "[RoomDOMNode]: Couldn't load archive " << resPath.string() << std::endl;
 		}
 	}
 }

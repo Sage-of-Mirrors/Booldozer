@@ -56,7 +56,7 @@ bool LMapDOMNode::AppendMap(std::shared_ptr<LMapDOMNode> map){
 		for(auto node : entities){
 			uint32_t roomNo = node->GetRoomNumber();
 			node->SetRoomNumber(roomNo + curMapRooms.size());
-			std::cout << "[MapDOMNode]: New Room # is " << node->GetRoomNumber() << " old Room # is " << roomNo << std::endl;
+			LGenUtility::Log << "[MapDOMNode]: New Room # is " << node->GetRoomNumber() << " old Room # is " << roomNo << std::endl;
 		}
 		AddChild(node);
 	}
@@ -73,32 +73,32 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	// Make sure file path is valid
 	if (!std::filesystem::exists(file_path))
 	{
-		std::cout << std::format("[MapDOMNode]: File \"{}\" does not exist", file_path.string().c_str()) << std::endl;
+		LGenUtility::Log << std::format("[MapDOMNode]: File \"{}\" does not exist", file_path.string().c_str()) << std::endl;
 		return false;
 	} else {
-		std::cout << "[MapDOMNode] Archive " << file_path << std::endl; 
+		LGenUtility::Log << "[MapDOMNode] Archive " << file_path << std::endl; 
 	}
 
 	bStream::CFileStream mMapArchiveStream(file_path.string(), bStream::Endianess::Big, bStream::OpenMode::In);
 	// Attempt to load archive
 	if (!mMapArchive->Load(&mMapArchiveStream))
 	{
-		std::cout << "[MapDOMNode]: Unable to load archive " << file_path.string() << std::endl;
+		LGenUtility::Log << "[MapDOMNode]: Unable to load archive " << file_path.string() << std::endl;
 		return false;
 	}
 
-	std::cout << "[MapDOMNode] Archive Loaded, Processing Map" << std::endl;
+	LGenUtility::Log << "[MapDOMNode] Archive Loaded, Processing Map" << std::endl;
 
 	// We'll call ourselves whatever the root directory of the archive is
 	mName = file_path.stem().string();
 
-	std::cout << "[MapDOMNode] Loading Event Archives" << std::endl;
+	LGenUtility::Log << "[MapDOMNode] Loading Event Archives" << std::endl;
 	std::filesystem::path eventPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Event";
 	if(std::filesystem::exists(eventPath))
 	{
 		for (const auto&  archive : std::filesystem::directory_iterator(eventPath.string()))
 		{
-			std::cout << "[MapDOMNode] Loading Event " << archive.path().string() << std::endl; 
+			LGenUtility::Log << "[MapDOMNode] Loading Event " << archive.path().string() << std::endl; 
 			
 			//Exclude cvs subdir
 			if(archive.is_regular_file()){
@@ -128,7 +128,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		
 	}
 
-	std::cout << "[MapDOMNode] Loading rooms.map" << std::endl;
+	LGenUtility::Log << "[MapDOMNode] Loading rooms.map" << std::endl;
 
 	std::filesystem::path roomsMap = LResUtility::GetStaticMapDataPath(mName);
 	if (!std::filesystem::exists(roomsMap))
@@ -136,19 +136,19 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		DOL dol;
 		if(dol.LoadDOLFile(std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol"))
 		{
-			std::cout << "[MapDOMNode]: Trying to rip static data for map " << mName << std::endl;
+			LGenUtility::Log << "[MapDOMNode]: Trying to rip static data for map " << mName << std::endl;
 			if (!OPTIONS.mIsDOLPatched && !mStaticMapIO.RipStaticDataFromExecutable(dol, roomsMap, mName, "GLME01"))
 			{
-				std::cout << std::format("[MapDOMNode]: Failed to rip static map data to {0}", roomsMap.string()) << std::endl;
+				LGenUtility::Log << std::format("[MapDOMNode]: Failed to rip static map data to {0}", roomsMap.string()) << std::endl;
 				return false;
 			} else if(OPTIONS.mIsDOLPatched && std::filesystem::exists(std::filesystem::path(OPTIONS.mRootPath) / "sys" / ".main_dol_backup") && dol.LoadDOLFile(std::filesystem::path(OPTIONS.mRootPath) / "sys" / ".main_dol_backup")){
 				if(!mStaticMapIO.RipStaticDataFromExecutable(dol, roomsMap, mName, "GLME01"))
 				{
-					std::cout << std::format("[MapDOMNode]: Failed to rip static map data to {0}", roomsMap.string()) << std::endl;
+					LGenUtility::Log << std::format("[MapDOMNode]: Failed to rip static map data to {0}", roomsMap.string()) << std::endl;
 					return false;
 				}
 			} else {
-				std::cout << "[MapDOMNode]: DOL checksum doesn't match clean executable and no .main_dol_backup present - not ripping rooms.\n[MapDOMNode]: Did you edit this DOL yourself? Use a clean one, patch it with booldozer, and copy your edits!" << std::endl;
+				LGenUtility::Log << "[MapDOMNode]: DOL checksum doesn't match clean executable and no .main_dol_backup present - not ripping rooms.\n[MapDOMNode]: Did you edit this DOL yourself? Use a clean one, patch it with booldozer, and copy your edits!" << std::endl;
 				ImGui::OpenPopup("Map Extraction Error");
 				return false;
 			}
@@ -157,11 +157,11 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 	if (!ReadStaticData(roomsMap))
 	{
-		std::cout << std::format("[MapDOMNode]: Failed to open static data from {0}", roomsMap.string()) << std::endl;
+		LGenUtility::Log << std::format("[MapDOMNode]: Failed to open static data from {0}", roomsMap.string()) << std::endl;
 		return false;
 	}
 
-	std::cout << "[MapDOMNode] Loading roominfo " << std::endl;
+	LGenUtility::Log << "[MapDOMNode] Loading roominfo " << std::endl;
 
 	// Attempt to load roominfo data. Doesn't necessarily exist!
 	std::shared_ptr<Archive::File> roomInfoFile = mMapArchive->GetFile("/jmp/roominfo");
@@ -172,11 +172,11 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		bStream::CMemoryStream roomMemStream(roomInfoFile->GetData(), roomInfoFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 		JmpIOManagers[LEntityType_Rooms].Load(&roomMemStream);
 	} else  {
-		std::cout << "[MapDOMNode] Couldn't Load roominfo" << std::endl;
+		LGenUtility::Log << "[MapDOMNode] Couldn't Load roominfo" << std::endl;
 		return false;
 	}
 
-	std::cout << "[MapDOMNode] Loading Room Names" << std::endl;
+	LGenUtility::Log << "[MapDOMNode] Loading Room Names" << std::endl;
 	
 	// Grab the friendly room names for this map
 	nlohmann::json roomNames = LResUtility::GetNameMap(std::format("{0}_rooms", mName));
@@ -202,14 +202,14 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 	auto rooms = GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
 
-	std::cout << "[MapDOMNode] Processing Static Room Data" << std::endl;
+	LGenUtility::Log << "[MapDOMNode] Processing Static Room Data" << std::endl;
 	
 	// Complete loading the basic map data
 	LoadStaticData(rooms);
 
 
 	// Load Collision
-	std::cout << "[MapDOMNode] Loading Map Collision" << std::endl;
+	LGenUtility::Log << "[MapDOMNode] Loading Map Collision" << std::endl;
 	std::shared_ptr<LMapCollisionDOMNode> collision = std::make_shared<LMapCollisionDOMNode>("Collision");
 
 	std::shared_ptr<Archive::File> collisionFile = mMapArchive->GetFile("col.mp");
@@ -221,7 +221,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		AddChild(collision);
 	}
 
-	std::cout << "[MapDOMNode] Loading JMP Files" << std::endl;
+	LGenUtility::Log << "[MapDOMNode] Loading JMP Files" << std::endl;
 
 	// Now load the entity data from the map's archive.
 	for (int32_t entityType = 0; entityType < LEntityType_Max; entityType++)
@@ -243,18 +243,18 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		bStream::CMemoryStream fileReader = bStream::CMemoryStream(jmpFile->GetData(), jmpFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 		if (!JmpIOManagers[entityType].Load(&fileReader))
 		{
-			std::cout << std::format("[MapDOMNode]: Error loading JMP data from \"{}\"", LEntityFileNames[entityType].c_str()) << std::endl;
+			LGenUtility::Log << std::format("[MapDOMNode]: Error loading JMP data from \"{}\"", LEntityFileNames[entityType].c_str()) << std::endl;
 			continue;
 		}
 
 		if (!LoadEntityNodes(&JmpIOManagers[entityType], (LEntityType)entityType))
 		{
-			std::cout << std::format("[MapDOMNode]: Error loading entities from \"{}\"", LEntityFileNames[entityType].c_str()) << std::endl;
+			LGenUtility::Log << std::format("[MapDOMNode]: Error loading entities from \"{}\"", LEntityFileNames[entityType].c_str()) << std::endl;
 			continue;
 		}
 	}
 
-	std::cout << "[MapDOMNode] Loading Map Mirrors" << std::endl;
+	LGenUtility::Log << "[MapDOMNode] Loading Map Mirrors" << std::endl;
 
 	// Get the path the mirrors file should be at.
 	std::filesystem::path mirrorsPath = LResUtility::GetMirrorDataPath(mName);
@@ -291,7 +291,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 		}
 	}
 
-	std::cout << "[MapDOMNode] Post Processing JMP Nodes" << std::endl;
+	LGenUtility::Log << "[MapDOMNode] Post Processing JMP Nodes" << std::endl;
 
 	// Shore up things like entity references now that all of the entity data has been loaded
 	for (auto loadedNode : GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Entity))
@@ -315,7 +315,7 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	for (std::shared_ptr<LRoomDOMNode> r : rooms)
 		r->CompleteLoad();
 
-	std::cout << "[MapDOMNode] Loading Complete" << std::endl;
+	LGenUtility::Log << "[MapDOMNode] Loading Complete" << std::endl;
 
 	return true;
 }
@@ -403,7 +403,7 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 			}
 		}
 		
-		std::cout << std::format("Saving jmp file {}", jmpFile->GetName()) << std::endl;
+		LGenUtility::Log << std::format("Saving jmp file {}", jmpFile->GetName()) << std::endl;
 		jmpFile->SetData(memWriter.getBuffer(), newFileSize);
 	}
 
@@ -413,7 +413,7 @@ bool LMapDOMNode::SaveMapToArchive(std::filesystem::path file_path)
 
 		if (jmpTemplate.find("fields") == jmpTemplate.end())
 		{
-			std::cout << std::format("[MapDOMNode]: Failed to read JSON at {0}", (RES_BASE_PATH / "jmp_templates" / "path.json").string());
+			LGenUtility::Log << std::format("[MapDOMNode]: Failed to read JSON at {0}", (RES_BASE_PATH / "jmp_templates" / "path.json").string());
 			return false;
 		}
 
@@ -506,7 +506,7 @@ bool LMapDOMNode::SaveMapToFiles(std::filesystem::path folder_path)
 
 		if (jmpTemplate.find("fields") == jmpTemplate.end())
 		{
-			std::cout << std::format("[MapDOMNode]: Failed to read JSON at {0}", (RES_BASE_PATH / "jmp_templates" / "path.json").string());
+			LGenUtility::Log << std::format("[MapDOMNode]: Failed to read JSON at {0}", (RES_BASE_PATH / "jmp_templates" / "path.json").string());
 			return false;
 		}
 

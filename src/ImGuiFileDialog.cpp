@@ -2294,7 +2294,7 @@ namespace IGFD
 			if (error)numchar = 0;
 			if (!numchar)
 			{
-				std::cout << "fail to obtain FullPathName " << path << std::endl;
+				LGenUtility::Log << "fail to obtain FullPathName " << path << std::endl;
 			}
 #elif defined(UNIX) // UNIX is LINUX or APPLE
 			char* numchar = realpath(path.c_str(), real_path);

@@ -25,14 +25,14 @@ namespace {
 LBooldozerApp::LBooldozerApp() : mWindow(nullptr) {}
 
 void DealWithGLErrors(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
-	//std::cout << "GL CALLBACK: " << message << std::endl;
+	//LGenUtility::Log << "GL CALLBACK: " << message << std::endl;
 }
 
 bool LBooldozerApp::Setup() {
     
 	// Init GLFW
 	if (!glfwInit()) {
-		std::cout << "[Booldozer]: Failed to init GLFW!" << std::endl;
+		LGenUtility::Log << "[Booldozer]: Failed to init GLFW!" << std::endl;
 		return false;
 	}
 
@@ -48,8 +48,8 @@ bool LBooldozerApp::Setup() {
 		const char* err;
 		glfwGetError(&err);
 
-		std::cout << "[Booldozer]: Failed to create GLFW window!" << std::endl;
-		std::cout << "[Booldozer]: " << err << std::endl;
+		LGenUtility::Log << "[Booldozer]: Failed to create GLFW window!" << std::endl;
+		LGenUtility::Log << "[Booldozer]: " << err << std::endl;
 		glfwTerminate();
 		return false;
 	}

@@ -45,7 +45,7 @@ public:
 	typedef LEntityDOMNode Super;
 
 	LPathPointDOMNode(std::string name);
-	~LPathPointDOMNode() { /*std::cout << "Path point destroyed!" << std::endl;*/ }
+	~LPathPointDOMNode() { /*LGenUtility::Log << "Path point destroyed!" << std::endl;*/ }
 
 	virtual void RenderDetailsUI(float dt) override;
 
@@ -89,7 +89,7 @@ public:
 	typedef LEntityDOMNode Super;
 
 	LPathDOMNode(std::string name);
-	~LPathDOMNode() { /*std::cout << "Path destroyed!" << std::endl;*/ }
+	~LPathDOMNode() { /*LGenUtility::Log << "Path destroyed!" << std::endl;*/ }
 	
 	glm::vec4 mPathColor;
 

@@ -189,10 +189,10 @@ void LItemMode::RenderGizmo(LEditorScene* renderer_scene){
 
 void LItemMode::OnBecomeActive()
 {
-	std::cout << "[Booldozer]: Item mode switching in" << std::endl;
+	LGenUtility::Log << "[Booldozer]: Item mode switching in" << std::endl;
 }
 
 void LItemMode::OnBecomeInactive()
 {
-	std::cout << "[Booldozer]: Item mode switching out" << std::endl;
+	LGenUtility::Log << "[Booldozer]: Item mode switching out" << std::endl;
 }
