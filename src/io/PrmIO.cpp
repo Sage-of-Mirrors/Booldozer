@@ -388,7 +388,7 @@ bool LPrmIO::RenderUI()
             name = actorNameMap[mLoadedConfigs[mSelectedConfig]]["name"].get<std::string>();
         }
 
-        if (ImGui::BeginCombo("Ghost", name.data(), 0))
+        if (ImGui::BeginCombo("Ghost Config", name.data(), 0))
         {
             for (int n = 0; n < mLoadedConfigs.size(); n++)
             {
@@ -399,7 +399,7 @@ bool LPrmIO::RenderUI()
                     name = actorNameMap[mLoadedConfigs[n]]["name"].get<std::string>();
                 }
 
-                if (ImGui::Selectable(name.data(), is_selected)){
+                if (ImGui::Selectable(std::format("{}##config{}", name.data(), n).c_str(), is_selected)){
                     mSelectedConfig = n;
 
                     PreviewWidget::UnloadModel();
