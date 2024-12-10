@@ -8,7 +8,7 @@
 #include "stb_image.h"
 #include <glad/glad.h>
 #include "scene/ModelViewer.hpp"
-#include "GhostImg.h"
+#include "GhostImg.hpp"
 
 constexpr float pi = 3.14159f;
 

@@ -1,6 +1,6 @@
 #include "UGrid.hpp"
-#include "UGridTex.h"
-#include "UGridShader.h"
+#include "UGridTex.hpp"
+#include "UGridShader.hpp"
 
 #include <algorithm>
 
