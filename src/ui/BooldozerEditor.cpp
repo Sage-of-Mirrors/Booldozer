@@ -31,6 +31,7 @@
 
 #include "stb_image.h"
 #include "stb_image_write.h"
+#include "GCM.hpp"
 
 namespace {
 	char* patchErrorMsg { nullptr };
@@ -61,6 +62,81 @@ LBooldozerEditor::~LBooldozerEditor(){
 	PreviewWidget::CleanupPreview();
 
 	LResUtility::CleanupThumbnails();
+}
+
+void PackFolderISO(std::shared_ptr<Disk::Image> img, std::shared_ptr<Disk::Folder> folder, std::filesystem::path path){
+    std::filesystem::current_path(path);
+    
+    for (auto const& dir_entry : std::filesystem::directory_iterator(path)){
+        if(std::filesystem::is_directory(dir_entry.path())){
+            std::shared_ptr<Disk::Folder> subdir = Disk::Folder::Create(img);
+            subdir->SetName(dir_entry.path().filename().string());
+            folder->AddSubdirectory(subdir);
+            
+            PackFolderISO(img, subdir, dir_entry.path());
+
+        } else {
+            std::shared_ptr<Disk::File> file = Disk::File::Create();
+
+            bStream::CFileStream fileStream(dir_entry.path().string(), bStream::Endianess::Big, bStream::OpenMode::In);
+            
+            uint8_t* fileData = new uint8_t[fileStream.getSize()];
+            fileStream.readBytesTo(fileData, fileStream.getSize());
+            
+            file->SetData(fileData, fileStream.getSize());
+            file->SetName(dir_entry.path().filename().string());
+
+            folder->AddFile(file);
+
+            delete[] fileData;
+        }
+    }
+    std::filesystem::current_path(std::filesystem::current_path().parent_path());
+}
+
+void PackISO(std::filesystem::path path){
+    std::shared_ptr<Disk::Image> image = Disk::Image::Create();
+    std::shared_ptr<Disk::Folder> root = Disk::Folder::Create(image);
+
+    image->SetRoot(root);
+    root->SetName(path.filename().string());
+
+    PackFolderISO(image, root, OPTIONS.mRootPath);
+
+    // check that we have the right files in sys
+    if(root->GetFolder("sys") == nullptr){
+        std::cout << "Root missing sys folder" << std::endl;
+        return;
+    }
+
+    if(root->GetFile("sys/apploader.img") == nullptr){
+        std::cout << "Root missing sys/apploader.img" << std::endl;
+        return;
+    } 
+
+    if(root->GetFile("sys/boot.bin") == nullptr){
+        std::cout << "Root missing sys/boot.bin" << std::endl;
+        return;
+    }
+
+    if(root->GetFile("sys/bi2.bin") == nullptr){
+        std::cout << "Root missing sys/bi2.bin" << std::endl;
+        return;
+    }
+
+    if(root->GetFile("sys/main.dol") == nullptr){
+        std::cout << "Root missing sys/main.dol" << std::endl;
+        return;
+    }
+
+	std::filesystem::path writeGCM = path.replace_extension(".gcm");
+
+    image->SaveToFile(writeGCM.string());
+
+	loadLock.lock();
+	mapLoading = false;
+	loadLock.unlock();
+
 }
 
 void LBooldozerEditor::LoadMap(std::string path, LEditorScene* scene){
@@ -370,6 +446,27 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::EndPopup();
 	}
 
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (ImGui::BeginPopupModal("ExportGCMPopup", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
+	{
+        const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+		ImGui::AlignTextToFramePadding();
+		ImGui::Spinner("##loadmapSpinner", 5.0f, 2, col);
+		ImGui::SameLine();
+		ImGui::Text("Exporting GCM...");
+		
+		loadLock.lock();
+		if(mapLoading == false){
+			LGenUtility::Log << "[BooldozerEditor]: Joining export gcm thread" << std::endl;
+			mapOperationThread.join();
+
+			ImGui::CloseCurrentPopup();
+		}
+		loadLock.unlock();
+
+		ImGui::EndPopup();
+	}
+
 	if(mOpenControlsDialog){
 		ImGui::OpenPopup("ControlsDialog");
 		mOpenControlsDialog = false;
@@ -651,7 +748,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::OpenPopup("BannerEditor");
 	}
 	
-	if (LUIUtility::RenderFileDialog("AppendMapDlg", path))
+	if (LUIUtility::RenderFileDialog("appendMapDlg", path))
 	{
 		GetSelectionManager()->ClearSelection();
 		
@@ -663,6 +760,14 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::OpenPopup("Loading Map");
 	}
 
+	if (LUIUtility::RenderFileDialog("exportGCMDlg", path)){
+		loadLock.lock();
+		mapLoading = true;
+		loadLock.unlock();
+
+		mapOperationThread = std::thread(&PackISO, path);
+		ImGui::OpenPopup("ExportGCMPopup");
+	}
 
 	if (mapLoading == false && mLoadedMap != nullptr && !mLoadedMap->Children.empty() && mCurrentMode != nullptr){
 		EEditorMode mode;
@@ -869,21 +974,12 @@ void LBooldozerEditor::onOpenMapCB()
 
 void LBooldozerEditor::onAppendMapCB()
 {
-	ImGuiFileDialog::Instance()->OpenDialog("AppendMapDlg", "Append Map Archive to Current Map", "Archives (*.arc *.szs *.szp){.arc,.szs,.szp}", OPTIONS.mLastOpenedMap);
+	ImGuiFileDialog::Instance()->OpenDialog("appendMapDlg", "Append Map Archive to Current Map", "Archives (*.arc *.szs *.szp){.arc,.szs,.szp}", OPTIONS.mLastOpenedMap);
 }
 
 void LBooldozerEditor::onClearMapCB()
 {
 	mClickedMapClear = true;
-}
-
-void LBooldozerEditor::onOpenRoomsCB()
-{
-	LGenUtility::Log << "[Booldozer]: User selected open room(s)!" << std::endl;
-}
-
-void LBooldozerEditor::onSaveMapCB()
-{
 }
 
 void LBooldozerEditor::onSaveMapArchiveCB()
@@ -893,6 +989,10 @@ void LBooldozerEditor::onSaveMapArchiveCB()
 	}
 }
 
+void LBooldozerEditor::onGCMExportCB()
+{
+	ImGuiFileDialog::Instance()->OpenDialog("exportGCMDlg", "Export GCM", "GameCube Disk Image (*.gcm *.iso *.szp){.iso,.gcm}", OPTIONS.mLastOpenedMap);
+}
 
 void LBooldozerEditor::onPlaytestCB()
 {

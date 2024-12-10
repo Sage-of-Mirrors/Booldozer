@@ -198,6 +198,8 @@ void LBooldozerApp::RenderUI(float deltaTime) {
 			if (ImGui::MenuItem(ICON_FK_FLOPPY_O "  Save"))
                 mEditorContext.onSaveMapArchiveCB();
 
+			if (ImGui::MenuItem(ICON_FK_SHARE "  Export GCM"))
+                mEditorContext.onGCMExportCB();
 
             ImGui::EndMenu();
         }

@@ -94,9 +94,9 @@ public:
 	// Callback for when the user requests to save a map
 	void onSaveMapCB();
 	void onSaveMapArchiveCB();
+	void onGCMExportCB();
 
 	void SaveActorConfigs();
-
 	void onPlaytestCB();
 
 	LEditorSelection* GetSelectionManager() { return mCurrentMode->GetSelectionManager(); }
