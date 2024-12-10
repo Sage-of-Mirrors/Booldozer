@@ -182,6 +182,9 @@ void LBooldozerApp::RenderUI(float deltaTime) {
     // Menu bar
     if (ImGui::BeginMainMenuBar())
     {
+		if (ImGui::MenuItem("Projects")){
+			mEditorContext.mOpenProjectManager = true;
+		}
         if (ImGui::BeginMenu("Map"))
         {
             if (ImGui::MenuItem(ICON_FK_MAP "  Open"))
@@ -233,12 +236,6 @@ void LBooldozerApp::RenderUI(float deltaTime) {
         ImGui::EndMainMenuBar();
     }
 
-
-    if (openOptionsMenu || mEditorContext.mOpenRootFlag)
-    {
-        mOptionsMenu.OpenMenu();
-		mEditorContext.mOpenRootFlag = false;
-    }
 
     ImGuizmo::BeginFrame();
 }

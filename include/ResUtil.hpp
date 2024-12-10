@@ -32,7 +32,7 @@ namespace LResUtility
 
 	uint32_t GetMapThumbnail(uint32_t map);
 	void SaveMapThumbnail(uint32_t w, uint32_t h, uint32_t map);
-	void LoadMapThumbnails();
+	void LoadMapThumbnails(std::string dir="");
 	void CleanupThumbnails();
 
 	nlohmann::ordered_json DeserializeJSON(std::filesystem::path file_path);

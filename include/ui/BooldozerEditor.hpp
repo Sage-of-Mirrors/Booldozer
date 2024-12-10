@@ -106,8 +106,8 @@ public:
 	// Switches the current mode to the given new one.
 	void ChangeMode();
 
-	bool mOpenRootFlag { false };
 	bool mOpenActorEditor { false };
 	bool mOpenControlsDialog { false };
 	bool mOpenBannerEditor { false };
+	bool mOpenProjectManager { false };
 };

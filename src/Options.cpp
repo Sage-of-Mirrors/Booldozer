@@ -57,6 +57,7 @@ void LOptionsMenu::RenderOptionsPopup(LEditorScene* scene)
 		LUIUtility::RenderTextInput("Game Root", &mTempOptions.mRootPath, 500);
 		ImGui::SameLine(605);
 		
+		/*
 		// Button for folder dialog
 		if (ImGui::Button("...##Root"))
 			ImGuiFileDialog::Instance()->OpenModal("SetGameRoot", "Choose Game Root", nullptr, mTempOptions.mRootPath);
@@ -68,6 +69,7 @@ void LOptionsMenu::RenderOptionsPopup(LEditorScene* scene)
 
 		// Tooltip
 		LUIUtility::RenderTooltip("This is the copy of the game that you are currently editing. All models, events, etc. will be loaded from here.");
+		*/
 
 /*=== Dolphin Path ===*/
 		// Text input box
@@ -95,16 +97,10 @@ void LOptionsMenu::RenderOptionsPopup(LEditorScene* scene)
 		ImGui::Separator();
 
 		// Save button
-		if (ImGui::Button("Save", ImVec2(120, 0)) && mTempOptions.mRootPath != "")
+		if (ImGui::Button("Save", ImVec2(120, 0)))
 		{
-			if(OPTIONS.mRootPath != mTempOptions.mRootPath){
-				rootChanged = true;
-			}
 			OPTIONS = mTempOptions;
 			LResUtility::SaveUserSettings();
-			GCResourceManager.Init();
-			scene->Clear();
-			scene->LoadResFromRoot();
 
 			ImGui::CloseCurrentPopup();
 
@@ -114,17 +110,9 @@ void LOptionsMenu::RenderOptionsPopup(LEditorScene* scene)
 		ImGui::SameLine();
 
 		// Cancel button
-		if (ImGui::Button("Cancel", ImVec2(120, 0)) && mTempOptions.mRootPath != "")
+		if (ImGui::Button("Cancel", ImVec2(120, 0)))
 			ImGui::CloseCurrentPopup();
 
 		ImGui::EndPopup();
-	}
-	
-	if(rootChanged){
-		DOL dol;
-		dol.LoadDOLFile(std::filesystem::path(mTempOptions.mRootPath) / "sys" / "main.dol");
-		if(OPTIONS.mIsDOLPatched == 0){
-			ImGui::OpenPopup("Unpatched DOL");
-		}
 	}
 }

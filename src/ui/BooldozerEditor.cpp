@@ -22,6 +22,7 @@
 
 #include <bzlib.h>
 #include "../lib/bsdifflib/bspatchlib.h"
+#include "../lib/bsdifflib/bsdifflib.h"
 
 #include <cstdlib>
 
@@ -32,6 +33,8 @@
 #include "stb_image.h"
 #include "stb_image_write.h"
 #include "GCM.hpp"
+
+#include "ProjectManager.hpp"
 
 namespace {
 	char* patchErrorMsg { nullptr };
@@ -227,16 +230,32 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::DockBuilderFinish(mMainDockSpaceID);
 		bInitialized = true;
 
-		GCResourceManager.Init();
-		renderer_scene->LoadResFromRoot();
-		LResUtility::LoadMapThumbnails();
 		
-		if (OPTIONS.mRootPath == "")
-		{
-			ImGui::OpenPopup("Root Not Set");
-		} else if(OPTIONS.mRootPath != "" && !OPTIONS.mIsDOLPatched){
-			ImGui::OpenPopup("Unpatched DOL");
-		}
+		//if (OPTIONS.mRootPath == "")
+		//{
+		//	ImGui::OpenPopup("Root Not Set");
+		//} else if(OPTIONS.mRootPath != "" && !OPTIONS.mIsDOLPatched){
+		//	ImGui::OpenPopup("Unpatched DOL");
+		//}
+
+		// Call these on project load
+		//GCResourceManager.Init();
+		//renderer_scene->LoadResFromRoot();
+		//LResUtility::LoadMapThumbnails();
+		
+		ProjectManager::Init();
+		ImGui::OpenPopup("ProjectManager");
+	}
+
+
+	ProjectManager::Render();
+
+	if(mOpenProjectManager){
+		ImGui::OpenPopup("ProjectManager");
+		mOpenProjectManager = false;
+		GetSelectionManager()->ClearSelection();
+		renderer_scene->Clear();
+		mLoadedMap = nullptr;
 	}
 	
 	if (ImGui::BeginPopupModal("Map Extraction Error", NULL, ImGuiWindowFlags_AlwaysAutoResize))
@@ -283,6 +302,10 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::EndPopup();
 	}
 
+	if(!OPTIONS.mIsDOLPatched && ProjectManager::JustClosed){
+	    ImGui::OpenPopup("Unpatched DOL");
+		ProjectManager::JustClosed = false;
+	}
 
 	if (ImGui::BeginPopupModal("Unpatched DOL", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 	{
@@ -517,7 +540,6 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		// This gets set later after we save the thumbnail SaveMapClicked = false;
 	}
 
-    center = ImGui::GetMainViewport()->GetCenter();
     ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize({ImGui::GetMainViewport()->Size.x * 0.32f, ImGui::GetMainViewport()->Size.y * 0.8f}, ImGuiCond_Appearing);
 	if (ImGui::BeginPopupModal("Map Select", NULL, ImGuiWindowFlags_AlwaysAutoResize))
@@ -1059,7 +1081,6 @@ void LBooldozerEditor::RenderNoRootPopup()
 
 		if (ImGui::Button("OK", ImVec2(120, 0))) {
 			ImGui::CloseCurrentPopup();
-			mOpenRootFlag = true;
 		}
 		ImGui::EndPopup();
 	}

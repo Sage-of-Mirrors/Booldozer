@@ -187,25 +187,36 @@ void LResUtility::SaveUserSettings()
 }
 
 // Thumbnails
-void LResUtility::LoadMapThumbnails(){
+void LResUtility::LoadMapThumbnails(std::string dir){
     for(int id = 0; id <= 14; id++){
 		int w, h, c;
 		unsigned char* defaultProjImg = nullptr;
 		
-		if(id != 14){
-			if(!std::filesystem::exists(std::filesystem::current_path() / RES_BASE_PATH / "thumb" / std::format("map{}.png", id))){
-				continue;
+		if(dir == ""){
+			if(id != 14){
+				if(!std::filesystem::exists(std::filesystem::current_path() / RES_BASE_PATH / "thumb" / std::format("map{}.png", id))){
+					continue;
+				}
+				defaultProjImg = stbi_load((std::filesystem::current_path() / RES_BASE_PATH / "thumb" / std::format("map{}.png", id)).string().c_str(), &w, &h, &c, 4);
+			} else {
+				defaultProjImg = stbi_load((std::filesystem::current_path() / RES_BASE_PATH / "thumb" / "default_thumb.png").string().c_str(), &w, &h, &c, 4);
 			}
-			defaultProjImg = stbi_load((std::filesystem::current_path() / RES_BASE_PATH / "thumb" / std::format("map{}.png", id)).string().c_str(), &w, &h, &c, 4);
 		} else {
-			defaultProjImg = stbi_load((std::filesystem::current_path() / RES_BASE_PATH / "thumb" / "default_thumb.png").string().c_str(), &w, &h, &c, 4);
+			if(id != 14){
+				if(!std::filesystem::exists(std::filesystem::path(dir) / "sys" / "thumb" / std::format("map{}.png", id))){
+					continue;
+				}
+				defaultProjImg = stbi_load((std::filesystem::path(dir) / "sys" / "thumb" / std::format("map{}.png", id)).string().c_str(), &w, &h, &c, 4);
+			} else {
+				defaultProjImg = stbi_load((std::filesystem::current_path() / RES_BASE_PATH / "thumb" / "default_thumb.png").string().c_str(), &w, &h, &c, 4);
+			}
 		}
 
 		uint32_t thumbId;
 		glGenTextures(1, &thumbId);
 		glBindTexture(GL_TEXTURE_2D, thumbId);
 				
-		MapThumbnails[id] = (thumbId);
+		MapThumbnails[id] = thumbId;
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -226,8 +237,8 @@ uint32_t LResUtility::GetMapThumbnail(uint32_t map) {
 }
 
 void LResUtility::SaveMapThumbnail(uint32_t w, uint32_t h, uint32_t map){
-	if(!std::filesystem::exists(std::filesystem::current_path() / RES_BASE_PATH / "thumb")){
-		std::filesystem::create_directory(std::filesystem::current_path() / RES_BASE_PATH / "thumb");
+	if(!std::filesystem::exists(std::filesystem::path(OPTIONS.mRootPath) / "sys" / "thumb")){
+		std::filesystem::create_directory(std::filesystem::path(OPTIONS.mRootPath) / "sys" / "thumb");
 	}
 
 	unsigned char* imgData = new unsigned char[w * h * 4]{0};
@@ -238,7 +249,7 @@ void LResUtility::SaveMapThumbnail(uint32_t w, uint32_t h, uint32_t map){
 
 	stbir_resize_uint8_linear(imgData, w, h, 0, imgDataScaled, 84, 64, 0, STBIR_RGBA_NO_AW);
 
-	stbi_write_png((std::filesystem::current_path() / RES_BASE_PATH / "thumb" / std::format("map{}.png", map)).string().c_str(), 84, 64, 4,  imgDataScaled, 84 * 4);
+	stbi_write_png((std::filesystem::path(OPTIONS.mRootPath) / "sys" / "thumb" / std::format("map{}.png", map)).string().c_str(), 84, 64, 4,  imgDataScaled, 84 * 4);
 	delete imgData;
 	delete imgDataScaled;
 }
