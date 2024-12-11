@@ -61,7 +61,7 @@ void Init(){
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-        uint8_t bannerImg[96*32*4];
+        uint8_t bannerImg[96*32*4]{0};
         std::filesystem::path bannerPath(std::filesystem::path(project.get<std::string>()) / "files" / "opening.bnr");
         if(std::filesystem::exists(bannerPath)){
             bStream::CFileStream bnr(bannerPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
@@ -171,7 +171,7 @@ void Render(){
         ImGui::Separator();
         LUIUtility::RenderTextInput("##projectRootName", &NewProjectRootName);
         if(ImGui::Button("Create")){
-            ImGuiFileDialog::Instance()->OpenModal("newRootDialog", "Create Project Root", "GameCube Disk Image (*.gcm, *.iso){.gcm,.iso}", std::filesystem::current_path().string());
+            ImGuiFileDialog::Instance()->OpenModal("newRootDialog", "Create Project Root", "GameCube Disk Image (*.gcm *.iso){.gcm,.iso}", std::filesystem::current_path().string());
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();
