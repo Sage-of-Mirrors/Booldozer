@@ -373,9 +373,25 @@ bool LPrmIO::RenderUI()
     }
 
     bool shouldSave = false;
-    if(!mConfigsLoaded || mLoadedConfigs.empty()) return shouldSave;
+    if(!mConfigsLoaded || mLoadedConfigs.empty()) {
+        ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+        ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+        if(ImGui::BeginPopupModal("ActorEditor", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiChildFlags_AlwaysAutoResize)){
+            ImGui::Text("Actor Editor");
+            ImGui::Separator();
+            ImGui::Text("Open a Map first!");
+            if(ImGui::Button("Close")){
+                ImGui::CloseCurrentPopup();
+                PreviewWidget::UnloadModel();
+                PreviewWidget::SetInactive();
+            }
+            ImGui::EndPopup();
+        }
+        return shouldSave;
+    }
+
 	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     if(ImGui::BeginPopupModal("ActorEditor", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiChildFlags_AlwaysAutoResize)){
         ImGui::Text("Actor Editor");
         ImGui::Separator();

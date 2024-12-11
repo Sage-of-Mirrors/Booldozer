@@ -216,12 +216,15 @@ void LBooldozerApp::RenderUI(float deltaTime) {
         }
         if (ImGui::BeginMenu("Tools"))
         {
-			if	(ImGui::MenuItem(ICON_FK_C "  Ghost Config Editor"))
+			if	(ImGui::MenuItem(ICON_FK_C "  Ghost Config Editor")){
 				mEditorContext.mOpenActorEditor = true;
-			if	(ImGui::MenuItem(ICON_FK_DATABASE "  Banner Editor"))
+			}
+			if	(ImGui::MenuItem(ICON_FK_DATABASE "  Banner Editor")){
 				mEditorContext.mOpenBannerEditor = true;
-            if (ImGui::MenuItem(ICON_FK_PLAY "  Playtest"))
+			}
+            if (ImGui::MenuItem(ICON_FK_PLAY "  Playtest")){
                 mEditorContext.onPlaytestCB();
+			}
 
             ImGui::EndMenu();
         }
@@ -236,6 +239,9 @@ void LBooldozerApp::RenderUI(float deltaTime) {
         ImGui::EndMainMenuBar();
     }
 
+	if(openOptionsMenu){
+		mOptionsMenu.OpenMenu();
+	}
 
     ImGuizmo::BeginFrame();
 }

@@ -374,7 +374,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	}
 
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	if (ImGui::BeginPopupModal("Loading Map", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
 	{
         const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
@@ -401,7 +401,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::EndPopup();
 	}
 
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	if (ImGui::BeginPopupModal("Saving Map", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
 	{
         const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
@@ -421,7 +421,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::EndPopup();
 	}
 
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	if (ImGui::BeginPopupModal("SavingConfigsModal", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
 	{
         const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
@@ -442,7 +442,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	}
 
 
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	if (ImGui::BeginPopupModal("ControlsDialog", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
 	{
         const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
@@ -469,7 +469,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::EndPopup();
 	}
 
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	if (ImGui::BeginPopupModal("ExportGCMPopup", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
 	{
         const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
@@ -540,8 +540,8 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		// This gets set later after we save the thumbnail SaveMapClicked = false;
 	}
 
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	ImGui::SetNextWindowSize({ImGui::GetMainViewport()->Size.x * 0.32f, ImGui::GetMainViewport()->Size.y * 0.8f}, ImGuiCond_Appearing);
+    ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize({ImGui::GetMainViewport()->Size.x * 0.32f, ImGui::GetMainViewport()->Size.y * 0.8f}, ImGuiCond_Always);
 	if (ImGui::BeginPopupModal("Map Select", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		auto mapNames = LResUtility::GetNameMap("MapNames");
@@ -619,7 +619,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	}
 
     center = ImGui::GetMainViewport()->GetCenter();
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	if (ImGui::BeginPopupModal("Clear Map", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		ImGui::Text("You are about to clear *everything* from this map, including all room archives, are you sure?");
@@ -694,7 +694,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	}
 
 	center = ImGui::GetMainViewport()->GetCenter();
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	if (ImGui::BeginPopupModal("BannerEditor", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiChildFlags_AlwaysAutoResize))
 	{
 		ImGui::Text("Banner");

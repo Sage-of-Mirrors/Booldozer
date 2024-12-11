@@ -14,6 +14,7 @@ bool JustClosed { false };
 bool ShowNewProjectDialog { false };
 nlohmann::json ProjectsJson;
 std::string NewProjectRootPath { "" };
+std::string NewProjectRootName { "" };
 std::map<std::string, std::string> ProjectNames {};
 std::map<std::string, uint32_t> ProjectBanners {};
 
@@ -82,8 +83,8 @@ void Init(){
 void Render(){
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 	// Project Manager
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	ImGui::SetNextWindowSize({ImGui::GetMainViewport()->Size.x * 0.65f, ImGui::GetMainViewport()->Size.y * 0.75f}, ImGuiCond_Appearing);
+    ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize({ImGui::GetMainViewport()->Size.x * 0.65f, ImGui::GetMainViewport()->Size.y * 0.75f}, ImGuiCond_Always);
 
 	if (ImGui::BeginPopupModal("ProjectManager", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
 	{
@@ -99,14 +100,19 @@ void Render(){
 
                 ImGui::EndChild();
             } else {
-                std::size_t id = 0;
-                for(auto project : ProjectsJson["projects"]){
+                std::size_t toDelete = -1;
+                for(std::size_t id = 0; id < ProjectsJson["projects"].size(); id++){
+                    auto project = ProjectsJson["projects"][id];
                     ImGui::SetCursorPosX((ImGui::GetContentRegionAvail().x - (ImGui::GetContentRegionAvail().x * 0.90f)) * 0.65f);
-                    ImGui::BeginChild(std::format("{}##{}", project.get<std::string>(), id++).c_str(), ImVec2(ImGui::GetContentRegionAvail().x * 0.90f, 82.0f), ImGuiChildFlags_Border);
+                    ImGui::BeginChild(std::format("{}##{}", project.get<std::string>(), id).c_str(), ImVec2(ImGui::GetContentRegionAvail().x * 0.90f, 82.0f), ImGuiChildFlags_Border);
                         if(ImGui::IsWindowHovered()){
-                            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 5);
-
-                            if(ImGui::IsMouseClicked(ImGuiMouseButton_Left)){
+                            float ypos = ImGui::GetCursorPosY();
+                            ImGui::SetCursorPosY(ypos + 24);
+                            ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x - 10);
+                            ImGui::Text(ICON_FK_TRASH);
+                            if(ImGui::IsItemClicked(ImGuiMouseButton_Left)){
+                                toDelete = id;
+                            } else if(ImGui::IsMouseClicked(ImGuiMouseButton_Left)){
                                 OPTIONS.mRootPath = project.get<std::string>();
                                 GCResourceManager.Init();
                                 LEditorScene::GetEditorScene()->LoadResFromRoot();
@@ -115,7 +121,8 @@ void Render(){
                                 DOL{}.LoadDOLFile(std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol");
                                 JustClosed = true;
                             }
-
+                            ImGui::SetCursorPosY(ypos);
+                            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10);
                         }
                         ImGui::Image(static_cast<uintptr_t>(ProjectBanners[project.get<std::string>()]), {192, 64});
                         ImGui::SameLine();
@@ -124,6 +131,13 @@ void Render(){
                         ImGui::Text(project.get<std::string>().c_str());
                         ImGui::EndGroup();
                     ImGui::EndChild();                    
+                }
+
+                if(toDelete != -1){
+                    std::filesystem::remove_all(ProjectsJson["projects"][toDelete].get<std::string>());
+                    ProjectsJson["projects"].erase(toDelete);
+                    std::ofstream{std::filesystem::current_path() / "res" / "projects.json"} << ProjectsJson;
+                    Init(); // reinit
                 }
 
                 ImGui::SetCursorPosX((ImGui::GetContentRegionAvail().x - (ImGui::GetContentRegionAvail().x * 0.90f)) * 0.65f);
@@ -146,17 +160,31 @@ void Render(){
 	}
 
     if(ShowNewProjectDialog){
-        ImGuiFileDialog::Instance()->OpenModal("newRootDialog", "Create Project Root", "GameCube Disk Image (*.gcm, *.iso){.gcm,.iso}", std::filesystem::current_path().string());
+        ImGui::OpenPopup("NewRootNameDiag");
         ShowNewProjectDialog = false;
     }
 
+    ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    if(ImGui::BeginPopupModal("NewRootNameDiag", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar)){
+        ImGui::Text("Root Name");
+        LUIUtility::RenderTooltip("Name of the folder booldozer will create, can't conflict with other root dir names!");
+        ImGui::Separator();
+        LUIUtility::RenderTextInput("##projectRootName", &NewProjectRootName);
+        if(ImGui::Button("Create")){
+            ImGuiFileDialog::Instance()->OpenModal("newRootDialog", "Create Project Root", "GameCube Disk Image (*.gcm, *.iso){.gcm,.iso}", std::filesystem::current_path().string());
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+
+    ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     if(LUIUtility::RenderFileDialog("newRootDialog", NewProjectRootPath)){
         std::shared_ptr<Disk::Image> image = Disk::Image::Create();
         bStream::CFileStream imageStream(NewProjectRootPath, bStream::Endianess::Big, bStream::OpenMode::In);
         if(!image->Load(&imageStream)){
-            std::cerr << "Couldn't parse image " << NewProjectRootPath << std::endl;
+            ImGui::OpenPopup("ImgOpenError");
         } else {
-            image->GetRoot()->SetName(std::filesystem::path(NewProjectRootPath).filename().stem().string());
+            image->GetRoot()->SetName(NewProjectRootName);
 
             if(!std::filesystem::exists(std::filesystem::current_path() / "roots" / image->GetRoot()->GetName())){
                 std::filesystem::path curpath = std::filesystem::current_path();
@@ -167,11 +195,22 @@ void Render(){
                 std::filesystem::current_path(curpath);
             }
 
-            ProjectsJson["projects"].push_back(nlohmann::json((std::filesystem::current_path() / "roots" / image->GetRoot()->GetName()).string()));
+            ProjectsJson["projects"].push_back(nlohmann::json(std::filesystem::current_path() / "roots" / NewProjectRootName));
             std::ofstream{std::filesystem::current_path() / "res" / "projects.json"} << ProjectsJson;
             Init(); // reinit
         }
         ImGui::OpenPopup("ProjectManager");
+    }
+
+    ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    if(ImGui::BeginPopupModal("ImgOpenError", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar)){
+        ImGui::Text("Error");
+        ImGui::Separator();
+        ImGui::Text("Couldn't Extract Selected Image!");
+        if(ImGui::Button("Ok")){
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
     }
 }
 

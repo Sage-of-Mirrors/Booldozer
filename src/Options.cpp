@@ -44,7 +44,8 @@ void LOptionsMenu::OpenMenu()
 void LOptionsMenu::RenderOptionsPopup(LEditorScene* scene)
 {
 	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize({0.0f, 0.0f}, ImGuiCond_Always);
 
 	bool rootChanged = false;
 
@@ -54,10 +55,10 @@ void LOptionsMenu::RenderOptionsPopup(LEditorScene* scene)
 
 /*=== Game Root ===*/
 		// Text input box
+		/*
 		LUIUtility::RenderTextInput("Game Root", &mTempOptions.mRootPath, 500);
 		ImGui::SameLine(605);
 		
-		/*
 		// Button for folder dialog
 		if (ImGui::Button("...##Root"))
 			ImGuiFileDialog::Instance()->OpenModal("SetGameRoot", "Choose Game Root", nullptr, mTempOptions.mRootPath);

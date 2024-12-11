@@ -130,7 +130,7 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 
 
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	if (ImGui::BeginPopupModal("Importing Obj", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
 	{
         const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
