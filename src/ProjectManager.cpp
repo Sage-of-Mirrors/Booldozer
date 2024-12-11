@@ -180,6 +180,7 @@ void Render(){
         if(ImGui::Button("Cancel")){
             NewProjectRootName = "";
             ImGui::CloseCurrentPopup();
+            ImGui::OpenPopup("ProjectManager");
         }
         ImGui::EndPopup();
     }
