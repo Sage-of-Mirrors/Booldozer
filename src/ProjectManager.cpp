@@ -11,6 +11,7 @@
 namespace ProjectManager {
 
 bool JustClosed { false };
+bool OpenNewRoot { false };
 bool ShowNewProjectDialog { false };
 nlohmann::json ProjectsJson;
 std::string NewProjectRootPath { "" };
@@ -170,8 +171,14 @@ void Render(){
         LUIUtility::RenderTooltip("Name of the folder booldozer will create, can't conflict with other root dir names!");
         ImGui::Separator();
         LUIUtility::RenderTextInput("##projectRootName", &NewProjectRootName);
-        if(ImGui::Button("Create")){
+        if(ImGui::Button("Next")){
             ImGuiFileDialog::Instance()->OpenModal("newRootDialog", "Create Project Root", "GameCube Disk Image (*.gcm *.iso){.gcm,.iso}", std::filesystem::current_path().string());
+            OpenNewRoot = true;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if(ImGui::Button("Cancel")){
+            NewProjectRootName = "";
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();
@@ -200,6 +207,9 @@ void Render(){
             Init(); // reinit
         }
         ImGui::OpenPopup("ProjectManager");
+    } else if(!ImGuiFileDialog::Instance()->IsOpened() && OpenNewRoot) {
+        ImGui::OpenPopup("ProjectManager");
+        OpenNewRoot = false;
     }
 
     ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
