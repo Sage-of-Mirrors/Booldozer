@@ -766,7 +766,6 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	}
 
 	std::string imgPath;
-	ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	if(LUIUtility::RenderFileDialog("openNewBanner", imgPath)){
 		int x,y,n;
 		unsigned char* img = stbi_load(imgPath.c_str(), &x, &y, &n, 0);
@@ -784,13 +783,11 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::OpenPopup("BannerEditor");
 	}
 
-	ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	if(LUIUtility::RenderFileDialog("saveBannerImage", imgPath)){
 		stbi_write_png(imgPath.c_str(), 96, 32, 4, GCResourceManager.mBannerImage, 96*4);
 		ImGui::OpenPopup("BannerEditor");
 	}
 	
-	ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	if (LUIUtility::RenderFileDialog("appendMapDlg", path))
 	{
 		GetSelectionManager()->ClearSelection();
@@ -803,7 +800,6 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::OpenPopup("Loading Map");
 	}
 
-	ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	if (LUIUtility::RenderFileDialog("exportGCMDlg", path)){
 		loadLock.lock();
 		mapLoading = true;
