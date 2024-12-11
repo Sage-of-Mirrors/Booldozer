@@ -302,21 +302,24 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::EndPopup();
 	}
 
+	// When you open a project, check if it's dol needs to be patched by seeing if the backup exists or not.
+	// This hash is done a few times in a few places, when opening maps for the first time specifically since it needs to extract map data
 	if(ProjectManager::JustClosed){
-		// SHA256 the DOL so we can see if its clean or needs to be patched
-		std::ifstream f(std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol", std::ios::binary);
-		std::vector<unsigned char> s(picosha2::k_digest_size);
-		picosha2::hash256(f, s.begin(), s.end());
+		if(!std::filesystem::exists(std::filesystem::path(OPTIONS.mRootPath) / "sys" / ".main_dol_backup")){
+			std::ifstream f(std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol", std::ios::binary);
+			std::vector<unsigned char> s(picosha2::k_digest_size);
+			picosha2::hash256(f, s.begin(), s.end());
 
-		std::string chksum = picosha2::hash256_hex_string(s);
+			std::string chksum = picosha2::hash256_hex_string(s);
 
-		LGenUtility::Log << "[DOL]: SHA256 of executable is " << chksum << std::endl;
-		if(chksum == "4e233ab2509e055894dbfef9cf4c5c07668b312ee2c2c44362b7d952308ce95a"){
-			LGenUtility::Log << "[DOL]: Executable is clean" << std::endl;
-			ImGui::OpenPopup("Unpatched DOL");
-			OPTIONS.mIsDOLPatched = false;
-		} else {
-			OPTIONS.mIsDOLPatched = true;
+			LGenUtility::Log << "[ProjectManager]: SHA256 of executable is " << chksum << std::endl;
+			if(chksum == "4e233ab2509e055894dbfef9cf4c5c07668b312ee2c2c44362b7d952308ce95a"){
+				LGenUtility::Log << "[DOL]: Executable is clean" << std::endl;
+				ImGui::OpenPopup("Unpatched DOL");
+				OPTIONS.mIsDOLPatched = false;
+			} else {
+				OPTIONS.mIsDOLPatched = true;
+			}
 		}
 
 		ProjectManager::JustClosed = false;
@@ -763,6 +766,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	}
 
 	std::string imgPath;
+	ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	if(LUIUtility::RenderFileDialog("openNewBanner", imgPath)){
 		int x,y,n;
 		unsigned char* img = stbi_load(imgPath.c_str(), &x, &y, &n, 0);
@@ -780,11 +784,13 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::OpenPopup("BannerEditor");
 	}
 
+	ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	if(LUIUtility::RenderFileDialog("saveBannerImage", imgPath)){
 		stbi_write_png(imgPath.c_str(), 96, 32, 4, GCResourceManager.mBannerImage, 96*4);
 		ImGui::OpenPopup("BannerEditor");
 	}
 	
+	ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	if (LUIUtility::RenderFileDialog("appendMapDlg", path))
 	{
 		GetSelectionManager()->ClearSelection();
@@ -797,6 +803,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::OpenPopup("Loading Map");
 	}
 
+	ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	if (LUIUtility::RenderFileDialog("exportGCMDlg", path)){
 		loadLock.lock();
 		mapLoading = true;

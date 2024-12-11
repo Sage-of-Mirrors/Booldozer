@@ -394,6 +394,7 @@ bool LPrmIO::RenderUI()
     ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     if(ImGui::BeginPopupModal("ActorEditor", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiChildFlags_AlwaysAutoResize)){
         ImGui::Text("Actor Editor");
+        LUIUtility::RenderTooltip("Hover the model preview and use the scroll wheel (+ shift) to zoom and rotate the view");
         ImGui::Separator();
 
         ImGui::BeginChild("##actorPropertiesWin", {250, 500});
