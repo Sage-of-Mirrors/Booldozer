@@ -24,8 +24,8 @@ namespace PreviewWidget {
     static LSceneCamera Camera;
     static glm::mat4 Identity { 1.0 };
 
-    static float Rotate { 0.0f };
-    static float Zoom { 500.0f };
+    static float Rotate { -155.0f };
+    static float Zoom { 430.0f };
 
     static EModelType CurrentEModelType { EModelType::None };
     static BinModel* ModelFurniture { nullptr };
@@ -35,6 +35,8 @@ namespace PreviewWidget {
 
     void SetActive(){
         Active = true;
+        Rotate = -155.0f;
+        Zoom = 430.0f;
     }
 
     void PlayAnimation(){

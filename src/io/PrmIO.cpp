@@ -483,77 +483,115 @@ bool LPrmIO::RenderUI()
             ImGui::EndCombo();
         }
 
-        ImGui::InputInt("HP", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mLife);
-        LUIUtility::RenderTooltip("Ghost Health.");
-
-        ImGui::InputInt("Bump Damage", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mHitDamage);
-        LUIUtility::RenderTooltip("Damage from getting bumped.");
-
-        ImGui::InputInt("Speed", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mSpeed);
-        LUIUtility::RenderTooltip("General movement speed.");
-        
-        ImGui::InputInt("Invis Move Speed", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mSpeedUnseen);
-        LUIUtility::RenderTooltip("Movement speed while invisisble.");
-
-        ImGui::InputInt("Chase Speed", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mSpeedFight);
-        LUIUtility::RenderTooltip("How fast a ghost will move when chasing luigi");
-
-        ImGui::InputInt("Agro Range", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mEyesight);
-        LUIUtility::RenderTooltip("The distance a ghost can notice luigi from.");
-
-        ImGui::InputInt("Stun Duration", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mLightBindFrame);
-        LUIUtility::RenderTooltip("The time a ghost will stay stunned before disappearing.");
-
-        ImGui::InputFloat("Min Stun Distance", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mMinLightBindRange);
-        LUIUtility::RenderTooltip("The minimum distance a ghost can be stunned with the flashlight from.");
-
-        ImGui::InputFloat("Max Stun Distance", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mMaxLightBindRange);
-        LUIUtility::RenderTooltip("The maximum distance a ghost can be stunned with the flashlight from.");
-
-        ImGui::InputInt("Success Anim Loops", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mNumAtkKarakai);
-        LUIUtility::RenderTooltip("The number of times a ghost will play the successful attack animation.");
-
-        ImGui::InputInt("Fail Anim Loops", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mNumAtkOrooro);
-        LUIUtility::RenderTooltip("The number of times a ghost will play the failed attack animation.");
-
-        ImGui::SliderFloat("Pull Strength", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mHikiPower, 0.0f, 1.0f);
-        LUIUtility::RenderTooltip("How hard the ghost will pull luigi during vacuuming. Value is a percentage.");
-
-        ImGui::SliderFloat("Effective Pull Range", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mEffectiveDegree, 0.0f, 180.0f);
-        LUIUtility::RenderTooltip("Sets a minimum for the difference in angle between the direction a ghost is moving and the direction luigi is pulling (the control stick direction).");
-        AngleVisualizer("effectivedegree", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mEffectiveDegree);
-
-
-        ImGui::InputFloat("Flee Height", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mTsuriHeight);
-        LUIUtility::RenderTooltip("The height a ghost will float at when fleeing the vacuum.");
-
-        //TODO: hook this up to the item tables
-        LUIUtility::RenderNodeReferenceCombo<LItemAppearDOMNode>("On Capture Drop Group", EDOMNodeType::ItemAppear, mMap, mCtpParams[mLoadedConfigs[mSelectedConfig]]->mNormalItemTblId);
-        LUIUtility::RenderNodeReferenceCombo<LItemFishingDOMNode>("During Capture Drop Group", EDOMNodeType::ItemFishing, mMap, mCtpParams[mLoadedConfigs[mSelectedConfig]]->mTsuriItemTblId);
-
-        ImGui::InputFloat("Ghost Pulse Size", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mPointerRange);
-        LUIUtility::RenderTooltip("The size of the colored ring that appears on the floor under a ghost");
-
-        LUIUtility::RenderComboEnum<EShieldType>("Shield Type", mCtpParams[mLoadedConfigs[mSelectedConfig]]->mElement);
-        LUIUtility::RenderTooltip("Sets the elemental type of a ghost.");
-
-        LUIUtility::RenderComboEnum<EAttackPattern>("Attack", mCtpParams[mLoadedConfigs[mSelectedConfig]]->mAttackPattern);
-        LUIUtility::RenderTooltip("Sets the attack of a ghost.");
-
-        LUIUtility::RenderComboEnum<EFleePattern>("Flee", mCtpParams[mLoadedConfigs[mSelectedConfig]]->mTsuriType);
-        LUIUtility::RenderTooltip("How a ghost will attempt to escape the vaccum.");
-
-
-        ImGui::ColorEdit4("Glow Color", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mBrightColor.r);
-        LUIUtility::RenderTooltip("Sets the color of a ghosts glowing orbs.");
-
-        ImGui::ColorEdit4("Overlay Color", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mAmbColor.r);
-        LUIUtility::RenderTooltip("Sets an ambient color to be mixed with the ghost texture.");
-
-        ImGui::Text("Unknown/Unused Settings");
-        ImGui::InputInt("Kiryu Count", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mKiryuCount);
-        ImGui::InputInt("Num Ground", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mNumGround);
-        LUIUtility::RenderCheckBox("Check", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mCheckbox);
+        for(int m = 0; m < mCtpParams[mLoadedConfigs[mSelectedConfig]]->mEnabledProperties.size(); m++){
+            switch(mCtpParams[mLoadedConfigs[mSelectedConfig]]->mEnabledProperties[m]){
+            case 0xa62f:
+                ImGui::InputInt("HP", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mLife);
+                LUIUtility::RenderTooltip("Ghost Health.");
+                break;
+            case 0x2528:
+                ImGui::InputInt("Bump Damage", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mHitDamage);
+                LUIUtility::RenderTooltip("Damage from getting bumped.");
+                break;
+            case 0xad88:
+                ImGui::InputInt("Speed", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mSpeed);
+                LUIUtility::RenderTooltip("General movement speed.");
+                break;
+            case 0x93d1:
+                ImGui::InputInt("Invis Move Speed", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mSpeedUnseen);
+                LUIUtility::RenderTooltip("Movement speed while invisisble.");
+                break;
+            case 0x4b45:
+                ImGui::InputInt("Chase Speed", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mSpeedFight);
+                LUIUtility::RenderTooltip("How fast a ghost will move when chasing luigi");
+                break;
+            case 0x5f6a:
+                ImGui::InputInt("Agro Range", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mEyesight);
+                LUIUtility::RenderTooltip("The distance a ghost can notice luigi from.");
+                break;
+            case 0xd9f9:
+                ImGui::InputInt("Stun Duration", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mLightBindFrame);
+                LUIUtility::RenderTooltip("The time a ghost will stay stunned before disappearing.");
+                break;
+            case 0x29fe:
+                ImGui::InputFloat("Min Stun Distance", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mMinLightBindRange);
+                LUIUtility::RenderTooltip("The minimum distance a ghost can be stunned with the flashlight from.");
+                break;
+            case 0xac49:
+                ImGui::InputFloat("Max Stun Distance", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mMaxLightBindRange);
+                LUIUtility::RenderTooltip("The maximum distance a ghost can be stunned with the flashlight from.");
+                break;
+            case 0x30aa:
+                ImGui::InputInt("Success Anim Loops", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mNumAtkKarakai);
+                LUIUtility::RenderTooltip("The number of times a ghost will play the successful attack animation.");
+                break;
+            case 0x560a:
+                ImGui::InputInt("Fail Anim Loops", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mNumAtkOrooro);
+                LUIUtility::RenderTooltip("The number of times a ghost will play the failed attack animation.");
+                break;
+            case 0xcc48:
+                ImGui::SliderFloat("Pull Strength", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mHikiPower, 0.0f, 1.0f);
+                LUIUtility::RenderTooltip("How hard the ghost will pull luigi during vacuuming. Value is a percentage.");
+                break;
+            case 0xc42e:
+                ImGui::SliderFloat("Effective Pull Range", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mEffectiveDegree, 0.0f, 180.0f);
+                LUIUtility::RenderTooltip("Sets a minimum for the difference in angle between the direction a ghost is moving and the direction luigi is pulling (the control stick direction).");
+                AngleVisualizer("effectivedegree", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mEffectiveDegree);
+                break;
+            case 0x7a1c:
+                ImGui::InputFloat("Flee Height", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mTsuriHeight);
+                LUIUtility::RenderTooltip("The height a ghost will float at when fleeing the vacuum.");
+                break;
+            case 0xe753:
+                // input for prm->mDissapearFrame
+                break;
+            case 0x11db:
+                // input for prm->mActAfterSu
+                break;
+            case 0x04a9:
+                // input for prm->mActAfterFa
+                break;
+            case 0x3960:
+                LUIUtility::RenderComboEnum<EFleePattern>("Flee", mCtpParams[mLoadedConfigs[mSelectedConfig]]->mTsuriType);
+                LUIUtility::RenderTooltip("How a ghost will attempt to escape the vaccum.");
+                break;
+            case 0x1f58:
+                LUIUtility::RenderComboEnum<EAttackPattern>("Attack", mCtpParams[mLoadedConfigs[mSelectedConfig]]->mAttackPattern);
+                LUIUtility::RenderTooltip("Sets the attack of a ghost.");
+                break;
+            case 0xf8f2:
+                LUIUtility::RenderComboEnum<EShieldType>("Shield Type", mCtpParams[mLoadedConfigs[mSelectedConfig]]->mElement);
+                LUIUtility::RenderTooltip("Sets the elemental type of a ghost.");
+                break;
+            case 0x55a0:
+                LUIUtility::RenderNodeReferenceCombo<LItemFishingDOMNode>("During Capture Drop Group", EDOMNodeType::ItemFishing, mMap, mCtpParams[mLoadedConfigs[mSelectedConfig]]->mTsuriItemTblId);
+                break;
+            case 0x7d81:
+                LUIUtility::RenderNodeReferenceCombo<LItemAppearDOMNode>("On Capture Drop Group", EDOMNodeType::ItemAppear, mMap, mCtpParams[mLoadedConfigs[mSelectedConfig]]->mNormalItemTblId);
+                break;
+            case 0x9b49:
+                ImGui::InputFloat("Ghost Pulse Size", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mPointerRange);
+                LUIUtility::RenderTooltip("The size of the colored ring that appears on the floor under a ghost");
+                break;
+            case 0x61f8:
+                ImGui::ColorEdit4("Glow Color", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mBrightColor.r);
+                LUIUtility::RenderTooltip("Sets the color of a ghosts glowing orbs.");
+                break;
+            case 0xcf8a:
+                ImGui::ColorEdit4("Overlay Color", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mAmbColor.r);
+                LUIUtility::RenderTooltip("Sets an ambient color to be mixed with the ghost texture.");
+                break;
+            case 0x97f5:
+                ImGui::InputInt("Kiryu Count", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mKiryuCount);
+                break;
+            case 0xc135:
+                ImGui::InputInt("Num Ground", (int*)&mCtpParams[mLoadedConfigs[mSelectedConfig]]->mNumGround);
+                break;
+            case 0x31d1:
+                LUIUtility::RenderCheckBox("Check", &mCtpParams[mLoadedConfigs[mSelectedConfig]]->mCheckbox);
+                break;
+            }
+        }
 
 		ImGui::EndChild();
 

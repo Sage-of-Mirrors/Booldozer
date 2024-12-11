@@ -18,6 +18,7 @@ DOL::~DOL()
 		delete mFileStream;
 }
 
+
 bool DOL::LoadDOLFile(std::filesystem::path dolPath)
 {
 	if (dolPath.empty() || !std::filesystem::exists(dolPath))
@@ -30,8 +31,6 @@ bool DOL::LoadDOLFile(std::filesystem::path dolPath)
 	picosha2::hash256(f, s.begin(), s.end());
 
 	mChecksum = picosha2::hash256_hex_string(s);
-
-	// 0699f1c279ea4a505d3f7cdfb73d79c07e153d02da8571b7bc5f500349c32499 <- Clean patched!
 
 	LGenUtility::Log << "[DOL]: SHA256 of executable is " << mChecksum << std::endl;
 	if(mChecksum == "4e233ab2509e055894dbfef9cf4c5c07668b312ee2c2c44362b7d952308ce95a"){

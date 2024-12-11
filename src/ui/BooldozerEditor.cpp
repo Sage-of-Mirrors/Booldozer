@@ -33,7 +33,7 @@
 #include "stb_image.h"
 #include "stb_image_write.h"
 #include "GCM.hpp"
-
+#include "picosha2.h"
 #include "ProjectManager.hpp"
 
 namespace {
@@ -302,8 +302,23 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::EndPopup();
 	}
 
-	if(!OPTIONS.mIsDOLPatched && ProjectManager::JustClosed){
-	    ImGui::OpenPopup("Unpatched DOL");
+	if(ProjectManager::JustClosed){
+		// SHA256 the DOL so we can see if its clean or needs to be patched
+		std::ifstream f(std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol", std::ios::binary);
+		std::vector<unsigned char> s(picosha2::k_digest_size);
+		picosha2::hash256(f, s.begin(), s.end());
+
+		std::string chksum = picosha2::hash256_hex_string(s);
+
+		LGenUtility::Log << "[DOL]: SHA256 of executable is " << chksum << std::endl;
+		if(chksum == "4e233ab2509e055894dbfef9cf4c5c07668b312ee2c2c44362b7d952308ce95a"){
+			LGenUtility::Log << "[DOL]: Executable is clean" << std::endl;
+			ImGui::OpenPopup("Unpatched DOL");
+			OPTIONS.mIsDOLPatched = false;
+		} else {
+			OPTIONS.mIsDOLPatched = true;
+		}
+
 		ProjectManager::JustClosed = false;
 	}
 
