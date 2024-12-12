@@ -70,6 +70,9 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 
 	mMapArchive = Archive::Rarc::Create();
 
+	char mapname[5];
+	std::sscanf(file_path.string().c_str(), "%3s%d", &mapname[0], &mMapNum);
+
 	// Make sure file path is valid
 	if (!std::filesystem::exists(file_path))
 	{
@@ -113,10 +116,10 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 				std::string eventName = archive.path().stem().string();
 				std::string csvName = eventName;
 
-				char* eventNm[5];
+				char eventNm[5];
 				int eventNo = 0;
 				
-				std::sscanf(eventName.c_str(), "%5s%3d", &eventNm, &eventNo);
+				std::sscanf(eventName.c_str(), "%5s%3d", &eventNm[0], &eventNo);
 				csvName = std::format("message{}", eventNo);
 				std::shared_ptr<LEventDataDOMNode> eventData =  std::make_shared<LEventDataDOMNode>(eventName);
 				
@@ -153,6 +156,19 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 				return false;
 			}
 		}
+	}
+
+	// Load Collision
+	LGenUtility::Log << "[MapDOMNode] Loading Map Collision" << std::endl;
+	std::shared_ptr<LMapCollisionDOMNode> collision = std::make_shared<LMapCollisionDOMNode>("Collision");
+
+	std::shared_ptr<Archive::File> collisionFile = mMapArchive->GetFile("col.mp");
+
+	if (collisionFile != nullptr)
+	{
+		bStream::CMemoryStream collisionMemStream(collisionFile->GetData(), collisionFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+		collision->Load(&collisionMemStream);
+		AddChild(collision);
 	}
 
 	if (!ReadStaticData(roomsMap))
@@ -208,18 +224,6 @@ bool LMapDOMNode::LoadMap(std::filesystem::path file_path)
 	LoadStaticData(rooms);
 
 
-	// Load Collision
-	LGenUtility::Log << "[MapDOMNode] Loading Map Collision" << std::endl;
-	std::shared_ptr<LMapCollisionDOMNode> collision = std::make_shared<LMapCollisionDOMNode>("Collision");
-
-	std::shared_ptr<Archive::File> collisionFile = mMapArchive->GetFile("col.mp");
-
-	if (collisionFile != nullptr)
-	{
-		bStream::CMemoryStream collisionMemStream(collisionFile->GetData(), collisionFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
-		collision->Load(&collisionMemStream);
-		AddChild(collision);
-	}
 
 	LGenUtility::Log << "[MapDOMNode] Loading JMP Files" << std::endl;
 

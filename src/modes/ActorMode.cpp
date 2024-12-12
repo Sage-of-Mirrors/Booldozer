@@ -68,7 +68,12 @@ void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map, 
 		std::shared_ptr<LRoomDOMNode> newRoom = std::make_shared<LRoomDOMNode>(std::format("Room {}", rooms.size() + 1));
 		std::shared_ptr<LRoomDataDOMNode> newRoomData = std::make_shared<LRoomDataDOMNode>(std::format("Room {}", rooms.size() + 1));
 
-		std::string resourcePathRoot = std::filesystem::path(rooms[0]->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0]->GetResourcePath()).parent_path().string();
+		std::string resourcePathRoot = "";
+		if(rooms.size() == 0){
+			resourcePathRoot = std::filesystem::path("Iwamoto") / std::format("map{}", current_map->GetMapNumber());
+		} else {
+			resourcePathRoot = std::filesystem::path(rooms[0]->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0]->GetResourcePath()).parent_path().string();
+		}
 
 		newRoomData->SetRoomResourcePath(std::format("{}/room_{:02}.arc", resourcePathRoot, rooms.size() + 1));
 

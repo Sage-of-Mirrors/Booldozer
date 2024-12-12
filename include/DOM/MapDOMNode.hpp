@@ -16,6 +16,7 @@ class LRoomDOMNode;
 // DOM node representing an entire map, including rooms and objects.
 class LMapDOMNode : public LDOMNodeBase
 {
+	uint32_t mMapNum;
 	std::shared_ptr<Archive::Rarc> mMapArchive;
 	LJmpIO JmpIOManagers[LEntityType_Max];
 	LStaticMapDataIO mStaticMapIO;
@@ -42,6 +43,7 @@ public:
 	std::shared_ptr<LRoomDOMNode> GetRoomByIndex(int32_t index);
 	std::weak_ptr<Archive::Rarc> GetArchive() { return mMapArchive; };
 	void SetArchive(std::shared_ptr<Archive::Rarc> arc) { mMapArchive = arc; };
+	uint32_t GetMapNumber() { return mMapNum; }
 
 /*=== Type operations ===*/
 	// Returns whether this node is of the given type, or derives from a node of that type.
