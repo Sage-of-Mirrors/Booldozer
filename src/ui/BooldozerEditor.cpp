@@ -311,7 +311,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	// This hash is done a few times in a few places, when opening maps for the first time specifically since it needs to extract map data
 	if(ProjectManager::JustClosed){
 		if(GCResourceManager.mLoadedGameArchive){
-			auto file = GCResourceManager.mGameArchive->GetFile("kawano/base/blo/map_1.blo");
+			auto file = GCResourceManager.mGameArchive->GetFile("kawano/base/blo/gbf_1.blo");
 			auto timg = GCResourceManager.mGameArchive->GetFolder("kawano/base/timg");
 			bStream::CMemoryStream stream(file->GetData(), file->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 			mScreenLoaded->Load(&stream, timg);
@@ -521,12 +521,13 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::EndPopup();
 	}
 
-	if (ImGui::BeginPopupModal("BloView", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
+	if (ImGui::BeginPopupModal("BloView", NULL, ImGuiWindowFlags_None))
 	{
 		ImGui::Text("Blo View");
 
-		mScreenLoaded->DrawHierarchy();
 		mScreenLoaded->Draw();
+		ImGui::SameLine();
+		mScreenLoaded->DrawHierarchy();
 
 		ImGui::EndPopup();
 	}
