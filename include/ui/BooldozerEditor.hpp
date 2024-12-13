@@ -69,7 +69,6 @@ class LBooldozerEditor
 	void SaveMapToArchive(std::string file_path);
 
 	void RenderNoRootPopup();
-
 public:
 	LBooldozerEditor();
 	~LBooldozerEditor();

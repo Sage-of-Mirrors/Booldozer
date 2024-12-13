@@ -35,6 +35,7 @@
 #include "GCM.hpp"
 #include "picosha2.h"
 #include "ProjectManager.hpp"
+#include "io/BloIO.hpp"
 
 namespace {
 	char* patchErrorMsg { nullptr };
@@ -42,6 +43,9 @@ namespace {
 	std::mutex loadLock {};
 	bool mapLoading { false };
 	uint32_t bannerEditorTexPreview { 0 };
+
+
+	std::shared_ptr<Blo::Screen> mScreenLoaded;
 }
 
 LBooldozerEditor::LBooldozerEditor()
@@ -50,6 +54,7 @@ LBooldozerEditor::LBooldozerEditor()
 	mCurrentMode = &mActorMode;
 
 	LResUtility::LoadUserSettings();
+	mScreenLoaded = std::make_shared<Blo::Screen>();
 }
 
 LBooldozerEditor::~LBooldozerEditor(){
@@ -305,6 +310,14 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	// When you open a project, check if it's dol needs to be patched by seeing if the backup exists or not.
 	// This hash is done a few times in a few places, when opening maps for the first time specifically since it needs to extract map data
 	if(ProjectManager::JustClosed){
+		if(GCResourceManager.mLoadedGameArchive){
+			auto file = GCResourceManager.mGameArchive->GetFile("kawano/base/blo/map_1.blo");
+			auto timg = GCResourceManager.mGameArchive->GetFolder("kawano/base/timg");
+			bStream::CMemoryStream stream(file->GetData(), file->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+			mScreenLoaded->Load(&stream, timg);
+			ImGui::OpenPopup("BloView");
+		}
+
 		if(!std::filesystem::exists(std::filesystem::path(OPTIONS.mRootPath) / "sys" / ".main_dol_backup")){
 			std::ifstream f(std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol", std::ios::binary);
 			std::vector<unsigned char> s(picosha2::k_digest_size);
@@ -504,6 +517,16 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 			ImGui::CloseCurrentPopup();
 		}
 		loadLock.unlock();
+
+		ImGui::EndPopup();
+	}
+
+	if (ImGui::BeginPopupModal("BloView", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
+	{
+		ImGui::Text("Blo View");
+
+		mScreenLoaded->DrawHierarchy();
+		mScreenLoaded->Draw();
 
 		ImGui::EndPopup();
 	}
