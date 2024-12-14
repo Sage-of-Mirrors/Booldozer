@@ -291,12 +291,11 @@ void Window::Draw(){
     if(mContentTexture.mTextureID != 0xFFFFFFFF){
         ImGui::SetCursorPosX(mContentRect[0]);
         ImGui::SetCursorPosY(mContentRect[1]);
-        float repeatX = mRect[2] / mContentTexture.mTexture.mWidth;
-        float repeatY = mRect[3] / mContentTexture.mTexture.mHeight;
 
-        ImGui::Image(static_cast<uintptr_t>(mContentTexture.mTextureID), {mContentTexture.mTexture.mWidth*repeatX, mContentTexture.mTexture.mHeight*repeatY}, {0.0, 0.0}, {repeatX, repeatY});
+        ImGui::Image(static_cast<uintptr_t>(mContentTexture.mTextureID), {mContentTexture.mTexture.mWidth, mContentTexture.mTexture.mHeight}, {0.0, 0.0}, {1.0, 1.0});
     } else {
-        ImVec2 min = {mRect[0], mRect[1]};
+        auto WindowPos = ImGui::GetWindowPos();
+        ImVec2 min = {WindowPos.x + mRect[0], WindowPos.y + mRect[1]};
         ImVec2 max = { mRect[2] + min.x, mRect[3] + min.y};
         ImGui::GetWindowDrawList()->AddRect(min, max, ImColor(0xFFFFFFFF), 0.0, ImDrawFlags_None, 2.0f);
     }

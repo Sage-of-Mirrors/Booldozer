@@ -310,9 +310,12 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	// When you open a project, check if it's dol needs to be patched by seeing if the backup exists or not.
 	// This hash is done a few times in a few places, when opening maps for the first time specifically since it needs to extract map data
 	if(ProjectManager::JustClosed){
-		if(GCResourceManager.mLoadedGameArchive){
-			auto file = GCResourceManager.mGameArchive->GetFile("kawano/base/blo/gbf_1.blo");
-			auto timg = GCResourceManager.mGameArchive->GetFolder("kawano/base/timg");
+
+		std::shared_ptr<Archive::Rarc> bloarc = Archive::Rarc::Create();
+		bStream::CFileStream fstrm(std::filesystem::path(OPTIONS.mRootPath) / "files" / "Kawano" / "res_cont.szp", bStream::Endianess::Big, bStream::OpenMode::In);
+		if(bloarc->Load(&fstrm)){
+			auto file = bloarc->GetFile("controller_2.blo");
+			auto timg = bloarc->GetFolder("timg");
 			bStream::CMemoryStream stream(file->GetData(), file->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 			mScreenLoaded->Load(&stream, timg);
 			ImGui::OpenPopup("BloView");
