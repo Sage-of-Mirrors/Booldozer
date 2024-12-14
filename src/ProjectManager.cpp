@@ -37,10 +37,13 @@ void ExtractFolderISO(std::shared_ptr<Disk::Folder> folder){
 }
 
 void Init(){
+    LGenUtility::Log << "[Project Manager] Initializing" << std::endl;
     if(std::filesystem::exists(std::filesystem::current_path() / "res" / "projects.json")){
         std::fstream projectsFileIn(std::filesystem::current_path() / "res" / "projects.json", std::ios::in);
         ProjectsJson = nlohmann::json::parse(projectsFileIn);
+        LGenUtility::Log << "[Project Manager] Projects loaded" << std::endl;
     } else {
+        LGenUtility::Log << "[Project Manager] Projects json not found, creating" << std::endl;
         std::ofstream{std::filesystem::current_path() / "res" / "projects.json"} << "{\"projects\":[]}";
     }
 
@@ -63,26 +66,29 @@ void Init(){
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-        //std::vector<uint8_t> bnrImgData(96*32*4);
-        //std::filesystem::path bannerPath(std::filesystem::path(project.get<std::string>()) / "files" / "opening.bnr");
-        //if(std::filesystem::exists(bannerPath)){
-        //    bStream::CFileStream bnr(bannerPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
-        //    bnr.seek(0x1820);
-        //    ProjectNames[project.get<std::string>()] = bnr.readString(0x20);
-        //    bnr.seek(0x20);
-        //    ImageFormat::Decode::RGB5A3(&bnr, 96, 32, bnrImgData.data());
-        //}
+        std::vector<uint8_t> bnrImgData(96*32*4);
+        std::filesystem::path bannerPath(std::filesystem::path(project.get<std::string>()) / "files" / "opening.bnr");
+        if(std::filesystem::exists(bannerPath)){
+            bStream::CFileStream bnr(bannerPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
+            bnr.seek(0x1820);
+            ProjectNames[project.get<std::string>()] = bnr.readString(0x20);
+            bnr.seek(0x20);
+            ImageFormat::Decode::RGB5A3(&bnr, 96, 32, bnrImgData.data());
+        }
 
-		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 96, 32, 0, GL_RGBA, GL_UNSIGNED_BYTE, bnrImgData.data());
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 96, 32, 0, GL_RGBA, GL_UNSIGNED_BYTE, bnrImgData.data());
 		glBindTexture(GL_TEXTURE_2D, 0);
+        LGenUtility::Log << "[Project Manager] Loaded Banner Image for Project " << project.get<std::string>() << std::endl;
     }
 
 	if(!std::filesystem::exists(std::filesystem::current_path() / "roots")){
+        LGenUtility::Log << "[Project Manager] Created Roots Directory" << std::endl;
 		std::filesystem::create_directory(std::filesystem::current_path() / "roots");
 	}
 }
 
 void Render(){
+    std::cout << "[Project Manager] Rendering Project Manager" << std::endl;
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 	// Project Manager
     ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
