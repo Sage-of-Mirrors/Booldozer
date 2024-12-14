@@ -40,7 +40,7 @@ void Init(){
     LGenUtility::Log << "[Project Manager] Initializing" << std::endl;
     if(std::filesystem::exists(std::filesystem::current_path() / "res" / "projects.json")){
         std::ifstream projectsFileIn(std::filesystem::current_path() / "res" / "projects.json", std::ios::in);
-        ProjectsJson << projectsFileIn;
+        projectsFileIn >> ProjectsJson;
         LGenUtility::Log << "[Project Manager] Projects loaded" << std::endl;
     } else {
         LGenUtility::Log << "[Project Manager] Projects json not found, creating" << std::endl;
