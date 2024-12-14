@@ -22,7 +22,8 @@ std::map<std::string, uint32_t> ProjectBanners {};
 
 void ExtractFolderISO(std::shared_ptr<Disk::Folder> folder){
     std::filesystem::create_directory(folder->GetName());
-    std::filesystem::current_path(std::filesystem::current_path() / folder->GetName());
+    std::filesystem::path p = std::filesystem::current_path();
+    std::filesystem::current_path(p / folder->GetName());
 
 
     for(auto subdir : folder->GetSubdirectories()){
@@ -34,17 +35,22 @@ void ExtractFolderISO(std::shared_ptr<Disk::Folder> folder){
         extractFile.writeBytes(file->GetData(), file->GetSize());
     }
 
-    std::filesystem::current_path(std::filesystem::current_path().parent_path());
+    std::filesystem::current_path(p);
 }
 
 void Init(){
     LGenUtility::Log << "[Project Manager] Initializing" << std::endl;
-    if(std::filesystem::exists(std::filesystem::current_path() / "res" / "projects.json")){
-        ProjectsJson = LResUtility::DeserializeJSON(std::filesystem::current_path() / "res" / "projects.json");
+    if(std::filesystem::exists(std::filesystem::current_path() / "projects.json")){
+        ProjectsJson = LResUtility::DeserializeJSON("projects.json");
         LGenUtility::Log << "[Project Manager] Projects loaded" << std::endl;
     } else {
         LGenUtility::Log << "[Project Manager] Projects json not found, creating" << std::endl;
-        std::ofstream{std::filesystem::current_path() / "res" / "projects.json"} << "{\"projects\":[]}";
+        std::ofstream destFile(std::filesystem::current_path() / "projects.json");
+        if (destFile.is_open()) {
+            destFile <<  "{\"projects\":[]}";
+        } else {
+            LGenUtility::Log << "[Project Manager] Created Projects json" << std::endl;
+        }
     }
 
     // Load Project Banners
@@ -108,7 +114,7 @@ void Render(){
 
                 ImGui::EndChild();
             } else {
-                std::size_t toDelete = -1;
+                int toDelete = -1;
                 for(std::size_t id = 0; id < ProjectsJson["projects"].size(); id++){
                     auto project = ProjectsJson["projects"][id];
                     ImGui::SetCursorPosX((ImGui::GetContentRegionAvail().x - (ImGui::GetContentRegionAvail().x * 0.90f)) * 0.65f);
