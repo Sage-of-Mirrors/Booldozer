@@ -13,7 +13,7 @@ namespace ProjectManager {
 bool JustClosed { false };
 bool OpenNewRoot { false };
 bool ShowNewProjectDialog { false };
-nlohmann::json ProjectsJson;
+nlohmann::json ProjectsJson {};
 std::string NewProjectRootPath { "" };
 std::string NewProjectRootName { "" };
 std::map<std::string, std::string> ProjectNames {};
@@ -114,12 +114,17 @@ void Render(){
                             if(ImGui::IsItemClicked(ImGuiMouseButton_Left)){
                                 toDelete = id;
                             } else if(ImGui::IsMouseClicked(ImGuiMouseButton_Left)){
+
                                 OPTIONS.mRootPath = project.get<std::string>();
                                 GCResourceManager.Init();
                                 LEditorScene::GetEditorScene()->LoadResFromRoot();
+
                                 LResUtility::LoadMapThumbnails(project.get<std::string>());
                                 ImGui::CloseCurrentPopup();
-                                DOL{}.LoadDOLFile(std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol");
+
+                                DOL dol;
+                                dol.LoadDOLFile(std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol");
+
                                 JustClosed = true;
                             }
                             ImGui::SetCursorPosY(ypos);

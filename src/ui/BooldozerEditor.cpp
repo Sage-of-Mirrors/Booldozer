@@ -230,23 +230,9 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::DockBuilderFinish(mMainDockSpaceID);
 		bInitialized = true;
 
-		
-		//if (OPTIONS.mRootPath == "")
-		//{
-		//	ImGui::OpenPopup("Root Not Set");
-		//} else if(OPTIONS.mRootPath != "" && !OPTIONS.mIsDOLPatched){
-		//	ImGui::OpenPopup("Unpatched DOL");
-		//}
-
-		// Call these on project load
-		//GCResourceManager.Init();
-		//renderer_scene->LoadResFromRoot();
-		//LResUtility::LoadMapThumbnails();
-		
 		ProjectManager::Init();
 		ImGui::OpenPopup("ProjectManager");
 	}
-
 
 	ProjectManager::Render();
 
