@@ -23,13 +23,14 @@ void ExtractFolderISO(std::shared_ptr<Disk::Folder> folder){
     std::filesystem::create_directory(folder->GetName());
     std::filesystem::current_path(std::filesystem::current_path() / folder->GetName());
 
-    for(auto file : folder->GetFiles()){
-        bStream::CFileStream extractFile(file->GetName(), bStream::Endianess::Big, bStream::OpenMode::Out);
-        extractFile.writeBytes(file->GetData(), file->GetSize());
-    }
 
     for(auto subdir : folder->GetSubdirectories()){
         ExtractFolderISO(subdir);
+    }
+
+    for(auto file : folder->GetFiles()){
+        bStream::CFileStream extractFile(file->GetName(), bStream::Endianess::Big, bStream::OpenMode::Out);
+        extractFile.writeBytes(file->GetData(), file->GetSize());
     }
 
     std::filesystem::current_path(std::filesystem::current_path().parent_path());
@@ -62,15 +63,15 @@ void Init(){
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-        std::vector<uint8_t> bnrImgData(96*32*4);
-        std::filesystem::path bannerPath(std::filesystem::path(project.get<std::string>()) / "files" / "opening.bnr");
-        if(std::filesystem::exists(bannerPath)){
-            bStream::CFileStream bnr(bannerPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
-            bnr.seek(0x1820);
-            ProjectNames[project.get<std::string>()] = bnr.readString(0x20);
-            bnr.seek(0x20);
-            ImageFormat::Decode::RGB5A3(&bnr, 96, 32, bnrImgData.data());
-        }
+        //std::vector<uint8_t> bnrImgData(96*32*4);
+        //std::filesystem::path bannerPath(std::filesystem::path(project.get<std::string>()) / "files" / "opening.bnr");
+        //if(std::filesystem::exists(bannerPath)){
+        //    bStream::CFileStream bnr(bannerPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
+        //    bnr.seek(0x1820);
+        //    ProjectNames[project.get<std::string>()] = bnr.readString(0x20);
+        //    bnr.seek(0x20);
+        //    ImageFormat::Decode::RGB5A3(&bnr, 96, 32, bnrImgData.data());
+        //}
 
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 96, 32, 0, GL_RGBA, GL_UNSIGNED_BYTE, bnrImgData.data());
 		glBindTexture(GL_TEXTURE_2D, 0);
