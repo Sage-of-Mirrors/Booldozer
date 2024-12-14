@@ -73,7 +73,7 @@ void Init(){
         //    ImageFormat::Decode::RGB5A3(&bnr, 96, 32, bnrImgData.data());
         //}
 
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 96, 32, 0, GL_RGBA, GL_UNSIGNED_BYTE, bnrImgData.data());
+		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 96, 32, 0, GL_RGBA, GL_UNSIGNED_BYTE, bnrImgData.data());
 		glBindTexture(GL_TEXTURE_2D, 0);
     }
 
