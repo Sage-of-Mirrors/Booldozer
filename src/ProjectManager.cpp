@@ -4,6 +4,7 @@
 #include "Options.hpp"
 #include "ProjectManager.hpp"
 #include <format>
+#include <iostream>
 #include <scene/EditorScene.hpp>
 #include "UIUtil.hpp"
 #include "GCM.hpp"
@@ -39,8 +40,7 @@ void ExtractFolderISO(std::shared_ptr<Disk::Folder> folder){
 void Init(){
     LGenUtility::Log << "[Project Manager] Initializing" << std::endl;
     if(std::filesystem::exists(std::filesystem::current_path() / "res" / "projects.json")){
-        std::ifstream projectsFileIn((std::filesystem::current_path() / "res" / "projects.json").string());
-        projectsFileIn >> ProjectsJson;
+        ProjectsJson = LResUtility::DeserializeJSON(std::filesystem::current_path() / "res" / "projects.json");
         LGenUtility::Log << "[Project Manager] Projects loaded" << std::endl;
     } else {
         LGenUtility::Log << "[Project Manager] Projects json not found, creating" << std::endl;
