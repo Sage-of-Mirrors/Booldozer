@@ -106,7 +106,6 @@ void LEditorScene::Init(){
 	BinModel::InitShaders();
 	MDL::InitShaders();
 
-	LoadResFromRoot();
 	mScene = this;
 }
 

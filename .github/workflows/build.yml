@@ -67,7 +67,7 @@ jobs:
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
           buildDirectory: '${{ github.workspace }}/build'
           useVcpkgToolchainFile: true
-          cmakeAppendedArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug'
+          cmakeAppendedArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release'
       - name: Create App Package Linux
         if: runner.os == 'Linux'
         run: |
