@@ -14,8 +14,8 @@ bool JustClosed { false };
 bool OpenNewRoot { false };
 bool ShowNewProjectDialog { false };
 nlohmann::json ProjectsJson {};
-std::string NewProjectRootPath { "" };
-std::string NewProjectRootName { "" };
+std::string NewProjectRootPath { "." };
+std::string NewProjectRootName { "." };
 std::map<std::string, std::string> ProjectNames {};
 std::map<std::string, uint32_t> ProjectBanners {};
 
@@ -39,8 +39,8 @@ void ExtractFolderISO(std::shared_ptr<Disk::Folder> folder){
 void Init(){
     LGenUtility::Log << "[Project Manager] Initializing" << std::endl;
     if(std::filesystem::exists(std::filesystem::current_path() / "res" / "projects.json")){
-        std::fstream projectsFileIn(std::filesystem::current_path() / "res" / "projects.json", std::ios::in);
-        ProjectsJson = nlohmann::json::parse(projectsFileIn);
+        std::ifstream projectsFileIn(std::filesystem::current_path() / "res" / "projects.json", std::ios::in);
+        ProjectsJson << projectsFileIn;
         LGenUtility::Log << "[Project Manager] Projects loaded" << std::endl;
     } else {
         LGenUtility::Log << "[Project Manager] Projects json not found, creating" << std::endl;
