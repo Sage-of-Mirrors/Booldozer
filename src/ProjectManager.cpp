@@ -39,7 +39,7 @@ void ExtractFolderISO(std::shared_ptr<Disk::Folder> folder){
 void Init(){
     LGenUtility::Log << "[Project Manager] Initializing" << std::endl;
     if(std::filesystem::exists(std::filesystem::current_path() / "res" / "projects.json")){
-        std::ifstream projectsFileIn(std::filesystem::current_path() / "res" / "projects.json", std::ios::in);
+        std::ifstream projectsFileIn((std::filesystem::current_path() / "res" / "projects.json").string());
         projectsFileIn >> ProjectsJson;
         LGenUtility::Log << "[Project Manager] Projects loaded" << std::endl;
     } else {
