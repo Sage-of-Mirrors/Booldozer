@@ -94,7 +94,6 @@ void Init(){
 }
 
 void Render(){
-    std::cout << "[Project Manager] Rendering Project Manager" << std::endl;
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 	// Project Manager
     ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
