@@ -155,7 +155,7 @@ void Render(){
                 if(toDelete != -1){
                     std::filesystem::remove_all(ProjectsJson["projects"][toDelete].get<std::string>());
                     ProjectsJson["projects"].erase(toDelete);
-                    std::ofstream{std::filesystem::current_path() / "res" / "projects.json"} << ProjectsJson;
+                    std::ofstream{std::filesystem::current_path() / "projects.json"} << ProjectsJson;
                     Init(); // reinit
                 }
 
@@ -222,7 +222,7 @@ void Render(){
             }
 
             ProjectsJson["projects"].push_back(nlohmann::json(std::filesystem::current_path() / "roots" / NewProjectRootName));
-            std::ofstream{std::filesystem::current_path() / "res" / "projects.json"} << ProjectsJson;
+            std::ofstream{std::filesystem::current_path() / "projects.json"} << ProjectsJson;
             Init(); // reinit
         }
         ImGui::OpenPopup("ProjectManager");
