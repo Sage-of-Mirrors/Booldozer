@@ -109,4 +109,5 @@ public:
 	bool mOpenControlsDialog { false };
 	bool mOpenBannerEditor { false };
 	bool mOpenProjectManager { false };
+	bool mOpenMenuEditor { false };
 };

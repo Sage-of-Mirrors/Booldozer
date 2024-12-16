@@ -345,20 +345,6 @@ void Screen::Draw(){
     ImGui::EndChild();
 }
 
-void Window::DrawHierarchy(){
-    uint32_t id = LGenUtility::SwapEndian<uint32_t>(mID);
-    char drawID[sizeof(uint32_t)] = {0};
-    std::memcpy(drawID, &id, sizeof(uint32_t));
-    ImGui::Text("ID: %4s - WIN", drawID);
-
-    ImGui::Indent();
-    for(auto child : mChildren){
-        child->DrawHierarchy();
-    }
-    ImGui::Unindent();
-}
-
-
 void Screen::DrawHierarchy(){
     ImGui::BeginChild("##bloViewHierarchy");
     ImGui::Text("Screen Elements");
@@ -374,13 +360,13 @@ void Pane::DrawHierarchy(){
     uint32_t id = LGenUtility::SwapEndian<uint32_t>(mID);
     char drawID[sizeof(uint32_t)] = {0};
     std::memcpy(drawID, &id, sizeof(uint32_t));
-    ImGui::Text("ID: %4s", drawID);
-
-    ImGui::Indent();
-    for(auto child : mChildren){
-        child->DrawHierarchy();
+    if(ImGui::TreeNode("%4s", drawID)){
+        for(auto child : mChildren){
+            child->DrawHierarchy();
+        }
+        
+        ImGui::TreePop();
     }
-    ImGui::Unindent();
 }
 
 void Picture::DrawHierarchy(){
@@ -392,14 +378,28 @@ void Picture::DrawHierarchy(){
         mVisible = !mVisible;
     }
     ImGui::SameLine();
-    ImGui::Text("ID: %4s", drawID);
-    ImGui::Text(std::format("Texture: {}", mTexutres[0].mPath).c_str());
 
-    ImGui::Indent();
-    for(auto child : mChildren){
-        child->DrawHierarchy();
+    if(ImGui::TreeNode("%4s", drawID)){
+        ImGui::Text(std::format("Texture: {}", mTexutres[0].mPath).c_str());
+        for(auto child : mChildren){
+            child->DrawHierarchy();
+        }
+        
+        ImGui::TreePop();
     }
-    ImGui::Unindent();
+}
+
+void Window::DrawHierarchy(){
+    uint32_t id = LGenUtility::SwapEndian<uint32_t>(mID);
+    char drawID[sizeof(uint32_t)] = {0};
+    std::memcpy(drawID, &id, sizeof(uint32_t));
+    if(ImGui::TreeNode("Window: %4s", drawID)){
+        for(auto child : mChildren){
+            child->DrawHierarchy();
+        }
+        
+        ImGui::TreePop();
+    }
 }
 
 }

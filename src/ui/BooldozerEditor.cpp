@@ -35,6 +35,7 @@
 #include "GCM.hpp"
 #include "picosha2.h"
 #include "ProjectManager.hpp"
+#include "ui/BloEditor.hpp"
 
 namespace {
 	char* patchErrorMsg { nullptr };
@@ -235,6 +236,8 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	}
 
 	ProjectManager::Render();
+
+	BloEditor::Render();
 
 	if(mOpenProjectManager){
 		ImGui::OpenPopup("ProjectManager");
@@ -524,6 +527,11 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 		ImGui::OpenPopup("BannerEditor");
 		mOpenBannerEditor = false;
+	}
+
+	if(mOpenMenuEditor){
+		ImGui::OpenPopup("BloEditorTool");
+		mOpenMenuEditor = false;
 	}
 
 	if(mSaveConfigsClicked){
