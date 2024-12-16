@@ -11,7 +11,6 @@ void Resource::Load(bStream::CStream* stream, std::shared_ptr<Archive::Folder> t
     mType = static_cast<ResourceType>(stream->readUInt8());
     uint8_t len = stream->readUInt8();
     mPath = stream->readString(len);
-    std::cout << "Resource Path: " << mPath << std::endl;
 }
 
 void Image::Load(bStream::CStream* stream, std::shared_ptr<Archive::Folder> timg){
@@ -19,13 +18,20 @@ void Image::Load(bStream::CStream* stream, std::shared_ptr<Archive::Folder> timg
     std::shared_ptr<Archive::File> imgFile = timg->GetFile(mPath);
 
     if(imgFile != nullptr){
-        std::cout << "Loading Image " << mPath << std::endl;
+        //std::cout << "Loading Image " << mPath << std::endl;
         bStream::CMemoryStream img(imgFile->GetData(), imgFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
         mTexture.Load(&img);
-
+        
 		glCreateTextures(GL_TEXTURE_2D, 1, &mTextureID);
+        glTextureParameteri(mTextureID, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTextureParameteri(mTextureID, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTextureParameteri(mTextureID, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTextureParameteri(mTextureID, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTextureStorage2D(mTextureID, 1, GL_RGBA8, mTexture.mWidth, mTexture.mHeight);
 		glTextureSubImage2D(mTextureID, 0, 0, 0, mTexture.mWidth, mTexture.mHeight, GL_RGBA, GL_UNSIGNED_BYTE, mTexture.GetData());
+    } else {
+        mTextureID = 0xFFFFFFFF;
+        LGenUtility::Log << "Couldn't load image resource " << mPath << std::endl;
     }
 }
 
@@ -70,12 +76,15 @@ bool Screen::LoadBlo1(bStream::CStream* stream, std::shared_ptr<Pane> parent, st
     std::shared_ptr<Pane> prev = parent;
     while(true){
         std::size_t paneStart = stream->tell();
+        
+        if(stream->tell() >= stream->getSize()) return true;
+
         uint32_t paneType = stream->readUInt32();
         uint32_t paneLen = stream->readUInt32();
         
         switch (paneType) {
         case 0x50414E31: // PAN1
-            std::cout << "Loading Pane" << std::endl;
+            //std::cout << "Loading Pane" << std::endl;
             prev = std::make_shared<Pane>();
             prev->Load(stream, parent, timg);
             if(stream->tell() != paneStart + paneLen){
@@ -123,7 +132,7 @@ bool Pane::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::sha
     parent->mChildren.push_back(shared_from_this());
 
     int numParams = stream->readUInt8() - 6;
-    std::cout << "Loading pane " << (int)numParams << " params..." << std::endl;
+    //std::cout << "Loading pane " << (int)numParams << " params..." << std::endl;
     mVisible = stream->readUInt8() != 0;
     stream->skip(2);
 
@@ -136,7 +145,7 @@ bool Pane::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::sha
 
     char temp[4];
     memcpy(temp, &mID, 4);
-    std::cout << "Pane ID " << temp << " params..." << std::endl;
+    //std::cout << "Pane ID " << temp << " params..." << std::endl;
 
     if(numParams > 0){
         mAngle = stream->readUInt16();
@@ -168,7 +177,7 @@ bool Pane::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::sha
 
     //stream->skip(4);
     
-    std::cout << "Finished Loading Pane at " << std::hex << stream->tell() << std::dec << std::endl;
+    //std::cout << "Finished Loading Pane at " << std::hex << stream->tell() << std::dec << std::endl;
 
     return true;
 }
@@ -177,7 +186,7 @@ bool Picture::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::
     Pane::Load(stream, parent, timg);
 
     uint8_t numParams = stream->readUInt8() - 3;
-    std::cout << "Loading picture " << (int)numParams << " params..." << std::endl;
+    //std::cout << "Loading picture " << (int)numParams << " params..." << std::endl;
     mTexutres[0].Load(stream, timg);
     mPalette.Load(stream, timg);
     mBinding = static_cast<Binding>(stream->readUInt8());
@@ -236,7 +245,8 @@ bool Window::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::s
     Pane::Load(stream, parent, timg);
 
     uint8_t numParams = stream->readUInt8() - 14;
-    
+    std::cout << "Num Params is " << numParams << std::endl;
+
     mContentRect[0] = stream->readUInt16();
     mContentRect[1] = stream->readUInt16();
     mContentRect[2] = stream->readUInt16();
@@ -259,6 +269,7 @@ bool Window::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::s
     }
 
     if(numParams > 0){
+        std::cout << "Loading Context Texture at " << stream->tell() << std::endl;
         mContentTexture.Load(stream, timg);
         numParams--;
     } else {
@@ -287,17 +298,59 @@ bool Window::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::s
 }
 
 void Window::Draw(){
+    // draw borders
 
+    if(mTextures[0].mTextureID != 0xFFFFFFFF && mTextures[1].mTextureID != 0xFFFFFFFF && mTextures[2].mTextureID != 0xFFFFFFFF && mTextures[3].mTextureID != 0xFFFFFFFF){
+        ImGui::SetCursorPosX(mRect[0]);
+        ImGui::SetCursorPosY(mRect[1]);
+        ImGui::Image(static_cast<uintptr_t>(mTextures[0].mTextureID), {mTextures[0].mTexture.mWidth, mTextures[0].mTexture.mHeight}, {0.0, 0.0}, {1.0, 1.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+        
+        ImGui::SetCursorPosX((mRect[0] + mRect[2]) - mTextures[1].mTexture.mWidth);
+        ImGui::SetCursorPosY(mRect[1]);
+        ImGui::Image(static_cast<uintptr_t>(mTextures[1].mTextureID), {mTextures[1].mTexture.mWidth, mTextures[1].mTexture.mHeight}, {1.0, 0.0}, {0.0, 1.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+        
+        ImGui::SetCursorPosX(mRect[0]);
+        ImGui::SetCursorPosY((mRect[1] + mRect[3]) - mTextures[3].mTexture.mHeight);
+        ImGui::Image(static_cast<uintptr_t>(mTextures[2].mTextureID), {mTextures[2].mTexture.mWidth, mTextures[2].mTexture.mHeight}, {0.0, 1.0}, {1.0, 0.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+        
+        ImGui::SetCursorPosX((mRect[0] + mRect[2]) - mTextures[3].mTexture.mWidth);
+        ImGui::SetCursorPosY((mRect[1] + mRect[3]) - mTextures[3].mTexture.mHeight);
+        ImGui::Image(static_cast<uintptr_t>(mTextures[3].mTextureID), {mTextures[3].mTexture.mWidth, mTextures[3].mTexture.mHeight}, {1.0, 1.0}, {0.0, 0.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+
+        // edges
+        ImGui::SetCursorPosY(mRect[1]);
+        ImGui::SetCursorPosX(mRect[0] + mTextures[1].mTexture.mWidth);
+        ImGui::Image(static_cast<uintptr_t>(mTextures[1].mTextureID), {mRect[2] - (mTextures[1].mTexture.mWidth*2), mTextures[1].mTexture.mHeight}, {0.9999, 0.0}, {1.0, 1.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+
+        ImGui::SetCursorPosY(mRect[1] + mTextures[1].mTexture.mHeight);
+        ImGui::SetCursorPosX(mRect[0]);
+        ImGui::Image(static_cast<uintptr_t>(mTextures[1].mTextureID), {mTextures[2].mTexture.mWidth, mRect[3] - (mTextures[2].mTexture.mHeight * 2)}, {0.0, 0.9999}, {1.0, 1.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+
+        ImGui::SetCursorPosY(mRect[1] + mTextures[2].mTexture.mHeight);
+        ImGui::SetCursorPosX((mRect[0] + mRect[2]) - mTextures[2].mTexture.mWidth);
+        ImGui::Image(static_cast<uintptr_t>(mTextures[2].mTextureID), {mTextures[2].mTexture.mWidth, mRect[3] - (mTextures[2].mTexture.mHeight * 2)}, {1.0, 0.9999}, {0.0, 1.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+
+        ImGui::SetCursorPosY(mRect[1] + mRect[3] - mTextures[1].mTexture.mHeight);
+        ImGui::SetCursorPosX(mRect[0] + mTextures[1].mTexture.mWidth);
+        ImGui::Image(static_cast<uintptr_t>(mTextures[1].mTextureID), {mRect[2] - (mTextures[1].mTexture.mWidth*2), mTextures[1].mTexture.mHeight}, {0.9999, 1.0}, {1.0, 0.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+
+    }
+
+    auto WindowPos = ImGui::GetWindowPos();
+    ImVec2 min = {WindowPos.x + mRect[0] + mContentRect[0], WindowPos.y + mRect[1] + mContentRect[1]};
+    ImVec2 max = { mContentRect[2] + min.x, mContentRect[3] + min.y};
+
+    // draw contents
     if(mContentTexture.mTextureID != 0xFFFFFFFF){
         ImGui::SetCursorPosX(mContentRect[0]);
         ImGui::SetCursorPosY(mContentRect[1]);
 
-        ImGui::Image(static_cast<uintptr_t>(mContentTexture.mTextureID), {mContentTexture.mTexture.mWidth, mContentTexture.mTexture.mHeight}, {0.0, 0.0}, {1.0, 1.0});
+        float hf = mContentRect[2] / mContentTexture.mTexture.mWidth;
+        float vf = mContentRect[3] / mContentTexture.mTexture.mHeight; 
+
+        ImGui::Image(static_cast<uintptr_t>(mContentTexture.mTextureID), {mContentRect[2], mContentRect[3]}, {0.0, 0.0}, {hf, vf});
     } else {
-        auto WindowPos = ImGui::GetWindowPos();
-        ImVec2 min = {WindowPos.x + mRect[0], WindowPos.y + mRect[1]};
-        ImVec2 max = { mRect[2] + min.x, mRect[3] + min.y};
-        ImGui::GetWindowDrawList()->AddRect(min, max, ImColor(0xFFFFFFFF), 0.0, ImDrawFlags_None, 2.0f);
+        ImGui::GetWindowDrawList()->AddRectFilled(min, max, ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha)));
     }
 }
 
@@ -326,7 +379,7 @@ void Picture::Draw(){
 void Pane::Draw(){
     ImGui::SetCursorPosX(mRect[0]);
     ImGui::SetCursorPosY(mRect[1]);
-    ImGui::BeginChild(std::format("##pane{}", mID).c_str(), ImVec2(mRect[2], mRect[3]), ImGuiChildFlags_Border);
+    ImGui::BeginChild(std::format("Pane##pane{}", mID).c_str(), ImVec2(mRect[2], mRect[3]), ImGuiChildFlags_Border);
 
     for(auto child : mChildren){
         child->Draw();
@@ -336,7 +389,7 @@ void Pane::Draw(){
 }
 
 void Screen::Draw(){
-    ImGui::BeginChild(std::format("##screen{}", mID).c_str(), ImVec2(mRect[2], mRect[3]), ImGuiChildFlags_Border);
+    ImGui::BeginChild(std::format("Screen##screen{}", mID).c_str(), ImVec2(mRect[2], mRect[3]), ImGuiChildFlags_Border);
 
     for(auto child : mChildren){
         child->Draw();
@@ -360,7 +413,7 @@ void Pane::DrawHierarchy(){
     uint32_t id = LGenUtility::SwapEndian<uint32_t>(mID);
     char drawID[sizeof(uint32_t)] = {0};
     std::memcpy(drawID, &id, sizeof(uint32_t));
-    if(ImGui::TreeNode("%4s", drawID)){
+    if(ImGui::TreeNode("%4s##%u", drawID, mID)){
         for(auto child : mChildren){
             child->DrawHierarchy();
         }
@@ -379,8 +432,7 @@ void Picture::DrawHierarchy(){
     }
     ImGui::SameLine();
 
-    if(ImGui::TreeNode("%4s", drawID)){
-        ImGui::Text(std::format("Texture: {}", mTexutres[0].mPath).c_str());
+    if(ImGui::TreeNode("%4s##%u", drawID, mID)){
         for(auto child : mChildren){
             child->DrawHierarchy();
         }
@@ -393,7 +445,7 @@ void Window::DrawHierarchy(){
     uint32_t id = LGenUtility::SwapEndian<uint32_t>(mID);
     char drawID[sizeof(uint32_t)] = {0};
     std::memcpy(drawID, &id, sizeof(uint32_t));
-    if(ImGui::TreeNode("Window: %4s", drawID)){
+    if(ImGui::TreeNode("%4s##%u", drawID, mID)){
         for(auto child : mChildren){
             child->DrawHierarchy();
         }

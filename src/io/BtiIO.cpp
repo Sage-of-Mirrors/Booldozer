@@ -283,37 +283,38 @@ namespace Decode {
 
     void I4(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData){
         if(imageData == nullptr) return;
-
-        uint32_t numBlocksW = width / 8;
-        uint32_t numBlocksH = height / 8;
                 
         // Iterate the blocks in the image
-        for (int blockY = 0; blockY < numBlocksH; blockY++) {
-            for (int blockX = 0; blockX < numBlocksW; blockX++) {
+        for (int blockY = 0; blockY < height; blockY += 8) {
+            for (int blockX = 0; blockX < width; blockX += 8) {
                 // Iterate the pixels in the current block
                 for (int pixelY = 0; pixelY < 8; pixelY++) {
                     for (int pixelX = 0; pixelX < 8; pixelX += 2) {
+                        uint8_t data = stream->readUInt8();
+                        
                         // Bounds check to ensure the pixel is within the image.
-                        if ((blockX * 8 + pixelX >= width) || (blockY * 8 + pixelY >= height))
+                        if (blockY + pixelY >= height)
                             continue;
 
-                        uint8_t data = stream->readUInt8();
-
                         // Each byte represents two pixels.
-                        uint8_t pixel0 = (data & 0xF0) >> 4;
-                        uint8_t pixel1 = (data & 0x0F);
+                        uint8_t pixel0 = (data >> 4) & 0xF;
+                        uint8_t pixel1 = (data & 0xF);
 
-                        uint32_t destIndex = (width * ((blockY * 8) + pixelY) + (blockX * 8) + pixelX) * 4;
+                        uint32_t destIndex = (width * (blockY + pixelY) + (blockX + pixelX)) * 4;
 
-                        imageData[destIndex] = pixel0 * 0x11;
-                        imageData[destIndex + 1] = pixel0 * 0x11;
-                        imageData[destIndex + 2] = pixel0 * 0x11;
-                        imageData[destIndex + 3] = pixel0 * 0x11;
+                        if (blockX + pixelX < width){
+                            imageData[destIndex + 0] = (pixel0 << 4) | pixel0;
+                            imageData[destIndex + 1] = (pixel0 << 4) | pixel0;
+                            imageData[destIndex + 2] = (pixel0 << 4) | pixel0;
+                            imageData[destIndex + 3] = (pixel0 << 4) | pixel0;
+                        }
 
-                        imageData[destIndex + 4] = pixel1 * 0x11;
-                        imageData[destIndex + 5] = pixel1 * 0x11;
-                        imageData[destIndex + 6] = pixel1 * 0x11;
-                        imageData[destIndex + 7] = pixel1 * 0x11;
+                        if (blockX + pixelX + 1 < width){
+                            imageData[destIndex + 4] = (pixel1 << 4) | pixel1;
+                            imageData[destIndex + 5] = (pixel1 << 4) | pixel1;
+                            imageData[destIndex + 6] = (pixel1 << 4) | pixel1;
+                            imageData[destIndex + 7] = (pixel1 << 4) | pixel1;
+                        }
                     }
                 }
             }
@@ -323,24 +324,21 @@ namespace Decode {
     void I8(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData){
         if(imageData == nullptr) return;
 
-        uint32_t numBlocksW = width / 8;
-        uint32_t numBlocksH = height / 4;
-
         // Iterate the blocks in the image
-        for (int blockY = 0; blockY < numBlocksH; blockY++) {
-            for (int blockX = 0; blockX < numBlocksW; blockX++) {
+        for (int blockY = 0; blockY < height; blockY += 4) {
+            for (int blockX = 0; blockX < width; blockX += 8) {
                 // Iterate the pixels in the current block
                 for (int pixelY = 0; pixelY < 4; pixelY++) {
                     for (int pixelX = 0; pixelX < 8; pixelX++) {
+                        uint8_t data = stream->readUInt8();
                         // Bounds check to ensure the pixel is within the image.
-                        if ((blockX * 8 + pixelX >= width) || (blockY * 4 + pixelY >= height))
+                        if ((blockX + pixelX >= width) || (blockY + pixelY >= height))
                             continue;
 
-                        uint8_t data = stream->readUInt8();
 
-                        uint32_t destIndex = (width * ((blockY * 4) + pixelY) + (blockX * 8) + pixelX) * 4;
+                        uint32_t destIndex = (width * (blockY + pixelY) + (blockX + pixelX)) * 4;
 
-                        imageData[destIndex] = data;
+                        imageData[destIndex + 0] = data;
                         imageData[destIndex + 1] = data;
                         imageData[destIndex + 2] = data;
                         imageData[destIndex + 3] = data;
@@ -353,27 +351,27 @@ namespace Decode {
     void IA4(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData){
         if(imageData == nullptr) return;
 
-        uint32_t numBlocksW = width / 8;
-        uint32_t numBlocksH = height / 4;
-
         // Iterate the blocks in the image
-        for (int blockY = 0; blockY < numBlocksH; blockY++) {
-            for (int blockX = 0; blockX < numBlocksW; blockX++) {
+        for (int blockY = 0; blockY < height; blockY += 4) {
+            for (int blockX = 0; blockX < width; blockX += 8) {
                 // Iterate the pixels in the current block
                 for (int pixelY = 0; pixelY < 4; pixelY++) {
                     for (int pixelX = 0; pixelX < 8; pixelX++) {
+                        uint8_t data = stream->readUInt8();
                         // Bounds check to ensure the pixel is within the image.
-                        if ((blockX * 8 + pixelX >= width) || (blockY * 4 + pixelY >= height))
+                        if ((blockX + pixelX >= width) || (blockY + pixelY >= height))
                             continue;
 
-                        uint8_t data = stream->readUInt8();
 
-                        uint32_t destIndex = (width * ((blockY * 4) + pixelY) + (blockX * 8) + pixelX) * 4;
+                        uint32_t destIndex = (width * (blockY  + pixelY) + (blockX + pixelX)) * 4;
 
-                        imageData[destIndex] = data & 0xF;
-                        imageData[destIndex + 1] = data & 0xF;
-                        imageData[destIndex + 2] = data & 0xF;
-                        imageData[destIndex + 3] = (data >> 4) & 0xF;
+                        uint8_t intensity = data & 0xF;
+                        uint8_t alpha = (data >> 4) & 0xF;
+
+                        imageData[destIndex + 0] = (intensity << 4) | intensity;
+                        imageData[destIndex + 1] = (intensity << 4) | intensity;
+                        imageData[destIndex + 2] = (intensity << 4) | intensity;
+                        imageData[destIndex + 3] = (alpha << 4) | alpha;
                     }
                 }
             }
@@ -383,27 +381,26 @@ namespace Decode {
     void IA8(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData){
         if(imageData == nullptr) return;
 
-        uint32_t numBlocksW = width / 8;
-        uint32_t numBlocksH = height / 4;
-
         // Iterate the blocks in the image
-        for (int blockY = 0; blockY < numBlocksH; blockY++) {
-            for (int blockX = 0; blockX < numBlocksW; blockX++) {
+        for (int blockY = 0; blockY < height; blockY+=4) {
+            for (int blockX = 0; blockX < width; blockX+=8) {
                 // Iterate the pixels in the current block
                 for (int pixelY = 0; pixelY < 4; pixelY++) {
                     for (int pixelX = 0; pixelX < 8; pixelX++) {
+                        uint8_t intensity = stream->readUInt8();
+                        uint8_t alpha = stream->readUInt8();
+
                         // Bounds check to ensure the pixel is within the image.
-                        if ((blockX * 8 + pixelX >= width) || (blockY * 4 + pixelY >= height))
+                        if ((blockX + pixelX >= width) || (blockY + pixelY >= height))
                             continue;
 
-                        uint16_t data = stream->readUInt16();
 
-                        uint32_t destIndex = (width * ((blockY * 4) + pixelY) + (blockX * 8) + pixelX) * 4;
+                        uint32_t destIndex = (width * (blockY + pixelY) + (blockX + pixelX)) * 4;
 
-                        imageData[destIndex] = data & 0x00FF;
-                        imageData[destIndex + 1] = data & 0x00FF;
-                        imageData[destIndex + 2] = data & 0x00FF;
-                        imageData[destIndex + 3] = data & 0xFF00;
+                        imageData[destIndex + 0] = intensity;
+                        imageData[destIndex + 1] = intensity;
+                        imageData[destIndex + 2] = intensity;
+                        imageData[destIndex + 3] = alpha;
                     }
                 }
             }
