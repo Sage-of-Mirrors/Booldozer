@@ -163,6 +163,16 @@ namespace Blo {
         Font mFont;
         glm::vec4 mTopColor, mBottomColor;
         uint8_t mHAlign, mVAlign;
+
+        uint16_t mFontSpacing;
+        uint16_t mFontLeading;
+        uint16_t mFontWidth;
+        uint16_t mFontHeight;
+
+        std::string mText;
+
+        glm::vec4 mFromColor;
+        glm::vec4 mToColor;
     public:
         bool Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg);
         void DrawHierarchy(std::shared_ptr<Blo::Pane> selection);

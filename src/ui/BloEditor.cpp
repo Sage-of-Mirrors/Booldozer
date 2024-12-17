@@ -86,7 +86,7 @@ void Render(){
         if(ScreenLoaded != nullptr){
             ScreenLoaded->Draw();
             ImGui::SameLine();
-            ScreenLoaded->DrawHierarchy();
+            ScreenLoaded->DrawHierarchy(SelectedNode);
 
             if(ImGui::Button("Close")){
                 ImGui::CloseCurrentPopup();
