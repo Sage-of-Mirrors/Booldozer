@@ -362,36 +362,36 @@ void Window::Draw(){
     if(mTextures[0].mTextureID != 0xFFFFFFFF && mTextures[1].mTextureID != 0xFFFFFFFF && mTextures[2].mTextureID != 0xFFFFFFFF && mTextures[3].mTextureID != 0xFFFFFFFF){
         ImGui::SetCursorPosX(mRect[0]);
         ImGui::SetCursorPosY(mRect[1]);
-        ImGui::Image(static_cast<uintptr_t>(mTextures[0].mTextureID), {mTextures[0].mTexture.mWidth, mTextures[0].mTexture.mHeight}, {0.0, 0.0}, {1.0, 1.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+        ImGui::Image(static_cast<uintptr_t>(mTextures[0].mTextureID), {static_cast<float>(mTextures[0].mTexture.mWidth), static_cast<float>(mTextures[0].mTexture.mHeight)}, {0.0, 0.0}, {1.0, 1.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
         
         ImGui::SetCursorPosX((mRect[0] + mRect[2]) - mTextures[1].mTexture.mWidth);
         ImGui::SetCursorPosY(mRect[1]);
-        ImGui::Image(static_cast<uintptr_t>(mTextures[1].mTextureID), {mTextures[1].mTexture.mWidth, mTextures[1].mTexture.mHeight}, {1.0, 0.0}, {0.0, 1.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+        ImGui::Image(static_cast<uintptr_t>(mTextures[1].mTextureID), {static_cast<float>(mTextures[1].mTexture.mWidth), static_cast<float>(mTextures[1].mTexture.mHeight)}, {1.0, 0.0}, {0.0, 1.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
         
         ImGui::SetCursorPosX(mRect[0]);
         ImGui::SetCursorPosY((mRect[1] + mRect[3]) - mTextures[3].mTexture.mHeight);
-        ImGui::Image(static_cast<uintptr_t>(mTextures[2].mTextureID), {mTextures[2].mTexture.mWidth, mTextures[2].mTexture.mHeight}, {0.0, 1.0}, {1.0, 0.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+        ImGui::Image(static_cast<uintptr_t>(mTextures[2].mTextureID), {static_cast<float>(mTextures[2].mTexture.mWidth), static_cast<float>(mTextures[2].mTexture.mHeight)}, {0.0, 1.0}, {1.0, 0.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
         
         ImGui::SetCursorPosX((mRect[0] + mRect[2]) - mTextures[3].mTexture.mWidth);
         ImGui::SetCursorPosY((mRect[1] + mRect[3]) - mTextures[3].mTexture.mHeight);
-        ImGui::Image(static_cast<uintptr_t>(mTextures[3].mTextureID), {mTextures[3].mTexture.mWidth, mTextures[3].mTexture.mHeight}, {1.0, 1.0}, {0.0, 0.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+        ImGui::Image(static_cast<uintptr_t>(mTextures[3].mTextureID), {static_cast<float>(mTextures[3].mTexture.mWidth), static_cast<float>(mTextures[3].mTexture.mHeight)}, {1.0, 1.0}, {0.0, 0.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
 
         // edges
         ImGui::SetCursorPosY(mRect[1]);
         ImGui::SetCursorPosX(mRect[0] + mTextures[1].mTexture.mWidth);
-        ImGui::Image(static_cast<uintptr_t>(mTextures[1].mTextureID), {mRect[2] - (mTextures[1].mTexture.mWidth*2), mTextures[1].mTexture.mHeight}, {0.9999, 0.0}, {1.0, 1.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+        ImGui::Image(static_cast<uintptr_t>(mTextures[1].mTextureID), {static_cast<float>(mRect[2] - (mTextures[1].mTexture.mWidth*2)), static_cast<float>(mTextures[1].mTexture.mHeight)}, {0.9999, 0.0}, {1.0, 1.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
 
         ImGui::SetCursorPosY(mRect[1] + mTextures[1].mTexture.mHeight);
         ImGui::SetCursorPosX(mRect[0]);
-        ImGui::Image(static_cast<uintptr_t>(mTextures[1].mTextureID), {mTextures[2].mTexture.mWidth, mRect[3] - (mTextures[2].mTexture.mHeight * 2)}, {0.0, 0.9999}, {1.0, 1.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+        ImGui::Image(static_cast<uintptr_t>(mTextures[1].mTextureID), {static_cast<float>(mTextures[2].mTexture.mWidth), static_cast<float>(mRect[3] - (mTextures[2].mTexture.mHeight * 2))}, {0.0, 0.9999}, {1.0, 1.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
 
         ImGui::SetCursorPosY(mRect[1] + mTextures[2].mTexture.mHeight);
         ImGui::SetCursorPosX((mRect[0] + mRect[2]) - mTextures[2].mTexture.mWidth);
-        ImGui::Image(static_cast<uintptr_t>(mTextures[2].mTextureID), {mTextures[2].mTexture.mWidth, mRect[3] - (mTextures[2].mTexture.mHeight * 2)}, {1.0, 0.9999}, {0.0, 1.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+        ImGui::Image(static_cast<uintptr_t>(mTextures[2].mTextureID), {static_cast<float>(mTextures[2].mTexture.mWidth), static_cast<float>(mRect[3] - (mTextures[2].mTexture.mHeight * 2))}, {1.0, 0.9999}, {0.0, 1.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
 
         ImGui::SetCursorPosY(mRect[1] + mRect[3] - mTextures[1].mTexture.mHeight);
         ImGui::SetCursorPosX(mRect[0] + mTextures[1].mTexture.mWidth);
-        ImGui::Image(static_cast<uintptr_t>(mTextures[1].mTextureID), {mRect[2] - (mTextures[1].mTexture.mWidth*2), mTextures[1].mTexture.mHeight}, {0.9999, 1.0}, {1.0, 0.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+        ImGui::Image(static_cast<uintptr_t>(mTextures[1].mTextureID), {static_cast<float>(mRect[2] - (mTextures[1].mTexture.mWidth*2)), static_cast<float>(mTextures[1].mTexture.mHeight)}, {0.9999, 1.0}, {1.0, 0.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
 
     }
 
