@@ -59,6 +59,15 @@ namespace Blo {
         BottomRight = 8
     };
 
+    enum class ElementType {
+        None,
+        Screen,
+        Pane,
+        Picture,
+        Window,
+        Textbox
+    };
+
     struct Resource {
         ResourceType mType;
         std::string mPath;
@@ -88,6 +97,7 @@ namespace Blo {
 
     class Pane : public std::enable_shared_from_this<Pane> {
     protected:
+        ElementType mType;
         std::shared_ptr<Pane> mParent;
         std::vector<std::shared_ptr<Pane>> mChildren;
         uint32_t mID;
@@ -102,9 +112,11 @@ namespace Blo {
         uint8_t mAccumulateAlpha;
 
     public:
+
+        ElementType Type() { return mType; }
         int16_t mRect[4];
         virtual bool Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg);
-        virtual void DrawHierarchy();
+        virtual void DrawHierarchy(std::shared_ptr<Blo::Pane> selection);
         virtual void Draw();
     };
 
@@ -128,7 +140,7 @@ namespace Blo {
 
     public:
         bool Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg);
-        void DrawHierarchy();
+        void DrawHierarchy(std::shared_ptr<Blo::Pane> selection);
         void Draw();
     };
 
@@ -143,7 +155,7 @@ namespace Blo {
         glm::vec4 mToColor;
     public:
         bool Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg);
-        void DrawHierarchy();
+        void DrawHierarchy(std::shared_ptr<Blo::Pane> selection);
         void Draw();
     };
 
@@ -153,7 +165,7 @@ namespace Blo {
         uint8_t mHAlign, mVAlign;
     public:
         bool Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg);
-        void DrawHierarchy();
+        void DrawHierarchy(std::shared_ptr<Blo::Pane> selection);
         void Draw();
     };
 
@@ -162,7 +174,7 @@ namespace Blo {
         bool LoadBlo1(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg);
     public:
         bool Load(bStream::CStream* stream, std::shared_ptr<Archive::Folder> timg);
-        void DrawHierarchy();
+        void DrawHierarchy(std::shared_ptr<Blo::Pane> selection);
         void Draw();
     };
 

@@ -4,6 +4,7 @@
 #include <format>
 #include "GenUtil.hpp"
 #include "IconsForkAwesome.h"
+#include "imgui_internal.h"
 
 namespace Blo {
 
@@ -44,6 +45,7 @@ void Palette::Load(bStream::CStream* stream, std::shared_ptr<Archive::Folder> ti
 }
 
 bool Screen::Load(bStream::CStream* stream, std::shared_ptr<Archive::Folder> timg){
+    mType = ElementType::Screen;
     if(stream->readUInt32() != 0x5343524e){ // 'SCRN'
         return false;
     }
@@ -128,6 +130,7 @@ bool Screen::LoadBlo1(bStream::CStream* stream, std::shared_ptr<Pane> parent, st
 }
 
 bool Pane::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg){
+    mType = ElementType::Pane;
     mParent = parent;
     parent->mChildren.push_back(shared_from_this());
 
@@ -184,6 +187,7 @@ bool Pane::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::sha
 
 bool Picture::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg){
     Pane::Load(stream, parent, timg);
+    mType = ElementType::Picture;
 
     uint8_t numParams = stream->readUInt8() - 3;
     //std::cout << "Loading picture " << (int)numParams << " params..." << std::endl;
@@ -243,6 +247,7 @@ bool Picture::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::
 
 bool Window::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg){
     Pane::Load(stream, parent, timg);
+    mType = ElementType::Window;
 
     uint8_t numParams = stream->readUInt8() - 14;
     std::cout << "Num Params is " << numParams << std::endl;
@@ -372,7 +377,22 @@ void Picture::Draw(){
             UV1.y = 0.0f;
         }
         
-        ImGui::Image(static_cast<uintptr_t>(mTexutres[0].mTextureID), {mTexutres[0].mTexture.mWidth , mTexutres[0].mTexture.mHeight}, UV0, UV1);
+        int vidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
+        ImGui::GetWindowDrawList()->AddImageQuad(
+            static_cast<uintptr_t>(mTexutres[0].mTextureID),
+            {ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y},
+            {ImGui::GetCursorScreenPos().x + mTexutres[0].mTexture.mWidth, ImGui::GetCursorScreenPos().y},
+            {ImGui::GetCursorScreenPos().x + mTexutres[0].mTexture.mWidth, ImGui::GetCursorScreenPos().y + mTexutres[0].mTexture.mHeight},
+            {ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y + mTexutres[0].mTexture.mHeight},
+            UV0,
+            {UV1.x, UV0.y},
+            UV1,
+            {UV0.x, UV1.y},
+            ImColor(mColors[1].r, mColors[1].g, mColors[1].b, mColors[1].a)
+        );
+        int evidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
+
+        ImGui::ShadeVertsLinearColorGradientKeepAlpha(ImGui::GetWindowDrawList(), vidx + 0, vidx + 2, {0.0, 0.0}, {0.0, 1.0}, ImColor(ImVec4(mFromColor.r, mFromColor.g, mFromColor.b, mFromColor.a)), ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a)));
     }
 }
 
@@ -381,9 +401,11 @@ void Pane::Draw(){
     ImGui::SetCursorPosY(mRect[1]);
     ImGui::BeginChild(std::format("Pane##pane{}", mID).c_str(), ImVec2(mRect[2], mRect[3]), ImGuiChildFlags_Border);
 
+    ImGui::PushID(std::format("##PreviewPane{}", mID).c_str());
     for(auto child : mChildren){
         child->Draw();
     }
+    ImGui::PopID();
 
     ImGui::EndChild();
 }
@@ -391,63 +413,92 @@ void Pane::Draw(){
 void Screen::Draw(){
     ImGui::BeginChild(std::format("Screen##screen{}", mID).c_str(), ImVec2(mRect[2], mRect[3]), ImGuiChildFlags_Border);
 
+    ImGui::PushID(std::format("##PreviewScreen{}", mID).c_str());
     for(auto child : mChildren){
         child->Draw();
     }
+    ImGui::PopID();
 
     ImGui::EndChild();
 }
 
-void Screen::DrawHierarchy(){
+void Screen::DrawHierarchy(std::shared_ptr<Blo::Pane> selection){
     ImGui::BeginChild("##bloViewHierarchy");
     ImGui::Text("Screen Elements");
-    ImGui::Indent();
-    for(auto child : mChildren){
-        child->DrawHierarchy();
+
+    uint32_t id = LGenUtility::SwapEndian<uint32_t>(mID);
+    char drawID[sizeof(uint32_t)] = {0};
+    std::memcpy(drawID, &id, sizeof(uint32_t));
+
+    ImGuiTreeNodeFlags flags = mChildren.size() == 0 ? ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_SpanFullWidth : ImGuiTreeNodeFlags_None;
+    if(ImGui::TreeNodeEx(std::format("{}##Hierarchy{:x}", drawID, mID).c_str(), flags, "Screen %4s", drawID)){
+        
+        for(auto child : mChildren){
+            child->DrawHierarchy(selection);
+        }
+        ImGui::TreePop();
     }
-    ImGui::Unindent();
+    
     ImGui::EndChild();
 }
 
-void Pane::DrawHierarchy(){
+void Pane::DrawHierarchy(std::shared_ptr<Blo::Pane> selection){
     uint32_t id = LGenUtility::SwapEndian<uint32_t>(mID);
     char drawID[sizeof(uint32_t)] = {0};
     std::memcpy(drawID, &id, sizeof(uint32_t));
-    if(ImGui::TreeNode("%4s##%u", drawID, mID)){
-        for(auto child : mChildren){
-            child->DrawHierarchy();
-        }
-        
-        ImGui::TreePop();
-    }
-}
-
-void Picture::DrawHierarchy(){
-    uint32_t id = LGenUtility::SwapEndian<uint32_t>(mID);
-    char drawID[sizeof(uint32_t)] = {0};
-    std::memcpy(drawID, &id, sizeof(uint32_t));
+    
     ImGui::Text((mVisible ? ICON_FK_EYE : ICON_FK_EYE_SLASH));
     if(ImGui::IsItemClicked()){
         mVisible = !mVisible;
     }
     ImGui::SameLine();
 
-    if(ImGui::TreeNode("%4s##%u", drawID, mID)){
+    ImGuiTreeNodeFlags flags = mChildren.size() == 0 ? ImGuiTreeNodeFlags_Leaf : ImGuiTreeNodeFlags_None;
+    if(ImGui::TreeNodeEx(std::format("{}##Hierarchy{:x}", drawID, mID).c_str(), flags, "%4s", drawID)){
         for(auto child : mChildren){
-            child->DrawHierarchy();
+            child->DrawHierarchy(selection);
         }
         
         ImGui::TreePop();
     }
 }
 
-void Window::DrawHierarchy(){
+void Picture::DrawHierarchy(std::shared_ptr<Blo::Pane> selection){
     uint32_t id = LGenUtility::SwapEndian<uint32_t>(mID);
     char drawID[sizeof(uint32_t)] = {0};
     std::memcpy(drawID, &id, sizeof(uint32_t));
-    if(ImGui::TreeNode("%4s##%u", drawID, mID)){
+    
+    ImGui::Text((mVisible ? ICON_FK_EYE : ICON_FK_EYE_SLASH));
+    if(ImGui::IsItemClicked()){
+        mVisible = !mVisible;
+    }
+    ImGui::SameLine();
+
+    ImGuiTreeNodeFlags flags = mChildren.size() == 0 ? ImGuiTreeNodeFlags_Leaf : ImGuiTreeNodeFlags_None;
+    if(ImGui::TreeNodeEx(std::format("{}##Hierarchy{:x}", drawID, mID).c_str(), flags, "%4s", drawID)){
         for(auto child : mChildren){
-            child->DrawHierarchy();
+            child->DrawHierarchy(selection);
+        }
+        
+        ImGui::TreePop();
+    }
+}
+
+void Window::DrawHierarchy(std::shared_ptr<Blo::Pane> selection){
+    uint32_t id = LGenUtility::SwapEndian<uint32_t>(mID);
+    char drawID[sizeof(uint32_t)] = {0};
+    std::memcpy(drawID, &id, sizeof(uint32_t));
+    
+    ImGui::Text((mVisible ? ICON_FK_EYE : ICON_FK_EYE_SLASH));
+    if(ImGui::IsItemClicked()){
+        mVisible = !mVisible;
+    }
+    ImGui::SameLine();
+
+    ImGuiTreeNodeFlags flags = mChildren.size() == 0 ? ImGuiTreeNodeFlags_Leaf : ImGuiTreeNodeFlags_None;
+    if(ImGui::TreeNodeEx(std::format("{}##Hierarchy{:x}", drawID, mID).c_str(), flags)){
+        for(auto child : mChildren){
+            child->DrawHierarchy(selection);
         }
         
         ImGui::TreePop();

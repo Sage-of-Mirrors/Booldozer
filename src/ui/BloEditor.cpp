@@ -24,6 +24,7 @@ std::map<std::string, std::tuple<std::filesystem::path, std::string, std::string
 bool BloEditorOpen { false };
 std::string MenuSelected = "Save Screen";
 std::shared_ptr<Blo::Screen> ScreenLoaded { nullptr };
+std::shared_ptr<Blo::Pane> SelectedNode { nullptr };
 
 void Render(){
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
