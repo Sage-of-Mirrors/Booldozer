@@ -112,16 +112,16 @@ namespace Blo {
         uint8_t mAccumulateAlpha;
 
     public:
-
+        uint8_t Alpha() { return mAplha; }
         ElementType Type() { return mType; }
         int16_t mRect[4];
         virtual bool Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg);
-        virtual void DrawHierarchy(std::shared_ptr<Blo::Pane> selection);
-        virtual void Draw();
+        virtual void DrawHierarchy(std::shared_ptr<Blo::Pane>& selection);
+        virtual void Draw(std::shared_ptr<Blo::Pane>& selection);
     };
 
     class Picture : public Pane {
-        Image mTexutres[4];
+        std::shared_ptr<Image> mTextures[4] { nullptr, nullptr, nullptr, nullptr };
         Palette mPalette;
         Binding mBinding;
         double mBlendFactors[4];
@@ -139,14 +139,15 @@ namespace Blo {
         glm::vec4 mColors[4];
 
     public:
+        std::shared_ptr<Image> GetTexture(){ return mTextures[0]; }
         bool Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg);
-        void DrawHierarchy(std::shared_ptr<Blo::Pane> selection);
-        void Draw();
+        void DrawHierarchy(std::shared_ptr<Blo::Pane>& selection);
+        void Draw(std::shared_ptr<Blo::Pane>& selection);
     };
 
     class Window : public Pane {
-        Image mTextures[4];
-        Image mContentTexture;
+        std::shared_ptr<Image> mTextures[4] { nullptr, nullptr, nullptr, nullptr };
+        std::shared_ptr<Image> mContentTexture { nullptr };
         Palette mPalette;
         Bti mContectBG;
         
@@ -155,8 +156,8 @@ namespace Blo {
         glm::vec4 mToColor;
     public:
         bool Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg);
-        void DrawHierarchy(std::shared_ptr<Blo::Pane> selection);
-        void Draw();
+        void DrawHierarchy(std::shared_ptr<Blo::Pane>& selection);
+        void Draw(std::shared_ptr<Blo::Pane>& selection);
     };
 
     class Textbox : public Pane {
@@ -175,17 +176,18 @@ namespace Blo {
         glm::vec4 mToColor;
     public:
         bool Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg);
-        void DrawHierarchy(std::shared_ptr<Blo::Pane> selection);
-        void Draw();
+        void DrawHierarchy(std::shared_ptr<Blo::Pane>& selection);
+        void Draw(std::shared_ptr<Blo::Pane>& selection);
     };
 
     class Screen : public Pane {
         uint32_t mColor;
         bool LoadBlo1(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg);
     public:
+        void Save(bStream::CStream* stream);
         bool Load(bStream::CStream* stream, std::shared_ptr<Archive::Folder> timg);
-        void DrawHierarchy(std::shared_ptr<Blo::Pane> selection);
-        void Draw();
+        void DrawHierarchy(std::shared_ptr<Blo::Pane>& selection);
+        void Draw(std::shared_ptr<Blo::Pane>& selection);
     };
 
 };

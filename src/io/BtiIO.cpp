@@ -355,8 +355,8 @@ namespace Decode {
         for (int blockY = 0; blockY < height; blockY += 4) {
             for (int blockX = 0; blockX < width; blockX += 8) {
                 // Iterate the pixels in the current block
-                for (int pixelY = 0; pixelY < 4; pixelY++) {
-                    for (int pixelX = 0; pixelX < 8; pixelX++) {
+                for (int pixelY = 0; pixelY < 4; ++pixelY) {
+                    for (int pixelX = 0; pixelX < 8; ++pixelX) {
                         uint8_t data = stream->readUInt8();
                         // Bounds check to ensure the pixel is within the image.
                         if ((blockX + pixelX >= width) || (blockY + pixelY >= height))

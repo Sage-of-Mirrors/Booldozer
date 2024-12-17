@@ -74,6 +74,10 @@ bool Screen::Load(bStream::CStream* stream, std::shared_ptr<Archive::Folder> tim
     return true;
 }
 
+void Screen::Save(bStream::CStream* stream){
+
+}
+
 bool Screen::LoadBlo1(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg){
     std::shared_ptr<Pane> prev = parent;
     while(true){
@@ -117,6 +121,12 @@ bool Screen::LoadBlo1(bStream::CStream* stream, std::shared_ptr<Pane> parent, st
             }
             break;
 		case 0x54425831: // TBX1
+            prev = std::make_shared<Textbox>();
+            prev->Load(stream, parent, timg);
+            if(stream->tell() != paneStart + paneLen){
+                stream->seek(paneStart + paneLen);
+                break;
+            }
             break;
 		case 0x454E4431: // END1
             stream->seek(paneStart + paneLen);
@@ -191,17 +201,18 @@ bool Picture::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::
 
     uint8_t numParams = stream->readUInt8() - 3;
     //std::cout << "Loading picture " << (int)numParams << " params..." << std::endl;
-    mTexutres[0].Load(stream, timg);
+    mTextures[0] = std::make_shared<Image>();
+    mTextures[0]->Load(stream, timg);
     mPalette.Load(stream, timg);
     mBinding = static_cast<Binding>(stream->readUInt8());
 
     if(numParams > 0){
         uint8_t bits = stream->readUInt8();
-        mMirror = static_cast<MirrorMode>(bits & 3);
+        mMirror = bits & 3;
         mRotate = ((bits & 4) != 0);
         numParams--;
     } else {
-        mMirror = MirrorMode::None;
+        mMirror = 0;
         mRotate = false;
     }
 
@@ -217,15 +228,15 @@ bool Picture::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::
 
     if(numParams > 0){
         uint32_t color = stream->readUInt32();
-        mFromColor = {((color >> 24) & 0xFF) / 0xFF, ((color >> 16) & 0xFF) / 0xFF, ((color >> 8) & 0xFF) / 0xFF, (color & 0xFF) / 0xFF};
+        mFromColor = {((color >> 24) & 0xFF) / 255.0f, ((color >> 16) & 0xFF) / 255.0f, ((color >> 8) & 0xFF) / 255.0f, (color & 0xFF) / 255.0f};
         numParams--;
     } else {
-        mFromColor = {0.0f, 0.0f, 0.0f, 0.0f};
+        mFromColor = {0.0f, 0.0f, 0.0f, 1.0f};
     }
 
     if(numParams > 0){
         uint32_t color = stream->readUInt32();
-        mToColor = {((color >> 24) & 0xFF) / 0xFF, ((color >> 16) & 0xFF) / 0xFF, ((color >> 8) & 0xFF) / 0xFF, (color & 0xFF) / 0xFF};
+        mToColor = {((color >> 24) & 0xFF) / 255.0f, ((color >> 16) & 0xFF) / 255.0f, ((color >> 8) & 0xFF) / 255.0f, (color & 0xFF) / 255.0f};
         numParams--;
     } else {
         mToColor = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -234,7 +245,7 @@ bool Picture::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::
     for(int c = 0; c < 4; c++){
         if(numParams > 0){
             uint32_t color = stream->readUInt32();
-            mColors[c] = {((color >> 24) & 0xFF) / 0xFF, ((color >> 16) & 0xFF) / 0xFF, ((color >> 8) & 0xFF) / 0xFF, (color & 0xFF) / 0xFF};
+            mColors[c] = {((color >> 24) & 0xFF) / 255.0f, ((color >> 16) & 0xFF) / 255.0f, ((color >> 8) & 0xFF) / 255.0f, (color & 0xFF) / 255.0f};
             numParams--;
         } else {
             mColors[c] = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -258,32 +269,32 @@ bool Window::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::s
     mContentRect[3] = stream->readUInt16();
 
     for(std::size_t i = 0; i < 4; i++){
-        mTextures[i].Load(stream, timg);
+        mTextures[i] = std::make_shared<Image>();
+        mTextures[i]->Load(stream, timg);
     }
 
     mPalette.Load(stream, timg);
 
     uint8_t bits = stream->readUInt8();
     for(std::size_t i = 0; i < 4; i++){
-        mTextures[i].mMirror = ((bits >> (6 - (i * 2))) & 3);
+        mTextures[i]->mMirror = ((bits >> (6 - (i * 2))) & 3);
     }
 
     for(std::size_t i = 0; i < 4; i++){
         uint32_t color = stream->readUInt32();
-        mTextures[i].mColor = {((color >> 24) & 0xFF) / 0xFF, ((color >> 16) & 0xFF) / 0xFF, ((color >> 8) & 0xFF) / 0xFF, (color & 0xFF) / 0xFF};
+        mTextures[i]->mColor = {((color >> 24) & 0xFF) / 255.0f, ((color >> 16) & 0xFF) / 255.0f, ((color >> 8) & 0xFF) / 255.0f, (color & 0xFF) / 255.0f};
     }
 
     if(numParams > 0){
         std::cout << "Loading Context Texture at " << stream->tell() << std::endl;
-        mContentTexture.Load(stream, timg);
+        mContentTexture = std::make_shared<Image>();
+        mContentTexture->Load(stream, timg);
         numParams--;
-    } else {
-        mContentTexture.mTextureID = 0xFFFFFFFF;
     }
 
     if(numParams > 0){
         uint32_t color = stream->readUInt32();
-        mFromColor = {((color >> 24) & 0xFF) / 0xFF, ((color >> 16) & 0xFF) / 0xFF, ((color >> 8) & 0xFF) / 0xFF, (color & 0xFF) / 0xFF};
+        mFromColor = {((color >> 24) & 0xFF) / 255.0f, ((color >> 16) & 0xFF) / 255.0f, ((color >> 8) & 0xFF) / 255.0f, (color & 0xFF) / 255.0f};
         numParams--;
     } else {
         mFromColor = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -291,7 +302,7 @@ bool Window::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::s
 
     if(numParams > 0){
         uint32_t color = stream->readUInt32();
-        mToColor = {((color >> 24) & 0xFF) / 0xFF, ((color >> 16) & 0xFF) / 0xFF, ((color >> 8) & 0xFF) / 0xFF, (color & 0xFF) / 0xFF};
+        mToColor = {((color >> 24) & 0xFF) / 255.0f, ((color >> 16) & 0xFF) / 255.0f, ((color >> 8) & 0xFF) / 255.0f, (color & 0xFF) / 255.0f};
         numParams--;
     } else {
         mToColor = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -311,10 +322,10 @@ bool Textbox::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::
     mFont.Load(stream, timg);
 
     uint32_t color = stream->readUInt32();
-    mTopColor = {((color >> 24) & 0xFF) / 0xFF, ((color >> 16) & 0xFF) / 0xFF, ((color >> 8) & 0xFF) / 0xFF, (color & 0xFF) / 0xFF};
+    mTopColor = {((color >> 24) & 0xFF) / 255.0f, ((color >> 16) & 0xFF) / 255.0f, ((color >> 8) & 0xFF) / 255.0f, (color & 0xFF) / 255.0f};
     
     color = stream->readUInt32();
-    mBottomColor = {((color >> 24) & 0xFF) / 0xFF, ((color >> 16) & 0xFF) / 0xFF, ((color >> 8) & 0xFF) / 0xFF, (color & 0xFF) / 0xFF};
+    mBottomColor = {((color >> 24) & 0xFF) / 255.0f, ((color >> 16) & 0xFF) / 255.0f, ((color >> 8) & 0xFF) / 255.0f, (color & 0xFF) / 255.0f};
 
     uint8_t alignment = stream->readUInt8();
     mHAlign = (alignment >> 2 & 3);
@@ -337,7 +348,7 @@ bool Textbox::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::
 
     if(numParams > 0){
         uint32_t color = stream->readUInt32();
-        mFromColor = {((color >> 24) & 0xFF) / 0xFF, ((color >> 16) & 0xFF) / 0xFF, ((color >> 8) & 0xFF) / 0xFF, (color & 0xFF) / 0xFF};
+        mFromColor = {((color >> 24) & 0xFF) / 255.0f, ((color >> 16) & 0xFF) / 255.0f, ((color >> 8) & 0xFF) / 255.0f, (color & 0xFF) / 255.0f};
         numParams--;
     } else {
         mFromColor = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -345,7 +356,7 @@ bool Textbox::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::
 
     if(numParams > 0){
         uint32_t color = stream->readUInt32();
-        mToColor = {((color >> 24) & 0xFF) / 0xFF, ((color >> 16) & 0xFF) / 0xFF, ((color >> 8) & 0xFF) / 0xFF, (color & 0xFF) / 0xFF};
+        mToColor = {((color >> 24) & 0xFF) / 255.0f, ((color >> 16) & 0xFF) / 255.0f, ((color >> 8) & 0xFF) / 255.0f, (color & 0xFF) / 255.0f};
         numParams--;
     } else {
         mToColor = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -356,42 +367,60 @@ bool Textbox::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::
     return true;
 }
 
-void Window::Draw(){
+void Window::Draw(std::shared_ptr<Blo::Pane>& selection){
     // draw borders
 
-    if(mTextures[0].mTextureID != 0xFFFFFFFF && mTextures[1].mTextureID != 0xFFFFFFFF && mTextures[2].mTextureID != 0xFFFFFFFF && mTextures[3].mTextureID != 0xFFFFFFFF){
+    int vidx;
+
+    if(mTextures[0] != nullptr && mTextures[1] != nullptr && mTextures[2] != nullptr && mTextures[3] != nullptr){
         ImGui::SetCursorPosX(mRect[0]);
         ImGui::SetCursorPosY(mRect[1]);
-        ImGui::Image(static_cast<uintptr_t>(mTextures[0].mTextureID), {static_cast<float>(mTextures[0].mTexture.mWidth), static_cast<float>(mTextures[0].mTexture.mHeight)}, {0.0, 0.0}, {1.0, 1.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
-        
-        ImGui::SetCursorPosX((mRect[0] + mRect[2]) - mTextures[1].mTexture.mWidth);
+        vidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
+        ImGui::Image(static_cast<uintptr_t>(mTextures[0]->mTextureID), {static_cast<float>(mTextures[0]->mTexture.mWidth), static_cast<float>(mTextures[0]->mTexture.mHeight)}, {0.0, 0.0}, {1.0, 1.0});
+        ImGui::ShadeVertsLinearColorGradientKeepAlpha(ImGui::GetWindowDrawList(), vidx + 0, vidx + 2, {0.0, 0.0}, {0.0, 1.0}, ImColor(ImVec4(mFromColor.r, mFromColor.g, mFromColor.b, mFromColor.a)), ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a)));        
+
+        ImGui::SetCursorPosX((mRect[0] + mRect[2]) - mTextures[1]->mTexture.mWidth);
         ImGui::SetCursorPosY(mRect[1]);
-        ImGui::Image(static_cast<uintptr_t>(mTextures[1].mTextureID), {static_cast<float>(mTextures[1].mTexture.mWidth), static_cast<float>(mTextures[1].mTexture.mHeight)}, {1.0, 0.0}, {0.0, 1.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
-        
+        vidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
+        ImGui::Image(static_cast<uintptr_t>(mTextures[1]->mTextureID), {static_cast<float>(mTextures[1]->mTexture.mWidth), static_cast<float>(mTextures[1]->mTexture.mHeight)}, {1.0, 0.0}, {0.0, 1.0});
+        ImGui::ShadeVertsLinearColorGradientKeepAlpha(ImGui::GetWindowDrawList(), vidx + 0, vidx + 2, {0.0, 0.0}, {0.0, 1.0}, ImColor(ImVec4(mFromColor.r, mFromColor.g, mFromColor.b, mFromColor.a)), ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a)));        
+
         ImGui::SetCursorPosX(mRect[0]);
-        ImGui::SetCursorPosY((mRect[1] + mRect[3]) - mTextures[3].mTexture.mHeight);
-        ImGui::Image(static_cast<uintptr_t>(mTextures[2].mTextureID), {static_cast<float>(mTextures[2].mTexture.mWidth), static_cast<float>(mTextures[2].mTexture.mHeight)}, {0.0, 1.0}, {1.0, 0.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+        ImGui::SetCursorPosY((mRect[1] + mRect[3]) - mTextures[3]->mTexture.mHeight);
+        vidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
+        ImGui::Image(static_cast<uintptr_t>(mTextures[2]->mTextureID), {static_cast<float>(mTextures[2]->mTexture.mWidth), static_cast<float>(mTextures[2]->mTexture.mHeight)}, {0.0, 1.0}, {1.0, 0.0});
+        ImGui::ShadeVertsLinearColorGradientKeepAlpha(ImGui::GetWindowDrawList(), vidx + 0, vidx + 2, {0.0, 0.0}, {0.0, 1.0}, ImColor(ImVec4(mFromColor.r, mFromColor.g, mFromColor.b, mFromColor.a)), ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a)));
         
-        ImGui::SetCursorPosX((mRect[0] + mRect[2]) - mTextures[3].mTexture.mWidth);
-        ImGui::SetCursorPosY((mRect[1] + mRect[3]) - mTextures[3].mTexture.mHeight);
-        ImGui::Image(static_cast<uintptr_t>(mTextures[3].mTextureID), {static_cast<float>(mTextures[3].mTexture.mWidth), static_cast<float>(mTextures[3].mTexture.mHeight)}, {1.0, 1.0}, {0.0, 0.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+        ImGui::SetCursorPosX((mRect[0] + mRect[2]) - mTextures[3]->mTexture.mWidth);
+        ImGui::SetCursorPosY((mRect[1] + mRect[3]) - mTextures[3]->mTexture.mHeight);
+        vidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
+        ImGui::Image(static_cast<uintptr_t>(mTextures[3]->mTextureID), {static_cast<float>(mTextures[3]->mTexture.mWidth), static_cast<float>(mTextures[3]->mTexture.mHeight)}, {1.0, 1.0}, {0.0, 0.0});
+        ImGui::ShadeVertsLinearColorGradientKeepAlpha(ImGui::GetWindowDrawList(), vidx + 0, vidx + 2, {0.0, 0.0}, {0.0, 1.0}, ImColor(ImVec4(mFromColor.r, mFromColor.g, mFromColor.b, mFromColor.a)), ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a)));
 
         // edges
         ImGui::SetCursorPosY(mRect[1]);
-        ImGui::SetCursorPosX(mRect[0] + mTextures[1].mTexture.mWidth);
-        ImGui::Image(static_cast<uintptr_t>(mTextures[1].mTextureID), {static_cast<float>(mRect[2] - (mTextures[1].mTexture.mWidth*2)), static_cast<float>(mTextures[1].mTexture.mHeight)}, {0.9999, 0.0}, {1.0, 1.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+        ImGui::SetCursorPosX(mRect[0] + mTextures[1]->mTexture.mWidth);
+        vidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
+        ImGui::Image(static_cast<uintptr_t>(mTextures[1]->mTextureID), {static_cast<float>(mRect[2] - (mTextures[1]->mTexture.mWidth*2)), static_cast<float>(mTextures[1]->mTexture.mHeight)}, {0.9999, 0.0}, {1.0, 1.0});
+        ImGui::ShadeVertsLinearColorGradientKeepAlpha(ImGui::GetWindowDrawList(), vidx + 0, vidx + 2, {0.0, 0.0}, {0.0, 1.0}, ImColor(ImVec4(mFromColor.r, mFromColor.g, mFromColor.b, mFromColor.a)), ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a)));
 
-        ImGui::SetCursorPosY(mRect[1] + mTextures[1].mTexture.mHeight);
+        ImGui::SetCursorPosY(mRect[1] + mTextures[1]->mTexture.mHeight);
         ImGui::SetCursorPosX(mRect[0]);
-        ImGui::Image(static_cast<uintptr_t>(mTextures[1].mTextureID), {static_cast<float>(mTextures[2].mTexture.mWidth), static_cast<float>(mRect[3] - (mTextures[2].mTexture.mHeight * 2))}, {0.0, 0.9999}, {1.0, 1.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+        vidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
+        ImGui::Image(static_cast<uintptr_t>(mTextures[1]->mTextureID), {static_cast<float>(mTextures[2]->mTexture.mWidth), static_cast<float>(mRect[3] - (mTextures[2]->mTexture.mHeight * 2))}, {0.0, 0.9999}, {1.0, 1.0});
+        ImGui::ShadeVertsLinearColorGradientKeepAlpha(ImGui::GetWindowDrawList(), vidx + 0, vidx + 2, {0.0, 0.0}, {0.0, 1.0}, ImColor(ImVec4(mFromColor.r, mFromColor.g, mFromColor.b, mFromColor.a)), ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a)));
 
-        ImGui::SetCursorPosY(mRect[1] + mTextures[2].mTexture.mHeight);
-        ImGui::SetCursorPosX((mRect[0] + mRect[2]) - mTextures[2].mTexture.mWidth);
-        ImGui::Image(static_cast<uintptr_t>(mTextures[2].mTextureID), {static_cast<float>(mTextures[2].mTexture.mWidth), static_cast<float>(mRect[3] - (mTextures[2].mTexture.mHeight * 2))}, {1.0, 0.9999}, {0.0, 1.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+        ImGui::SetCursorPosY(mRect[1] + mTextures[2]->mTexture.mHeight);
+        ImGui::SetCursorPosX((mRect[0] + mRect[2]) - mTextures[2]->mTexture.mWidth);
+        vidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
+        ImGui::Image(static_cast<uintptr_t>(mTextures[2]->mTextureID), {static_cast<float>(mTextures[2]->mTexture.mWidth), static_cast<float>(mRect[3] - (mTextures[2]->mTexture.mHeight * 2))}, {1.0, 0.9999}, {0.0, 1.0});
+        ImGui::ShadeVertsLinearColorGradientKeepAlpha(ImGui::GetWindowDrawList(), vidx + 0, vidx + 2, {0.0, 0.0}, {0.0, 1.0}, ImColor(ImVec4(mFromColor.r, mFromColor.g, mFromColor.b, mFromColor.a)), ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a)));
 
-        ImGui::SetCursorPosY(mRect[1] + mRect[3] - mTextures[1].mTexture.mHeight);
-        ImGui::SetCursorPosX(mRect[0] + mTextures[1].mTexture.mWidth);
-        ImGui::Image(static_cast<uintptr_t>(mTextures[1].mTextureID), {static_cast<float>(mRect[2] - (mTextures[1].mTexture.mWidth*2)), static_cast<float>(mTextures[1].mTexture.mHeight)}, {0.9999, 1.0}, {1.0, 0.0}, ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha));
+        ImGui::SetCursorPosY(mRect[1] + mRect[3] - mTextures[1]->mTexture.mHeight);
+        ImGui::SetCursorPosX(mRect[0] + mTextures[1]->mTexture.mWidth);
+        vidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
+        ImGui::Image(static_cast<uintptr_t>(mTextures[1]->mTextureID), {static_cast<float>(mRect[2] - (mTextures[1]->mTexture.mWidth*2)), static_cast<float>(mTextures[1]->mTexture.mHeight)}, {0.9999, 1.0}, {1.0, 0.0});
+        ImGui::ShadeVertsLinearColorGradientKeepAlpha(ImGui::GetWindowDrawList(), vidx + 0, vidx + 2, {0.0, 0.0}, {0.0, 1.0}, ImColor(ImVec4(mFromColor.r, mFromColor.g, mFromColor.b, mFromColor.a)), ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a)));
 
     }
 
@@ -400,71 +429,109 @@ void Window::Draw(){
     ImVec2 max = { mContentRect[2] + min.x, mContentRect[3] + min.y};
 
     // draw contents
-    if(mContentTexture.mTextureID != 0xFFFFFFFF){
+    if(mContentTexture != nullptr && mContentTexture->mTextureID != 0xFFFFFFFF){
         ImGui::SetCursorPosX(mContentRect[0]);
         ImGui::SetCursorPosY(mContentRect[1]);
 
-        float hf = mContentRect[2] / mContentTexture.mTexture.mWidth;
-        float vf = mContentRect[3] / mContentTexture.mTexture.mHeight; 
+        float hf = mContentRect[2] / mContentTexture->mTexture.mWidth;
+        float vf = mContentRect[3] / mContentTexture->mTexture.mHeight; 
 
-        ImGui::Image(static_cast<uintptr_t>(mContentTexture.mTextureID), {static_cast<float>(mContentRect[2]), static_cast<float>(mContentRect[3])}, {0.0, 0.0}, {hf, vf});
+        ImGui::Image(static_cast<uintptr_t>(mContentTexture->mTextureID), {static_cast<float>(mContentRect[2]), static_cast<float>(mContentRect[3])}, {0.0, 0.0}, {hf, vf});
     } else {
-        ImGui::GetWindowDrawList()->AddRectFilled(min, max, ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha)));
+        ImGui::GetWindowDrawList()->AddRectFilled(min, max, ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a)));
     }
+
+    for(auto child: mChildren){
+        child->Draw(selection);
+    }
+
 }
 
-void Picture::Draw(){
-    ImGui::SetCursorPosX(mRect[0]);
-    ImGui::SetCursorPosY(mRect[1]);
-    
-    if(mVisible){
+void Picture::Draw(std::shared_ptr<Blo::Pane>& selection){
+    if(mParent != nullptr){
+        ImGui::SetCursorPosX(mParent->mRect[0] + mRect[0]);
+        ImGui::SetCursorPosY(mParent->mRect[1] + mRect[1]);
+    } else {
+        ImGui::SetCursorPosX(mRect[0]);
+        ImGui::SetCursorPosY(mRect[1]);
+    }
+
+    if(mVisible && mTextures[0] != nullptr && mTextures[0]->mTextureID != 0xFFFFFFFF){
         ImVec2 UV0 (0.0f, 0.0f);
         ImVec2 UV1 (1.0f, 1.0f);
         
         if(mMirror & MirrorMode::X){
-            UV0.x = 1.0f;
-            UV1.x = 0.0f;
+            ImSwap(UV0.x, UV1.x);
         }
 
         if(mMirror & MirrorMode::Y){
-            UV0.y = 1.0f;
-            UV1.y = 0.0f;
+            ImSwap(UV0.y, UV1.y);
         }
         
         int vidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
-        ImGui::GetWindowDrawList()->AddImageQuad(
-            static_cast<uintptr_t>(mTexutres[0].mTextureID),
-            {ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y},
-            {ImGui::GetCursorScreenPos().x + mTexutres[0].mTexture.mWidth, ImGui::GetCursorScreenPos().y},
-            {ImGui::GetCursorScreenPos().x + mTexutres[0].mTexture.mWidth, ImGui::GetCursorScreenPos().y + mTexutres[0].mTexture.mHeight},
-            {ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y + mTexutres[0].mTexture.mHeight},
-            UV0,
-            {UV1.x, UV0.y},
-            UV1,
-            {UV0.x, UV1.y},
-            ImColor(mColors[1].r, mColors[1].g, mColors[1].b, mColors[1].a)
-        );
-        int evidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
+        
+        float a = ImGui::GetStyle().Alpha;
+        if(!mAccumulateAlpha){
+            if(mInheritAlpha){
+                ImGui::GetStyle().Alpha = static_cast<float>(mParent->Alpha()) / 255.0f;
+            } else {
+                ImGui::GetStyle().Alpha = static_cast<float>(mParent->Alpha()) / 255.0f;
+            }
+        } else {
+            ImGui::GetStyle().Alpha = (static_cast<float>(mAplha) + static_cast<float>(mParent->Alpha())) / 255.0f;
+        }
+        ImGui::Image(static_cast<uintptr_t>(mTextures[0]->mTextureID), {mRect[2] , mRect[3]}, UV0, UV1, ImVec4(mColors[0].r, mColors[0].g, mColors[0].b, mColors[0].a));
+        ImGui::GetStyle().Alpha = a;
 
-        ImGui::ShadeVertsLinearColorGradientKeepAlpha(ImGui::GetWindowDrawList(), vidx + 0, vidx + 2, {0.0, 0.0}, {0.0, 1.0}, ImColor(ImVec4(mFromColor.r, mFromColor.g, mFromColor.b, mFromColor.a)), ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a)));
+        if(ImGui::IsItemClicked()){
+            selection = shared_from_this();
+        }
+
+        ImGui::ShadeVertsLinearColorGradientKeepAlpha(
+            ImGui::GetWindowDrawList(), 
+            vidx + 0, 
+            vidx + 2, 
+            {0.0, 0.0}, 
+            {0.0, 1.0}, 
+            ImColor(ImVec4(mFromColor.r, mFromColor.g, mFromColor.b, mFromColor.a)), 
+            ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a))
+        );
     }
+
+    for(auto child: mChildren){
+        child->Draw(selection);
+    }
+
 }
 
-void Pane::Draw(){
+void Pane::Draw(std::shared_ptr<Blo::Pane>& selection){
+    uint32_t id = LGenUtility::SwapEndian<uint32_t>(mID);
+    char drawID[sizeof(uint32_t)] = {0};
+    std::memcpy(drawID, &id, sizeof(uint32_t));
+
     ImGui::SetCursorPosX(mRect[0]);
     ImGui::SetCursorPosY(mRect[1]);
-    ImGui::BeginChild(std::format("Pane##pane{}", mID).c_str(), ImVec2(mRect[2], mRect[3]), ImGuiChildFlags_Border);
 
-    ImGui::PushID(std::format("##PreviewPane{}", mID).c_str());
-    for(auto child: mChildren){
-        child->Draw();
+    if(mParent->mRect[2] != mRect[2] && mParent->mRect[3] != mRect[3]){
+        ImGui::BeginChild(std::format("Pane##pane{}", mID).c_str(), ImVec2(mRect[2], mRect[3]), ImGuiChildFlags_Border);
+        ImGui::Text("Pane %4s", drawID);
+        ImGui::PushID(std::format("##PreviewPane{}", mID).c_str());
+        for(auto child: mChildren){
+            child->Draw(selection);
+        }
+        ImGui::PopID();
+        ImGui::EndChild();
+    } else {
+        ImGui::Text("Pane %4s", drawID);
+        ImGui::PushID(std::format("##PreviewPane{}", mID).c_str());
+        for(auto child: mChildren){
+            child->Draw(selection);
+        }
+        ImGui::PopID();
     }
-    ImGui::PopID();
-
-    ImGui::EndChild();
 }
 
-void Textbox::Draw(){
+void Textbox::Draw(std::shared_ptr<Blo::Pane>& selection){
     ImGui::SetCursorPosX(mRect[0]);
     ImGui::SetCursorPosY(mRect[1]);
 
@@ -474,27 +541,24 @@ void Textbox::Draw(){
 
     ImGui::PushID(std::format("##PreviewPane{}", mID).c_str());
     for(auto child: mChildren){
-        child->Draw();
+        child->Draw(selection);
     }
     ImGui::PopID();
-
-    ImGui::EndChild();
 }
 
-void Screen::Draw(){
+void Screen::Draw(std::shared_ptr<Blo::Pane>& selection){
     ImGui::BeginChild(std::format("Screen##screen{}", mID).c_str(), ImVec2(mRect[2], mRect[3]), ImGuiChildFlags_Border);
 
     ImGui::PushID(std::format("##PreviewScreen{}", mID).c_str());
     for(auto child: mChildren){
-        child->Draw();
+        child->Draw(selection);
     }
     ImGui::PopID();
 
     ImGui::EndChild();
 }
 
-void Screen::DrawHierarchy(std::shared_ptr<Blo::Pane> selection){
-    ImGui::BeginChild("##bloViewHierarchy");
+void Screen::DrawHierarchy(std::shared_ptr<Blo::Pane>& selection){
     ImGui::Text("Screen Elements");
 
     uint32_t id = LGenUtility::SwapEndian<uint32_t>(mID);
@@ -502,6 +566,7 @@ void Screen::DrawHierarchy(std::shared_ptr<Blo::Pane> selection){
     std::memcpy(drawID, &id, sizeof(uint32_t));
 
     ImGuiTreeNodeFlags flags = mChildren.size() == 0 ? ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_SpanFullWidth : ImGuiTreeNodeFlags_None;
+    if(shared_from_this() == selection) { flags |= ImGuiTreeNodeFlags_Selected; }
     if(ImGui::TreeNodeEx(std::format("{}##Hierarchy{:x}", drawID, mID).c_str(), flags, "Screen %4s", drawID)){
         if(ImGui::IsItemClicked()){
             selection = shared_from_this();
@@ -512,11 +577,9 @@ void Screen::DrawHierarchy(std::shared_ptr<Blo::Pane> selection){
         }
         ImGui::TreePop();
     }
-    
-    ImGui::EndChild();
 }
 
-void Pane::DrawHierarchy(std::shared_ptr<Blo::Pane> selection){
+void Pane::DrawHierarchy(std::shared_ptr<Blo::Pane>& selection){
     uint32_t id = LGenUtility::SwapEndian<uint32_t>(mID);
     char drawID[sizeof(uint32_t)] = {0};
     std::memcpy(drawID, &id, sizeof(uint32_t));
@@ -528,6 +591,7 @@ void Pane::DrawHierarchy(std::shared_ptr<Blo::Pane> selection){
     ImGui::SameLine();
 
     ImGuiTreeNodeFlags flags = mChildren.size() == 0 ? ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_SpanFullWidth : ImGuiTreeNodeFlags_None;
+    if(shared_from_this() == selection) { flags |= ImGuiTreeNodeFlags_Selected; }
     if(ImGui::TreeNodeEx(std::format("{}##Hierarchy{:x}", drawID, mID).c_str(), flags, "%4s", drawID)){
         if(ImGui::IsItemClicked()){
             selection = shared_from_this();
@@ -541,7 +605,7 @@ void Pane::DrawHierarchy(std::shared_ptr<Blo::Pane> selection){
     }
 }
 
-void Picture::DrawHierarchy(std::shared_ptr<Blo::Pane> selection){
+void Picture::DrawHierarchy(std::shared_ptr<Blo::Pane>& selection){
     uint32_t id = LGenUtility::SwapEndian<uint32_t>(mID);
     char drawID[sizeof(uint32_t)] = {0};
     std::memcpy(drawID, &id, sizeof(uint32_t));
@@ -553,6 +617,7 @@ void Picture::DrawHierarchy(std::shared_ptr<Blo::Pane> selection){
     ImGui::SameLine();
 
     ImGuiTreeNodeFlags flags = mChildren.size() == 0 ? ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_SpanFullWidth : ImGuiTreeNodeFlags_None;
+    if(shared_from_this() == selection) { flags |= ImGuiTreeNodeFlags_Selected; }
     if(ImGui::TreeNodeEx(std::format("{}##Hierarchy{:x}", drawID, mID).c_str(), flags, "%4s", drawID)){
         if(ImGui::IsItemClicked()){
             selection = shared_from_this();
@@ -566,7 +631,7 @@ void Picture::DrawHierarchy(std::shared_ptr<Blo::Pane> selection){
     }
 }
 
-void Window::DrawHierarchy(std::shared_ptr<Blo::Pane> selection){
+void Window::DrawHierarchy(std::shared_ptr<Blo::Pane>& selection){
     uint32_t id = LGenUtility::SwapEndian<uint32_t>(mID);
     char drawID[sizeof(uint32_t)] = {0};
     std::memcpy(drawID, &id, sizeof(uint32_t));
@@ -578,6 +643,7 @@ void Window::DrawHierarchy(std::shared_ptr<Blo::Pane> selection){
     ImGui::SameLine();
 
     ImGuiTreeNodeFlags flags = mChildren.size() == 0 ? ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_SpanFullWidth : ImGuiTreeNodeFlags_None;
+    if(shared_from_this() == selection) { flags |= ImGuiTreeNodeFlags_Selected; }
     if(ImGui::TreeNodeEx(std::format("{}##Hierarchy{:x}", drawID, mID).c_str(), flags)){
         if(ImGui::IsItemClicked()){
             selection = shared_from_this();
@@ -591,7 +657,7 @@ void Window::DrawHierarchy(std::shared_ptr<Blo::Pane> selection){
     }
 }
 
-void Textbox::DrawHierarchy(std::shared_ptr<Blo::Pane> selection) {
+void Textbox::DrawHierarchy(std::shared_ptr<Blo::Pane>& selection) {
     uint32_t id = LGenUtility::SwapEndian<uint32_t>(mID);
     char drawID[sizeof(uint32_t)] = {0};
     std::memcpy(drawID, &id, sizeof(uint32_t));
@@ -603,6 +669,7 @@ void Textbox::DrawHierarchy(std::shared_ptr<Blo::Pane> selection) {
     ImGui::SameLine();
 
     ImGuiTreeNodeFlags flags = mChildren.size() == 0 ? ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_SpanFullWidth : ImGuiTreeNodeFlags_None;
+    if(shared_from_this() == selection) { flags |= ImGuiTreeNodeFlags_Selected; }
     if(ImGui::TreeNodeEx(std::format("{}##Hierarchy{:x}", drawID, mID).c_str(), flags)){
         if(ImGui::IsItemClicked()){
             selection = shared_from_this();

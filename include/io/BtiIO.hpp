@@ -61,6 +61,6 @@ public:
     void Save(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData);
 
     Bti(){}
-    ~Bti(){ if(mImageData != nullptr) delete[] mImageData; }
+    ~Bti(){ if(mImageData != nullptr){ delete[] mImageData; } }
 
 };
