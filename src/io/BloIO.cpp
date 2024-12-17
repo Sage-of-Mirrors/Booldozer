@@ -407,7 +407,7 @@ void Window::Draw(){
         float hf = mContentRect[2] / mContentTexture.mTexture.mWidth;
         float vf = mContentRect[3] / mContentTexture.mTexture.mHeight; 
 
-        ImGui::Image(static_cast<uintptr_t>(mContentTexture.mTextureID), {mContentRect[2], mContentRect[3]}, {0.0, 0.0}, {hf, vf});
+        ImGui::Image(static_cast<uintptr_t>(mContentTexture.mTextureID), {static_cast<float>(mContentRect[2]), static_cast<float>(mContentRect[3])}, {0.0, 0.0}, {hf, vf});
     } else {
         ImGui::GetWindowDrawList()->AddRectFilled(min, max, ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mAplha)));
     }
