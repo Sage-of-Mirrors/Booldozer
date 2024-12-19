@@ -105,14 +105,13 @@ namespace Blo {
         uint8_t mCullMode;
         Anchor mAnchor;
         float mAngle;
-        uint8_t mAplha;
         bool mInheritAlpha;
         bool mConnectParent;
 
         uint8_t mAccumulateAlpha;
 
     public:
-        uint8_t Alpha() { return mAplha; }
+        uint8_t mAlpha;
         ElementType Type() { return mType; }
         int16_t mRect[4];
         virtual bool Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg);

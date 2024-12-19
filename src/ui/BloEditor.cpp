@@ -128,6 +128,7 @@ void Render(){
         if(ScreenLoaded != nullptr){
             ScreenLoaded->Draw(DraggingNode);
             if(DraggingNode != nullptr && DragStart.x == 0 && DragStart.y == 0){
+                SelectedNode = DraggingNode;
                 DragStart = {DraggingNode->mRect[0], DraggingNode->mRect[1]};
             }
             ImGui::SameLine();
@@ -140,6 +141,8 @@ void Render(){
             if(SelectedNode != nullptr){
                 if(SelectedNode->Type() == Blo::ElementType::Picture){
                     ImGui::Text(std::format("Texture Path {}", std::reinterpret_pointer_cast<Blo::Picture>(SelectedNode)->GetTexture()->mPath).c_str());
+                } else if(SelectedNode->Type() == Blo::ElementType::Picture){
+                    
                 }
             }
             ImGui::EndChild();

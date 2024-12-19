@@ -175,10 +175,10 @@ bool Pane::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::sha
     }
 
     if(numParams > 0){
-        mAplha = stream->readUInt8();
+        mAlpha = stream->readUInt8();
         numParams--;
     } else {
-        mAplha = 0xFF;
+        mAlpha = 0xFF;
     }
 
     if(numParams > 0){
@@ -371,56 +371,49 @@ void Window::Draw(std::shared_ptr<Blo::Pane>& selection){
     // draw borders
 
     int vidx;
+    bool clicked = false;
 
     if(mTextures[0] != nullptr && mTextures[1] != nullptr && mTextures[2] != nullptr && mTextures[3] != nullptr){
         ImGui::SetCursorPosX(mRect[0]);
         ImGui::SetCursorPosY(mRect[1]);
-        vidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
-        ImGui::Image(static_cast<uintptr_t>(mTextures[0]->mTextureID), {static_cast<float>(mTextures[0]->mTexture.mWidth), static_cast<float>(mTextures[0]->mTexture.mHeight)}, {0.0, 0.0}, {1.0, 1.0});
-        ImGui::ShadeVertsLinearColorGradientKeepAlpha(ImGui::GetWindowDrawList(), vidx + 0, vidx + 2, {0.0, 0.0}, {0.0, 1.0}, ImColor(ImVec4(mFromColor.r, mFromColor.g, mFromColor.b, mFromColor.a)), ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a)));        
+        ImGui::Image(static_cast<uintptr_t>(mTextures[0]->mTextureID), {static_cast<float>(mTextures[0]->mTexture.mWidth), static_cast<float>(mTextures[0]->mTexture.mHeight)}, {0.0, 0.0}, {1.0, 1.0}, ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a * (mAlpha / 255.0f))));
+        clicked |= ImGui::IsItemClicked(0);
 
         ImGui::SetCursorPosX((mRect[0] + mRect[2]) - mTextures[1]->mTexture.mWidth);
         ImGui::SetCursorPosY(mRect[1]);
-        vidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
-        ImGui::Image(static_cast<uintptr_t>(mTextures[1]->mTextureID), {static_cast<float>(mTextures[1]->mTexture.mWidth), static_cast<float>(mTextures[1]->mTexture.mHeight)}, {1.0, 0.0}, {0.0, 1.0});
-        ImGui::ShadeVertsLinearColorGradientKeepAlpha(ImGui::GetWindowDrawList(), vidx + 0, vidx + 2, {0.0, 0.0}, {0.0, 1.0}, ImColor(ImVec4(mFromColor.r, mFromColor.g, mFromColor.b, mFromColor.a)), ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a)));        
+        ImGui::Image(static_cast<uintptr_t>(mTextures[1]->mTextureID), {static_cast<float>(mTextures[1]->mTexture.mWidth), static_cast<float>(mTextures[1]->mTexture.mHeight)}, {1.0, 0.0}, {0.0, 1.0}, ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a * (mAlpha / 255.0f))));
+        clicked |= ImGui::IsItemClicked(0);
 
         ImGui::SetCursorPosX(mRect[0]);
         ImGui::SetCursorPosY((mRect[1] + mRect[3]) - mTextures[3]->mTexture.mHeight);
-        vidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
-        ImGui::Image(static_cast<uintptr_t>(mTextures[2]->mTextureID), {static_cast<float>(mTextures[2]->mTexture.mWidth), static_cast<float>(mTextures[2]->mTexture.mHeight)}, {0.0, 1.0}, {1.0, 0.0});
-        ImGui::ShadeVertsLinearColorGradientKeepAlpha(ImGui::GetWindowDrawList(), vidx + 0, vidx + 2, {0.0, 0.0}, {0.0, 1.0}, ImColor(ImVec4(mFromColor.r, mFromColor.g, mFromColor.b, mFromColor.a)), ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a)));
-        
+        ImGui::Image(static_cast<uintptr_t>(mTextures[2]->mTextureID), {static_cast<float>(mTextures[2]->mTexture.mWidth), static_cast<float>(mTextures[2]->mTexture.mHeight)}, {0.0, 1.0}, {1.0, 0.0}, ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a * (mAlpha / 255.0f))));
+        clicked |= ImGui::IsItemClicked(0);
+
         ImGui::SetCursorPosX((mRect[0] + mRect[2]) - mTextures[3]->mTexture.mWidth);
         ImGui::SetCursorPosY((mRect[1] + mRect[3]) - mTextures[3]->mTexture.mHeight);
-        vidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
-        ImGui::Image(static_cast<uintptr_t>(mTextures[3]->mTextureID), {static_cast<float>(mTextures[3]->mTexture.mWidth), static_cast<float>(mTextures[3]->mTexture.mHeight)}, {1.0, 1.0}, {0.0, 0.0});
-        ImGui::ShadeVertsLinearColorGradientKeepAlpha(ImGui::GetWindowDrawList(), vidx + 0, vidx + 2, {0.0, 0.0}, {0.0, 1.0}, ImColor(ImVec4(mFromColor.r, mFromColor.g, mFromColor.b, mFromColor.a)), ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a)));
+        ImGui::Image(static_cast<uintptr_t>(mTextures[3]->mTextureID), {static_cast<float>(mTextures[3]->mTexture.mWidth), static_cast<float>(mTextures[3]->mTexture.mHeight)}, {1.0, 1.0}, {0.0, 0.0}, ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a * (mAlpha / 255.0f))));
+        clicked |= ImGui::IsItemClicked(0);
 
         // edges
         ImGui::SetCursorPosY(mRect[1]);
         ImGui::SetCursorPosX(mRect[0] + mTextures[1]->mTexture.mWidth);
-        vidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
-        ImGui::Image(static_cast<uintptr_t>(mTextures[1]->mTextureID), {static_cast<float>(mRect[2] - (mTextures[1]->mTexture.mWidth*2)), static_cast<float>(mTextures[1]->mTexture.mHeight)}, {0.9999, 0.0}, {1.0, 1.0});
-        ImGui::ShadeVertsLinearColorGradientKeepAlpha(ImGui::GetWindowDrawList(), vidx + 0, vidx + 2, {0.0, 0.0}, {0.0, 1.0}, ImColor(ImVec4(mFromColor.r, mFromColor.g, mFromColor.b, mFromColor.a)), ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a)));
+        ImGui::Image(static_cast<uintptr_t>(mTextures[1]->mTextureID), {static_cast<float>(mRect[2] - (mTextures[1]->mTexture.mWidth*2)), static_cast<float>(mTextures[1]->mTexture.mHeight)}, {0.9999, 0.0}, {1.0, 1.0}, ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a * (mAlpha / 255.0f))));
+        clicked |= ImGui::IsItemClicked(0);
 
         ImGui::SetCursorPosY(mRect[1] + mTextures[1]->mTexture.mHeight);
         ImGui::SetCursorPosX(mRect[0]);
-        vidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
-        ImGui::Image(static_cast<uintptr_t>(mTextures[1]->mTextureID), {static_cast<float>(mTextures[2]->mTexture.mWidth), static_cast<float>(mRect[3] - (mTextures[2]->mTexture.mHeight * 2))}, {0.0, 0.9999}, {1.0, 1.0});
-        ImGui::ShadeVertsLinearColorGradientKeepAlpha(ImGui::GetWindowDrawList(), vidx + 0, vidx + 2, {0.0, 0.0}, {0.0, 1.0}, ImColor(ImVec4(mFromColor.r, mFromColor.g, mFromColor.b, mFromColor.a)), ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a)));
+        ImGui::Image(static_cast<uintptr_t>(mTextures[1]->mTextureID), {static_cast<float>(mTextures[3]->mTexture.mWidth), static_cast<float>(mRect[3] - (mTextures[2]->mTexture.mHeight * 2))}, {0.0, 0.9999}, {1.0, 1.0}, ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a * (mAlpha / 255.0f))));
+        clicked |= ImGui::IsItemClicked(0);
 
         ImGui::SetCursorPosY(mRect[1] + mTextures[2]->mTexture.mHeight);
         ImGui::SetCursorPosX((mRect[0] + mRect[2]) - mTextures[2]->mTexture.mWidth);
-        vidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
-        ImGui::Image(static_cast<uintptr_t>(mTextures[2]->mTextureID), {static_cast<float>(mTextures[2]->mTexture.mWidth), static_cast<float>(mRect[3] - (mTextures[2]->mTexture.mHeight * 2))}, {1.0, 0.9999}, {0.0, 1.0});
-        ImGui::ShadeVertsLinearColorGradientKeepAlpha(ImGui::GetWindowDrawList(), vidx + 0, vidx + 2, {0.0, 0.0}, {0.0, 1.0}, ImColor(ImVec4(mFromColor.r, mFromColor.g, mFromColor.b, mFromColor.a)), ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a)));
+        ImGui::Image(static_cast<uintptr_t>(mTextures[2]->mTextureID), {static_cast<float>(mTextures[3]->mTexture.mWidth), static_cast<float>(mRect[3] - (mTextures[2]->mTexture.mHeight * 2))}, {1.0, 0.9999}, {0.0, 1.0}, ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a * (mAlpha / 255.0f))));
+        clicked |= ImGui::IsItemClicked(0);
 
         ImGui::SetCursorPosY(mRect[1] + mRect[3] - mTextures[1]->mTexture.mHeight);
         ImGui::SetCursorPosX(mRect[0] + mTextures[1]->mTexture.mWidth);
-        vidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
-        ImGui::Image(static_cast<uintptr_t>(mTextures[1]->mTextureID), {static_cast<float>(mRect[2] - (mTextures[1]->mTexture.mWidth*2)), static_cast<float>(mTextures[1]->mTexture.mHeight)}, {0.9999, 1.0}, {1.0, 0.0});
-        ImGui::ShadeVertsLinearColorGradientKeepAlpha(ImGui::GetWindowDrawList(), vidx + 0, vidx + 2, {0.0, 0.0}, {0.0, 1.0}, ImColor(ImVec4(mFromColor.r, mFromColor.g, mFromColor.b, mFromColor.a)), ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a)));
+        ImGui::Image(static_cast<uintptr_t>(mTextures[1]->mTextureID), {static_cast<float>(mRect[2] - (mTextures[1]->mTexture.mWidth*2)), static_cast<float>(mTextures[1]->mTexture.mHeight)}, {0.9999, 1.0}, {1.0, 0.0}, ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a * (mAlpha / 255.0f))));
+        clicked |= ImGui::IsItemClicked(0);
 
     }
 
@@ -437,13 +430,20 @@ void Window::Draw(std::shared_ptr<Blo::Pane>& selection){
         float vf = mContentRect[3] / mContentTexture->mTexture.mHeight; 
 
         ImGui::Image(static_cast<uintptr_t>(mContentTexture->mTextureID), {static_cast<float>(mContentRect[2]), static_cast<float>(mContentRect[3])}, {0.0, 0.0}, {hf, vf});
+        clicked |= ImGui::IsItemClicked(0);
     } else {
-        ImGui::GetWindowDrawList()->AddRectFilled(min, max, ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a)));
+        ImGui::GetWindowDrawList()->AddRectFilled(min, max, ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a * (mAlpha / 255.0f))));
+        clicked |= (ImGui::IsMouseHoveringRect(min, max) && ImGui::IsMouseClicked(0));
+    }
+
+    if(clicked){
+        selection = shared_from_this();
     }
 
     for(auto child: mChildren){
         child->Draw(selection);
     }
+
 
 }
 
@@ -460,6 +460,15 @@ void Picture::Draw(std::shared_ptr<Blo::Pane>& selection){
         ImVec2 UV0 (0.0f, 0.0f);
         ImVec2 UV1 (1.0f, 1.0f);
         
+
+        if(mRect[2] > mTextures[0]->mTexture.mWidth){
+            UV1.x = mRect[2] / mTextures[0]->mTexture.mWidth;
+        }
+
+        if(mRect[3] > mTextures[0]->mTexture.mHeight){
+            UV1.y = mRect[3] / mTextures[0]->mTexture.mHeight;
+        }
+
         if(mMirror & MirrorMode::X){
             ImSwap(UV0.x, UV1.x);
         }
@@ -467,35 +476,12 @@ void Picture::Draw(std::shared_ptr<Blo::Pane>& selection){
         if(mMirror & MirrorMode::Y){
             ImSwap(UV0.y, UV1.y);
         }
-        
-        int vidx = ImGui::GetWindowDrawList()->VtxBuffer.Size;
-        
-        float a = ImGui::GetStyle().Alpha;
-        if(!mAccumulateAlpha){
-            if(mInheritAlpha){
-                ImGui::GetStyle().Alpha = static_cast<float>(mParent->Alpha()) / 255.0f;
-            } else {
-                ImGui::GetStyle().Alpha = static_cast<float>(mParent->Alpha()) / 255.0f;
-            }
-        } else {
-            ImGui::GetStyle().Alpha = (static_cast<float>(mAplha) + static_cast<float>(mParent->Alpha())) / 255.0f;
-        }
-        ImGui::Image(static_cast<uintptr_t>(mTextures[0]->mTextureID), {mRect[2] , mRect[3]}, UV0, UV1, ImVec4(mColors[0].r, mColors[0].g, mColors[0].b, mColors[0].a));
-        ImGui::GetStyle().Alpha = a;
+
+        ImGui::Image(static_cast<uintptr_t>(mTextures[0]->mTextureID), {mRect[2] , mRect[3]}, UV0, UV1, ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a * (mAlpha / 255.0f)));
 
         if(ImGui::IsItemClicked()){
             selection = shared_from_this();
         }
-
-        ImGui::ShadeVertsLinearColorGradientKeepAlpha(
-            ImGui::GetWindowDrawList(), 
-            vidx + 0, 
-            vidx + 2, 
-            {0.0, 0.0}, 
-            {0.0, 1.0}, 
-            ImColor(ImVec4(mFromColor.r, mFromColor.g, mFromColor.b, mFromColor.a)), 
-            ImColor(ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a))
-        );
     }
 
     for(auto child: mChildren){
