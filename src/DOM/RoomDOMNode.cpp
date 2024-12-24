@@ -729,6 +729,7 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 		
 		std::vector<uint8_t> imgData(x*y*n);
 		std::memcpy(imgData.data(), img, x*y*n);
+		stbi_image_free(img);
 
 		auto fileData = GCResourceManager.mGameArchive->GetFile(std::format("/kawano/roomname/{}", LResUtility::GetNameMap("MapTitlecards")["titlecards"][mRoomNumber].get<std::string>()));
 		bStream::CMemoryStream file(0x20 + (x * y), bStream::Endianess::Big, bStream::OpenMode::Out);

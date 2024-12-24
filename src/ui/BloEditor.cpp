@@ -1,29 +1,37 @@
 #include "ResUtil.hpp"
 #include "Options.hpp"
 #include "ui/BloEditor.hpp"
+#include "UIUtil.hpp"
 #include "imgui.h"
 #include <map>
 #include <format>
+#include "ImGuiFileDialog/ImGuiFileDialog.h"
+#include "io/BtiIO.hpp"
+#include "stb_image.h"
 
 namespace BloEditor {
 
-std::map<std::string, std::tuple<std::filesystem::path, std::string, std::string>> Menus {
-    { "Save Screen", {"Kawano/ENGLISH/res_save.szp", "save_2.blo", "timg"}},
-    { "File Select", {"Kawano/ENGLISH/res_slct.szp", "blo/file_select_1.blo", "timg"}},
-    { "Options Menu", {"Kawano/ENGLISH/res_slct.szp", "blo/option_1.blo", "timg"}},
-    { "Area Complete 0", {"Kawano/ENGLISH/res_acnt.szp", "blo/adjustment_0.blo", "timg"}},
-    { "Area Complete 1", {"Kawano/ENGLISH/res_acnt.szp", "blo/adjustment_1.blo", "timg"}},
-    { "Area Complete 2", {"Kawano/ENGLISH/res_acnt.szp", "blo/adjustment_2.blo", "timg"}},
-    { "Controls Explantion", {"Kawano/ENGLISH/res_cont.szp", "controller_2.blo", "timg"}},
-    { "GBH Treasure", {"game", "kawano/list/blo/sgb_1.blo", "kawano/base/timg"}},
-    { "Map Screen", {"game", "kawano/base/blo/map_1.blo", "kawano/base/timg"}},
-    { "GBH Scan Menu", {"game", "kawano/base/blo/gbf_1.blo", "kawano/base/timg"}},
-    { "GBH Border Menu", {"game", "kawano/base/blo/gbf_0.blo", "kawano/base/timg"}},
-    { "Hidden Mansion Star", {"game", "kawano/base/blo/star_1.blo", "kawano/base/timg"}}
+std::map<std::string, std::tuple<std::filesystem::path, std::string, std::string, std::string>> Menus {
+    { "Save Screen", {"Kawano/ENGLISH/res_save.szp", "save_2.blo", "timg", "font"}},
+    { "File Select", {"Kawano/ENGLISH/res_slct.szp", "blo/file_select_1.blo", "timg", "font"}},
+    { "New Game", {"Kawano/ENGLISH/res_slct.szp", "blo/file_select_2.blo", "timg", "font"}},
+    { "Options Menu", {"Kawano/ENGLISH/res_slct.szp", "blo/option_1.blo", "timg", "font"}},
+    { "Area Complete 0", {"Kawano/ENGLISH/res_acnt.szp", "blo/adjustment_0.blo", "timg", "font"}},
+    { "Area Complete 1", {"Kawano/ENGLISH/res_acnt.szp", "blo/adjustment_1.blo", "timg", "font"}},
+    { "Area Complete 2", {"Kawano/ENGLISH/res_acnt.szp", "blo/adjustment_2.blo", "timg", "font"}},
+    { "Controls Explantion", {"Kawano/ENGLISH/res_cont.szp", "controller_2.blo", "timg", "font"}},
+    { "GBH Treasure", {"game", "kawano/list/blo/sgb_1.blo", "kawano/base/timg", "kawano/base/font"}},
+    { "Map Screen", {"game", "kawano/base/blo/map_1.blo", "kawano/base/timg", "kawano/base/font"}},
+    { "GBH Scan Menu", {"game", "kawano/base/blo/gbf_1.blo", "kawano/base/timg", "kawano/base/font"}},
+    { "GBH Border Menu", {"game", "kawano/base/blo/gbf_0.blo", "kawano/base/timg", "kawano/base/font"}},
+    { "Hidden Mansion Star", {"game", "kawano/base/blo/star_1.blo", "kawano/base/timg", "kawano/base/font"}}
 };
 
 bool BloEditorOpen { false };
 std::string MenuSelected = "Save Screen";
+std::shared_ptr<Archive::Rarc> MenuArc { nullptr };
+std::shared_ptr<Archive::Folder> ImageFolder { nullptr };
+std::shared_ptr<Archive::Folder> FontFolder { nullptr };
 std::shared_ptr<Blo::Screen> ScreenLoaded { nullptr };
 std::shared_ptr<Blo::Pane> SelectedNode { nullptr };
 std::shared_ptr<Blo::Pane> DraggingNode { nullptr };
@@ -44,12 +52,34 @@ void Render(){
             std::filesystem::path menuResPath = std::get<0>(menuInfo);
             std::string menuBloPath = std::get<1>(menuInfo);
             std::string menuTimgPath = std::get<2>(menuInfo);
+            std::string menuFontPath = std::get<3>(menuInfo);
 
             std::shared_ptr<Archive::Rarc> menuarc = Archive::Rarc::Create();
             bStream::CFileStream fstrm((std::filesystem::path(OPTIONS.mRootPath) / "files" / menuResPath).string(), bStream::Endianess::Big, bStream::OpenMode::In);
             if(menuarc->Load(&fstrm)){
                 auto file = menuarc->GetFile(menuBloPath);
                 auto timg = menuarc->GetFolder(menuTimgPath);
+                
+                MenuArc = menuarc;
+
+                ImageFolder = timg;
+                if(ImageFolder == nullptr){
+                    ImageFolder = Archive::Folder::Create(MenuArc);
+                    ImageFolder->SetName("timg");
+
+                    auto parent = MenuArc->GetFolder(std::filesystem::path(menuTimgPath).parent_path());
+                    if(parent != nullptr) parent->AddSubdirectory(ImageFolder);
+                }
+
+                FontFolder = menuarc->GetFolder(menuFontPath);
+                if(FontFolder == nullptr){
+                    FontFolder = Archive::Folder::Create(MenuArc);
+                    FontFolder->SetName("tfon");
+
+                    auto parent = MenuArc->GetFolder(std::filesystem::path(menuTimgPath).parent_path());
+                    if(parent != nullptr) parent->AddSubdirectory(FontFolder);
+                }
+
                 bStream::CMemoryStream stream(file->GetData(), file->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
                 ScreenLoaded->Load(&stream, timg);
             }
@@ -67,6 +97,8 @@ void Render(){
                     if(menuResPath.string() == "game" && GCResourceManager.mLoadedGameArchive){
                         auto file = GCResourceManager.mGameArchive->GetFile(menuBloPath);
                         auto timg = GCResourceManager.mGameArchive->GetFolder(menuTimgPath);
+                        ImageFolder = timg;
+                        MenuArc = GCResourceManager.mGameArchive;
                         bStream::CMemoryStream stream(file->GetData(), file->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
                         ScreenLoaded->Load(&stream, timg);
                     } else if(menuResPath.string() != "game") {
@@ -75,9 +107,11 @@ void Render(){
                         if(menuarc->Load(&fstrm)){
                             auto file = menuarc->GetFile(menuBloPath);
                             auto timg = menuarc->GetFolder(menuTimgPath);
+                            ImageFolder = timg;
                             bStream::CMemoryStream stream(file->GetData(), file->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
                             ScreenLoaded->Load(&stream, timg);
                         }
+                        MenuArc = menuarc;
                     }
                 }
             }
@@ -101,16 +135,27 @@ void Render(){
             if(menuResPath.string() == "game" && GCResourceManager.mLoadedGameArchive){
                 auto file = GCResourceManager.mGameArchive->GetFile(menuBloPath);
                 auto timg = GCResourceManager.mGameArchive->GetFolder(menuTimgPath);
-                bStream::CMemoryStream stream(file->GetData(), file->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+
+                bStream::CMemoryStream stream(64, bStream::Endianess::Big, bStream::OpenMode::In);
                 ScreenLoaded->Save(&stream);
+                file->SetData(stream.getBuffer(), stream.getSize());
+                std::filesystem::path gameArcPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Game" / "game_usa.szp";
+                GCResourceManager.mGameArchive->SaveToFile(gameArcPath.string(), Compression::Format::YAY0);
+
             } else if(menuResPath.string() != "game") {
-                std::shared_ptr<Archive::Rarc> menuarc = Archive::Rarc::Create();
-                bStream::CFileStream fstrm((std::filesystem::path(OPTIONS.mRootPath) / "files" / menuResPath).string(), bStream::Endianess::Big, bStream::OpenMode::In);
-                if(menuarc->Load(&fstrm)){
-                    auto file = menuarc->GetFile(menuBloPath);
-                    auto timg = menuarc->GetFolder(menuTimgPath);
-                    bStream::CMemoryStream stream(file->GetData(), file->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+                if(MenuArc != nullptr){
+                    auto file = MenuArc->GetFile(menuBloPath);
+                    auto timg = MenuArc->GetFolder(menuTimgPath);
+
+                    bStream::CMemoryStream stream(64, bStream::Endianess::Big, bStream::OpenMode::In);
                     ScreenLoaded->Save(&stream);
+
+                    LGenUtility::Log << "Finished Saving BLO, writing to archive..." << std::endl;
+
+                    file->SetData(stream.getBuffer(), stream.getSize());
+
+                    MenuArc->SaveToFile((std::filesystem::path(OPTIONS.mRootPath) / "files" / menuResPath).string(), Compression::Format::YAY0, 0, true);
+
                 }
             }
 
@@ -129,30 +174,165 @@ void Render(){
             ScreenLoaded->Draw(DraggingNode);
             if(DraggingNode != nullptr && DragStart.x == 0 && DragStart.y == 0){
                 SelectedNode = DraggingNode;
-                DragStart = {DraggingNode->mRect[0], DraggingNode->mRect[1]};
+                if(ImGui::IsKeyDown(ImGuiKey_LeftShift)){
+                    DragStart = {DraggingNode->mRect[2], DraggingNode->mRect[3]};
+                } else {
+                    DragStart = {DraggingNode->mRect[0], DraggingNode->mRect[1]};
+                }
             }
             ImGui::SameLine();
             ImGui::BeginChild("##leftHandWindow");
-            ImGui::BeginChild("##hierarchy", {ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y*0.5f});
+            ImGui::Text("Resources");
+            ImGui::Separator();
+            ImGui::BeginChild("##resView", {ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y*0.15f});
+            if(ImGui::TreeNode("Images (timg)")){
+                std::shared_ptr<Archive::File> toDelete = nullptr;
+                for(auto file : ImageFolder->GetFiles()){
+                    ImGui::Text(file->GetName().data());
+                    if(ImGui::BeginPopupContextItem(std::format("##rm{}", file->GetName()).c_str())){
+                        if(ImGui::Selectable("Remove")){
+                            toDelete = file;
+                        }
+                        ImGui::EndPopup();
+                    }
+                }
+                if(toDelete != nullptr){
+                    std::erase(ImageFolder->GetFiles(), toDelete);
+                }
+                ImGui::Text(ICON_FK_PLUS_CIRCLE);
+                if(ImGui::IsItemClicked(0) && MenuArc != nullptr){
+                    ImGuiFileDialog::Instance()->OpenModal("ImportBloPNG", "Import PNG", "PNG Image (*.png){.png}", std::filesystem::current_path().string());
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::TreePop();
+            }
+
+            if(ImGui::TreeNode("Fonts (font)")){
+                std::shared_ptr<Archive::File> toDelete = nullptr;
+                for(auto file : FontFolder->GetFiles()){
+                    ImGui::Text(file->GetName().data());
+                    if(ImGui::BeginPopupContextItem(std::format("##rm{}", file->GetName()).c_str())){
+                        if(ImGui::Selectable("Remove")){
+                            toDelete = file;
+                        }
+                        ImGui::EndPopup();
+                    }
+                }
+                if(toDelete != nullptr){
+                    std::erase(FontFolder->GetFiles(), toDelete);
+                }
+                ImGui::Text(ICON_FK_PLUS_CIRCLE);
+                if(ImGui::IsItemClicked(0) && MenuArc != nullptr){
+                    ImGuiFileDialog::Instance()->OpenModal("ImportBfnFont", "Import BFN", "BFN Font (*.bfn){.bfn}", std::filesystem::current_path().string());
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::TreePop();
+            }
+
+            ImGui::EndChild();
+            ImGui::Text("Screen Elements");
+            ImGui::Separator();
+            ImGui::BeginChild("##hierarchy", {ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y*(0.5f-0.15f)});
             ScreenLoaded->DrawHierarchy(SelectedNode);
             ImGui::EndChild();
+            ImGui::BeginChild("##properties", {ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y});
             ImGui::Text("Selected");
             ImGui::Separator();
             if(SelectedNode != nullptr){
-                if(SelectedNode->Type() == Blo::ElementType::Picture){
-                    ImGui::Text(std::format("Texture Path {}", std::reinterpret_pointer_cast<Blo::Picture>(SelectedNode)->GetTexture()->mPath).c_str());
-                } else if(SelectedNode->Type() == Blo::ElementType::Picture){
-                    
+                std::vector<char> id(4, '\0');
+                std::memcpy(id.data(), &SelectedNode->mID, sizeof(uint32_t));
+                std::reverse(id.begin(), id.end());
+                id.push_back('\0');
+                
+                if(ImGui::InputText("##idEdit", id.data(), id.size())){
+                    id.pop_back();
+                    std::reverse(id.begin(), id.end());
+                    std::memcpy(&SelectedNode->mID, id.data(), sizeof(uint32_t));
+                }
+
+                ImGui::Text("Rect");
+                int x = SelectedNode->mRect[0], y = SelectedNode->mRect[1], w = SelectedNode->mRect[2], h = SelectedNode->mRect[3];
+                ImGui::InputInt("x", &x);
+                ImGui::InputInt("y", &y);
+                ImGui::InputInt("w", &w);
+                ImGui::InputInt("h", &h);
+                SelectedNode->mRect[0] = x, SelectedNode->mRect[1] = y, SelectedNode->mRect[2] = w, SelectedNode->mRect[3] = h;
+
+                switch (SelectedNode->Type()) {
+                case Blo::ElementType::Picture: {
+                    auto node = std::reinterpret_pointer_cast<Blo::Picture>(SelectedNode);
+                    if(LUIUtility::RenderTextInput("Texture Name", &node->GetTexture()->mPath)){
+                        std::shared_ptr<Archive::File> imgFile = ImageFolder->GetFile(node->GetTexture()->mPath);
+
+                        if(imgFile == nullptr){
+                            std::string lowerPath = node->GetTexture()->mPath;
+                            std::transform(lowerPath.begin(), lowerPath.end(), lowerPath.begin(), [](unsigned char c){ return std::tolower(c); });
+                            imgFile = ImageFolder->GetFile(lowerPath);
+                        }
+
+                        if(imgFile != nullptr){
+                            //std::cout << "Loading Image " << mPath << std::endl;
+                            bStream::CMemoryStream img(imgFile->GetData(), imgFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+                            node->GetTexture()->mTexture.Load(&img);
+                            node->SetWidth(node->GetTexture()->mTexture.mWidth);
+                            node->SetHeight(node->GetTexture()->mTexture.mHeight);
+                            
+                            glCreateTextures(GL_TEXTURE_2D, 1, &node->GetTexture()->mTextureID);
+                            glTextureParameteri(node->GetTexture()->mTextureID, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                            glTextureParameteri(node->GetTexture()->mTextureID, GL_TEXTURE_WRAP_T, GL_REPEAT);
+                            glTextureParameteri(node->GetTexture()->mTextureID, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                            glTextureParameteri(node->GetTexture()->mTextureID, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                            glTextureStorage2D(node->GetTexture()->mTextureID, 1, GL_RGBA8, node->GetTexture()->mTexture.mWidth, node->GetTexture()->mTexture.mHeight);
+                            glTextureSubImage2D(node->GetTexture()->mTextureID, 0, 0, 0, node->GetTexture()->mTexture.mWidth, node->GetTexture()->mTexture.mHeight, GL_RGBA, GL_UNSIGNED_BYTE, node->GetTexture()->mTexture.GetData());
+                        } else {
+                            node->GetTexture()->mTextureID = 0xFFFFFFFF;
+                            LGenUtility::Log << "Couldn't load image resource " << node->GetTexture()->mPath << std::endl;
+                        }
+                    }
+                    Blo::ResourceType type = (Blo::ResourceType)node->GetTexture()->mType;
+                    if(LUIUtility::RenderComboEnum<Blo::ResourceType>("Resource Type", type)){
+                        node->GetTexture()->mType = (uint8_t)type;
+                    }
+                    break;
+                }
+                case Blo::ElementType::Textbox: {
+                    auto node = std::reinterpret_pointer_cast<Blo::Textbox>(SelectedNode);
+                    LUIUtility::RenderTextInput("Font Path ", &node->GetFont()->mPath);
+                    LUIUtility::RenderTextInput("Text ", node->GetText());
+                    Blo::ResourceType type = (Blo::ResourceType)node->GetFont()->mType;
+                    if(LUIUtility::RenderComboEnum<Blo::ResourceType>("Resource Type", type)){
+                        node->GetFont()->mType = (uint8_t)type;
+                    }
+
+                    break;
+                }
+                case Blo::ElementType::Window: {
+                    auto node = std::reinterpret_pointer_cast<Blo::Window>(SelectedNode);
+                    LUIUtility::RenderTextInput("Texture 1 Name", &node->GetTexture(0)->mPath);
+                    LUIUtility::RenderTextInput("Texture 2 Name", &node->GetTexture(1)->mPath);
+                    LUIUtility::RenderTextInput("Texture 3 Name", &node->GetTexture(2)->mPath);
+                    LUIUtility::RenderTextInput("Texture 4 Name", &node->GetTexture(3)->mPath);
+                    break;
+                }
+                default:
+                    break;
                 }
             }
+            ImGui::EndChild();
             ImGui::EndChild();
         }
 
         if(DraggingNode != nullptr){
             auto delta = ImGui::GetMouseDragDelta();
-            DraggingNode->mRect[0] = DragStart.x + delta.x;
-            DraggingNode->mRect[1] = DragStart.y + delta.y;
-            if(ImGui::IsMouseReleased(0)){
+            if(ImGui::IsKeyDown(ImGuiKey_LeftShift)){
+                DraggingNode->mRect[2] = DragStart.x + delta.x;
+                DraggingNode->mRect[3] = DragStart.y + delta.y;
+            } else {
+                DraggingNode->mRect[0] = DragStart.x + delta.x;
+                DraggingNode->mRect[1] = DragStart.y + delta.y;
+            }
+
+            if(ImGui::IsMouseReleased(0) || ImGui::IsKeyReleased(ImGuiKey_LeftShift) || ImGui::IsKeyPressed(ImGuiKey_LeftShift)){
                 DraggingNode = nullptr;
                 DragStart = {0, 0};
             }
@@ -160,6 +340,43 @@ void Render(){
 
 		ImGui::EndPopup();
 	}
+
+    std::string resPath;
+    if(LUIUtility::RenderFileDialog("ImportBloPNG", resPath)){
+		Bti img;
+        img.SetFormat(0x05);
+
+		int x,y,n;
+		unsigned char* imgBuffer = stbi_load(resPath.c_str(), &x, &y, &n, 0);
+		
+		std::vector<uint8_t> imgData(x*y*n);
+		std::memcpy(imgData.data(), imgBuffer, x*y*n);
+        stbi_image_free(imgBuffer);
+
+        bStream::CMemoryStream file(0x20 + (x * y), bStream::Endianess::Big, bStream::OpenMode::Out);
+		img.Save(&file, x, y, imgData);
+
+        std::shared_ptr<Archive::File> newImg = Archive::File::Create();
+        newImg->SetData(file.getBuffer(), file.getSize());
+        newImg->SetName(std::filesystem::path(resPath).stem().replace_extension(".bti").string());
+        ImageFolder->AddFile(newImg);
+
+        ImGui::OpenPopup("BloEditorTool");
+    }
+
+    if(LUIUtility::RenderFileDialog("ImportBfnFont", resPath)){
+        std::shared_ptr<Archive::File> newImg = Archive::File::Create();
+        
+        bStream::CFileStream file(resPath, bStream::Endianess::Big, bStream::OpenMode::In);
+
+        std::vector<uint8_t> fileData(file.getSize());
+        file.readBytesTo(fileData.data(), fileData.size());
+
+        newImg->SetData(fileData.data(), fileData.size());
+        newImg->SetName(std::filesystem::path(resPath).filename().string());
+        ImageFolder->AddFile(newImg);
+        ImGui::OpenPopup("BloEditorTool");
+    }
 }
 
 }

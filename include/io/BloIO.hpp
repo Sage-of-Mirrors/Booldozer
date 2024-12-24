@@ -7,7 +7,7 @@
 #include <glm/glm.hpp>
 
 namespace Blo {
-    enum class ResourceType : uint32_t {
+    enum class ResourceType : uint8_t {
         None,
         Unknown,
         Directory,
@@ -44,7 +44,7 @@ namespace Blo {
         Bottom = (1 << 0),
         Top = (1 << 1),
         Right = (1 << 2),
-        Left = (1 << 3)
+        Left = (1 << 3),
     };
 
     enum class Anchor : uint32_t {
@@ -69,9 +69,10 @@ namespace Blo {
     };
 
     struct Resource {
-        ResourceType mType;
+        uint8_t mType;
         std::string mPath;
         virtual void Load(bStream::CStream* stream, std::shared_ptr<Archive::Folder> timg);
+        void Save(bStream::CStream* stream);
     };
 
     struct Image : Resource {
@@ -99,36 +100,41 @@ namespace Blo {
     protected:
         ElementType mType;
         std::shared_ptr<Pane> mParent;
-        std::vector<std::shared_ptr<Pane>> mChildren;
-        uint32_t mID;
         bool mVisible;
         uint8_t mCullMode;
-        Anchor mAnchor;
+        uint8_t mAnchor;
         float mAngle;
         bool mInheritAlpha;
         bool mConnectParent;
 
         uint8_t mAccumulateAlpha;
+        std::map<std::string, bool> mPaneArgs;
 
     public:
+        uint32_t mID;
+        int16_t mRect[4] {32, 32, 100, 100};
         uint8_t mAlpha;
         ElementType Type() { return mType; }
-        int16_t mRect[4];
+        std::vector<std::shared_ptr<Pane>> mChildren;
         virtual bool Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg);
         virtual void DrawHierarchy(std::shared_ptr<Blo::Pane>& selection);
         virtual void Draw(std::shared_ptr<Blo::Pane>& selection);
+        virtual void Save(bStream::CStream* stream);
+
+        Pane();
+        Pane(ElementType t, uint32_t id);
     };
 
     class Picture : public Pane {
         std::shared_ptr<Image> mTextures[4] { nullptr, nullptr, nullptr, nullptr };
         Palette mPalette;
-        Binding mBinding;
+        uint8_t mBinding;
         double mBlendFactors[4];
         double mBlendAlphaFactors[4];
         int mTextureCount;
         
-        WrapMode mWrapX;
-        WrapMode mWrapY;
+        uint8_t mWrapX;
+        uint8_t mWrapY;
         uint8_t mMirror;
         bool mRotate;
 
@@ -136,12 +142,19 @@ namespace Blo {
         glm::vec4 mToColor;
 
         glm::vec4 mColors[4];
+        std::map<std::string, bool> mPictArgs;
 
     public:
         std::shared_ptr<Image> GetTexture(){ return mTextures[0]; }
         bool Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg);
         void DrawHierarchy(std::shared_ptr<Blo::Pane>& selection);
         void Draw(std::shared_ptr<Blo::Pane>& selection);
+        void Save(bStream::CStream* stream);
+
+        void SetWidth(uint16_t w) { mRect[2] = w; }
+        void SetHeight(uint16_t h) { mRect[3] = h; } 
+
+        Picture();
     };
 
     class Window : public Pane {
@@ -153,15 +166,22 @@ namespace Blo {
         int16_t mContentRect[4];
         glm::vec4 mFromColor;
         glm::vec4 mToColor;
+        std::map<std::string, bool> mWindowArgs;
     public:
         bool Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg);
         void DrawHierarchy(std::shared_ptr<Blo::Pane>& selection);
         void Draw(std::shared_ptr<Blo::Pane>& selection);
+        void Save(bStream::CStream* stream);
+
+        std::shared_ptr<Image> GetTexture(uint32_t id) { if(id < 4) { return mTextures[id]; } else { return nullptr; } }
+        void SetTexture(std::shared_ptr<Image> img, uint32_t id) { if(id < 4) { mTextures[id] = img; } }
+
+        Window();
     };
 
     class Textbox : public Pane {
         Font mFont;
-        glm::vec4 mTopColor, mBottomColor;
+        glm::vec4 mTopColor {1.0f, 1.0f, 1.0f, 1.0f}, mBottomColor {1.0f, 1.0f, 1.0f, 1.0f};
         uint8_t mHAlign, mVAlign;
 
         uint16_t mFontSpacing;
@@ -173,10 +193,17 @@ namespace Blo {
 
         glm::vec4 mFromColor;
         glm::vec4 mToColor;
+        std::map<std::string, bool> mTextboxArgs;
     public:
         bool Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg);
         void DrawHierarchy(std::shared_ptr<Blo::Pane>& selection);
         void Draw(std::shared_ptr<Blo::Pane>& selection);
+        void Save(bStream::CStream* stream);
+
+        Font* GetFont() { return &mFont; };
+        std::string* GetText() { return &mText; }
+
+        Textbox();
     };
 
     class Screen : public Pane {
@@ -187,6 +214,8 @@ namespace Blo {
         bool Load(bStream::CStream* stream, std::shared_ptr<Archive::Folder> timg);
         void DrawHierarchy(std::shared_ptr<Blo::Pane>& selection);
         void Draw(std::shared_ptr<Blo::Pane>& selection);
+
+        Screen();
     };
 
 };

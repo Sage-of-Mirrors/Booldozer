@@ -188,7 +188,7 @@ void LCharacterDOMNode::PreProcess()
 		auto itemAppearNodes = mapNodeLocked->GetChildrenOfType<LItemAppearDOMNode>(EDOMNodeType::ItemAppear);
 
 		auto lockedItemRef = mItemTableRef.lock();
-		ptrdiff_t index = LGenUtility::VectorIndexOf(itemAppearNodes, lockedItemRef);
+		std::ptrdiff_t index = LGenUtility::VectorIndexOf(itemAppearNodes, lockedItemRef);
 
 		if (index == -1)
 			mItemTableIndex = 0;

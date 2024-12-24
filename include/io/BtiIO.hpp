@@ -59,6 +59,7 @@ public:
 
     uint8_t* Load(bStream::CStream* stream);
     void Save(bStream::CStream* stream, uint16_t width, uint16_t height, std::vector<uint8_t>& imageData);
+    void SetFormat(uint8_t fmt) { mFormat = fmt; }
 
     Bti(){}
     ~Bti(){ if(mImageData != nullptr){ delete[] mImageData; } }

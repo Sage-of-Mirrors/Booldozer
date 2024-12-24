@@ -212,13 +212,13 @@ bool LPathMode::RenderPointContextMenu(std::shared_ptr<LPathDOMNode> path, std::
 
 	if (ImGui::Selectable("Insert Point Above"))
 	{
-		ptrdiff_t index = LGenUtility::VectorIndexOf(path->Children, std::static_pointer_cast<LDOMNodeBase>(point));
+		std::ptrdiff_t index = LGenUtility::VectorIndexOf(path->Children, std::static_pointer_cast<LDOMNodeBase>(point));
 		path->AddChildAtIndex(std::make_shared<LPathPointDOMNode>("Path Point"), index);
 	}
 
 	if (ImGui::Selectable("Insert Point Below"))
 	{
-		ptrdiff_t index = LGenUtility::VectorIndexOf(path->Children, std::static_pointer_cast<LDOMNodeBase>(point));
+		std::ptrdiff_t index = LGenUtility::VectorIndexOf(path->Children, std::static_pointer_cast<LDOMNodeBase>(point));
 		path->AddChildAtIndex(std::make_shared<LPathPointDOMNode>("Path Point"), index + 1);
 	}
 

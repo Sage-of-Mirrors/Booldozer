@@ -200,7 +200,7 @@ public:
 
 	void RemoveChild(std::shared_ptr<LDOMNodeBase> child)
 	{
-		ptrdiff_t index = LGenUtility::VectorIndexOf(Children, child);
+		std::ptrdiff_t index = LGenUtility::VectorIndexOf(Children, child);
 		if (index == -1)
 			return;
 
