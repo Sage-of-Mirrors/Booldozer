@@ -447,7 +447,7 @@ bool Pane::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::sha
 
     if(numParams > 0){
         mPaneArgs["angle"] = true;
-        mAngle = stream->readUInt16();
+        mAngle = static_cast<float>(stream->readUInt16());
         numParams--;
     } else {
         mPaneArgs["angle"] = false;
