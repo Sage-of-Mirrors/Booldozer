@@ -175,9 +175,9 @@ void Render(){
             if(DraggingNode != nullptr && DragStart.x == 0 && DragStart.y == 0){
                 SelectedNode = DraggingNode;
                 if(ImGui::IsKeyDown(ImGuiKey_LeftShift)){
-                    DragStart = {DraggingNode->mRect[2], DraggingNode->mRect[3]};
+                    DragStart = {static_cast<float>(DraggingNode->mRect[2]), static_cast<float>(DraggingNode->mRect[3])};
                 } else {
-                    DragStart = {DraggingNode->mRect[0], DraggingNode->mRect[1]};
+                    DragStart = {static_cast<float>(DraggingNode->mRect[0]), static_cast<float>(DraggingNode->mRect[1])};
                 }
             }
             ImGui::SameLine();
@@ -430,11 +430,11 @@ void Render(){
         if(DraggingNode != nullptr){
             auto delta = ImGui::GetMouseDragDelta();
             if(ImGui::IsKeyDown(ImGuiKey_LeftShift)){
-                DraggingNode->mRect[2] = DragStart.x + delta.x;
-                DraggingNode->mRect[3] = DragStart.y + delta.y;
+                DraggingNode->mRect[2] = static_cast<uint16_t>(DragStart.x + delta.x);
+                DraggingNode->mRect[3] = static_cast<uint16_t>(DragStart.y + delta.y);
             } else {
-                DraggingNode->mRect[0] = DragStart.x + delta.x;
-                DraggingNode->mRect[1] = DragStart.y + delta.y;
+                DraggingNode->mRect[0] = static_cast<uint16_t>(DragStart.x + delta.x);
+                DraggingNode->mRect[1] = static_cast<uint16_t>(DragStart.y + delta.y);
             }
 
             if(ImGui::IsMouseReleased(0) || ImGui::IsKeyReleased(ImGuiKey_LeftShift) || ImGui::IsKeyPressed(ImGuiKey_LeftShift)){

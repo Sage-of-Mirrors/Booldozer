@@ -1,4 +1,5 @@
 #include "io/BtiIO.hpp"
+#include "Archive.hpp"
 #include <cmath>
 
 namespace ColorFormat {
@@ -625,7 +626,10 @@ void Bti::Save(bStream::CStream* stream, uint16_t width, uint16_t height, std::v
     stream->writeUInt8(0);
     stream->writeUInt16(mLODBias);
 
-    stream->writeUInt32(stream->tell()+sizeof(uint32_t));
+    std::size_t dataOffset = Util::PadTo32(stream->tell()+sizeof(uint32_t));
+    stream->writeUInt32(dataOffset);
+    
+    while(stream->tell() != dataOffset) stream->writeUInt8(0);
 
     switch (mFormat){
     case 0x00:
