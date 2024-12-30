@@ -11,11 +11,50 @@ namespace Blo {
 static int blockCount = 0;
 
 Pane::Pane() : mType(ElementType::Pane), mID(0x50414E45) {}
-Pane::Pane(ElementType t, uint32_t id) : mType(t), mID(id) {}
+
+Pane::Pane(ElementType t, uint32_t id) : mType(t), mID(id) {
+    mAlpha = 0x00;
+}
+
 Screen::Screen() : Pane(ElementType::Screen, 0x5343524E) {}
-Picture::Picture() : Pane(ElementType::Picture, 0x50494354) { mTextures[0] = std::make_shared<Image>(); }
-Textbox::Textbox() : Pane(ElementType::Textbox, 0x54585442) { mText = "Text"; }
-Window::Window() : Pane(ElementType::Window, 0x57494E44) {}
+
+Picture::Picture() : Pane(ElementType::Picture, 0x50494354) {
+    mTextures[0] = std::make_shared<Image>();
+    mBinding = (uint8_t)Binding::Top;
+    mAnchor = (uint8_t)Anchor::CenterMiddle;
+    mMirror = MirrorMode::None;
+    mWrapX = 3;
+    mWrapY = 3;
+
+    mPictArgs["mirror"] = true;
+    mPictArgs["wrap"] = true; 
+    mPictArgs["fromColor"] = true;
+    mPictArgs["toColor"] = true;
+
+}
+
+Textbox::Textbox() : Pane(ElementType::Textbox, 0x54585442) {
+    mText = "Text";
+    mTextboxArgs["connectParent"] = true;
+    mTextboxArgs["fromColor"] = true;
+    mTextboxArgs["toColor"] = true;
+}
+
+Window::Window() : Pane(ElementType::Window, 0x57494E44) {
+    mTextures[0] = std::make_shared<Image>();
+    mTextures[1] = std::make_shared<Image>(); 
+    mTextures[1]->mMirror |= MirrorMode::X;
+    mTextures[2] = std::make_shared<Image>(); 
+    mTextures[2]->mMirror |= MirrorMode::Y; 
+    mTextures[3] = std::make_shared<Image>();
+    mTextures[3]->mMirror |= MirrorMode::X | MirrorMode::Y;
+    mContentTexture = std::make_shared<Image>();
+    mContentTexture->mTextureID = 0xFFFFFFFF;
+
+    mWindowArgs["contenttex"] = true;
+    mWindowArgs["fromColor"] = true;
+    mWindowArgs["toColor"] = true;
+}
 
 void Resource::Load(bStream::CStream* stream, std::shared_ptr<Archive::Folder> timg){
     mType = stream->readUInt8();
@@ -694,8 +733,6 @@ bool Textbox::Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::
 }
 
 void Window::Draw(std::shared_ptr<Blo::Pane>& selection){
-    // draw borders
-
     int vidx;
     bool clicked = false;
 
@@ -804,7 +841,7 @@ void Picture::Draw(std::shared_ptr<Blo::Pane>& selection){
             ImSwap(UV0.y, UV1.y);
         }
 
-        ImGui::Image(static_cast<uintptr_t>(mTextures[0]->mTextureID), {mRect[2] , mRect[3]}, UV0, UV1, ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a * (mAlpha / 255.0f)));
+        ImGui::Image(static_cast<uintptr_t>(mTextures[0]->mTextureID), {static_cast<float>(mRect[2]) , static_cast<float>(mRect[3])}, UV0, UV1, ImVec4(mToColor.r, mToColor.g, mToColor.b, mToColor.a * (mAlpha / 255.0f)));
 
         if(ImGui::IsItemClicked()){
             selection = shared_from_this();
@@ -921,8 +958,8 @@ void Screen::DrawHierarchy(std::shared_ptr<Blo::Pane>& selection){
         }
         ImGui::Separator();
         if(ImGui::Selectable("Delete")){
-            auto iter = std::find(mParent->mChildren.begin(), mParent->mChildren.end(), shared_from_this());
-            mParent->mChildren.erase(iter);
+            selection = nullptr;
+            mParent->mToDelete = shared_from_this();
         }
         ImGui::EndPopup();
     }
@@ -937,6 +974,11 @@ void Screen::DrawHierarchy(std::shared_ptr<Blo::Pane>& selection){
             child->DrawHierarchy(selection);
         }
         ImGui::TreePop();
+    }
+
+    if(mToDelete != nullptr){
+        std::erase(mChildren, mToDelete);
+        mToDelete = nullptr;
     }
 }
 
@@ -970,6 +1012,11 @@ void Pane::DrawHierarchy(std::shared_ptr<Blo::Pane>& selection){
         if(ImGui::Selectable("TextBox")){
             mChildren.push_back(std::make_shared<Textbox>());
         }
+        ImGui::Separator();
+        if(ImGui::Selectable("Delete")){
+            selection = nullptr;
+            mParent->mToDelete = shared_from_this();
+        }
         ImGui::EndPopup();
     }
 
@@ -984,6 +1031,11 @@ void Pane::DrawHierarchy(std::shared_ptr<Blo::Pane>& selection){
         }
         
         ImGui::TreePop();
+    }
+
+    if(mToDelete != nullptr){
+        std::erase(mChildren, mToDelete);
+        mToDelete = nullptr;
     }
 }
 
@@ -1017,6 +1069,11 @@ void Picture::DrawHierarchy(std::shared_ptr<Blo::Pane>& selection){
         if(ImGui::Selectable("TextBox")){
             mChildren.push_back(std::make_shared<Textbox>());
         }
+        ImGui::Separator();
+        if(ImGui::Selectable("Delete")){
+            selection = nullptr;
+            mParent->mToDelete = shared_from_this();
+        }
         ImGui::EndPopup();
     }
 
@@ -1031,6 +1088,11 @@ void Picture::DrawHierarchy(std::shared_ptr<Blo::Pane>& selection){
         }
         
         ImGui::TreePop();
+    }
+
+    if(mToDelete != nullptr){
+        std::erase(mChildren, mToDelete);
+        mToDelete = nullptr;
     }
 }
 
@@ -1064,6 +1126,11 @@ void Window::DrawHierarchy(std::shared_ptr<Blo::Pane>& selection){
         if(ImGui::Selectable("TextBox")){
             mChildren.push_back(std::make_shared<Textbox>());
         }
+        ImGui::Separator();
+        if(ImGui::Selectable("Delete")){
+            selection = nullptr;
+            mParent->mToDelete = shared_from_this();
+        }
         ImGui::EndPopup();
     }
 
@@ -1078,6 +1145,11 @@ void Window::DrawHierarchy(std::shared_ptr<Blo::Pane>& selection){
         }
         
         ImGui::TreePop();
+    }
+
+    if(mToDelete != nullptr){
+        std::erase(mChildren, mToDelete);
+        mToDelete = nullptr;
     }
 }
 
@@ -1112,6 +1184,11 @@ void Textbox::DrawHierarchy(std::shared_ptr<Blo::Pane>& selection) {
         if(ImGui::Selectable("TextBox")){
             mChildren.push_back(std::make_shared<Textbox>());
         }
+        ImGui::Separator();
+        if(ImGui::Selectable("Delete")){
+            selection = nullptr;
+            mParent->mToDelete = shared_from_this();
+        }
         ImGui::EndPopup();
     }
 
@@ -1125,6 +1202,11 @@ void Textbox::DrawHierarchy(std::shared_ptr<Blo::Pane>& selection) {
         }
         
         ImGui::TreePop();
+    }
+
+    if(mToDelete != nullptr){
+        std::erase(mChildren, mToDelete);
+        mToDelete = nullptr;
     }
 
 }

@@ -74,7 +74,7 @@ void Render(){
                 FontFolder = menuarc->GetFolder(menuFontPath);
                 if(FontFolder == nullptr){
                     FontFolder = Archive::Folder::Create(MenuArc);
-                    FontFolder->SetName("tfon");
+                    FontFolder->SetName("font");
 
                     auto parent = MenuArc->GetFolder(std::filesystem::path(menuTimgPath).parent_path());
                     if(parent != nullptr) parent->AddSubdirectory(FontFolder);
@@ -258,6 +258,12 @@ void Render(){
                 ImGui::InputInt("h", &h);
                 SelectedNode->mRect[0] = x, SelectedNode->mRect[1] = y, SelectedNode->mRect[2] = w, SelectedNode->mRect[3] = h;
 
+                ImGui::Text("Alpha");
+                int paneAlpha = static_cast<int>(SelectedNode->mAlpha);
+                if(ImGui::SliderInt("##elementAlpha", &paneAlpha, 0, 255)){
+                    SelectedNode->mAlpha = static_cast<uint8_t>(paneAlpha);
+                }
+
                 switch (SelectedNode->Type()) {
                 case Blo::ElementType::Picture: {
                     auto node = std::reinterpret_pointer_cast<Blo::Picture>(SelectedNode);
@@ -289,6 +295,13 @@ void Render(){
                             LGenUtility::Log << "Couldn't load image resource " << node->GetTexture()->mPath << std::endl;
                         }
                     }
+
+                    ImGui::Text("To Color");
+                    ImGui::ColorEdit4("##windowToColorEdit", &node->GetToColor()->r);
+
+                    ImGui::Text("From Color");
+                    ImGui::ColorEdit4("##windowFromColorEdit", &node->GetFromColor()->r);
+
                     Blo::ResourceType type = (Blo::ResourceType)node->GetTexture()->mType;
                     if(LUIUtility::RenderComboEnum<Blo::ResourceType>("Resource Type", type)){
                         node->GetTexture()->mType = (uint8_t)type;
@@ -297,21 +310,113 @@ void Render(){
                 }
                 case Blo::ElementType::Textbox: {
                     auto node = std::reinterpret_pointer_cast<Blo::Textbox>(SelectedNode);
+                    
                     LUIUtility::RenderTextInput("Font Path ", &node->GetFont()->mPath);
-                    LUIUtility::RenderTextInput("Text ", node->GetText());
                     Blo::ResourceType type = (Blo::ResourceType)node->GetFont()->mType;
                     if(LUIUtility::RenderComboEnum<Blo::ResourceType>("Resource Type", type)){
                         node->GetFont()->mType = (uint8_t)type;
+                    }
+
+                    LUIUtility::RenderTextInput("Text ", node->GetText());
+                    ImGui::Text("Top Color");
+                    ImGui::ColorEdit4("##windowTopColorEdit", &node->mTopColor.r);
+
+                    ImGui::Text("Bottom Color");
+                    ImGui::ColorEdit4("##windowBottomColorEdit", &node->mBottomColor.r);
+
+                    ImGui::Text("To Color");
+                    ImGui::ColorEdit4("##windowToColorEdit", &node->GetToColor()->r);
+
+                    ImGui::Text("From Color");
+                    ImGui::ColorEdit4("##windowFromColorEdit", &node->GetFromColor()->r);
+
+                    int spacing = node->GetFontSpacing();
+                    int leading = node->GetFontLeading();
+                    int width = node->GetFontWidth();
+                    int height = node->GetFontHeight();
+
+                    ImGui::Text("Font Spacing");
+                    ImGui::SameLine();
+                    if(ImGui::InputInt("##textSpacingEdit", &spacing)){
+                        node->SetFontSpacing(spacing);
+                    }
+
+                    ImGui::Text("Font Leading");
+                    ImGui::SameLine();
+                    if(ImGui::InputInt("##textLeadingEdit", &leading)){
+                        node->SetFontLeading(leading);
+                    }
+
+                    ImGui::Text("Font Width");
+                    ImGui::SameLine();
+                    if(ImGui::InputInt("##textWidthEdit", &width)){
+                        node->SetFontWidth(width);
+                    }
+
+                    ImGui::Text("Font Height");
+                    ImGui::SameLine();
+                    if(ImGui::InputInt("##textHeightEdit", &height)){
+                        node->SetFontHeight(height);
                     }
 
                     break;
                 }
                 case Blo::ElementType::Window: {
                     auto node = std::reinterpret_pointer_cast<Blo::Window>(SelectedNode);
+                    ImGui::Text("To Color");
+                    ImGui::ColorEdit4("##windowToColorEdit", &node->GetToColor()->r);
+
+                    ImGui::Text("From Color");
+                    ImGui::ColorEdit4("##windowFromColorEdit", &node->GetFromColor()->r);
+
+                    if(node->GetContentTexture() != nullptr){
+                        LUIUtility::RenderTextInput("Content Texture", &node->GetContentTexture()->mPath);
+                        Blo::ResourceType type = (Blo::ResourceType)node->GetContentTexture()->mType;
+                        if(LUIUtility::RenderComboEnum<Blo::ResourceType>("Resource Type##contentTexWin", type)){
+                            node->GetContentTexture()->mType = (uint8_t)type;
+                        }
+                    }
+
                     LUIUtility::RenderTextInput("Texture 1 Name", &node->GetTexture(0)->mPath);
+                    ImGui::Text("Texture 1 Overlay Color");
+                    ImGui::ColorEdit4("##tex1OverlayColor", &node->GetTexture(0)->mColor.r);                    
+                    Blo::ResourceType type = (Blo::ResourceType)node->GetTexture(0)->mType;
+                    if(LUIUtility::RenderComboEnum<Blo::ResourceType>("Resource Type##win0", type)){
+                        node->GetTexture(0)->mType = (uint8_t)type;
+                    }
+                    
                     LUIUtility::RenderTextInput("Texture 2 Name", &node->GetTexture(1)->mPath);
+                    ImGui::Text("Texture 2 Overlay Color");
+                    ImGui::ColorEdit4("##tex2OverlayColor", &node->GetTexture(1)->mColor.r);
+                    type = (Blo::ResourceType)node->GetTexture(1)->mType;
+                    if(LUIUtility::RenderComboEnum<Blo::ResourceType>("Resource Type##win1", type)){
+                        node->GetTexture(1)->mType = (uint8_t)type;
+                    }
+                    
                     LUIUtility::RenderTextInput("Texture 3 Name", &node->GetTexture(2)->mPath);
+                    ImGui::Text("Texture 3 Overlay Color");
+                    ImGui::ColorEdit4("##tex3OverlayColor", &node->GetTexture(2)->mColor.r);
+                    type = (Blo::ResourceType)node->GetTexture(2)->mType;
+                    if(LUIUtility::RenderComboEnum<Blo::ResourceType>("Resource Type##win2", type)){
+                        node->GetTexture(2)->mType = (uint8_t)type;
+                    }                    
+
                     LUIUtility::RenderTextInput("Texture 4 Name", &node->GetTexture(3)->mPath);
+                    ImGui::Text("Texture 4 Overlay Color");
+                    ImGui::ColorEdit4("##tex4OverlayColor", &node->GetTexture(3)->mColor.r);
+                    type = (Blo::ResourceType)node->GetTexture(3)->mType;
+                    if(LUIUtility::RenderComboEnum<Blo::ResourceType>("Resource Type##win3", type)){
+                        node->GetTexture(3)->mType = (uint8_t)type;
+                    }
+
+                    ImGui::Text("Content Rect");
+                    int x = node->mContentRect[0], y = node->mContentRect[1], w = node->mContentRect[2], h = node->mContentRect[3];
+                    ImGui::InputInt("x##content", &x);
+                    ImGui::InputInt("y##content", &y);
+                    ImGui::InputInt("w##content", &w);
+                    ImGui::InputInt("h##content", &h);
+                    node->mContentRect[0] = x, node->mContentRect[1] = y, node->mContentRect[2] = w, node->mContentRect[3] = h;
+
                     break;
                 }
                 default:
@@ -374,7 +479,7 @@ void Render(){
 
         newImg->SetData(fileData.data(), fileData.size());
         newImg->SetName(std::filesystem::path(resPath).filename().string());
-        ImageFolder->AddFile(newImg);
+        FontFolder->AddFile(newImg);
         ImGui::OpenPopup("BloEditorTool");
     }
 }

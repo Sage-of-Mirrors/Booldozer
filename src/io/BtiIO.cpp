@@ -48,24 +48,24 @@ uint16_t RGBA8toRGB565(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 
 uint16_t RGBA8toRGB5A3(uint8_t r, uint8_t g, uint8_t  b, uint8_t a){
     uint16_t color = 0x0000;
-    if(a != 0xFF){
-        a >>= 5;
-        r >>= 4;
-        g >>= 4;
-        b >>= 4;
+    if(a != 255){
+        uint8_t na = a >> 5;
+        uint8_t nr = r >> 4;
+        uint8_t ng = g >> 4;
+        uint8_t nb = b >> 4;
         color = 0x0000;
-        color |= ((a & 0x7) << 12);
-        color |= ((r & 0xF) << 8);
-        color |= ((g & 0xF) << 4);
-        color |= ((b & 0xF) << 0);
+        color |= ((na & 0x7) << 12);
+        color |= ((nr & 0xF) << 8);
+        color |= ((ng & 0xF) << 4);
+        color |= ((nb & 0xF) << 0);
     } else {
-        r >>= 3;
-        g >>= 3;
-        b >>= 3;
+        uint8_t nr = r >> 3;
+        uint8_t ng = g >> 3;
+        uint8_t nb = b >> 3;
         color = 0x8000;
-        color |= ((r & 0x1F) << 10);
-        color |= ((g & 0x1F) << 5);
-        color |= ((b & 0x1F) << 0);
+        color |= ((nr & 0x1F) << 10);
+        color |= ((ng & 0x1F) << 5);
+        color |= ((nb & 0x1F) << 0);
     }
     return color;
 }
@@ -236,11 +236,11 @@ namespace Decode {
                 for (int pixelY = 0; pixelY < 4; pixelY++) {
                     for (int pixelX = 0; pixelX < 4; pixelX++) {
                         // Bounds check to ensure the pixel is within the image.
+                        uint16_t data = stream->readUInt16();
                         if ((blockX * 4 + pixelX >= width) || (blockY * 4 + pixelY >= height))
                             continue;
 
                         // RGB values for this pixel are stored in a 16-bit integer.
-                        uint16_t data = stream->readUInt16();
                         uint32_t rgba8 = ColorFormat::RGB5A3toRGBA8(data);
 
                         uint32_t destIndex = (width * ((blockY * 4) + pixelY) + (blockX * 4) + pixelX) * 4;
@@ -432,7 +432,6 @@ namespace Encode {
                     for (int pixelX = 0; pixelX < 4; pixelX++) {
                         // Bounds check to ensure the pixel is within the image.
                         if ((blockX * 4 + pixelX >= width) || (blockY * 4 + pixelY >= height)){
-                            stream->writeUInt16(0xFFFF);
                             continue;
                         }
 
@@ -460,19 +459,19 @@ namespace Encode {
         uint32_t numBlocksH = height / 4;
 
         // Iterate the blocks in the image
-        for (int blockY = 0; blockY < numBlocksH; blockY++) {
-            for (int blockX = 0; blockX < numBlocksW; blockX++) {
+        for (int blockY = 0; blockY < height; blockY+=4) {
+            for (int blockX = 0; blockX < width; blockX+=4) {
                 // Iterate the pixels in the current block
                 for (int pixelY = 0; pixelY < 4; pixelY++) {
                     for (int pixelX = 0; pixelX < 4; pixelX++) {
                         // Bounds check to ensure the pixel is within the image.
-                        if ((blockX * 4 + pixelX >= width) || (blockY * 4 + pixelY >= height)){
+                        if ((blockX + pixelX >= width) || (blockY + pixelY >= height)){
                             stream->writeUInt16(0xFFFF);
                             continue;
                         }
 
                         // RGB values for this pixel are stored in a 16-bit integer.
-                        uint32_t destIndex = (width * ((blockY * 4) + pixelY) + (blockX * 4) + pixelX) * 4;
+                        uint32_t destIndex = ((width * (blockY + pixelY)) + (blockX + pixelX)) * 4;
                         uint8_t r = imageData[destIndex];
                         uint8_t g = imageData[destIndex + 1];
                         uint8_t b = imageData[destIndex + 2];

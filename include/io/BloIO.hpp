@@ -110,7 +110,10 @@ namespace Blo {
         uint8_t mAccumulateAlpha;
         std::map<std::string, bool> mPaneArgs;
 
+
     public:
+        std::shared_ptr<Pane> mToDelete { nullptr };
+
         uint32_t mID;
         int16_t mRect[4] {32, 32, 100, 100};
         uint8_t mAlpha;
@@ -154,6 +157,9 @@ namespace Blo {
         void SetWidth(uint16_t w) { mRect[2] = w; }
         void SetHeight(uint16_t h) { mRect[3] = h; } 
 
+        glm::vec4* GetToColor(){ return &mToColor; }
+        glm::vec4* GetFromColor(){ return &mFromColor; }
+
         Picture();
     };
 
@@ -161,27 +167,30 @@ namespace Blo {
         std::shared_ptr<Image> mTextures[4] { nullptr, nullptr, nullptr, nullptr };
         std::shared_ptr<Image> mContentTexture { nullptr };
         Palette mPalette;
-        Bti mContectBG;
         
-        int16_t mContentRect[4];
         glm::vec4 mFromColor;
         glm::vec4 mToColor;
         std::map<std::string, bool> mWindowArgs;
     public:
+        int16_t mContentRect[4];
         bool Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg);
         void DrawHierarchy(std::shared_ptr<Blo::Pane>& selection);
         void Draw(std::shared_ptr<Blo::Pane>& selection);
         void Save(bStream::CStream* stream);
 
+        std::shared_ptr<Image> GetContentTexture() { return mContentTexture; }
+
         std::shared_ptr<Image> GetTexture(uint32_t id) { if(id < 4) { return mTextures[id]; } else { return nullptr; } }
         void SetTexture(std::shared_ptr<Image> img, uint32_t id) { if(id < 4) { mTextures[id] = img; } }
+
+        glm::vec4* GetToColor(){ return &mToColor; }
+        glm::vec4* GetFromColor(){ return &mFromColor; }
 
         Window();
     };
 
     class Textbox : public Pane {
         Font mFont;
-        glm::vec4 mTopColor {1.0f, 1.0f, 1.0f, 1.0f}, mBottomColor {1.0f, 1.0f, 1.0f, 1.0f};
         uint8_t mHAlign, mVAlign;
 
         uint16_t mFontSpacing;
@@ -195,6 +204,18 @@ namespace Blo {
         glm::vec4 mToColor;
         std::map<std::string, bool> mTextboxArgs;
     public:
+
+        int GetFontSpacing() { return static_cast<int>(mFontSpacing); };
+        int GetFontLeading() { return static_cast<int>(mFontLeading); };
+        int GetFontWidth() { return static_cast<int>(mFontWidth); };
+        int GetFontHeight() { return static_cast<int>(mFontHeight); };
+
+        void SetFontSpacing(int n) { mFontSpacing = static_cast<uint16_t>(n); };
+        void SetFontLeading(int n) { mFontLeading = static_cast<uint16_t>(n); };
+        void SetFontWidth(int n) { mFontWidth = static_cast<uint16_t>(n); };
+        void SetFontHeight(int n) { mFontHeight = static_cast<uint16_t>(n); };
+
+        glm::vec4 mTopColor {1.0f, 1.0f, 1.0f, 1.0f}, mBottomColor {1.0f, 1.0f, 1.0f, 1.0f};
         bool Load(bStream::CStream* stream, std::shared_ptr<Pane> parent, std::shared_ptr<Archive::Folder> timg);
         void DrawHierarchy(std::shared_ptr<Blo::Pane>& selection);
         void Draw(std::shared_ptr<Blo::Pane>& selection);
@@ -202,6 +223,9 @@ namespace Blo {
 
         Font* GetFont() { return &mFont; };
         std::string* GetText() { return &mText; }
+
+        glm::vec4* GetToColor(){ return &mToColor; }
+        glm::vec4* GetFromColor(){ return &mFromColor; }
 
         Textbox();
     };
