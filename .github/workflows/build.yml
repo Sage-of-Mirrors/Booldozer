@@ -25,18 +25,18 @@ jobs:
             architecture: x64
             artifact: linux
             upload_path_suffix: '/*'
-    
+
     runs-on: ${{ matrix.os }}
-    
+
     defaults:
       run:
         shell: bash
-    
+
     env:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-    
+
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Install dependencies
@@ -83,13 +83,13 @@ jobs:
           cp build/*.dll booldozer-build
       - name: Upload App Windows
         if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: booldozer-windows
           path: booldozer-build
       - name: Upload App Linux
         if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: booldozer-linux
           path: booldozer-build
