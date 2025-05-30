@@ -12,7 +12,7 @@ LEventMode::~LEventMode(){
 
 void LEventMode::RenderLeafContextMenu(std::shared_ptr<LDoorDOMNode> node)
 {
-
+	
 }
 
 void LEventMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map, EEditorMode& mode)

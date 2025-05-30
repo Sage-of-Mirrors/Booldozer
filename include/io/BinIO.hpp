@@ -85,7 +85,7 @@ public:
     void Bind();
 
     BinMesh(bStream::CStream* stream, uint32_t offset, std::vector<glm::vec3>& vertexData, std::vector<glm::vec2>& texcoordData);
-	
+
     BinMesh(){}
     ~BinMesh();
 
@@ -133,7 +133,7 @@ public:
     std::shared_ptr<BinScenegraphNode> child;
     std::shared_ptr<BinScenegraphNode> next;
     std::shared_ptr<BinScenegraphNode> prev;
-    
+
 
 	glm::mat4 transform;
 	glm::vec3 mScale, mRotation, mTranslation;
