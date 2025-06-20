@@ -415,10 +415,10 @@ namespace BIN {
 
         node->Transform = glm::mat4(1.0f);
         node->Transform = glm::scale(node->Transform, node->Scale);
-        node->Transform = glm::rotate(node->Transform, glm::radians(node->Rotation.x), {1.0f, 0.0f, 0.0f});
+        node->Transform = glm::rotate(node->Transform, glm::radians(node->Rotation.z), {1.0f, 0.0f, 0.0f});
         node->Transform = glm::rotate(node->Transform, glm::radians(node->Rotation.y), {0.0f, 1.0f, 0.0f});
-        node->Transform = glm::rotate(node->Transform, glm::radians(node->Rotation.z), {0.0f, 0.0f, 1.0f});
-        node->Transform = glm::translate(node->Transform, node->Position);
+        node->Transform = glm::rotate(node->Transform, glm::radians(node->Rotation.x), {0.0f, 0.0f, 1.0f});
+        node->Transform = glm::translate(node->Transform, {node->Position.z, node->Position.y, node->Position.x});
 
         for(int i = 0; i < node->ElementCount; i++){
             stream->seek(mHeader.SceneGraphOffset + node->ElementOffset + (i * 4));
