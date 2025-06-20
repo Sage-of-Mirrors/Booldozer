@@ -6,7 +6,7 @@
 #include <map>
 #include <format>
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
-#include "io/BtiIO.hpp"
+#include <Bti.hpp>
 #include "stb_image.h"
 
 namespace BloEditor {
@@ -459,7 +459,8 @@ void Render(){
         stbi_image_free(imgBuffer);
 
         bStream::CMemoryStream file(0x20 + (x * y), bStream::Endianess::Big, bStream::OpenMode::Out);
-		img.Save(&file, x, y, imgData);
+        img.SetData(x, y, imgData.data());
+		img.Save(&file);
 
         std::shared_ptr<Archive::File> newImg = Archive::File::Create();
         newImg->SetData(file.getBuffer(), file.getSize());

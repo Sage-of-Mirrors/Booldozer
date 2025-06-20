@@ -38,7 +38,7 @@ LEditorScene* LEditorScene::GetEditorScene(){
 LEditorScene::LEditorScene() : Initialized(false) {}
 
 LEditorScene::~LEditorScene(){
-	BinModel::DestroyShaders();
+	BIN::DestroyShaders();
 	MDL::DestroyShaders();
 }
 
@@ -51,7 +51,7 @@ void LEditorScene::LoadResFromRoot(){
 		if(doorModelFile != nullptr){
 			bStream::CMemoryStream bin_data(doorModelFile->GetData(), doorModelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 			
-			auto doorModel = std::make_shared<BinModel>(&bin_data);
+			auto doorModel = std::make_shared<BIN::Model>(&bin_data);
 			mDoorModels.push_back(doorModel);
 		}
 	}
@@ -103,7 +103,7 @@ void LEditorScene::Init(){
 
 	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "soundobj.png", 6);
 
-	BinModel::InitShaders();
+	BIN::InitShaders();
 	MDL::InitShaders();
 
 	mScene = this;
@@ -329,7 +329,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 
 				// Offset the first door (right/forward) and render it.
 				doorMat = glm::translate(doorMat, doubleDoorOffset);
-				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, door->GetID(), door->GetIsSelected(), false);
+				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, door->GetID(), door->GetIsSelected());
 
 				// Now offset the second door (left/backward) and rotate it 180 degrees.
 				doubleDoorOffset *= 2;
@@ -337,12 +337,12 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 				doorMat = glm::rotate(doorMat, glm::radians(180.f), glm::vec3(0, 1, 0));
 
 				// Render second door.
-				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, door->GetID(), door->GetIsSelected(), false);
+				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, door->GetID(), door->GetIsSelected());
 			}
 			// Single door can just be rendered without hassle.
 			else
 			{
-				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, door->GetID(), door->GetIsSelected(), bIgnoreTransforms);
+				mDoorModels[(uint8_t)doorType - 1]->Draw(&doorMat, door->GetID(), door->GetIsSelected());
 			}
 		}
 	}
@@ -543,10 +543,10 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 
 					if (modelName != "room.bin")
 					{
-						mRoomFurniture[modelName.substr(0, modelNameExtIter)] = std::make_shared<BinModel>(&bin);
+						mRoomFurniture[modelName.substr(0, modelNameExtIter)] = std::make_shared<BIN::Model>(&bin);
 						LGenUtility::Log << "[Editor Scene]: completed loading " << modelName.substr(0, modelNameExtIter) << std::endl;
 					} else {
-						mRoomModels.insert({curRoomData->GetResourcePath(), std::make_shared<BinModel>(&bin)});
+						mRoomModels.insert({curRoomData->GetResourcePath(), std::make_shared<BIN::Model>(&bin)});
 						LGenUtility::Log << "[Editor Scene]: completed loading room model" << std::endl;
 					}					
 				}
@@ -556,9 +556,9 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 				#ifdef _WIN32
 				std::string resPath = curRoomData->GetResourcePath();
 				std::replace(resPath.begin(), resPath.end(), '/', '\\');
-				mRoomModels.insert({ resPath, std::make_shared<BinModel>(&bin)});
+				mRoomModels.insert({ resPath, std::make_shared<BIN::Model>(&bin)});
 				#else
-				mRoomModels.insert({ curRoomData->GetResourcePath(), std::make_shared<BinModel>(&bin)});
+				mRoomModels.insert({ curRoomData->GetResourcePath(), std::make_shared<BIN::Model>(&bin)});
 				#endif
 			}
 		}

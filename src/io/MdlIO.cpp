@@ -1,7 +1,6 @@
 #include "io/MdlIO.hpp"
 #include "io/TxpIO.hpp"
-#include "io/BinIO.hpp"
-#include "io/BtiIO.hpp"
+#include <Bti.hpp>
 #include <glad/glad.h>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <format>
@@ -93,7 +92,7 @@ namespace MDL {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-        
+
         uint8_t* imageData = new uint8_t[Width * Height * 4]{};
 
         //todo read image
@@ -115,12 +114,12 @@ namespace MDL {
             ImageFormat::Decode::I8(stream, Width, Height, imageData);
             break;
         default:
-            LGenUtility::Log << "[MDL Loader]: No Decoder for 0x" << (int)Format << std::endl;
+            std::cout << "[MDL Loader]: No Decoder for 0x" << (int)Format << std::endl;
             break;
         }
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
-        
+
         glBindTexture(GL_TEXTURE_2D, 0);
 
         delete[] imageData;
@@ -206,7 +205,7 @@ namespace MDL {
             if(baseColor.a < 1.0 / 255.0) discard;\n\
         }\
     ";
-    
+
     void DestroyShaders(){
         glDeleteProgram(mProgram);
     }
@@ -238,30 +237,46 @@ namespace MDL {
         glAttachShader(mProgram, vs);
         glAttachShader(mProgram, fs);
         glLinkProgram(mProgram);
-        glGetProgramiv(mProgram, GL_LINK_STATUS, &status); 
+        glGetProgramiv(mProgram, GL_LINK_STATUS, &status);
         if(GL_FALSE == status) {
-            GLint logLen; 
-            glGetProgramiv(mProgram, GL_INFO_LOG_LENGTH, &logLen); 
-            glGetProgramInfoLog(mProgram, logLen, NULL, glErrorLogBuffer); 
+            GLint logLen;
+            glGetProgramiv(mProgram, GL_INFO_LOG_LENGTH, &logLen);
+            glGetProgramInfoLog(mProgram, logLen, NULL, glErrorLogBuffer);
             printf("[MDL Loader]: Shader Program Linking Error:\n%s\n", glErrorLogBuffer);
-        } 
+        }
         glDetachShader(mProgram, vs);
         glDetachShader(mProgram, fs);
         glDeleteShader(vs);
         glDeleteShader(fs);
     }
 
+    template<class T>
+    std::vector<T> ReadSection(bStream::CStream* stream, uint32_t offset, uint16_t count){
+        std::vector<T> collection;
+
+        stream->seek(LGenUtility::SwapEndian<uint32_t>(offset));
+        for (size_t i = 0; i < LGenUtility::SwapEndian<uint16_t>(count); i++)
+        {
+            T item;
+            item.Read(stream);
+            collection.push_back(item);
+        }
+
+        return collection;
+    };
+
+
     void Model::Load(bStream::CStream* stream){
         stream->readBytesTo((uint8_t*)&mHeader, sizeof(mHeader));
 
-        LGenUtility::Log << "[MDL Loader]: Reading Model Start" << std::endl;
+        std::cout << "[MDL Loader]: Reading Model Start" << std::endl;
 
         mTexturesHeaders = ReadSection<TextureHeader>(stream, mHeader.TextureOffsetArray, mHeader.TextureCount);
         mSamplers = ReadSection<Sampler>(stream, mHeader.SamplerOffset, mHeader.SamplerCount);
         mShapes = ReadSection<Shape>(stream, mHeader.ShapeOffset, mHeader.ShapeCount);
         mPackets = ReadSection<Packet>(stream, mHeader.PacketOffset, mHeader.PacketCount);
         mDrawElements = ReadSection<DrawElement>(stream, mHeader.DrawElementOffset, mHeader.DrawElementCount);
-        
+
         mMaterials = ReadSection<Material>(stream, mHeader.MaterialOffset, mHeader.MaterialCount);
         mGraphNodes = ReadSection<SceneGraphNode>(stream, mHeader.SceneGraphOffset, mHeader.SceneGraphNodeCount);
 
@@ -277,7 +292,7 @@ namespace MDL {
             bbMax.y = (mPositions.back().y > bbMax.y ? mPositions.back().y : bbMax.y);
             bbMax.x = (mPositions.back().z > bbMax.z ? mPositions.back().z : bbMax.z);
         }
-        
+
         stream->seek(LGenUtility::SwapEndian<uint32_t>(mHeader.NormalsOffset));
         for (size_t i = 0; i < LGenUtility::SwapEndian<uint16_t>(mHeader.NormalCount); i++){
             mNormals.push_back({stream->readFloat(), stream->readFloat(), stream->readFloat()});
@@ -309,18 +324,18 @@ namespace MDL {
         }
 
         // This whole section of the code is broken I think, but it isn't needed unless skinning gets added
-        
+
         mWeights.reserve(LGenUtility::SwapEndian<uint16_t>(mHeader.WeightCount));
 
         if(LGenUtility::SwapEndian<uint32_t>(mHeader.WeightCountTableOffset) != 0){
             stream->seek(LGenUtility::SwapEndian<uint32_t>(mHeader.WeightCountTableOffset));
-        
+
             std::vector<uint8_t> weightCounters;
             for (size_t i = 0; i < LGenUtility::SwapEndian<uint16_t>(mHeader.WeightCount); i++){
                 weightCounters.push_back(stream->readUInt8());
                 mWeights.push_back(Weight());
             }
-            
+
             stream->seek(LGenUtility::SwapEndian<uint32_t>(mHeader.WeightOffset));
             for (size_t i = 0; i < weightCounters.size(); i++){
                 mWeights[i].Weights.reserve(weightCounters[i]);
@@ -328,7 +343,7 @@ namespace MDL {
                     mWeights[i].Weights.push_back(stream->readFloat());
                 }
             }
-            
+
             stream->seek(LGenUtility::SwapEndian<uint32_t>(mHeader.JointIndexOffset));
             for (size_t i = 0; i < weightCounters.size(); i++){
                 for (size_t j = 0; j < weightCounters[i]; j++){
@@ -343,7 +358,7 @@ namespace MDL {
             uint16_t matIndices[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
             std::vector<Vertex> triangulatedPrimitives;
-            
+
             for (size_t i = mShapes[drawElement.ShapeIndex].PacketBeginIndex; i < mShapes[drawElement.ShapeIndex].PacketBeginIndex + mShapes[drawElement.ShapeIndex].PacketCount; i++){
                 //Read Packet
                 Packet packet = mPackets[i];
@@ -395,15 +410,15 @@ namespace MDL {
 
                         primitiveVertices.push_back(vtx);
                     }
-                
+
                     switch (opcode){
                     case GXPrimitiveType::Triangles: {
                             int8_t prevMtx = -1;
                             for(PrimitiveVertex vtxIdx : primitiveVertices){
-                                Vertex vtx = {{0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}};
-                                
+                                Vertex vtx = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}};
+
                                 int8_t mtxIdx = vtxIdx.Matrix == -1 ? prevMtx : vtxIdx.Matrix;
-                                
+
                                 vtx.Position = glm::vec3(mMatrixTable[mtxIdx] * glm::vec4(mPositions[vtxIdx.Position], 1.0f));
                                 if(mHeader.NormalCount != 0) vtx.Normal = mNormals[vtxIdx.Normal];
                                 if(mHeader.TexCoordCount != 0) vtx.Texcoord = mTexCoords[vtxIdx.Texcoord];
@@ -415,9 +430,9 @@ namespace MDL {
                         break;
                     case GXPrimitiveType::TriangleStrip: {
                             for (size_t v = 2; v < primitiveVertices.size(); v++){
-                                Vertex vtx1 = {{0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}}, 
-                                       vtx2 = {{0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}}, 
-                                       vtx3 = {{0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}};
+                                Vertex vtx1 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}},
+                                       vtx2 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}},
+                                       vtx3 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}};
 
                                 glm::mat4 vtx1Mat(1.0f), vtx2Mat(1.0f), vtx3Mat(1.0f);
                                 if(primitiveVertices[v-2].Matrix != -1 && primitiveVertices[v-2].Matrix < LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount)){
@@ -453,11 +468,10 @@ namespace MDL {
                             }
                         }
                         break;
-                    
                     case GXPrimitiveType::TriangleFan:{
                             for(size_t v = 0; v < 3; v++){
-                                Vertex vtx = {{0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}};
-                                
+                                Vertex vtx = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}};
+
                                 vtx.Position = glm::vec3(mMatrixTable[primitiveVertices[v].Matrix] * glm::vec4(mPositions[primitiveVertices[v].Position], 1.0f));
                                 if(mHeader.NormalCount != 0) vtx.Normal = mNormals[primitiveVertices[v].Normal];
                                 if(mHeader.TexCoordCount != 0) vtx.Texcoord = mTexCoords[primitiveVertices[v].Texcoord];
@@ -465,13 +479,13 @@ namespace MDL {
 
                                 triangulatedPrimitives.push_back(vtx);
                             }
-                            
-                            for (size_t v = 2; v < primitiveVertices.size(); v++){
-                                Vertex vtx1 = {{0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}}, 
-                                       vtx2 = {{0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}}, 
-                                       vtx3 = {{0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}};
 
-                                if(primitiveVertices[v].Position == primitiveVertices[v-1].Position || 
+                            for (size_t v = 2; v < primitiveVertices.size(); v++){
+                                Vertex vtx1 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}},
+                                       vtx2 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}},
+                                       vtx3 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}};
+
+                                if(primitiveVertices[v].Position == primitiveVertices[v-1].Position ||
                                    primitiveVertices[v-1].Position == primitiveVertices[0].Position ||
                                    primitiveVertices[v].Position == primitiveVertices[0].Position){
                                     continue;
@@ -511,9 +525,8 @@ namespace MDL {
                             }
                         }
                         break;
-
                     default:
-                        LGenUtility::Log << "[MDL Loader]: Unimplemented primitive " << std::format("{0}", opcode) << std::endl; 
+                        std::cout << "[MDL Loader]: Unimplemented primitive " << std::format("{0}", opcode) << std::endl;
                         break;
                     }
                 }
@@ -524,23 +537,23 @@ namespace MDL {
 
             glGenBuffers(1, &mShapes[drawElement.ShapeIndex].Vbo);
             glBindBuffer(GL_ARRAY_BUFFER, mShapes[drawElement.ShapeIndex].Vbo);
-            
+
             glEnableVertexAttribArray(0);
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Position));
-            
+
             glEnableVertexAttribArray(1);
             glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
-            
+
             glEnableVertexAttribArray(2);
             glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Color));
-            
+
             glEnableVertexAttribArray(3);
             glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Texcoord));
-            
+
             glBufferData(GL_ARRAY_BUFFER, triangulatedPrimitives.size() * sizeof(Vertex), triangulatedPrimitives.data(), GL_STATIC_DRAW);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
-            
+
             mShapes[drawElement.ShapeIndex].VertexCount = triangulatedPrimitives.size();
 
         }
@@ -549,7 +562,7 @@ namespace MDL {
 
 
     void Model::Draw(glm::mat4* transform, int32_t id, bool selected, TXP::Animation* materialAnimtion){
-        
+
         glUseProgram(mProgram);
         glUniformMatrix4fv(glGetUniformLocation(mProgram, "transform"), 1, 0, &(*transform)[0][0]);
         glUniform1i(glGetUniformLocation(mProgram, "pickID"), id);
@@ -560,16 +573,16 @@ namespace MDL {
 
             Sampler sampler;
             if(mMaterials[element.MaterialIndex].TevStages[0].SamplerIndex < mSamplers.size()){
-                sampler = mSamplers[mMaterials[element.MaterialIndex].TevStages[0].SamplerIndex];   
+                sampler = mSamplers[mMaterials[element.MaterialIndex].TevStages[0].SamplerIndex];
             }
-            
+
             if(materialAnimtion != nullptr){
                 uint32_t updatedSampler = materialAnimtion->GetSamplerIndex(element.MaterialIndex);
                 if(updatedSampler != UINT32_MAX) sampler = mSamplers[updatedSampler];
             }
 
             glBindVertexArray(mShapes[element.ShapeIndex].Vao);
-            
+
             glActiveTexture(GL_TEXTURE0);
 
             if(mTexturesHeaders.size() > 0){
@@ -584,7 +597,7 @@ namespace MDL {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (sampler.WrapV == 2 ? GL_MIRRORED_REPEAT : GL_REPEAT));
 
             glDrawArrays(GL_TRIANGLES, 0, mShapes[element.ShapeIndex].VertexCount);
-        
+
         }
     }
 
@@ -598,4 +611,3 @@ namespace MDL {
         }
     }
 };
-

@@ -28,7 +28,7 @@ namespace PreviewWidget {
     static float Zoom { 430.0f };
 
     static EModelType CurrentEModelType { EModelType::None };
-    static BinModel* ModelFurniture { nullptr };
+    static BIN::Model* ModelFurniture { nullptr };
     static MDL::Model* ModelActor { nullptr };
     static TXP::Animation* ActorTxp { nullptr };
     static UGrid* Grid { nullptr };
@@ -41,15 +41,15 @@ namespace PreviewWidget {
 
     void PlayAnimation(){
         if(CurrentEModelType == EModelType::Furniture && ModelFurniture != nullptr){
-            ModelFurniture->mAnimationInformation.mPlaying = true;
-            ModelFurniture->mAnimationInformation.mCurrentFrame = 0.0f;
-            ModelFurniture->ResetAnimation();
+            ModelFurniture->mAnim.mPlaying = true;
+            ModelFurniture->mAnim.mCurrentFrame = 0.0f;
+            //ModelFurniture->ResetAnimation();
         }
     }
 
     void PauseAnimation(){
         if(CurrentEModelType == EModelType::Furniture && ModelFurniture != nullptr){
-            ModelFurniture->mAnimationInformation.mPlaying = false;
+            ModelFurniture->mAnim.mPlaying = false;
         }
     }
 
@@ -127,10 +127,11 @@ namespace PreviewWidget {
             ModelActor = nullptr;
         }
         if(Type == EModelType::Furniture){
-            ModelFurniture = new BinModel(ModelStream);
-            ModelFurniture->mAnimationInformation.mCurrentFrame = 0;
-            ModelFurniture->ResetAnimation();
-            Camera.SetCenter(ModelFurniture->GetRootPosition());
+            ModelFurniture = new BIN::Model();
+            ModelFurniture->Load(ModelStream);
+            ModelFurniture->mAnim.mCurrentFrame = 0;
+            //ModelFurniture->ResetAnimation();
+            Camera.SetCenter(ModelFurniture->mGraphNodes[0].Position);
             CurrentEModelType = Type;
         } else if(Type == EModelType::Actor){
             ModelActor = new MDL::Model();
@@ -143,7 +144,7 @@ namespace PreviewWidget {
     void SetModelAnimation(bStream::CMemoryStream* AnimStream){
         if(CurrentEModelType == EModelType::Furniture && ModelFurniture != nullptr){
             ModelFurniture->LoadAnimation(AnimStream);
-            ModelFurniture->ResetAnimation();
+            //ModelFurniture->ResetAnimation();
         } else if(CurrentEModelType == EModelType::Actor && ModelActor != nullptr){
             ActorTxp = new TXP::Animation();
             ActorTxp->Load(AnimStream);
@@ -191,14 +192,14 @@ namespace PreviewWidget {
             // TODO: Draw Grid somehow
 
             if(CurrentEModelType == EModelType::Furniture && ModelFurniture != nullptr){
-                Camera.SetEye({ModelFurniture->GetRootPosition().x + (sin(Rotate) * (Zoom * 2)), ModelFurniture->GetRootPosition().y + Zoom, ModelFurniture->GetRootPosition().z - (cos(Rotate) * (Zoom * 2))});
+                Camera.SetEye({ModelFurniture->mGraphNodes[0].Position.x + (sin(Rotate) * (Zoom * 2)), ModelFurniture->mGraphNodes[0].Position.y + Zoom, ModelFurniture->mGraphNodes[0].Position.z - (cos(Rotate) * (Zoom * 2))});
                 
                 // Ow.
 	            J3DUniformBufferObject::SetProjAndViewMatrices(Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
 	            J3DUniformBufferObject::SubmitUBO();
 
-                ModelFurniture->Draw(&Identity, 0, false, false, true);
-                Grid->Render({ModelFurniture->GetRootPosition().x + (sin(Rotate) * (Zoom * 2)), ModelFurniture->GetRootPosition().y + Zoom, ModelFurniture->GetRootPosition().z - (cos(Rotate) * (Zoom * 2))}, Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
+                ModelFurniture->Draw(&Identity, 0, false);
+                Grid->Render({ModelFurniture->mGraphNodes[0].Position.x + (sin(Rotate) * (Zoom * 2)), ModelFurniture->mGraphNodes[0].Position.y + Zoom, ModelFurniture->mGraphNodes[0].Position.z - (cos(Rotate) * (Zoom * 2))}, Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
             } else if(CurrentEModelType == EModelType::Actor && ModelActor != nullptr) {
                 Camera.SetEye({sin(Rotate) * (Zoom * 2), Zoom, cos(Rotate) * (Zoom * 2)});
 

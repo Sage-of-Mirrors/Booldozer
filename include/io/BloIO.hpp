@@ -2,7 +2,7 @@
 #include "bstream.h"
 #include <vector>
 #include <memory>
-#include "io/BtiIO.hpp"
+#include <Bti.hpp>
 #include "Archive.hpp"
 #include <glm/glm.hpp>
 

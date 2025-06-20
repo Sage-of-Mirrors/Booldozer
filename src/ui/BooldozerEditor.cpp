@@ -741,7 +741,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 			std::vector<uint8_t> bnrImgData(96*32*4);
 			std::memcpy(bnrImgData.data(), GCResourceManager.mBannerImage, sizeof(GCResourceManager.mBannerImage));
 
-			ImageFormat::Encode::RGB5A3(&bnrImgStream, 96, 32, bnrImgData);
+			ImageFormat::Encode::RGB5A3(&bnrImgStream, 96, 32, bnrImgData.data());
 			
 			std::filesystem::path bannerPath(std::filesystem::path(OPTIONS.mRootPath) / "files" / "opening.bnr");
 			bStream::CFileStream bnr(bannerPath.string(), bStream::Endianess::Big, bStream::OpenMode::Out);

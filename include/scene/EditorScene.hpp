@@ -41,8 +41,8 @@ class LEditorScene {
     std::vector<std::weak_ptr<LDoorDOMNode>> mRoomDoors;
     std::vector<std::weak_ptr<LRoomDOMNode>> mCurrentRooms;
     
-    std::vector<std::shared_ptr<BinModel>> mDoorModels;
-    std::map<std::string, std::shared_ptr<BinModel>> mRoomModels;
+    std::vector<std::shared_ptr<BIN::Model>> mDoorModels;
+    std::map<std::string, std::shared_ptr<BIN::Model>> mRoomModels;
 
 
     std::map<std::string, std::unique_ptr<MDL::Model>> mActorModels;
@@ -58,7 +58,7 @@ class LEditorScene {
 
 public:
     LSceneCamera Camera;
-    std::map<std::string, std::shared_ptr<BinModel>> mRoomFurniture;
+    std::map<std::string, std::shared_ptr<BIN::Model>> mRoomFurniture;
     
     glm::mat4 getCameraView();
     glm::mat4 getCameraProj();

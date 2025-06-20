@@ -1,32 +1,10 @@
 #pragma once
-#include <vector>
-#include <type_traits>
-#include "GenUtil.hpp"
-#include "../lib/bStream/bstream.h"
+#include <io/Util.hpp>
 #include <glm/glm.hpp>
-
+#include <GenUtil.hpp>
 #include "io/TxpIO.hpp"
 
 namespace MDL {
-    struct Readable {
-        virtual void Read(bStream::CStream* stream) = 0;
-        virtual ~Readable(){}
-    };
-    
-    template<class T>
-    std::vector<T> ReadSection(bStream::CStream* stream, uint32_t offset, uint16_t count){
-        std::vector<T> collection;
-
-        stream->seek(LGenUtility::SwapEndian<uint32_t>(offset));
-        for (size_t i = 0; i < LGenUtility::SwapEndian<uint16_t>(count); i++)
-        {
-            T item;
-            item.Read(stream);
-            collection.push_back(item);
-        }
-        
-        return collection;
-    };
 
     #pragma pack(push, 1)
     struct MDLHeader {
@@ -70,6 +48,11 @@ namespace MDL {
     };
     #pragma pack(pop)
 
+    struct Readable {
+        virtual void Read(bStream::CStream* stream) = 0;
+        virtual ~Readable(){}
+    };
+
     struct SceneGraphNode : Readable {
         uint16_t InverseMatrixIndex;
         uint16_t ChildIndexShift;
@@ -78,14 +61,14 @@ namespace MDL {
         uint16_t DrawElementCount;
         uint16_t DrawElementBeginIndex;
         uint32_t PaddingSecond;
-    
+
         void Read(bStream::CStream* stream) override;
     };
 
     struct DrawElement : Readable {
         uint16_t MaterialIndex;
         uint16_t ShapeIndex;
-    
+
         void Read(bStream::CStream* stream) override;
     };
 
@@ -96,7 +79,7 @@ namespace MDL {
         uint8_t UnknownFlag;
         uint16_t PacketCount;
         uint16_t PacketBeginIndex;
-    
+
         uint32_t Vao, Vbo, VertexCount; // Bind these for rendering
 
         void Read(bStream::CStream* stream) override;
@@ -109,7 +92,7 @@ namespace MDL {
         uint16_t Unknown;
         uint16_t MatrixCount;
         uint16_t MatrixIndices[10];
-    
+
 
         void Read(bStream::CStream* stream) override;
         void Destroy(); // Delete arrays
@@ -140,7 +123,7 @@ namespace MDL {
         uint8_t WrapV;
         uint8_t Unknown1;
         uint8_t Unknown2;
-    
+
         void Read(bStream::CStream* stream) override;
     };
 
@@ -150,7 +133,7 @@ namespace MDL {
         uint16_t Width;
         uint16_t Height;
         uint8_t Padding2[26];
-    
+
         uint32_t TextureID { UINT32_MAX }; // Bind this for rendering
 
         void Read(bStream::CStream* stream) override;
@@ -163,21 +146,6 @@ namespace MDL {
         std::vector<float> Weights;
     };
 
-    struct Vertex {
-        glm::vec3 Position;
-        glm::vec3 Normal;
-        glm::vec4 Color;
-        glm::vec2 Texcoord;
-    };
-
-    struct PrimitiveVertex {
-        int8_t Matrix;
-        int16_t Position;
-        int16_t Normal;
-        int16_t Color;
-        int16_t Texcoord;
-    };
-
     static uint32_t mProgram { UINT32_MAX };
 
     void InitShaders();
@@ -186,9 +154,9 @@ namespace MDL {
     class Model
     {
     private:
-        
+
         MDLHeader mHeader;
-        
+
         std::vector<TextureHeader> mTexturesHeaders;
 
         std::vector<Sampler> mSamplers;
@@ -214,7 +182,7 @@ namespace MDL {
         void Draw(glm::mat4* transform, int32_t id, bool selected, TXP::Animation* materialAnimtion);
 
         void Load(bStream::CStream* stream);
-        
+
         Model(){}
         ~Model();
     };

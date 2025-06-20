@@ -1,7 +1,7 @@
 #pragma once
 
+#include <Bti.hpp>
 #include "GenUtil.hpp"
-#include "io/BtiIO.hpp"
 #include "constants.hpp"
 
 #include <json.hpp>

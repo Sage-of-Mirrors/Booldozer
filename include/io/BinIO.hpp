@@ -2,189 +2,216 @@
 
 #include <map>
 #include <memory>
-#include "../lib/bStream/bstream.h"
+#include <bstream.h>
+#include <vector>
+#include "Util.hpp"
 #include "io/KeyframeIO.hpp"
 
-enum class GXAttribute : int {
-	PositionMatrixIndex,
-	Tex0MatrixIndex,
-	Tex1MatrixIndex,
-	Tex2MatrixIndex,
-	Tex3MatrixIndex,
-	Tex4MatrixIndex,
-	Tex5MatrixIndex,
-	Tex6MatrixIndex,
-	Tex7MatrixIndex,
-	Position,
-	Normal,
-	Color0,
-	Color1,
-	Tex0,
-	Tex1,
-	Tex2,
-	Tex3,
-	Tex4,
-	Tex5,
-	Tex6,
-	Tex7,
-	PositionMatrixArray,
-	NormalMatrixArray,
-	TextureMatrixArray,
-	LitMatrixArray,
-	NormalBinormalTangent,
-	NullAttr = 0xFF
-};
+namespace BIN {
 
-enum GXPrimitiveType {
-	Points = 0xB8,
-	Lines = 0xA8,
-	LineStrip = 0xB0,
-	Triangles = 0x90,
-	TriangleStrip = 0x98,
-	TriangleFan = 0xA0,
-	Quads = 0x80,
-	PrimitiveNone = 0x00
-};
+    struct AnimInfo {
+    	bool mLoop { 0 };
+    	bool mPlaying { false };
+    	bool mLoaded { false };
+    	float mCurrentFrame { 0.0f }; // float so that we can change speed more easily
+    	float mPlaybackSpeed { 0.5f };
+    	uint32_t mFrameCount { 0 };
+    };
 
-class BinMaterial {
-	uint32_t mTexture;
-    uint8_t mWrap;
+    #pragma pack(push, 1)
+    struct Header {
+        uint8_t Version;
+        std::string Name;
+        uint32_t TextureOffset;     // 0
+        uint32_t SamplerOffset;     // 1
+        uint32_t PositionOffset;    // 2
+        uint32_t NormalOffset;      // 3
+        uint32_t Color0Offset;      // 4
+        uint32_t Color1Offest;      // 5
+        uint32_t TexCoord0Offset;   // 6
+        uint32_t TexCoord1Offset;   // 7
+        uint32_t UnknownOffsets[2]; // 8, 9
+        uint32_t MaterialOffset;    // 10
+        uint32_t BatchOffset;       // 11
+        uint32_t SceneGraphOffset;  // 12
+    };
+    #pragma pack(pop)
 
-public:
+    struct DrawElement : Readable {
+        int16_t MaterialIndex, BatchIndex;
 
-	static void DecodeCMPR(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData);
-	static void DecodeRGB5A3(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData);
-	static void DecodeRGB565(bStream::CStream* stream, uint16_t width, uint16_t height, uint8_t* imageData);
+        void Read(bStream::CStream* stream) override;
+    };
 
-	static uint8_t* DecodeCMPRSubBlock(bStream::CStream* stream);
-	static uint32_t RGB565toRGBA8(uint16_t data);
-	static uint32_t RGB5A3toRGBA8(uint16_t data);
+    struct TextureHeader : Readable {
+        uint16_t Width;
+        uint16_t Height;
+        uint8_t Format;
+        uint16_t Unknown;
 
-    void Bind();
-	BinMaterial(bStream::CStream* stream, uint32_t textureOffset);
-	~BinMaterial();
-};
+        uint32_t ImageOffset;
+        uint32_t TextureID { UINT32_MAX }; // Bind this for rendering
+        uint8_t* ImageData;
 
-class BinSampler {
+        void Read(bStream::CStream* stream) override;
+        void Write(bStream::CStream* stream);
+        void Save(bStream::CStream* stream);
+        void Load(bStream::CStream* stream);
 
-public:
-	glm::vec4 mAmbientColor;
-	uint16_t mTextureID;
-    BinSampler(bStream::CStream* stream);
-	BinSampler(){}
-    ~BinSampler(){}
-};
+        void Destroy();
+    };
 
-class BinMesh {
-    uint32_t mVbo;
-	uint32_t mVao;
+    struct Sampler : Readable {
+        int16_t TextureIndex;
+        uint16_t PaletteIndex;
+        uint8_t WrapU;
+        uint8_t WrapV;
+        uint16_t Unk;
 
-public:
-	uint32_t mVertexCount;
+        void Read(bStream::CStream* stream) override;
+        void Write(bStream::CStream* stream);
+    };
 
-    void Bind();
+    struct Material : Readable {
+        uint8_t LightEnabled;
+        uint8_t Unk0, Unk1;
+        glm::vec4 Color;
+        int16_t SamplerIndices[8];
+        //uint16_t Unk2, Unk3;
 
-    BinMesh(bStream::CStream* stream, uint32_t offset, std::vector<glm::vec3>& vertexData, std::vector<glm::vec2>& texcoordData);
+        void Read(bStream::CStream* stream) override;
+        void Write(bStream::CStream* stream);
+    };
 
-    BinMesh(){}
-    ~BinMesh();
+    struct Primitive {
+        uint8_t Opcode;
+        std::vector<Vertex> Vertices;
+    };
 
-};
+    struct Batch : Readable {
+        uint16_t TriangleCount;
+        uint16_t DisplayListSize;
+        uint32_t VertexAttributes;
 
-struct BinAnimInfo {
-	bool mLoop { 0 };
-	bool mPlaying { false };
-	bool mLoaded { false };
-	float mCurrentFrame { 0.0f }; // float so that we can change speed more easily
-	float mPlaybackSpeed { 0.5f };
-	uint32_t mFrameCount { 0 };
-};
+        uint8_t NormalFlag;
+        uint8_t PositionFlag;
+        uint8_t TexCoordFlag;
+        uint8_t NBTFlag;
 
-class BinModel;
+        uint32_t Vao;
+        uint32_t Vbo;
+        uint32_t VertexCount;
+        uint32_t PrimitiveOffset;
 
-class BinScenegraphNode {
-	friend BinModel;
-    std::vector<std::pair<int16_t, int16_t>> meshes;
+        std::vector<Primitive> Primitives;
 
-	void LoadNodeTracks(bStream::CStream* stream, uint32_t& idx, uint32_t groupOffset, uint32_t scaleKeysOffset, uint32_t rotateKeysOffset, uint32_t translateKeysOffset);
+        void Read(bStream::CStream* stream) override;
+        void Write(bStream::CStream* stream);
+        void Destroy();
+    };
 
-	uint32_t mNextScaleKeyX { 1 };
-    uint32_t mNextScaleKeyY { 1 };
-    uint32_t mNextScaleKeyZ { 1 };
-	LTrackCommon mXScaleTrack;
-	LTrackCommon mYScaleTrack;
-	LTrackCommon mZScaleTrack;
+    struct SceneGraphNode : Readable {
+        int16_t Index;
 
-	uint32_t mNextRotKeyX { 1 };
-    uint32_t mNextRotKeyY { 1 };
-    uint32_t mNextRotKeyZ { 1 };
-	LTrackCommon mXRotTrack;
-	LTrackCommon mYRotTrack;
-	LTrackCommon mZRotTrack;
+        int16_t ParentIndex { -1 };
+        int16_t ChildIndex { -1 };
+        int16_t NextSibIndex { -1 };
+        int16_t PreviousSibIndex { -1 };
 
-	uint32_t mNextPosKeyX { 1 };
-    uint32_t mNextPosKeyY { 1 };
-    uint32_t mNextPosKeyZ { 1 };
-	LTrackCommon mXPosTrack;
-	LTrackCommon mYPosTrack;
-	LTrackCommon mZPosTrack;
-public:
-    std::shared_ptr<BinScenegraphNode> parent;
-    std::shared_ptr<BinScenegraphNode> child;
-    std::shared_ptr<BinScenegraphNode> next;
-    std::shared_ptr<BinScenegraphNode> prev;
+        uint8_t RenderFlags;
 
+        glm::vec3 Scale, Rotation, Position;
+        glm::vec3 BoundingBoxMin, BoundingBoxMax;
+        float Radius;
+        glm::mat4 Transform { 1.0f };
 
-	glm::mat4 transform;
-	glm::vec3 mScale, mRotation, mTranslation;
-	float mBoundingSphereRadius;
+        int16_t ElementCount;
+        int32_t ElementOffset;
+        std::vector<DrawElement> mDrawElements;
 
-	void ResetAnimation();
+        inline bool CastShadow() { return (RenderFlags & (1 << 1)) != 0; }
+        inline bool FourthWall() { return (RenderFlags & (1 << 2)) != 0; }
+        inline bool Transparent() { return (RenderFlags & (1 << 3)) != 0; }
+        inline bool FullBright() { return (RenderFlags & (1 << 6)) != 0; }
+        inline bool Ceiling() { return (RenderFlags & (1 << 7)) != 0; }
 
-    void AddMesh(int16_t material, int16_t mesh);
-    void Draw(glm::mat4 localTransform, glm::mat4* instance, BinModel* bin, bool ignoreTransforms = false, bool animate = false);
-    BinScenegraphNode();
-    ~BinScenegraphNode();
+        inline bool CastShadow(bool set) { if (set) { RenderFlags |= (1 << 1); } else { RenderFlags &= ~(1 << 1); } return set; }
+        inline bool FourthWall(bool set) { if (set) { RenderFlags |= (1 << 2); } else { RenderFlags &= ~(1 << 2); } return set; }
+        inline bool Transparent(bool set) { if (set) { RenderFlags |= (1 << 3); } else { RenderFlags &= ~(1 << 3); } return set; }
+        inline bool FullBright(bool set) { if (set) { RenderFlags |= (1 << 6); } else { RenderFlags &= ~(1 << 6); } return set; }
+        inline bool Ceiling(bool set) { if (set) { RenderFlags |= (1 << 7); } else { RenderFlags &= ~(1 << 7); } return set; }
 
-};
+        void Read(bStream::CStream* stream) override;
+        void Write(bStream::CStream* stream);
+    };
 
-class BinModel {
-	friend BinScenegraphNode;
-    std::map<int16_t, std::shared_ptr<BinMesh>> mMeshes;
-    std::map<int16_t, std::shared_ptr<BinSampler>> mSamplers;
-	std::vector<std::shared_ptr<BinMaterial>> mMaterials;
-    std::shared_ptr<BinScenegraphNode> mRoot;
+    struct GraphNodeTrack {
+        LTrackCommon mXScaleTrack;
+        LTrackCommon mYScaleTrack;
+        LTrackCommon mZScaleTrack;
 
-    std::shared_ptr<BinScenegraphNode> ParseSceneraph(bStream::CStream* stream, uint32_t* offsets, uint16_t index, std::vector<glm::vec3>& vertexData, std::vector<glm::vec2>& texcoordData, std::shared_ptr<BinScenegraphNode> parent = nullptr, std::shared_ptr<BinScenegraphNode> previous = nullptr);
+        LTrackCommon mXRotTrack;
+        LTrackCommon mYRotTrack;
+        LTrackCommon mZRotTrack;
 
+        LTrackCommon mXPosTrack;
+        LTrackCommon mYPosTrack;
+        LTrackCommon mZPosTrack;
 
-public:
-	BinAnimInfo mAnimationInformation;
+        uint32_t mNextScaleKeyX { 1 };
+        uint32_t mNextScaleKeyY { 1 };
+        uint32_t mNextScaleKeyZ { 1 };
 
-	static void InitShaders();
-	static void DestroyShaders();
+        uint32_t mNextPosKeyX { 1 };
+        uint32_t mNextPosKeyY { 1 };
+        uint32_t mNextPosKeyZ { 1 };
 
-	bool BindMesh(uint16_t id);
+        uint32_t mNextRotKeyX { 1 };
+        uint32_t mNextRotKeyY { 1 };
+        uint32_t mNextRotKeyZ { 1 };
+    };
 
-	bool BindMaterial(uint16_t id);
+    static uint32_t mProgram { UINT32_MAX };
 
-    void Draw(glm::mat4* transform, int32_t id, bool selected, bool ignoreTransforms = false, bool animate = false);
+    void InitShaders();
+    void DestroyShaders();
 
-	void ResetAnimation(){ mRoot->ResetAnimation(); }
+    class Model
+    {
+    public:
+        Header mHeader;
 
-	void TranslateRoot(glm::vec3 translation);
+        AnimInfo mAnim;
 
-	float GetRootBoundingSphere() { return mRoot->mBoundingSphereRadius; }
+        std::map<uint16_t, TextureHeader> mTexturesHeaders;
 
-	glm::vec3 GetRootPosition() { return mRoot->transform[3]; }
+        std::map<uint16_t, Sampler> mSamplers;
+        std::map<uint16_t, Batch> mBatches;
 
-	void LoadAnimation(bStream::CStream* stream);
-	void ClearAnimation();
+        std::map<uint16_t, Material> mMaterials;
+        std::map<uint16_t, SceneGraphNode> mGraphNodes;
+        std::map<uint16_t, GraphNodeTrack> mAnimationTracks;
 
-	std::shared_ptr<BinMesh> GetMesh(uint32_t id) { return mMeshes.at(id); }
-	std::shared_ptr<BinSampler> GetSampler(uint32_t id) { return mSamplers.at(id); }
+        std::vector<glm::vec3> mPositions;
+        std::vector<glm::vec3> mNormals;
+        std::vector<glm::vec2> mTexCoords;
 
-    BinModel(bStream::CStream* stream);
+        void ReadSceneGraphNode(bStream::CStream* stream, uint32_t index);
+        void DrawScenegraphNode(uint32_t idx, glm::mat4 transform);
 
-    ~BinModel();
-};
+        glm::vec3 bbMax {0, 0, 0}, bbMin {0, 0, 0};
+
+        void LoadAnimation(bStream::CStream* stream);
+        void ClearAnimation();
+
+        void Draw(glm::mat4* transform, int32_t id, bool selected);
+
+        void Load(bStream::CStream* stream);
+        void Write(bStream::CStream* stream);
+
+		Model(bStream::CStream* stream){ Load(stream); }
+        Model(){}
+        ~Model();
+    };
+
+}

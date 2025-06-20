@@ -9,7 +9,7 @@
 #include "IconsForkAwesome.h"
 #include "modes/ActorMode.hpp"
 #include "scene/ModelViewer.hpp"
-#include "io/BtiIO.hpp"
+#include <Bti.hpp>
 #include "ResUtil.hpp"
 
 #include "stb_image.h"
@@ -185,7 +185,8 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 			auto fileData = GCResourceManager.mGameArchive->GetFile(std::format("/kawano/roomname/{}", LResUtility::GetNameMap("MapTitlecards")["titlecards"][mRoomNumber].get<std::string>()));
 			bStream::CMemoryStream file(fileData->GetData(), fileData->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 
-			uint8_t* roomImage = RoomTitlecard.Load(&file);
+			RoomTitlecard.Load(&file);
+			uint8_t* roomImage = RoomTitlecard.GetData();
 
 			glCreateTextures(GL_TEXTURE_2D, 1, &CurRoomNameImgID);
 			glTextureStorage2D(CurRoomNameImgID, 1, GL_RGBA8, RoomTitlecard.mWidth, RoomTitlecard.mHeight);
@@ -733,7 +734,8 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 
 		auto fileData = GCResourceManager.mGameArchive->GetFile(std::format("/kawano/roomname/{}", LResUtility::GetNameMap("MapTitlecards")["titlecards"][mRoomNumber].get<std::string>()));
 		bStream::CMemoryStream file(0x20 + (x * y), bStream::Endianess::Big, bStream::OpenMode::Out);
-		RoomTitlecard.Save(&file, x, y, imgData);
+		RoomTitlecard.SetData(x, y, fileData->GetData());
+		RoomTitlecard.Save(&file);
 		fileData->SetData(file.getBuffer(), file.getSize());
 
     	std::filesystem::path gameArcPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Game" / "game_usa.szp";
@@ -1050,7 +1052,7 @@ void LRoomDOMNode::PreProcess(){
 			uint32_t offsets[21];
 			stream.seek(12);
 
-			for (size_t o = 0; o < 21; o++)
+			for (std::size_t o = 0; o < 21; o++)
 			{
 				offsets[o] = stream.readUInt32();
 			}
@@ -1089,7 +1091,7 @@ void LRoomDOMNode::PreProcess(){
 				bStream::CMemoryStream stream(roomBin->GetData(), roomBin->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 	
 				stream.seek(12);
-				for (size_t o = 0; o < 21; o++)
+				for (std::size_t o = 0; o < 21; o++)
 				{
 					offsets[o] = stream.readUInt32();
 				}
