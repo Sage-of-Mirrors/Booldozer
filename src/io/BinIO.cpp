@@ -135,7 +135,6 @@ namespace BIN {
     }
 
     void Material::Read(bStream::CStream* stream){
-        std::cout << "Reading Material at " << stream->tell() << std::endl;
         LightEnabled = stream->readUInt8();
         Unk0 = stream->readUInt8();
         Unk1 = stream->readUInt8();
@@ -151,7 +150,7 @@ namespace BIN {
         stream->writeUInt8(LightEnabled);
         stream->writeUInt8(Unk0);
         stream->writeUInt8(Unk1);
-        stream->writeUInt32(static_cast<uint8_t>(Color.r * 255) | (static_cast<uint8_t>(Color.g * 255) << 8) | (static_cast<uint8_t>(Color.b * 255) << 16) | (static_cast<uint8_t>(Color.a * 255) << 24));
+        stream->writeUInt32(static_cast<uint8_t>(Color.a * 255) | (static_cast<uint8_t>(Color.b * 255) << 8) | (static_cast<uint8_t>(Color.g * 255) << 16) | (static_cast<uint8_t>(Color.r * 255) << 24));
         stream->writeUInt8(0);
         for(int i = 0; i < 8; i++){
             stream->writeInt16(SamplerIndices[i]);
@@ -270,7 +269,6 @@ namespace BIN {
                 ImageFormat::Encode::I4(stream, Width, Height, ImageData);
                 break;
         }
-        std::cout << "texture over at" << std::hex << stream->tell() << std::dec << std::endl;
     }
 
     void TextureHeader::SetImage(uint8_t* data, std::size_t size, int w, int h){
@@ -447,7 +445,6 @@ namespace BIN {
 
             DrawElement element;
             element.Read(stream);
-            std::cout << "[BIN Loader]: Reading Draw Element " << element.BatchIndex << " " << element.MaterialIndex << std::endl;
 
             if(element.BatchIndex >= 0 && !mBatches.contains(element.BatchIndex)){
                 Batch* batch = Read<Batch>(mBatches, stream, mHeader.BatchOffset, element.BatchIndex, 0x18);
@@ -666,11 +663,13 @@ namespace BIN {
         for(auto [idx, sampler] : mSamplers){
             sampler.Write(&SamplerStream);
         }
+        SamplerStream.alignTo(32);
         uint32_t SamplerSectionSize = SamplerStream.tell();
 
         for(auto [idx, material] : mMaterials){
             material.Write(&MaterialStream);
         }
+        MaterialStream.alignTo(32);
         uint32_t MaterialSectionSize = MaterialStream.tell();
 
         for(auto [idx, batch] : mBatches){
@@ -809,7 +808,6 @@ namespace BIN {
     }
 
     void Model::Load(bStream::CStream* stream){
-        std::cout << "Stream Size is "<< stream->getSize() << std::endl;
         stream->seek(0);
         mHeader.Version = stream->readUInt8();
         mHeader.Name = stream->readString(11);
@@ -826,8 +824,6 @@ namespace BIN {
         mHeader.MaterialOffset = stream->readUInt32();    // 10
         mHeader.BatchOffset = stream->readUInt32();       // 11
         mHeader.SceneGraphOffset = stream->readUInt32();  // 12
-
-        std::cout << "[BIN Loader]: Reading Model Start" << std::endl;
 
 
         uint32_t vertexCount = 0;
