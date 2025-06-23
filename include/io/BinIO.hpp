@@ -58,6 +58,8 @@ namespace BIN {
         void Save(bStream::CStream* stream);
         void Load(bStream::CStream* stream);
 
+        void SetImage(uint8_t* data, std::size_t size, int w, int h);
+
         void Destroy();
     };
 

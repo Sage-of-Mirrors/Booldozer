@@ -273,6 +273,28 @@ namespace BIN {
         std::cout << "texture over at" << std::hex << stream->tell() << std::dec << std::endl;
     }
 
+    void TextureHeader::SetImage(uint8_t* data, std::size_t size, int w, int h){
+        if(TextureID != UINT32_MAX) glDeleteTextures(1, &TextureID);
+        if(ImageData != nullptr) delete[] ImageData;
+
+        ImageData = new uint8_t[size];
+        memcpy(ImageData, data, size);
+
+        Width = w;
+        Height = h;
+
+        glGenTextures(1, &TextureID);
+        glBindTexture(GL_TEXTURE_2D, TextureID);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ImageData);
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
     void TextureHeader::Destroy(){
         glDeleteTextures(1, &TextureID);
         delete[] ImageData;
@@ -807,7 +829,7 @@ namespace BIN {
 
         std::cout << "[BIN Loader]: Reading Model Start" << std::endl;
 
-        
+
         uint32_t vertexCount = 0;
         uint32_t texcoordCount = 0;
         uint32_t normalCount = 0;
@@ -818,15 +840,15 @@ namespace BIN {
             {
                 chunkOffsets[o] = stream->readUInt32();
             }
-            
-            
-            
+
+
+
             for(std::size_t o = 3; o < 21; o++)
             {
                 vertexCount = (uint32_t)((chunkOffsets[o] - chunkOffsets[2]) / 6);
                 if(chunkOffsets[o] != 0) break;
             }
-            
+
             for(std::size_t o = 4; o < 21; o++)
             {
                 normalCount = (uint32_t)((chunkOffsets[o] - chunkOffsets[3]) / 12);
@@ -839,7 +861,7 @@ namespace BIN {
                 if(chunkOffsets[o] != 0) break;
             }
         }
-            
+
         stream->seek(mHeader.PositionOffset);
         for(int i = 0; i < vertexCount; i++){
             mPositions.push_back({stream->readInt16(), stream->readInt16(), stream->readInt16()});

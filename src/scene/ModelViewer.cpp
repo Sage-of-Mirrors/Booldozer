@@ -33,6 +33,10 @@ namespace PreviewWidget {
     static TXP::Animation* ActorTxp { nullptr };
     static UGrid* Grid { nullptr };
 
+    BIN::Model* GetFurnitureModel(){
+        return ModelFurniture;
+    }
+
     void SetActive(){
         Active = true;
         Rotate = -155.0f;
@@ -141,6 +145,12 @@ namespace PreviewWidget {
         }
     }
 
+    void SaveModel(bStream::CMemoryStream* ModelStream){
+        if(ModelFurniture != nullptr){
+            ModelFurniture->Write(ModelStream);
+        }
+    }
+
     void SetModelAnimation(bStream::CMemoryStream* AnimStream){
         if(CurrentEModelType == EModelType::Furniture && ModelFurniture != nullptr){
             ModelFurniture->LoadAnimation(AnimStream);
@@ -176,7 +186,7 @@ namespace PreviewWidget {
 
             glEnable(GL_DEPTH_TEST);
             glDepthFunc(GL_LEQUAL);
-            
+
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -187,13 +197,13 @@ namespace PreviewWidget {
             glViewport(0, 0, 500, 500);
             glClearColor(0.100f, 0.261f, 0.402f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            
+
 
             // TODO: Draw Grid somehow
 
             if(CurrentEModelType == EModelType::Furniture && ModelFurniture != nullptr){
                 Camera.SetEye({ModelFurniture->mGraphNodes[0].Position.x + (sin(Rotate) * (Zoom * 2)), ModelFurniture->mGraphNodes[0].Position.y + Zoom, ModelFurniture->mGraphNodes[0].Position.z - (cos(Rotate) * (Zoom * 2))});
-                
+
                 // Ow.
 	            J3DUniformBufferObject::SetProjAndViewMatrices(Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
 	            J3DUniformBufferObject::SubmitUBO();
@@ -206,9 +216,9 @@ namespace PreviewWidget {
 
 	            J3DUniformBufferObject::SetProjAndViewMatrices(Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
 	            J3DUniformBufferObject::SubmitUBO();
-                
+
                 ModelActor->Draw(&Identity, 0, false, ActorTxp);
-                Grid->Render({(sin(Rotate) * (Zoom * 2)), Zoom, (cos(Rotate) * (Zoom * 2))}, Camera.GetProjectionMatrix(), Camera.GetViewMatrix());     
+                Grid->Render({(sin(Rotate) * (Zoom * 2)), Zoom, (cos(Rotate) * (Zoom * 2))}, Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
             } else {
 	            J3DUniformBufferObject::SetProjAndViewMatrices(Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
 	            J3DUniformBufferObject::SubmitUBO();
@@ -217,8 +227,8 @@ namespace PreviewWidget {
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glBindRenderbuffer(GL_RENDERBUFFER, 0);
-            
+
         }
     }
-    
+
 }

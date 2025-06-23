@@ -4,6 +4,7 @@
 #include "glm/glm.hpp"
 #include "bstream.h"
 #include "imgui.h"
+#include "io/BinIO.hpp"
 
 enum class EModelType {
     Actor,
@@ -12,6 +13,8 @@ enum class EModelType {
 };
 
 namespace PreviewWidget {
+
+    BIN::Model* GetFurnitureModel();
 
     void SetActive();
     void SetInactive();
@@ -27,6 +30,7 @@ namespace PreviewWidget {
 
     void UpdateCamera();
     void LoadModel(bStream::CMemoryStream* ModelStream, EModelType Type);
+    void SaveModel(bStream::CMemoryStream* ModelStream);
     void SetModelAnimation(bStream::CMemoryStream* AnimStream);
     void UnloadModel();
 
@@ -34,5 +38,5 @@ namespace PreviewWidget {
     void DoRotate(float amt);
 
     uint32_t PreviewID();
-    
+
 }

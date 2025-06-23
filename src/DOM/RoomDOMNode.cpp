@@ -7,19 +7,32 @@
 #include "UIUtil.hpp"
 #include "Options.hpp"
 #include "IconsForkAwesome.h"
+#include "imgui.h"
+#include "io/BinIO.hpp"
 #include "modes/ActorMode.hpp"
 #include "scene/ModelViewer.hpp"
 #include <Bti.hpp>
+#include <memory>
 #include "ResUtil.hpp"
 
 #include "stb_image.h"
 #include "stb_image_write.h"
+
+enum class SelectedResourceType {
+  Texture,
+  Sampler,
+  Material,
+  Batch,
+  None
+};
 
 namespace {
 	std::shared_ptr<Archive::Rarc> ActiveRoomArchive = nullptr;
 	std::shared_ptr<Archive::File> EditFileName = nullptr;
 	std::shared_ptr<Archive::File> SelectedFile = nullptr;
 	std::shared_ptr<Archive::File> SelectedAnimation = nullptr;
+	void* BinSelectedResource = nullptr;
+	SelectedResourceType SelectedType { SelectedResourceType::None };
 	std::string FileName = "(null)";
 	uint32_t PreviousRoomID = 0xFFFFFFFF;
 	uint32_t CurRoomNameImgID = 0x00000000;
@@ -53,7 +66,7 @@ LRoomEntityType DOMToEntityType(EDOMNodeType type){
 	case EDOMNodeType::Character: return LRoomEntityType_Characters;
 	case EDOMNodeType::Event: return LRoomEntityType_Events;
 	case EDOMNodeType::Key: return LRoomEntityType_Keys;
-	
+
 	default: return LRoomEntityType_Max;
 	}
 }
@@ -70,7 +83,7 @@ void LRoomDOMNode::RoomResourceManagerHandleType(std::shared_ptr<LDOMNodeBase> s
 		for(auto file : dir->GetFiles()){
 			if(std::filesystem::path(file->GetName()).extension().string() != typeExt) continue;
 			if(EditFileName == file){
-				
+
 				LUIUtility::RenderTextInput("##filename", &FileName);
 				if(ImGui::IsItemFocused() && ImGui::IsKeyDown(ImGuiKey_Enter)){
 					if(typeExt == ".bin"){
@@ -146,7 +159,7 @@ void LRoomDOMNode::RoomResourceManagerHandleType(std::shared_ptr<LDOMNodeBase> s
 					EditFileName = nullptr;
 				}
 			}
-			
+
 			ImGui::SameLine();
 			ImGui::Text(ICON_FK_MINUS_CIRCLE);
 			if(ImGui::IsItemClicked()) {
@@ -162,6 +175,34 @@ void LRoomDOMNode::RoomResourceManagerHandleType(std::shared_ptr<LDOMNodeBase> s
 	if(toDelete != nullptr){
 		dir->DeleteFile(toDelete);
 	}
+}
+
+void BinTreeNodeUI(BIN::Model* model, uint32_t index){
+    if(ImGui::TreeNode(std::format("Node {}", model->mGraphNodes[index].Index).c_str())){
+        ImGui::Text(ICON_FK_CUBE " Meshes");
+        ImGui::Indent();
+        for(auto element : model->mGraphNodes[index].mDrawElements){
+            ImGui::Text(std::format("Batch {}", element.BatchIndex).c_str());
+        }
+        ImGui::Unindent();
+
+        ImGui::Text(ICON_FK_PAINT_BRUSH " Materials");
+        ImGui::Indent();
+        for(auto element : model->mGraphNodes[index].mDrawElements){
+            ImGui::Text(std::format("Material {}", element.MaterialIndex).c_str());
+        }
+        ImGui::Unindent();
+
+        if(model->mGraphNodes[index].ChildIndex != -1){
+            ImGui::Text(ICON_FK_LEAF " Children");
+            BinTreeNodeUI(model, model->mGraphNodes[index].ChildIndex);
+        }
+
+        ImGui::TreePop();
+    }
+    if(model->mGraphNodes[index].NextSibIndex != -1){
+        BinTreeNodeUI(model, model->mGraphNodes[index].NextSibIndex);
+    }
 }
 
 void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection)
@@ -223,6 +264,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 				ImGui::EndChild();
 
 				ImGui::SameLine();
+				ImGui::BeginChild("##roomResourcePreview",  {600, 500});
 				ImGui::Image(static_cast<uintptr_t>(PreviewWidget::PreviewID()), {600, 500},  {0.0f, 1.0f}, {1.0f, 0.0f});
 
 				if(ImGui::IsItemHovered()){
@@ -231,6 +273,48 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 					} else {
 						PreviewWidget::DoZoom(ImGui::GetIO().MouseWheel*50);
 					}
+				}
+
+
+				ImGui::EndChild();
+
+				if(PreviewWidget::GetFurnitureModel() != nullptr){
+    				ImGui::SameLine();
+                    ImGui::BeginChild("##binEditorPanels", {180, 500});
+                    ImGui::Text("SceneGraph");
+                    ImGui::Separator();
+    				ImGui::BeginChild("##binTree", {180, 125});
+                    BinTreeNodeUI(PreviewWidget::GetFurnitureModel(), 0);
+    				ImGui::EndChild();
+                    ImGui::Text("Resources");
+                    ImGui::Separator();
+    				ImGui::BeginChild("##binResources", {180, 200});
+                    if(ImGui::TreeNode(ICON_FK_PICTURE_O " Textures")){
+                        for(auto [idx, texture] : PreviewWidget::GetFurnitureModel()->mTexturesHeaders){
+                            ImGui::Image(static_cast<uintptr_t>(texture.TextureID), {16, 16});
+                            ImGui::SameLine();
+                            ImGui::Text("Texture %d", idx);
+                            if(ImGui::BeginPopupContextItem(std::format("##textureResourceContextMenu{}",idx).c_str())){
+                                if(ImGui::Selectable("Replace")){
+                                    ImGuiFileDialog::Instance()->OpenModal("replaceTextureImageDialog", "Replace Texture", "PNG Image (*.png){.png}", OPTIONS.mRootPath);
+                                    BinSelectedResource = &PreviewWidget::GetFurnitureModel()->mTexturesHeaders[idx];
+                                }
+                                if(ImGui::Selectable("Export")){
+                                    ImGuiFileDialog::Instance()->OpenModal("exportTextureImageDialog", "Export Texture", "PNG Image (*.png){.png}", OPTIONS.mRootPath);
+                                    BinSelectedResource = &PreviewWidget::GetFurnitureModel()->mTexturesHeaders[idx];
+                                }
+                                ImGui::EndPopup();
+                            }
+                        }
+                        ImGui::TreePop();
+                    }
+    				ImGui::EndChild();
+                    ImGui::BeginChild("##binResourceSelected", {180, 175});
+                    if(SelectedType != SelectedResourceType::None && BinSelectedResource != nullptr){
+
+                    }
+                    ImGui::EndChild();
+                    ImGui::EndChild();
 				}
 
 				if(ImGui::Button("Done")){
@@ -244,14 +328,14 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 					PreviewWidget::SetInactive();
 					ImGui::CloseCurrentPopup();
 				}
-				
+
 				if(SelectedAnimation != nullptr){
 					ImGui::SameLine();
 					ImGui::Text(ICON_FK_PLAY);
 					if(ImGui::IsItemClicked()){
 						PreviewWidget::PlayAnimation();
 					}
-					
+
 					ImGui::SameLine();
 					ImGui::Text(ICON_FK_STOP);
 					if(ImGui::IsItemClicked()){
@@ -261,9 +345,32 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 
 				ImGui::EndPopup();
 			}
-		} 
+		}
 
 		std::string modelPath;
+		if(LUIUtility::RenderFileDialog("replaceTextureImageDialog", modelPath)){// error check should be here oops!
+		    if(BinSelectedResource != nullptr && reinterpret_cast<BIN::TextureHeader*>(BinSelectedResource)->ImageData != nullptr){
+				int w, h, channels;
+				unsigned char* img = stbi_load(modelPath.c_str(), &w, &h, &channels, 4);
+				reinterpret_cast<BIN::TextureHeader*>(BinSelectedResource)->SetImage(img, w*h*4, w, h);
+				stbi_image_free(img);
+
+				bStream::CMemoryStream modelData(12, bStream::Endianess::Big, bStream::OpenMode::Out);
+				PreviewWidget::SaveModel(&modelData);
+
+				auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+                std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
+				if(std::filesystem::exists(resPath) && resPath.extension().string() == ".arc"){
+    				SelectedFile->SetData(modelData.getBuffer(), modelData.tell());
+    				ActiveRoomArchive->SaveToFile(resPath.string());
+				}
+			}
+		}
+
+		if(LUIUtility::RenderFileDialog("exportTextureImageDialog", modelPath)){// error check should be here oops!
+		    if(BinSelectedResource != nullptr && reinterpret_cast<BIN::TextureHeader*>(BinSelectedResource)->ImageData != nullptr) stbi_write_png(modelPath.c_str(), reinterpret_cast<BIN::TextureHeader*>(BinSelectedResource)->Width, reinterpret_cast<BIN::TextureHeader*>(BinSelectedResource)->Height, 4, reinterpret_cast<BIN::TextureHeader*>(BinSelectedResource)->ImageData, 4*reinterpret_cast<BIN::TextureHeader*>(BinSelectedResource)->Width);
+		}
+
 		if(LUIUtility::RenderFileDialog("addModelToRoomArchiveDialog", modelPath)){
 			auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
 
@@ -273,7 +380,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 				if(ActiveRoomArchive != nullptr){
 					bStream::CFileStream modelFile(modelPath, bStream::Endianess::Big, bStream::OpenMode::In);
 					std::shared_ptr<Archive::File> newFile = Archive::File::Create();
-						
+
 					uint8_t* modelData = new uint8_t[modelFile.getSize()]{};
 					modelFile.readBytesTo(modelData, modelFile.getSize());
 
@@ -296,7 +403,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 							animFolder->SetName("anm");
 							ActiveRoomArchive->GetRoot()->AddSubdirectory(animFolder);
 						}
-						
+
 						animFolder->AddFile(newFile);
 
 					} else {
@@ -308,7 +415,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 			ImGui::OpenPopup("##roomResources");
 		}
 	}
-	
+
 	if(ImGui::BeginDragDropTarget()){
 		LDOMNodeBase* dragDropNode = nullptr;
 
@@ -345,7 +452,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 					}
 
 					oldRoom->RemoveChild(sharedNode);
-					
+
 					if(nodeType == LRoomEntityType_Furniture){
 						std::shared_ptr<LFurnitureDOMNode> furnitureNode = std::static_pointer_cast<LFurnitureDOMNode>(sharedNode);
 						std::shared_ptr<LRoomDataDOMNode> oldRoomData = oldRoom->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
@@ -380,7 +487,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 								rootFolder->SetName(newResPath.filename().stem().string());
 
 								newResArc->SetRoot(rootFolder);
-								
+
 								auto roomModel = Archive::File::Create();
 								roomModel->SetName("room.bin");
 
@@ -391,22 +498,22 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 
 								modelFile.readBytesTo(modelData, modelFileSize);
 								roomModel->SetData(modelData, modelFileSize);
-								
+
 								ActiveRoomArchive->GetRoot()->AddFile(roomModel);
 
 								delete[] modelData;
 
 								std::filesystem::path path(newRoomData->GetResourcePath());
-								
+
 								path.replace_extension(".arc");
 
 								newRoomData->SetRoomResourcePath(path.string());
-							
+
 								newResArc->GetRoot()->AddFile(oldResArc->GetFile(furnitureNode->GetModelName()));
 								newResArc->SaveToFile(path.string());
 
 							}
-						}						
+						}
 
 					}
 				}
@@ -439,12 +546,12 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 					} else {
 						// This is for archive editing so we need to make an archive if its just a model
 						ActiveRoomArchive = Archive::Rarc::Create();
-						
+
 						auto rootFolder = Archive::Folder::Create(ActiveRoomArchive);
 						rootFolder->SetName(resPath.filename().stem().string());
 
 						ActiveRoomArchive->SetRoot(rootFolder);
-						
+
 						auto roomModel = Archive::File::Create();
 						roomModel->SetName("room.bin");
 
@@ -455,17 +562,17 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 
 						modelFile.readBytesTo(modelData, modelFileSize);
 						roomModel->SetData(modelData, modelFileSize);
-						
+
 						ActiveRoomArchive->GetRoot()->AddFile(roomModel);
 
 						delete[] modelData;
 
 						std::filesystem::path path(data->GetResourcePath());
-						
+
 						path.replace_extension(".arc");
 
 						data->SetRoomResourcePath(path.string());
-					
+
 						ActiveRoomArchive->SaveToFile(resPath.string());
 					}
 				}
@@ -473,7 +580,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 
 			if(openRoomRes) ImGui::OpenPopup("##roomResources");
 		}
-		
+
 		// Iterating all of the entity types
 		for (uint32_t i = 0; i < LRoomEntityType_Max; i++)
 		{
@@ -531,12 +638,12 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 					ImGui::SameLine();
 					ImGui::Text(ICON_FK_MINUS_CIRCLE);
 					if(ImGui::IsItemClicked()){
-							
+
 						auto select = mode_selection->GetPrimarySelection();
 						mode_selection->ClearSelection();
-							
+
 						std::erase(mRoomEntities[i], select);
-							
+
 						// Remove from map if child of map too
 						GetParentOfType<LMapDOMNode>(EDOMNodeType::Map).lock()->RemoveChild(select);
 						RemoveChild(select);
@@ -727,7 +834,7 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 	if(LUIUtility::RenderFileDialog("openNewRoomTitlecard", imgPath)){
 		int x,y,n;
 		unsigned char* img = stbi_load(imgPath.c_str(), &x, &y, &n, 0);
-		
+
 		std::vector<uint8_t> imgData(x*y*n);
 		std::memcpy(imgData.data(), img, x*y*n);
 		stbi_image_free(img);
@@ -808,7 +915,7 @@ void LRoomDOMNode::RenderDetailsUI(float dt)
 	{
 		int index = dataNode->GetRoomIndex();
 		int id = dataNode->GetRoomID();
-		
+
 		if(ImGui::InputInt("Room Index", &index)){
 			dataNode->SetRoomIndex(index);
 		}
@@ -1045,10 +1152,10 @@ void LRoomDOMNode::PreProcess(){
 		size_t binFileSize = 0;
 		uint32_t offset;
 		float x = 0.0f, y = 0.0f, z = 0.0f;
-		
+
 		{
 			bStream::CFileStream stream(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
-			
+
 			uint32_t offsets[21];
 			stream.seek(12);
 
@@ -1075,7 +1182,7 @@ void LRoomDOMNode::PreProcess(){
 
 	} else if(resPath.extension() == ".arc"){
 		std::shared_ptr<Archive::Rarc> roomResource = Archive::Rarc::Create();
-		
+
 		{
 			bStream::CFileStream stream(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
 			roomResource->Load(&stream);
@@ -1086,10 +1193,10 @@ void LRoomDOMNode::PreProcess(){
 		if(roomBin != nullptr){
 			float x = 0.0f, y = 0.0f, z = 0.0f;
 			uint32_t offsets[21];
-			
+
 			{
 				bStream::CMemoryStream stream(roomBin->GetData(), roomBin->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
-	
+
 				stream.seek(12);
 				for (std::size_t o = 0; o < 21; o++)
 				{
