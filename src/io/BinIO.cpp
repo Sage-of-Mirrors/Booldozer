@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <filesystem>
 #include <iterator>
 #include <numeric>
 #include <vector>
@@ -18,6 +19,7 @@
 #include <Bti.hpp>
 #include <format>
 #include "io/KeyframeIO.hpp"
+#include "stb_image.h"
 
 namespace BIN {
     // from https://github.com/Sage-of-Mirrors/libjstudio/blob/main/src/engine/value/interpolation.cpp
@@ -377,6 +379,22 @@ namespace BIN {
     }
 
     void InitShaders(){
+
+        // Load Dev Tex
+        if(std::filesystem::exists(std::filesystem::current_path() / "res" / "img" / "missing.png")){
+            int x, y, channels = 0;
+            unsigned char* img = stbi_load((std::filesystem::current_path() / "res" / "img" / "missing.png").string().c_str(), &x, &y, &channels, 4);
+            glGenTextures(1, &MissingTexID);
+            glBindTexture(GL_TEXTURE_2D, MissingTexID);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, img);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            stbi_image_free(img);
+        }
+
         char glErrorLogBuffer[4096];
         GLuint vs = glCreateShader(GL_VERTEX_SHADER);
         GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
@@ -912,14 +930,22 @@ namespace BIN {
 
 
         for(auto element : node->mDrawElements){
+            if(element.BatchIndex == -1) continue;
             glBindVertexArray(mBatches[element.BatchIndex].Vao);
 
-            int16_t samplerIdx = mMaterials[element.MaterialIndex].SamplerIndices[0];
+            int16_t samplerIdx = 0;
+            if(element.MaterialIndex >= 0) samplerIdx = mMaterials[element.MaterialIndex].SamplerIndices[0];
             if(samplerIdx != -1 && mSamplers[samplerIdx].TextureIndex != -1){
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, mTexturesHeaders[mSamplers[samplerIdx].TextureIndex].TextureID);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (mSamplers[samplerIdx].WrapU == 2 ? GL_MIRRORED_REPEAT : GL_REPEAT));
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (mSamplers[samplerIdx].WrapV == 2 ? GL_MIRRORED_REPEAT : GL_REPEAT));
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (mSamplers[samplerIdx].WrapU == 2 ? GL_MIRRORED_REPEAT : (mSamplers[samplerIdx].WrapU == 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE)));
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (mSamplers[samplerIdx].WrapV == 2 ? GL_MIRRORED_REPEAT : (mSamplers[samplerIdx].WrapV == 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE)));
+            } else {
+                // bind dev texture MissingTexID
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, MissingTexID);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
             }
             glDrawArrays(GL_TRIANGLES, 0, mBatches[element.BatchIndex].VertexCount);
         }

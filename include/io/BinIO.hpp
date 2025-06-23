@@ -174,6 +174,7 @@ namespace BIN {
     };
 
     static uint32_t mProgram { UINT32_MAX };
+    static uint32_t MissingTexID { UINT32_MAX };
 
     void InitShaders();
     void DestroyShaders();
