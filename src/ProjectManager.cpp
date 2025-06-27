@@ -40,12 +40,12 @@ void ExtractFolderISO(std::shared_ptr<Disk::Folder> folder){
 
 void Init(){
     LGenUtility::Log << "[Project Manager] Initializing" << std::endl;
-    if(std::filesystem::exists(std::filesystem::current_path() / "projects.json")){
-        ProjectsJson = LResUtility::DeserializeJSON("projects.json");
+    if(std::filesystem::exists(USER_DATA_PATH / "projects.json")){
+        ProjectsJson = LResUtility::DeserializeJSON(USER_DATA_PATH / "projects.json");
         LGenUtility::Log << "[Project Manager] Projects loaded" << std::endl;
     } else {
         LGenUtility::Log << "[Project Manager] Projects json not found, creating" << std::endl;
-        std::ofstream destFile(std::filesystem::current_path() / "projects.json");
+        std::ofstream destFile(USER_DATA_PATH / "projects.json");
         if (destFile.is_open()) {
             destFile <<  "{\"projects\":[]}";
         } else {
@@ -87,9 +87,9 @@ void Init(){
         LGenUtility::Log << "[Project Manager] Loaded Banner Image for Project " << project.get<std::string>() << std::endl;
     }
 
-	if(!std::filesystem::exists(std::filesystem::current_path() / "roots")){
+	if(!std::filesystem::exists(USER_DATA_PATH / "roots")){
         LGenUtility::Log << "[Project Manager] Created Roots Directory" << std::endl;
-		std::filesystem::create_directory(std::filesystem::current_path() / "roots");
+		std::filesystem::create_directory(USER_DATA_PATH/ "roots");
 	}
 }
 
@@ -104,7 +104,7 @@ void Render(){
 		ImGui::Text("Game Roots");
 		ImGui::Separator();
 		ImGui::Spacing();
-		
+
 		ImGui::BeginChild("##projectsPanel");
             if(ShowNewProjectDialog) {
                 ImGui::SetCursorPosX((ImGui::GetContentRegionAvail().x - (ImGui::GetContentRegionAvail().x * 0.65f)) * 0.65f);
@@ -148,13 +148,13 @@ void Render(){
                         ImGui::Text(ProjectNames[project.get<std::string>()].c_str());
                         ImGui::Text(project.get<std::string>().c_str());
                         ImGui::EndGroup();
-                    ImGui::EndChild();                    
+                    ImGui::EndChild();
                 }
 
                 if(toDelete != -1){
                     std::filesystem::remove_all(ProjectsJson["projects"][toDelete].get<std::string>());
                     ProjectsJson["projects"].erase(toDelete);
-                    std::ofstream{std::filesystem::current_path() / "projects.json"} << ProjectsJson;
+                    std::ofstream{USER_DATA_PATH / "projects.json"} << ProjectsJson;
                     Init(); // reinit
                 }
 
@@ -211,17 +211,16 @@ void Render(){
         } else {
             image->GetRoot()->SetName(NewProjectRootName);
 
-            if(!std::filesystem::exists(std::filesystem::current_path() / "roots" / image->GetRoot()->GetName())){
-                std::filesystem::path curpath = std::filesystem::current_path();
-                std::filesystem::current_path(std::filesystem::current_path() / "roots");
-                
+            if(!std::filesystem::exists(USER_DATA_PATH / "roots" / image->GetRoot()->GetName())){
+                std::filesystem::current_path(USER_DATA_PATH / "roots");
+
                 ExtractFolderISO(image->GetRoot());
 
-                std::filesystem::current_path(curpath);
+                std::filesystem::current_path(USER_DATA_PATH);
             }
 
-            ProjectsJson["projects"].push_back(nlohmann::json(std::filesystem::current_path() / "roots" / NewProjectRootName));
-            std::ofstream{std::filesystem::current_path() / "projects.json"} << ProjectsJson;
+            ProjectsJson["projects"].push_back(nlohmann::json(USER_DATA_PATH / "roots" / NewProjectRootName));
+            std::ofstream{USER_DATA_PATH / "projects.json"} << ProjectsJson;
             Init(); // reinit
         }
         ImGui::OpenPopup("ProjectManager");

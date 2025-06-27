@@ -50,12 +50,12 @@ void LEditorScene::LoadResFromRoot(){
 		std::shared_ptr<Archive::File> doorModelFile = GCResourceManager.mGameArchive->GetFile(std::filesystem::path(std::format("iwamoto/door/door_{:02}.bin", door_id)));
 		if(doorModelFile != nullptr){
 			bStream::CMemoryStream bin_data(doorModelFile->GetData(), doorModelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
-			
+
 			auto doorModel = std::make_shared<BIN::Model>(&bin_data);
 			mDoorModels.push_back(doorModel);
 		}
 	}
-	
+
 	J3DModelLoader Loader;
 
 	if((std::filesystem::exists(std::filesystem::path(OPTIONS.mRootPath) / "files" / "Iwamoto" / "vrball_M.szp"))){
@@ -68,9 +68,9 @@ void LEditorScene::LoadResFromRoot(){
 			LGenUtility::Log << "[EditorScene] Failed to load SkyBox Archive" << std::endl;
 			return;
 		}
-		
+
 		std::shared_ptr<Archive::File> skyboxModelFile = skyboxArchive->GetFile("vrball01.bmd");
-		
+
 		if(skyboxModelFile != nullptr){
 			LGenUtility::Log << "[EditorScene] Loaded SkyBox Model" << std::endl;
 			bStream::CMemoryStream modelData(skyboxModelFile->GetData(), skyboxModelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
@@ -91,17 +91,17 @@ void LEditorScene::Init(){
 
 	mPathRenderer.Init();
 	mPointManager.Init(512, 9);
-	mMirrorRenderer.Init((std::filesystem::current_path() / "res" / "img" / "mirror.png").string());
-	
-	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "ice_generator.png", 0);
-	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "fire_generator.png", 1);
-	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "water_generator.png", 2);
+	mMirrorRenderer.Init((RES_BASE_PATH / "img" / "mirror.png").string());
 
-	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "event.png", 3);
-	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "observer.png", 4);
-	//mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "enemy_placeholder.png", 5);
+	mPointManager.SetBillboardTexture(RES_BASE_PATH / "img" / "ice_generator.png", 0);
+	mPointManager.SetBillboardTexture(RES_BASE_PATH / "img" / "fire_generator.png", 1);
+	mPointManager.SetBillboardTexture(RES_BASE_PATH / "img" / "water_generator.png", 2);
 
-	mPointManager.SetBillboardTexture(std::filesystem::current_path() / "res" / "img" / "soundobj.png", 6);
+	mPointManager.SetBillboardTexture(RES_BASE_PATH / "img" / "event.png", 3);
+	mPointManager.SetBillboardTexture(RES_BASE_PATH / "img" / "observer.png", 4);
+	//mPointManager.SetBillboardTexture(RES_BASE_PATH / "img" / "enemy_placeholder.png", 5);
+
+	mPointManager.SetBillboardTexture(RES_BASE_PATH / "img" / "soundobj.png", 6);
 
 	BIN::InitShaders();
 	MDL::InitShaders();
@@ -140,7 +140,7 @@ void LEditorScene::UpdateRenderers(){
 					{
 					case EDOMNodeType::RoomData:
 						{
-							int32_t pickID = curRoom->GetID(); 
+							int32_t pickID = curRoom->GetID();
 							glm::vec4 color = (curRoom->GetRoomNumber() == mSelectedRoomNumber ? glm::vec4(0.0f, 1.0f, 0.0f, 1.0f) : glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
 							glm::vec3 min = static_cast<LRoomDataDOMNode*>(node.get())->GetMin();
@@ -179,13 +179,13 @@ void LEditorScene::UpdateRenderers(){
 					case EDOMNodeType::Path:
 						{
 							std::vector<CPathPoint> path;
-							
+
 							auto points = node->template GetChildrenOfType<LPathPointDOMNode>(EDOMNodeType::PathPoint);
-							
+
 							for(auto& point : points){
 								path.push_back({point->GetPosition(), static_cast<LPathDOMNode*>(node.get())->mPathColor, 12800, point->GetID()});
 							}
-							
+
 							mPathRenderer.mPaths.push_back(path);
 						}
 						break;
@@ -218,7 +218,7 @@ void LEditorScene::UpdateRenderers(){
 
 		}
 	}
-	
+
 	if(!mCurrentRooms[0].expired()){
 		std::shared_ptr<LRoomDOMNode> firstRoom = mCurrentRooms[0].lock();
 		std::shared_ptr<LMapDOMNode> mapNode = firstRoom->GetParentOfType<LMapDOMNode>(EDOMNodeType::Map).lock();
@@ -295,7 +295,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
-	
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -353,14 +353,14 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 		//{
 		//	room->Draw(&identity, -1, false);
 		//}
-		
+
 		std::shared_ptr<LRoomDOMNode> curRoom;
 
 		if((curRoom = roomRef.lock()) && Initialized)
 		{
 			// this sucks
 			auto roomData = curRoom->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
-			
+
 			if(mRoomModels.contains(roomData->GetResourcePath())){
 				glm::mat4 identity = glm::identity<glm::mat4>();
 				identity = glm::translate(identity, curRoom->GetRoomModelDelta());
@@ -370,7 +370,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 			// is okay
 			curRoom->ForEachChildOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender, [&](auto node){
 					if(!node->GetIsRendered()) return;
-					
+
 					//TODO: Render MDL if type is character
 
 					switch (node->GetNodeType())
@@ -422,11 +422,11 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 
 void LEditorScene::LoadActor(std::string name, bool log){
 	std::tuple<std::string, std::string, bool> actorRef = LResUtility::GetActorModelFromName(name, log);
-	
+
 	if(mActorModels.count(name) != 0 && (mMaterialAnimations.count(name) != 0 && std::get<1>(actorRef) != "")) return;
-	
+
 	std::filesystem::path modelPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "model" / (std::get<0>(actorRef) + ".szp");
-	
+
 	if(!std::get<2>(actorRef) && std::filesystem::exists(modelPath)){
 		std::string actorName = std::get<0>(actorRef);
 		std::string txpName = std::get<1>(actorRef);
@@ -447,7 +447,7 @@ void LEditorScene::LoadActor(std::string name, bool log){
 			}
 		}
 		if(mMaterialAnimations.count(name) == 0 && txpName != ""){
-			
+
 			std::shared_ptr<Archive::File> txpFile = modelArchive->GetFile(std::filesystem::path("txp") / (txpName + ".txp"));
 			if(txpFile == nullptr){
 				LGenUtility::Log << "[Editor Scene]: Couldn't find txp/" << txpName << ".txp in archive" << std::endl;
@@ -460,10 +460,10 @@ void LEditorScene::LoadActor(std::string name, bool log){
 		}
 	} else {
 		std::filesystem::path fullModelPath = std::filesystem::path("model") / (std::get<0>(actorRef) + ".arc") / "model" / (std::get<0>(actorRef) + ".mdl");
-		
+
 		if(GCResourceManager.mLoadedGameArchive){
 			std::shared_ptr<Archive::File> modelFile = GCResourceManager.mGameArchive->GetFile(fullModelPath);
-			
+
 			if(modelFile == nullptr){
 				if(log) LGenUtility::Log << "[Editor Scene]: Couldn't find " << std::get<0>(actorRef) << ".mdl in game archive" << std::endl;
 			} else {
@@ -524,7 +524,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 			std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(curRoomData->GetResourcePath()).relative_path();
 
 			if(!std::filesystem::exists(resPath)) continue;
-			
+
 			if(resPath.extension() == ".arc")
 			{
 				std::shared_ptr<Archive::Rarc> roomArc = Archive::Rarc::Create();
@@ -536,7 +536,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 
 				for(auto file : roomArc->GetRoot()->GetFiles()){
 					bStream::CMemoryStream bin(file->GetData(), file->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
-					
+
 					std::string modelName = file->GetName();
 					auto modelNameExtIter = modelName.find(".bin");
 					if(modelNameExtIter == std::string::npos) continue;
@@ -548,7 +548,7 @@ void LEditorScene::SetRoom(std::shared_ptr<LRoomDOMNode> room)
 					} else {
 						mRoomModels.insert({curRoomData->GetResourcePath(), std::make_shared<BIN::Model>(&bin)});
 						LGenUtility::Log << "[Editor Scene]: completed loading room model" << std::endl;
-					}					
+					}
 				}
 			} else {
 				//If this is happening the map only has room models, no furniture.

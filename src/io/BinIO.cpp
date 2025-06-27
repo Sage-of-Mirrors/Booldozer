@@ -7,6 +7,7 @@
 #include "GenUtil.hpp"
 #include "Util.hpp"
 #include "bstream.h"
+#include "constants.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/glm.hpp"
 #include "glm/gtx/quaternion.hpp"
@@ -381,9 +382,9 @@ namespace BIN {
     void InitShaders(){
 
         // Load Dev Tex
-        if(std::filesystem::exists(std::filesystem::current_path() / "res" / "img" / "missing.png")){
+        if(std::filesystem::exists(RES_BASE_PATH / "img" / "missing.png")){
             int x, y, channels = 0;
-            unsigned char* img = stbi_load((std::filesystem::current_path() / "res" / "img" / "missing.png").string().c_str(), &x, &y, &channels, 4);
+            unsigned char* img = stbi_load((RES_BASE_PATH / "img" / "missing.png").string().c_str(), &x, &y, &channels, 4);
             glGenTextures(1, &MissingTexID);
             glBindTexture(GL_TEXTURE_2D, MissingTexID);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

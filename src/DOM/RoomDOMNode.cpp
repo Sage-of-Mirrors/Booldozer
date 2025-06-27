@@ -1,7 +1,9 @@
+#include <algorithm>
 #include <bstream.h>
 #include <cstdint>
 #include <format>
 #include "GXGeometryData.hpp"
+#include "GenUtil.hpp"
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
 #include "DOM/RoomDOMNode.hpp"
 #include "DOM/ObserverDOMNode.hpp"
@@ -11,6 +13,7 @@
 #include "IconsForkAwesome.h"
 #include "imgui.h"
 #include "io/BinIO.hpp"
+#include "io/Util.hpp"
 #include "modes/ActorMode.hpp"
 #include "scene/ModelViewer.hpp"
 #include <Bti.hpp>
@@ -21,6 +24,7 @@
 #include "stb_image.h"
 #include "stb_image_write.h"
 #include "tiny_obj_loader.h"
+#include "tri_stripper.h"
 
 enum class SelectedResourceType {
   Texture,
@@ -196,7 +200,7 @@ void BinTreeNodeUI(BIN::Model* model, uint32_t index){
             BinSelectedResource = &model->mGraphNodes[index];
         }
         ImGui::Text(ICON_FK_CUBE " Draw Elements");
-        uint32_t deleteIdx = UINT32_MAX;
+        uint16_t deleteIdx = UINT16_MAX;
         for(int i = 0; i < model->mGraphNodes[index].mDrawElements.size(); i++){ //model->mGraphNodes[index].mDrawElements
             ImGui::Text(std::format("[Batch {}, Material {}]", model->mGraphNodes[index].mDrawElements[i].BatchIndex, model->mGraphNodes[index].mDrawElements[i].MaterialIndex).c_str());
 
@@ -213,7 +217,7 @@ void BinTreeNodeUI(BIN::Model* model, uint32_t index){
             }
         }
 
-        if(deleteIdx != UINT32_MAX){
+        if(deleteIdx != UINT16_MAX){
             model->mGraphNodes[index].mDrawElements.erase(model->mGraphNodes[index].mDrawElements.begin() + deleteIdx);
         }
 
@@ -328,7 +332,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                     ImGui::Separator();
     				ImGui::BeginChild("##binResources", {180, 125});
                     if(ImGui::TreeNode(ICON_FK_CUBE " Batches")){
-                        uint32_t deleteIdx = UINT32_MAX;
+                        uint16_t deleteIdx = UINT16_MAX;
                         for(auto [idx, batch] : PreviewWidget::GetFurnitureModel()->mBatches){
                             ImGui::Text("Batch %d", idx);
                             if(ImGui::IsItemClicked(0)){
@@ -342,7 +346,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                                 ImGui::EndPopup();
                             }
                         }
-                        if(deleteIdx != UINT32_MAX){
+                        if(deleteIdx != UINT16_MAX){
                             BinSelectedResource = nullptr;
 	                        SelectedType = SelectedResourceType::None;
                             PreviewWidget::GetFurnitureModel()->mBatches.erase(deleteIdx);
@@ -358,7 +362,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                     }
 
                     if(ImGui::TreeNode(ICON_FK_PAINT_BRUSH " Materials")){
-                        uint32_t deleteIdx = UINT32_MAX;
+                        uint16_t deleteIdx = UINT16_MAX;
                         for(auto [idx, material] : PreviewWidget::GetFurnitureModel()->mMaterials){
                             ImGui::Text("Material %d", idx);
                             if(ImGui::IsItemClicked(0)){
@@ -372,7 +376,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                                 ImGui::EndPopup();
                             }
                         }
-                        if(deleteIdx != UINT32_MAX){
+                        if(deleteIdx != UINT16_MAX){
                             BinSelectedResource = nullptr;
 	                        SelectedType = SelectedResourceType::None;
                             PreviewWidget::GetFurnitureModel()->mMaterials.erase(deleteIdx);
@@ -388,7 +392,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                     }
 
                     if(ImGui::TreeNode(ICON_FK_PAINT_BRUSH " Samplers")){
-                        uint32_t deleteIdx = UINT32_MAX;
+                        uint16_t deleteIdx = UINT16_MAX;
                         for(auto [idx, sampler] : PreviewWidget::GetFurnitureModel()->mSamplers){
                             ImGui::Text("Sampler %d", idx);
                             if(ImGui::IsItemClicked(0)){
@@ -402,7 +406,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                                 ImGui::EndPopup();
                             }
                         }
-                        if(deleteIdx != UINT32_MAX){
+                        if(deleteIdx != UINT16_MAX){
                             PreviewWidget::GetFurnitureModel()->mSamplers.erase(deleteIdx);
                             for(auto [idx, material] : PreviewWidget::GetFurnitureModel()->mMaterials){
                                 if(PreviewWidget::GetFurnitureModel()->mMaterials[idx].SamplerIndices[0] == deleteIdx){
@@ -416,7 +420,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                     }
 
                     if(ImGui::TreeNode(ICON_FK_PICTURE_O " Textures")){
-                        uint32_t deleteIdx = UINT32_MAX;
+                        uint16_t deleteIdx = UINT16_MAX;
                         for(auto [idx, texture] : PreviewWidget::GetFurnitureModel()->mTexturesHeaders){
                             ImGui::Image(static_cast<uintptr_t>(texture.TextureID), {16, 16});
                             ImGui::SameLine();
@@ -441,7 +445,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                             }
                         }
 
-                        if(deleteIdx != UINT32_MAX){
+                        if(deleteIdx != UINT16_MAX){
                             PreviewWidget::GetFurnitureModel()->mTexturesHeaders.erase(deleteIdx);
                             for(auto [idx, sampler] : PreviewWidget::GetFurnitureModel()->mSamplers){
                                 if(PreviewWidget::GetFurnitureModel()->mSamplers[idx].TextureIndex == deleteIdx){
@@ -611,57 +615,64 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 		std::string modelPath;
 		if(LUIUtility::RenderFileDialog("replaceBatchDialog", modelPath)){// error check should be here oops!
 		    if(BinSelectedResource != nullptr){
-                tinyobj::attrib_t attributes;
+
+                auto batch = reinterpret_cast<BIN::Batch*>(BinSelectedResource);
+				batch->Primitives.clear();
+
+				tinyobj::attrib_t attributes;
                 std::vector<tinyobj::shape_t> shapes;
                 std::vector<tinyobj::material_t> materials;
 
                 std::string warn;
                 std::string err;
-                bool ret = tinyobj::LoadObj(&attributes, &shapes, &materials, &warn, &err, modelPath.c_str(), std::filesystem::path(modelPath).parent_path().string().c_str(), true);
-
-                if(!ret){
+                bool ret = tinyobj::LoadObj(&attributes, &shapes, &materials, &warn, &err, std::filesystem::path(modelPath).string().c_str(), std::filesystem::path(modelPath).parent_path().string().c_str(), true);
+				if(!ret){
                     return;
                 }
 
-                auto batch = reinterpret_cast<BIN::Batch*>(BinSelectedResource);
-
+				std::vector<Vertex> vertices;
+				std::vector<std::size_t> indices;
                 for(auto shp : shapes){
-                    BIN::Primitive primitive;
-                    primitive.Opcode = GXPrimitiveType::Triangles;
-                    for(int poly = 0; poly < shp.mesh.indices.size() / 3; poly++){
-                        if(shp.mesh.indices.size() == 0) continue;
-                        Vertex vtx0, vtx1, vtx2;
+                    if(shp.mesh.indices.size() == 0) continue;
+                    for(int i = 0; i < shp.mesh.indices.size(); i++){
+                        Vertex vtx;
+                        int v = shp.mesh.indices[i].vertex_index;
+                        int n = shp.mesh.indices[i].normal_index;
+                        int t = shp.mesh.indices[i].texcoord_index;
+                        vtx.Position = glm::vec3(attributes.vertices[v * 3], attributes.vertices[(v * 3) + 1], attributes.vertices[(v * 3) + 2]);
+                        vtx.Normal = glm::vec3(attributes.normals[n * 3], attributes.normals[(n * 3) + 1], attributes.normals[(n * 3) + 2]);
+                        vtx.Texcoord = glm::vec2(attributes.texcoords[t * 2], attributes.texcoords[(t * 2) + 1]);
 
-                        int mVtx1 = shp.mesh.indices[(3*poly)+0].vertex_index;
-                        int mVtx2 = shp.mesh.indices[(3*poly)+1].vertex_index;
-                        int mVtx3 = shp.mesh.indices[(3*poly)+2].vertex_index;
+                        auto vtxIdx = std::find_if(vertices.begin(), vertices.end(), [i=vtx](const Vertex& o){
+                            return i.Position == o.Position && i.Normal == o.Normal && i.Texcoord == o.Texcoord;
+                        });
 
-                        int mNrm1 = shp.mesh.indices[(3*poly)+0].normal_index;
-                        int mNrm2 = shp.mesh.indices[(3*poly)+1].normal_index;
-                        int mNrm3 = shp.mesh.indices[(3*poly)+2].normal_index;
-
-                        int mTcd1 = shp.mesh.indices[(3*poly)+0].texcoord_index;
-                        int mTcd2 = shp.mesh.indices[(3*poly)+1].texcoord_index;
-                        int mTcd3 = shp.mesh.indices[(3*poly)+2].texcoord_index;
-
-                        vtx0.Position = glm::vec3(attributes.vertices[mVtx1 * 3], attributes.vertices[(mVtx1 * 3) + 1], attributes.vertices[(mVtx1 * 3) + 2]);
-                        vtx1.Position = glm::vec3(attributes.vertices[mVtx2 * 3], attributes.vertices[(mVtx2 * 3) + 1], attributes.vertices[(mVtx2 * 3) + 2]);
-                        vtx2.Position = glm::vec3(attributes.vertices[mVtx3 * 3], attributes.vertices[(mVtx3 * 3) + 1], attributes.vertices[(mVtx3 * 3) + 2]);
-
-                        vtx0.Normal = glm::vec3(attributes.normals[mNrm1 * 3], attributes.normals[(mNrm1 * 3) + 1], attributes.normals[(mNrm1 * 3) + 2]);
-                        vtx1.Normal = glm::vec3(attributes.normals[mNrm2 * 3], attributes.normals[(mNrm2 * 3) + 1], attributes.normals[(mNrm2 * 3) + 2]);
-                        vtx1.Normal = glm::vec3(attributes.normals[mNrm3 * 3], attributes.normals[(mNrm3 * 3) + 1], attributes.normals[(mNrm3 * 3) + 2]);
-
-                        vtx0.Texcoord = glm::vec2(attributes.texcoords[mTcd1 * 2], attributes.texcoords[(mTcd1 * 2) + 1]);
-                        vtx1.Texcoord = glm::vec2(attributes.texcoords[mTcd2 * 2], attributes.texcoords[(mTcd2 * 2) + 1]);
-                        vtx2.Texcoord = glm::vec2(attributes.texcoords[mTcd3 * 2], attributes.texcoords[(mTcd3 * 2) + 1]);
-
-                        primitive.Vertices.push_back(vtx0);
-                        primitive.Vertices.push_back(vtx1);
-                        primitive.Vertices.push_back(vtx2);
+                        if(vtxIdx != vertices.end()){
+                            indices.push_back(vtxIdx - vertices.begin());
+                        } else {
+                            indices.push_back(vertices.size());
+                            vertices.push_back(vtx);
+                        }
                     }
-                    batch->Primitives.push_back(primitive);
+
+    				triangle_stripper::tri_stripper stripify(indices);
+    				triangle_stripper::primitive_vector primitives;
+    				stripify.SetBackwardSearch(false);
+    				stripify.Strip(&primitives);
+
+    				int indexCount = 0;
+    				for(auto p : primitives){
+    					BIN::Primitive primitive;
+    					primitive.Opcode = (p.Type == triangle_stripper::TRIANGLE_STRIP ? GXPrimitiveType::TriangleStrip : GXPrimitiveType::Triangles);
+    					for(int i = 0; i < p.Indices.size(); i++){
+    						primitive.Vertices.push_back(vertices[p.Indices[i]]);
+    					}
+    					indexCount += p.Indices.size();
+    					batch->Primitives.push_back(primitive);
+    				}
+                    LGenUtility::Log << "Stripped count " << indexCount << " Triangle Count " << shp.mesh.indices.size() << std::endl;
                 }
+
 				ImGui::OpenPopup("##roomResources");
 			}
 		}

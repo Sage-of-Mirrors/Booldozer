@@ -70,23 +70,23 @@ LBooldozerEditor::~LBooldozerEditor(){
 
 void PackFolderISO(std::shared_ptr<Disk::Image> img, std::shared_ptr<Disk::Folder> folder, std::filesystem::path path){
     std::filesystem::current_path(path);
-    
+
     for (auto const& dir_entry : std::filesystem::directory_iterator(path)){
         if(std::filesystem::is_directory(dir_entry.path())){
             std::shared_ptr<Disk::Folder> subdir = Disk::Folder::Create(img);
             subdir->SetName(dir_entry.path().filename().string());
             folder->AddSubdirectory(subdir);
-            
+
             PackFolderISO(img, subdir, dir_entry.path());
 
         } else {
             std::shared_ptr<Disk::File> file = Disk::File::Create();
 
             bStream::CFileStream fileStream(dir_entry.path().string(), bStream::Endianess::Big, bStream::OpenMode::In);
-            
+
             uint8_t* fileData = new uint8_t[fileStream.getSize()];
             fileStream.readBytesTo(fileData, fileStream.getSize());
-            
+
             file->SetData(fileData, fileStream.getSize());
             file->SetName(dir_entry.path().filename().string());
 
@@ -116,7 +116,7 @@ void PackISO(std::filesystem::path path){
     if(root->GetFile("sys/apploader.img") == nullptr){
         std::cout << "Root missing sys/apploader.img" << std::endl;
         return;
-    } 
+    }
 
     if(root->GetFile("sys/boot.bin") == nullptr){
         std::cout << "Root missing sys/boot.bin" << std::endl;
@@ -148,7 +148,7 @@ void LBooldozerEditor::LoadMap(std::string path, LEditorScene* scene){
 
 	OPTIONS.mLastOpenedMap = path;
 	LResUtility::SaveUserSettings();
-	
+
 	loadLock.lock();
 	mapLoading = false;
 	loadLock.unlock();
@@ -159,7 +159,7 @@ void LBooldozerEditor::SaveMap(std::string path){
 
 	OPTIONS.mLastSavedDirectory = path;
 	LResUtility::SaveUserSettings();
-	
+
 	loadLock.lock();
 	mapLoading = false;
 	loadLock.unlock();
@@ -182,7 +182,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 	ImGuiDockNodeFlags dockFlags = ImGuiDockNodeFlags_AutoHideTabBar;
 	mMainDockSpaceID = ImGui::DockSpaceOverViewport(0, mainViewport, dockFlags);
-	
+
 	if(!bInitialized){
 
 		glGenFramebuffers(1, &mFbo);
@@ -206,7 +206,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mRbo);
 
 		assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-	
+
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glBindRenderbuffer(GL_RENDERBUFFER, 0);
@@ -246,7 +246,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		renderer_scene->Clear();
 		mLoadedMap = nullptr;
 	}
-	
+
 	if (ImGui::BeginPopupModal("Map Extraction Error", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		ImGui::NewLine();
@@ -271,7 +271,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 			ImGui::Text("Re-apply your modifications to newly patched dol");
 			ImGui::TreePop();
 		}
-		
+
 		if(ImGui::TreeNode("Just show me the map!")){
 			ImGui::Bullet();
 			ImGui::SameLine();
@@ -284,7 +284,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 		ImGui::NewLine();
 		ImGui::Separator();
-		
+
 		if (ImGui::Button("Ok")) {
 			ImGui::CloseCurrentPopup();
 		}
@@ -320,7 +320,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::Text("Apply externalized map data patch?");
 		ImGui::Separator();
 		if (ImGui::Button("Yes")) {
-			std::filesystem::path patchPath = std::filesystem::current_path() / RES_BASE_PATH / "externalizemaps.patch";
+			std::filesystem::path patchPath = RES_BASE_PATH / "externalizemaps.patch";
 			std::filesystem::path dolPath = std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol";
 			std::filesystem::path patchedPath = std::filesystem::path(OPTIONS.mRootPath) / "sys" / "patched.dol";
 			std::filesystem::path backupPath = std::filesystem::path(OPTIONS.mRootPath) / "sys" / ".main_dol_backup";
@@ -335,7 +335,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 			//Copy DOL to a backup
 			std::filesystem::copy(dolPath, std::filesystem::path(OPTIONS.mRootPath) / "sys" / ".main_dol_backup");
-		
+
 			if(std::filesystem::exists(patchPath)){
 				patchErrorMsg = bspatch(dolPath.string().c_str(), patchedPath.string().c_str(), patchPath.string().c_str());
 				if(patchErrorMsg == NULL){
@@ -356,7 +356,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::SameLine();
 		if (ImGui::Button("No")) {
 			ImGui::CloseCurrentPopup();
-		} 
+		}
 		ImGui::EndPopup();
 	}
 
@@ -389,14 +389,14 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::Spinner("##loadmapSpinner", 5.0f, 2, col);
 		ImGui::SameLine();
 		ImGui::Text("Loading Map...");
-		
+
 		loadLock.lock();
 		if(mapLoading == false){
 			LGenUtility::Log << "[BooldozerEditor]: Joining load/append thread" << std::endl;
 			mapOperationThread.join();
 
 			auto rooms = mLoadedMap->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
-			
+
 			if(rooms.size() > 0){
 				renderer_scene->SetRoom(rooms[0]);
 			}
@@ -484,7 +484,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::Spinner("##loadmapSpinner", 5.0f, 2, col);
 		ImGui::SameLine();
 		ImGui::Text("Exporting GCM...");
-		
+
 		loadLock.lock();
 		if(mapLoading == false){
 			LGenUtility::Log << "[BooldozerEditor]: Joining export gcm thread" << std::endl;
@@ -507,7 +507,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::OpenPopup("Map Select");
 		mClickedMapSelect = false;
 	}
-	
+
 	if(mClickedMapClear){
 		ImGui::OpenPopup("Clear Map");
 		mClickedMapClear = false;
@@ -586,7 +586,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 					if(ImGui::IsKeyDown(ImGuiKey_Enter)){
 						mapNames["names"][x] = nlohmann::json(mMapNameDialogEditingNameStr);
 						LResUtility::SetNameMap("MapNames", mapNames);
-						std::ofstream namesConfig((std::filesystem::current_path() / RES_BASE_PATH / "names" / "MapNames.json").string()); 
+						std::ofstream namesConfig((RES_BASE_PATH / "names" / "MapNames.json").string());
 						namesConfig << mapNames;
 						mMapNameDialogEditingNameIdx = -1;
 						mMapNameDialogEditingNameStr = "";
@@ -596,18 +596,18 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 					if (ImGui::IsItemClicked()){
 						closeEdit = true;
 					}
-					
+
 				}
-				
+
 				if(mMapNameDialogEditingNameIdx == -1 && (hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left, false))){
 					ImGui::CloseCurrentPopup();
 					GetSelectionManager()->ClearSelection();
 					renderer_scene->Clear();
-					
+
 					openedMap = true;
 					mSelectedMap = x;
 				}
-				
+
 				ImGui::EndGroup();
 			ImGui::EndChild();
 			if(openedMap) break;
@@ -615,7 +615,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		if(closeEdit){
 			mapNames["names"][mMapNameDialogEditingNameIdx] = nlohmann::json(mMapNameDialogEditingNameStr);
 			LResUtility::SetNameMap("MapNames", mapNames);
-			std::ofstream namesConfig((std::filesystem::current_path() / RES_BASE_PATH / "names" / "MapNames.json").string()); 
+			std::ofstream namesConfig((RES_BASE_PATH / "names" / "MapNames.json").string());
 			namesConfig << mapNames;
 			mMapNameDialogEditingNameIdx = -1;
 			mMapNameDialogEditingNameStr = "";
@@ -641,7 +641,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		if (ImGui::Button("Yes")) {
 			renderer_scene->Clear();
 			GetSelectionManager()->ClearSelection();
-			
+
 			auto rooms = mLoadedMap->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
 
 			std::shared_ptr<LRoomDOMNode> newRoom = std::make_shared<LRoomDOMNode>("Room 0");
@@ -655,7 +655,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 			for(auto ent : mLoadedMap->GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Entity)){
 				mLoadedMap->RemoveChild(ent);
 			}
-			
+
 			for(auto mirror : mLoadedMap->GetChildrenOfType<LMirrorDOMNode>(EDOMNodeType::Mirror)){
 				mLoadedMap->RemoveChild(mirror);
 			}
@@ -693,7 +693,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 			newRoom->AddChild(newRoomData);
 			newRoom->SetRoomNumber(0);
 			newRoomData->GetAdjacencyList().push_back(newRoom);
-			
+
 			mLoadedMap->AddChild(newRoom);
 
 			ImGui::CloseCurrentPopup();
@@ -702,7 +702,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::SameLine();
 		if (ImGui::Button("No")) {
 			ImGui::CloseCurrentPopup();
-		} 
+		}
 		ImGui::EndPopup();
 	}
 
@@ -742,7 +742,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 			std::memcpy(bnrImgData.data(), GCResourceManager.mBannerImage, sizeof(GCResourceManager.mBannerImage));
 
 			ImageFormat::Encode::RGB5A3(&bnrImgStream, 96, 32, bnrImgData.data());
-			
+
 			std::filesystem::path bannerPath(std::filesystem::path(OPTIONS.mRootPath) / "files" / "opening.bnr");
 			bStream::CFileStream bnr(bannerPath.string(), bStream::Endianess::Big, bStream::OpenMode::Out);
 			bnr.writeBytes((uint8_t*)&GCResourceManager.mBanner, sizeof(GCResourceManager.mBanner));
@@ -755,7 +755,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		if (ImGui::Button("No")) {
 			ImGui::CloseCurrentPopup();
 			glDeleteTextures(1, &bannerEditorTexPreview);
-		} 
+		}
 
 		ImGui::EndPopup();
 	}
@@ -764,7 +764,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	if(LUIUtility::RenderFileDialog("openNewBanner", imgPath)){
 		int x,y,n;
 		unsigned char* img = stbi_load(imgPath.c_str(), &x, &y, &n, 0);
-		
+
 		LGenUtility::Log << n << std::endl;
 
 		if(x == 96 && y == 32 && n == 4){
@@ -782,11 +782,11 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		stbi_write_png(imgPath.c_str(), 96, 32, 4, GCResourceManager.mBannerImage, 96*4);
 		ImGui::OpenPopup("BannerEditor");
 	}
-	
+
 	if (LUIUtility::RenderFileDialog("appendMapDlg", path))
 	{
 		GetSelectionManager()->ClearSelection();
-		
+
 		loadLock.lock();
 		mapLoading = true;
 		loadLock.unlock();
@@ -815,7 +815,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	}
 
 	mSaveConfigsClicked = mGhostConfigs.RenderUI();
-	
+
 	CameraAnimation::RenderPreview();
 	PreviewWidget::RenderPreview();
 
@@ -837,7 +837,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		// Reload Thumbnails
 		LResUtility::CleanupThumbnails();
 		LResUtility::LoadMapThumbnails();
-		
+
 		mSaveMapClicked = false;
 	}
 
@@ -872,9 +872,9 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 		//assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
 	}
-	
+
 	glViewport(0, 0, (uint32_t)winSize.x, (uint32_t)winSize.y);
-	
+
 	mPrevWinWidth = winSize.x;
 	mPrevWinHeight = winSize.y;
 
@@ -884,7 +884,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	int32_t unused = -1;
 
 	glClearTexImage(mPickTex, 0, GL_RED_INTEGER, GL_INT, &unused);
-	
+
 	// is this slow? shouldnt be but is it???
 	loadLock.lock();
 	if(!mapLoading) renderer_scene->RenderSubmit((uint32_t)winSize.x,  (uint32_t)winSize.y);
@@ -913,7 +913,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	if(ImGui::IsKeyPressed(ImGuiKey_Escape)){
 		GetSelectionManager()->ClearSelection();
 	}
-	
+
 	if(ImGui::IsItemClicked() && mLoadedMap != nullptr && !ImGuizmo::IsOver()){
 		int32_t id;
 		ImVec2 mousePos = ImGui::GetMousePos();
@@ -1051,7 +1051,7 @@ void LBooldozerEditor::ChangeMode()
 	GetSelectionManager()->ClearSelection();
 	if (mCurrentMode != nullptr)
 		mCurrentMode->OnBecomeInactive();
-	
+
 	switch(CurrentMode)
 	{
 		case EEditorMode::Actor_Mode:

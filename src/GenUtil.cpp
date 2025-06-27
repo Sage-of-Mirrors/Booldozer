@@ -7,7 +7,7 @@
 #include "GenUtil.hpp"
 
 // Log handlers
-std::fstream LGenUtility::Log((std::filesystem::current_path() / "booldozer.log").string(), std::ios::out);
+std::fstream LGenUtility::Log;
 
 
 // The following was copied from https://gist.github.com/kilfu0701/e279e35372066ae1832850c438d5611e

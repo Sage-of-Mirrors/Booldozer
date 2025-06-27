@@ -376,3 +376,4 @@ include/DiscordIntegration.hpp
 lib/*
 !lib/CMakeLists.txt
 !lib/imgui.cmake
+compile_commands.json

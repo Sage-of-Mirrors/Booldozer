@@ -23,3 +23,6 @@
 [submodule "lib/bsdifflib"]
 	path = lib/bsdifflib
 	url = https://github.com/petervas/bsdifflib.git
+[submodule "lib/TriStripper"]
+	path = lib/TriStripper
+	url = https://github.com/GPSnoopy/TriStripper.git

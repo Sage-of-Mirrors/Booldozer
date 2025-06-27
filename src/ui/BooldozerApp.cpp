@@ -1,4 +1,5 @@
 #include "ui/BooldozerApp.hpp"
+#include "GenUtil.hpp"
 #include "ui/LInput.hpp"
 #include "TimeUtil.hpp"
 #include "UIUtil.hpp"
@@ -9,9 +10,13 @@
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_glfw.h"
+#include <fstream>
 #include <iostream>
 
 #include <IconsForkAwesome.h>
+#include "stb_image.h"
+#include "icon.h"
+#include "constants.hpp"
 
 constexpr int GL_VERSION_MAJOR = 4;
 constexpr int GL_VERSION_MINOR = 6;
@@ -29,7 +34,10 @@ void DealWithGLErrors(GLenum source, GLenum type, GLuint id, GLenum severity, GL
 }
 
 bool LBooldozerApp::Setup() {
-    
+    InitResourcePaths();
+
+    LGenUtility::Log = std::fstream((USER_DATA_PATH / "booldozer.log").string(), std::ios::out);
+
 	// Init GLFW
 	if (!glfwInit()) {
 		LGenUtility::Log << "[Booldozer]: Failed to init GLFW!" << std::endl;
@@ -54,6 +62,11 @@ bool LBooldozerApp::Setup() {
 		return false;
 	}
 
+	GLFWimage images[1];
+	images[0].pixels = stbi_load_from_memory(icon_png, icon_png_size, &images[0].width, &images[0].height, nullptr, 4);
+	glfwSetWindowIcon(mWindow, 1, images);
+	stbi_image_free(images[0].pixels);
+
 	// Set up input callbacks
 	glfwSetKeyCallback(mWindow, LInput::GLFWKeyCallback);
 	glfwSetCursorPosCallback(mWindow, LInput::GLFWMousePositionCallback);
@@ -63,7 +76,7 @@ bool LBooldozerApp::Setup() {
 	// Set up GLAD
 	glfwMakeContextCurrent(mWindow);
 	gladLoadGL();
-	
+
 	glfwSwapInterval(1);
 
 	// Set up GL debug error handling.
@@ -78,19 +91,19 @@ bool LBooldozerApp::Setup() {
 	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(mWindow, true);
 	ImGui_ImplOpenGL3_Init("#version 150");
-	
-	
-	if(std::filesystem::exists((std::filesystem::current_path() / "res" / "font" / "NotoSansJP-Regular.otf"))){
-		io.Fonts->AddFontFromFileTTF((std::filesystem::current_path() / "res" / "font" / "NotoSansJP-Regular.otf").string().c_str(), 16.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+
+
+	if(std::filesystem::exists((RES_BASE_PATH / "font" / "NotoSansJP-Regular.otf"))){
+		io.Fonts->AddFontFromFileTTF((RES_BASE_PATH / "font" / "NotoSansJP-Regular.otf").string().c_str(), 16.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 	}
 
-	if(std::filesystem::exists((std::filesystem::current_path() / "res" / "font" / "forkawesome.ttf"))){
+	if(std::filesystem::exists((RES_BASE_PATH / "font" / "forkawesome.ttf"))){
 		static const ImWchar icons_ranges[] = { ICON_MIN_FK, ICON_MAX_16_FK, 0 };
-		ImFontConfig icons_config; 
-		icons_config.MergeMode = true; 
-		icons_config.PixelSnapH = true; 
+		ImFontConfig icons_config;
+		icons_config.MergeMode = true;
+		icons_config.PixelSnapH = true;
 		icons_config.GlyphMinAdvanceX = 14.0f;
-		io.Fonts->AddFontFromFileTTF((std::filesystem::current_path() / "res" / "font" / "forkawesome.ttf").string().c_str(), icons_config.GlyphMinAdvanceX, &icons_config, icons_ranges );
+		io.Fonts->AddFontFromFileTTF((RES_BASE_PATH / "font" / "forkawesome.ttf").string().c_str(), icons_config.GlyphMinAdvanceX, &icons_config, icons_ranges );
 	}
 
 	mEditorScene.Init();

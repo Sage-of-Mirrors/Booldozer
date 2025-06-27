@@ -38,7 +38,7 @@ void LResUtility::LGCResourceManager::Init()
 		LGenUtility::Log << "[ResUtil]: Couldn't find game archive" << std::endl;
 	}
 
-	if(std::filesystem::exists(std::filesystem::current_path() / NAMES_BASE_PATH / "MapNames.json")){
+	if(std::filesystem::exists(NAMES_BASE_PATH / "MapNames.json")){
 		GetNameMap("MapNames");
 	} else {
 		NameMaps["MapNames"] = nlohmann::json();
@@ -91,7 +91,7 @@ nlohmann::ordered_json LResUtility::GetNameMap(std::string name)
 	if (NameMaps.count(name) != 0)
 		return NameMaps[name];
 
-	std::filesystem::path fullPath = std::filesystem::current_path() / NAMES_BASE_PATH / std::format("{0}.json", name);
+	std::filesystem::path fullPath = NAMES_BASE_PATH / std::format("{0}.json", name);
 
 	auto json = DeserializeJSON(fullPath);
 	if (!json.empty())
@@ -102,14 +102,14 @@ nlohmann::ordered_json LResUtility::GetNameMap(std::string name)
 
 nlohmann::ordered_json LResUtility::GetMirrorTemplate(std::string name)
 {
-	std::filesystem::path fullPath = std::filesystem::current_path() / RES_BASE_PATH / std::format("{0}.json", name);
+	std::filesystem::path fullPath = RES_BASE_PATH / std::format("{0}.json", name);
 
 	return DeserializeJSON(fullPath);
 }
 
 uint32_t LResUtility::GetStaticMapDataOffset(std::string mapName, std::string region)
 {
-	std::filesystem::path fullPath = std::filesystem::current_path() / RES_BASE_PATH / "static_room_data.json";
+	std::filesystem::path fullPath = RES_BASE_PATH / "static_room_data.json";
 	nlohmann::json deserializedJson = DeserializeJSON(fullPath);
 
 	if (deserializedJson.find(mapName) == deserializedJson.end())
@@ -160,7 +160,7 @@ std::tuple<std::string, std::string, bool> LResUtility::GetActorModelFromName(st
 
 void LResUtility::LoadUserSettings()
 {
-	std::filesystem::path fullPath = std::filesystem::current_path() / "user_settings.json";
+	std::filesystem::path fullPath = USER_DATA_PATH / "user_settings.json";
 
 	// If the settings file doesn't exist, cause it to be created with the default settings.
 	if (!std::filesystem::exists(fullPath))
@@ -175,7 +175,7 @@ void LResUtility::LoadUserSettings()
 
 void LResUtility::SaveUserSettings()
 {
-	std::filesystem::path fullPath = std::filesystem::current_path() / "user_settings.json";
+	std::filesystem::path fullPath = USER_DATA_PATH / "user_settings.json";
 	nlohmann::json serialize;
 	LUserOptions::ToJson(serialize, OPTIONS);
 
@@ -191,15 +191,15 @@ void LResUtility::LoadMapThumbnails(std::string dir){
     for(int id = 0; id <= 14; id++){
 		int w, h, c;
 		unsigned char* defaultProjImg = nullptr;
-		
+
 		if(dir == ""){
 			if(id != 14){
-				if(!std::filesystem::exists(std::filesystem::current_path() / RES_BASE_PATH / "thumb" / std::format("map{}.png", id))){
+				if(!std::filesystem::exists(RES_BASE_PATH / "thumb" / std::format("map{}.png", id))){
 					continue;
 				}
-				defaultProjImg = stbi_load((std::filesystem::current_path() / RES_BASE_PATH / "thumb" / std::format("map{}.png", id)).string().c_str(), &w, &h, &c, 4);
+				defaultProjImg = stbi_load((RES_BASE_PATH / "thumb" / std::format("map{}.png", id)).string().c_str(), &w, &h, &c, 4);
 			} else {
-				defaultProjImg = stbi_load((std::filesystem::current_path() / RES_BASE_PATH / "thumb" / "default_thumb.png").string().c_str(), &w, &h, &c, 4);
+				defaultProjImg = stbi_load((RES_BASE_PATH / "thumb" / "default_thumb.png").string().c_str(), &w, &h, &c, 4);
 			}
 		} else {
 			if(id != 14){
@@ -208,14 +208,14 @@ void LResUtility::LoadMapThumbnails(std::string dir){
 				}
 				defaultProjImg = stbi_load((std::filesystem::path(dir) / "sys" / "thumb" / std::format("map{}.png", id)).string().c_str(), &w, &h, &c, 4);
 			} else {
-				defaultProjImg = stbi_load((std::filesystem::current_path() / RES_BASE_PATH / "thumb" / "default_thumb.png").string().c_str(), &w, &h, &c, 4);
+				defaultProjImg = stbi_load((RES_BASE_PATH / "thumb" / "default_thumb.png").string().c_str(), &w, &h, &c, 4);
 			}
 		}
 
 		uint32_t thumbId;
 		glGenTextures(1, &thumbId);
 		glBindTexture(GL_TEXTURE_2D, thumbId);
-				
+
 		MapThumbnails[id] = thumbId;
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
