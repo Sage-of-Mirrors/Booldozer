@@ -41,7 +41,7 @@ void InitResourcePaths(){
     auto folderPathRet = SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &pathTmp);
     if (folderPathRet != S_OK) {
         CoTaskMemFree(folderPathRet);
-        return 1;
+        return;
     }
 
     USER_DATA_PATH = folderPathRet;
@@ -50,7 +50,7 @@ void InitResourcePaths(){
         std::filesystem::create_directory(USER_DATA_PATH);
     }
 
-    CoTaskMemFree(path_tmp);
+    CoTaskMemFree(pathTmp);
 
     if(!std::filesystem::exists(RES_BASE_PATH)){
         RES_BASE_PATH = RES_BASE_PATH / "res";;

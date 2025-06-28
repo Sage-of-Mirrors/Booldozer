@@ -350,6 +350,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                             BinSelectedResource = nullptr;
 	                        SelectedType = SelectedResourceType::None;
                             PreviewWidget::GetFurnitureModel()->mBatches.erase(deleteIdx);
+							std::cout << PreviewWidget::GetFurnitureModel()->mBatches.count(deleteIdx) << std::endl;
                             for(auto [idx, node] : PreviewWidget::GetFurnitureModel()->mGraphNodes){
                                 for(auto element : PreviewWidget::GetFurnitureModel()->mGraphNodes[idx].mDrawElements){
                                     if(element.BatchIndex == deleteIdx){
