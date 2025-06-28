@@ -522,7 +522,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                                 if(ImGui::Button("Export")){
                                     ImGuiFileDialog::Instance()->OpenModal("exportTextureImageDialog", "Export Texture", "PNG Image (*.png){.png}", OPTIONS.mRootPath);
                                 }
-                                ImGui::Image(static_cast<uintptr_t>(texture->TextureID), {texture->Width, texture->Height});
+                                ImGui::Image(static_cast<uintptr_t>(texture->TextureID), {static_cast<float>(texture->Width), static_cast<float>(texture->Height)});
                                 break;
                             }
                             case SelectedResourceType::Material: {
