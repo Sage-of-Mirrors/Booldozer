@@ -40,7 +40,7 @@ void InitResourcePaths(){
 
     auto folderPathRet = SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &pathTmp);
     if (folderPathRet != S_OK) {
-        CoTaskMemFree(folderPathRet);
+        CoTaskMemFree(pathTmp);
         return;
     }
 
