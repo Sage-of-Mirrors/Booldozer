@@ -44,7 +44,7 @@ void InitResourcePaths(){
         return;
     }
 
-    USER_DATA_PATH = folderPathRet;
+    USER_DATA_PATH = pathTmp;
     USER_DATA_PATH = USER_DATA_PATH / "booldozer";
     if(!std::filesystem::exists(USER_DATA_PATH)){
         std::filesystem::create_directory(USER_DATA_PATH);
