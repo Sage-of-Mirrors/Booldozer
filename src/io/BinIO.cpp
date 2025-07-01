@@ -22,6 +22,7 @@
 #include "io/KeyframeIO.hpp"
 #include "stb_image.h"
 #include "tiny_obj_loader.h"
+#include "ufbx.h"
 #include "tri_stripper.h"
 
 namespace BIN {
@@ -1077,6 +1078,158 @@ namespace BIN {
             mAnimationTracks[i] = track;
         }
 
+    }
+
+    Model Model::FromFBX(std::string path){
+        Model mdl;
+
+        ufbx_load_opts opts = {};
+        opts.target_axes = ufbx_axes_right_handed_y_up;
+        opts.target_unit_meters = 1.0f;
+        ufbx_scene* scene = ufbx_load_file(path.c_str(), &opts, nullptr);
+
+        // set up resources per node
+        for(ufbx_node* node : scene->nodes) mdl.mGraphNodes[node->typed_id] = {};
+        for(ufbx_texture* texture : scene->textures){
+            if(texture->content.data == nullptr && std::string(texture->absolute_filename.data) == "") continue;
+            mdl.mSamplers[texture->typed_id] = {};
+            mdl.mTexturesHeaders[texture->typed_id] = {};
+
+            mdl.mSamplers[texture->typed_id].TextureIndex = texture->typed_id;
+            mdl.mSamplers[texture->typed_id].WrapU = texture->wrap_u;
+            mdl.mSamplers[texture->typed_id].WrapV = texture->wrap_v;
+            mdl.mTexturesHeaders[texture->typed_id].Format = 0x0E;
+            
+            // if the texture is embedded
+            if(texture->content.data != nullptr){
+                int x, y, c;
+                unsigned char* data = stbi_load_from_memory((const unsigned char*)texture->content.data, texture->content.size, &x, &y, &c, 4);
+                mdl.mTexturesHeaders[texture->typed_id].SetImage(data, x*y*4, x, y);
+                mdl.mTexturesHeaders[texture->typed_id].Width = x;
+                mdl.mTexturesHeaders[texture->typed_id].Height = y;
+                stbi_image_free(data);
+            } else {
+                int x, y, c;
+                unsigned char* data = stbi_load(texture->absolute_filename.data, &x, &y, &c, 4);
+                mdl.mTexturesHeaders[texture->typed_id].SetImage(data, x*y*4, x, y);
+                mdl.mTexturesHeaders[texture->typed_id].Width = x;
+                mdl.mTexturesHeaders[texture->typed_id].Height = y;
+                stbi_image_free(data);
+            }
+        }
+
+        for(ufbx_material* material : scene->materials){
+            mdl.mMaterials[material->typed_id] = {};
+            mdl.mMaterials[material->typed_id].Color = { material->fbx.ambient_color.value_vec4.x, material->fbx.ambient_color.value_vec4.y, material->fbx.ambient_color.value_vec4.z, material->fbx.ambient_color.value_vec4.w };
+            int idx = 0;
+            for(ufbx_material_texture texture : material->textures){
+                if(idx >= 8) break;
+                mdl.mMaterials[material->typed_id].SamplerIndices[idx] = texture.texture->typed_id;
+                idx++;
+            }
+        }
+
+        std::map<std::pair<uint32_t, uint32_t>, uint16_t> meshIdxRemap;
+        uint16_t batchIdx = 0;
+        for(ufbx_mesh* mesh : scene->meshes){
+            for(ufbx_mesh_part part : mesh->material_parts){
+                meshIdxRemap[{mesh->typed_id, part.index}] = batchIdx;
+                mdl.mBatches[batchIdx++] = {};
+                
+                std::vector<Vertex> vertices;
+                std::vector<uint32_t> triIndices;
+                triIndices.resize(mesh->max_face_triangles * 3);
+            
+                // Iterate over each face using the specific material.
+                for (uint32_t face_index : part.face_indices) {
+                    ufbx_face face = mesh->faces[face_index];
+            
+                    // Triangulate the face into `tri_indices[]`.
+                    uint32_t numTris = ufbx_triangulate_face(triIndices.data(), triIndices.size(), mesh, face);
+            
+                    // Iterate over each triangle corner contiguously.
+                    for (std::size_t i = 0; i < numTris * 3; i++) {
+                        uint32_t index = triIndices[i];
+            
+                        Vertex v;
+                        v.Position = { mesh->vertex_position[index].x, mesh->vertex_position[index].y, mesh->vertex_position[index].z };
+                        v.Normal = { mesh->vertex_normal[index].x, mesh->vertex_normal[index].y, mesh->vertex_normal[index].z };
+                        v.Texcoord = { mesh->vertex_uv[index].x, mesh->vertex_uv[index].y };
+                        vertices.push_back(v);
+                    }
+                }
+
+                ufbx_vertex_stream streams[1] = { { vertices.data(), vertices.size(), sizeof(Vertex) } };
+                
+                std::vector<uint32_t> indicesDeuplicated;
+                indicesDeuplicated.resize(part.num_triangles * 3);
+
+                std::size_t numVertices = ufbx_generate_indices(streams, 1, indicesDeuplicated.data(), indicesDeuplicated.size(), nullptr, nullptr);
+                vertices.resize(numVertices);
+
+                std::vector<std::size_t> indices;
+                indices.assign(indicesDeuplicated.begin(), indicesDeuplicated.end());
+
+                triangle_stripper::tri_stripper stripify(indices);
+                triangle_stripper::primitive_vector primitives;
+                stripify.SetBackwardSearch(false);
+                stripify.Strip(&primitives);
+    
+                int indexCount = 0;
+                for(auto p : primitives){
+                    BIN::Primitive primitive;
+                    primitive.Opcode = (p.Type == triangle_stripper::TRIANGLE_STRIP ? GXPrimitiveType::TriangleStrip : GXPrimitiveType::Triangles);
+                    for(int i = 0; i < p.Indices.size(); i++){
+                        primitive.Vertices.push_back(vertices[p.Indices[i]]);
+                    }
+                    indexCount += p.Indices.size();
+                    mdl.mBatches[mesh->typed_id+part.index].Primitives.push_back(primitive);
+                }
+
+            }
+        }
+
+        for(ufbx_node* node : scene->nodes) mdl.mGraphNodes[node->typed_id] = {}; // Initialize ndoes
+
+        for(ufbx_node* node : scene->nodes){
+            std::cout << "Adding node " << node->typed_id << std::endl;
+            mdl.mGraphNodes[node->typed_id].Index = node->typed_id;
+            mdl.mGraphNodes[node->typed_id].Position = { node->local_transform.translation.x, node->local_transform.translation.y, node->local_transform.translation.z };
+            mdl.mGraphNodes[node->typed_id].Rotation = { node->local_transform.rotation.x, node->local_transform.rotation.y, node->local_transform.rotation.z };
+            mdl.mGraphNodes[node->typed_id].Scale = { node->local_transform.scale.x, node->local_transform.scale.y, node->local_transform.scale.z };
+
+            if(node->parent != nullptr){
+                mdl.mGraphNodes[node->typed_id].ParentIndex = node->parent->typed_id;
+            }
+
+            for(auto child = node->children.begin(); child != node->children.end(); child++){
+                if(*child == node->children[0]){
+                    mdl.mGraphNodes[node->typed_id].ChildIndex = (*child)->typed_id;
+                }
+                if(*child != node->children[0]){
+                    mdl.mGraphNodes[(*(child-1))->typed_id].NextSibIndex = (*child)->typed_id;
+                    mdl.mGraphNodes[(*child)->typed_id].PreviousSibIndex = (*(child-1))->typed_id;
+                }
+            }
+
+            // dont set up mesh parts if we have none
+            if(node->attrib_type != ufbx_element_type::UFBX_ELEMENT_MESH){
+                continue;
+            }
+
+            for(ufbx_mesh_part part : node->mesh->material_parts){
+                DrawElement element;
+                element.BatchIndex = meshIdxRemap[{node->mesh->typed_id, part.index}];
+                element.MaterialIndex = node->mesh->materials[part.index]->typed_id;
+                mdl.mGraphNodes[node->typed_id].mDrawElements.push_back(element);
+            }
+
+        }
+
+
+        ufbx_free_scene(scene);
+
+        return mdl;
     }
 
     Model Model::FromOBJ(std::string path){

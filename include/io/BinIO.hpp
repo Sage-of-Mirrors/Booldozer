@@ -214,6 +214,7 @@ namespace BIN {
         void Write(bStream::CStream* stream);
 
         static Model FromOBJ(std::string path);
+        static Model FromFBX(std::string path);
 		Model(bStream::CStream* stream){ Load(stream); }
         Model(){}
         ~Model();

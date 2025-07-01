@@ -291,7 +291,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                 }
                 ImGui::SameLine();
                 ImGui::Text(ICON_FK_UPLOAD);
-                if(ImGui::IsItemClicked()) ImGuiFileDialog::Instance()->OpenModal("addModelToRoomArchiveDialog", "Select Room Resource", "Resource (*.bin *.anm *.bas){.bin,.anm,.bas},Model (*.obj){.obj}", OPTIONS.mRootPath);
+                if(ImGui::IsItemClicked()) ImGuiFileDialog::Instance()->OpenModal("addModelToRoomArchiveDialog", "Select Room Resource", "Resource (*.bin *.anm *.bas){.bin,.anm,.bas},FBX Model (*.fbx){.fbx},OBJ Model (*.obj){.obj}", OPTIONS.mRootPath);
                 ImGui::Separator();
 
                 if(ActiveRoomArchive->GetRoot()->GetFolder("anm") == nullptr){
@@ -795,6 +795,13 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                     std::string ext = std::filesystem::path(modelPath).extension().string();
                     if(ext == ".obj"){
                         BIN::Model model = BIN::Model::FromOBJ(modelPath);
+                        bStream::CMemoryStream modelData(0x24, bStream::Endianess::Big, bStream::OpenMode::Out);
+                        model.Write(&modelData);
+                        newFile->SetName(std::filesystem::path(modelPath).filename().replace_extension(".bin").string());
+                        newFile->SetData(modelData.getBuffer(), modelData.tell());
+                        mRoomModels.push_back(std::filesystem::path(modelPath).filename().stem().string());
+                    } else if(ext == ".fbx"){
+                        BIN::Model model = BIN::Model::FromFBX(modelPath);
                         bStream::CMemoryStream modelData(0x24, bStream::Endianess::Big, bStream::OpenMode::Out);
                         model.Write(&modelData);
                         newFile->SetName(std::filesystem::path(modelPath).filename().replace_extension(".bin").string());
