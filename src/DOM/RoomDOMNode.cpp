@@ -283,10 +283,15 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                 ImGui::Text(ICON_FK_PLUS_CIRCLE);
                 if(ImGui::IsItemClicked()){
                     PreviewWidget::NewFurnitureModel();
+                    std::shared_ptr<Archive::File> newBin = Archive::File::Create();
+                    newBin->SetName("new.bin");
+                    EditFileName = newBin;
+                    SelectedFile = newBin;
+                    ActiveRoomArchive->GetRoot()->AddFile(newBin);
                 }
                 ImGui::SameLine();
                 ImGui::Text(ICON_FK_UPLOAD);
-                if(ImGui::IsItemClicked()) ImGuiFileDialog::Instance()->OpenModal("addModelToRoomArchiveDialog", "Select Room Resource", "Resource (*.bin *.anm *.bas){.bin,.anm,.bas}", OPTIONS.mRootPath);
+                if(ImGui::IsItemClicked()) ImGuiFileDialog::Instance()->OpenModal("addModelToRoomArchiveDialog", "Select Room Resource", "Resource (*.bin *.anm *.bas){.bin,.anm,.bas},Model (*.obj){.obj}", OPTIONS.mRootPath);
                 ImGui::Separator();
 
                 if(ActiveRoomArchive->GetRoot()->GetFolder("anm") == nullptr){
@@ -343,6 +348,8 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                     ImGui::BeginChild("##binResources", {180, 125});
                     bool  open = ImGui::TreeNode(ICON_FK_CUBE " Batches");
                     ImGui::SameLine();
+                    ImGui::Spacing();
+                    ImGui::SameLine();
                     ImGui::Text(ICON_FK_PLUS_CIRCLE);
                     if(ImGui::IsItemClicked(0)){
                         int id = PreviewWidget::GetFurnitureModel()->mBatches.size();
@@ -389,6 +396,8 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                     }
 
                     open = ImGui::TreeNode(ICON_FK_PAINT_BRUSH " Materials");
+                    ImGui::SameLine();
+                    ImGui::Spacing();
                     ImGui::SameLine();
                     ImGui::Text(ICON_FK_PLUS_CIRCLE);
                     if(ImGui::IsItemClicked(0)){
@@ -437,6 +446,8 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 
                     open = ImGui::TreeNode(ICON_FK_PAINT_BRUSH " Samplers");
                     ImGui::SameLine();
+                    ImGui::Spacing();
+                    ImGui::SameLine();
                     ImGui::Text(ICON_FK_PLUS_CIRCLE);
                     if(ImGui::IsItemClicked(0)){
                         int id = PreviewWidget::GetFurnitureModel()->mSamplers.size();
@@ -481,6 +492,8 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                     }
 
                     open = ImGui::TreeNode(ICON_FK_PICTURE_O " Textures");
+                    ImGui::SameLine();
+                    ImGui::Spacing();
                     ImGui::SameLine();
                     ImGui::Text(ICON_FK_PLUS_CIRCLE);
                     if(ImGui::IsItemClicked(0)){
@@ -750,7 +763,8 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                     }
                     LGenUtility::Log << "Stripped count " << indexCount << " Triangle Count " << shp.mesh.indices.size() << std::endl;
                 }
-
+                
+                batch->ReloadMeshes();
                 ImGui::OpenPopup("##roomResources");
             }
         }
@@ -777,23 +791,32 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
             LGenUtility::Log << "[RoomDOMNode]: Loading arc " << resPath.string() << std::endl;
             if(std::filesystem::exists(resPath) && resPath.extension().string() == ".arc"){
                 if(ActiveRoomArchive != nullptr){
-                    bStream::CFileStream modelFile(modelPath, bStream::Endianess::Big, bStream::OpenMode::In);
                     std::shared_ptr<Archive::File> newFile = Archive::File::Create();
-
-                    uint8_t* modelData = new uint8_t[modelFile.getSize()]{};
-                    modelFile.readBytesTo(modelData, modelFile.getSize());
-
                     std::string ext = std::filesystem::path(modelPath).extension().string();
-
-                    LGenUtility::Log << "[RoomDOMNode]: Adding model " << std::filesystem::path(modelPath).filename().string() << " to archive" << resPath.string() << std::endl;
-                    if(ext == ".bin"){
+                    if(ext == ".obj"){
+                        BIN::Model model = BIN::Model::FromOBJ(modelPath);
+                        bStream::CMemoryStream modelData(0x24, bStream::Endianess::Big, bStream::OpenMode::Out);
+                        model.Write(&modelData);
+                        newFile->SetName(std::filesystem::path(modelPath).filename().replace_extension(".bin").string());
+                        newFile->SetData(modelData.getBuffer(), modelData.tell());
                         mRoomModels.push_back(std::filesystem::path(modelPath).filename().stem().string());
+                    } else {
+                        bStream::CFileStream modelFile(modelPath, bStream::Endianess::Big, bStream::OpenMode::In);
+
+                        uint8_t* modelData = new uint8_t[modelFile.getSize()]{};
+                        modelFile.readBytesTo(modelData, modelFile.getSize());
+
+
+                        LGenUtility::Log << "[RoomDOMNode]: Adding model " << std::filesystem::path(modelPath).filename().string() << " to archive" << resPath.string() << std::endl;
+                        if(ext == ".bin"){
+                            mRoomModels.push_back(std::filesystem::path(modelPath).filename().stem().string());
+                        }
+                        newFile->SetName(std::filesystem::path(modelPath).filename().string());
+                        newFile->SetData(modelData, modelFile.getSize());
+
+                        delete[] modelData;
+
                     }
-                    newFile->SetName(std::filesystem::path(modelPath).filename().string());
-                    newFile->SetData(modelData, modelFile.getSize());
-
-                    delete[] modelData;
-
                     if(ext == ".anm"){
                         std::shared_ptr<Archive::Folder> animFolder = ActiveRoomArchive->GetRoot()->GetFolder("anm");
 

@@ -47,7 +47,7 @@ namespace BIN {
         uint16_t Width { 0 };
         uint16_t Height { 0 };
         uint8_t Format { 0 };
-        uint16_t Unknown { 0 };
+        uint16_t Unknown { 0x20 };
 
         uint32_t ImageOffset { 0 };
         uint32_t TextureID { UINT32_MAX }; // Bind this for rendering
@@ -109,6 +109,7 @@ namespace BIN {
 
         void Read(bStream::CStream* stream) override;
         void Write(bStream::CStream* stream);
+        void ReloadMeshes();
         void Destroy();
     };
 
@@ -212,6 +213,7 @@ namespace BIN {
         void Load(bStream::CStream* stream);
         void Write(bStream::CStream* stream);
 
+        static Model FromOBJ(std::string path);
 		Model(bStream::CStream* stream){ Load(stream); }
         Model(){}
         ~Model();

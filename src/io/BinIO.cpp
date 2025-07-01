@@ -21,6 +21,8 @@
 #include <format>
 #include "io/KeyframeIO.hpp"
 #include "stb_image.h"
+#include "tiny_obj_loader.h"
+#include "tri_stripper.h"
 
 namespace BIN {
     // from https://github.com/Sage-of-Mirrors/libjstudio/blob/main/src/engine/value/interpolation.cpp
@@ -192,6 +194,83 @@ namespace BIN {
         stream->writeUInt32(0);
     }
 
+    void Batch::ReloadMeshes(){
+        glDeleteVertexArrays(1, &Vao);
+        glDeleteBuffers(1, &Vbo);
+                
+        glGenVertexArrays(1, &Vao);
+        glBindVertexArray(Vao);
+
+        glGenBuffers(1, &Vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, Vbo);
+
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Position));
+
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
+
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Color));
+
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Texcoord));
+
+        std::vector<Vertex> triangulatedPrimitives;
+        for (auto primitive : Primitives){
+            switch (primitive.Opcode){
+                case GXPrimitiveType::Triangles: {
+                        for(auto vtx : primitive.Vertices){
+                            triangulatedPrimitives.push_back(vtx);
+                        }
+                    }
+                    break;
+                case GXPrimitiveType::TriangleStrip: {
+                        for (std::size_t v = 2; v < primitive.Vertices.size(); v++){
+                            triangulatedPrimitives.push_back(primitive.Vertices[v-2]);
+                            triangulatedPrimitives.push_back(primitive.Vertices[(v % 2 != 0 ? v : v-1)]);
+                            triangulatedPrimitives.push_back(primitive.Vertices[(v % 2 != 0 ? v-1 : v)]);
+                        }
+                    }
+                    break;
+                case GXPrimitiveType::TriangleFan:{
+                        for(std::size_t v = 0; v < 3; v++){
+                            triangulatedPrimitives.push_back(primitive.Vertices[v]);
+                        }
+
+                        for (std::size_t v = 2; v < primitive.Vertices.size(); v++){
+
+                            if(primitive.Vertices[v].Position == primitive.Vertices[v-1].Position ||
+                                primitive.Vertices[v-1].Position == primitive.Vertices[0].Position ||
+                                primitive.Vertices[v].Position == primitive.Vertices[0].Position){
+                                continue;
+                            }
+
+                            triangulatedPrimitives.push_back(primitive.Vertices[0]);
+                            triangulatedPrimitives.push_back(primitive.Vertices[v-1]);
+                            triangulatedPrimitives.push_back(primitive.Vertices[v]);
+                        }
+                    }
+                    break;
+                default: {
+                    std::cout << "[BIN Loader]: Unimplemented primitive " << std::format("{0}", primitive.Opcode) << std::endl;
+                    break;
+                }
+            }
+        }
+
+        
+        VertexCount = triangulatedPrimitives.size();
+        glBufferData(GL_ARRAY_BUFFER, triangulatedPrimitives.size() * sizeof(Vertex), triangulatedPrimitives.data(), GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+    }    
+
+    void Batch::Destroy(){
+        glDeleteVertexArrays(1, &Vao);
+        glDeleteBuffers(1, &Vbo);
+    }
+
     void TextureHeader::Read(bStream::CStream* stream){
         Width = stream->readUInt16();
         Height = stream->readUInt16();
@@ -299,11 +378,6 @@ namespace BIN {
     void TextureHeader::Destroy(){
         glDeleteTextures(1, &TextureID);
         delete[] ImageData;
-    }
-
-    void Batch::Destroy(){
-        glDeleteVertexArrays(1, &Vao);
-        glDeleteBuffers(1, &Vbo);
     }
 
     const char* default_bin_vtx_shader_source = "#version 460\n\
@@ -529,7 +603,7 @@ namespace BIN {
                         }
                         break;
                     case GXPrimitiveType::TriangleStrip: {
-                            for (size_t v = 2; v < primitiveVertices.size(); v++){
+                            for (std::size_t v = 2; v < primitiveVertices.size(); v++){
                                 Vertex vtx1 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}},
                                        vtx2 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}},
                                        vtx3 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}};
@@ -554,7 +628,7 @@ namespace BIN {
                         }
                         break;
                     case GXPrimitiveType::TriangleFan:{
-                            for(size_t v = 0; v < 3; v++){
+                            for(std::size_t v = 0; v < 3; v++){
                                 Vertex vtx = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}};
 
                                 vtx.Position = mPositions[primitiveVertices[v].Position];
@@ -564,7 +638,7 @@ namespace BIN {
                                 triangulatedPrimitives.push_back(vtx);
                             }
 
-                            for (size_t v = 2; v < primitiveVertices.size(); v++){
+                            for (std::size_t v = 2; v < primitiveVertices.size(); v++){
                                 Vertex vtx1 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}},
                                        vtx2 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}},
                                        vtx3 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}};
@@ -786,6 +860,7 @@ namespace BIN {
         stream->writeUInt8(mHeader.Version);
         stream->writeString(mHeader.Name);
         for(int i = 0; i < 21; i++) stream->writeUInt32(0);
+        stream->alignTo(32);
 
         stream->writeOffsetAt32(12);
         stream->writeBytes(TextureStream.getBuffer(), TextureSectionSize);
@@ -1002,6 +1077,94 @@ namespace BIN {
             mAnimationTracks[i] = track;
         }
 
+    }
+
+    Model Model::FromOBJ(std::string path){
+        Model mdl;
+        tinyobj::attrib_t attributes;
+        std::vector<tinyobj::shape_t> shapes;
+        std::vector<tinyobj::material_t> materials;
+
+        std::string warn;
+        std::string err;
+        bool ret = tinyobj::LoadObj(&attributes, &shapes, &materials, &warn, &err, std::filesystem::path(path).string().c_str(), std::filesystem::path(path).parent_path().string().c_str(), true);
+
+        mdl.mGraphNodes[0] = {};
+        mdl.mGraphNodes[0].mDrawElements.resize(shapes.size());
+        int elementIDX = 0;
+        for(auto shp : shapes){
+            if(shp.mesh.indices.size() == 0) continue;
+
+            Batch batch;
+
+            std::vector<Vertex> vertices;
+            std::vector<std::size_t> indices;
+            for(int i = 0; i < shp.mesh.indices.size(); i++){
+                Vertex vtx;
+                int v = shp.mesh.indices[i].vertex_index;
+                int n = shp.mesh.indices[i].normal_index;
+                int t = shp.mesh.indices[i].texcoord_index;
+                vtx.Position = glm::vec3(attributes.vertices[v * 3], attributes.vertices[(v * 3) + 1], attributes.vertices[(v * 3) + 2]);
+                vtx.Normal = glm::vec3(attributes.normals[n * 3], attributes.normals[(n * 3) + 1], attributes.normals[(n * 3) + 2]);
+                vtx.Texcoord = glm::vec2(attributes.texcoords[t * 2], attributes.texcoords[(t * 2) + 1]);
+
+                auto vtxIdx = std::find_if(vertices.begin(), vertices.end(), [i=vtx](const Vertex& o){
+                    return i.Position == o.Position && i.Normal == o.Normal && i.Texcoord == o.Texcoord;
+                });
+
+                if(vtxIdx != vertices.end()){
+                    indices.push_back(vtxIdx - vertices.begin());
+                } else {
+                    indices.push_back(vertices.size());
+                    vertices.push_back(vtx);
+                }
+            }
+
+            triangle_stripper::tri_stripper stripify(indices);
+            triangle_stripper::primitive_vector primitives;
+            stripify.SetBackwardSearch(false);
+            stripify.Strip(&primitives);
+
+            int indexCount = 0;
+            for(auto p : primitives){
+                BIN::Primitive primitive;
+                primitive.Opcode = (p.Type == triangle_stripper::TRIANGLE_STRIP ? GXPrimitiveType::TriangleStrip : GXPrimitiveType::Triangles);
+                for(int i = 0; i < p.Indices.size(); i++){
+                    primitive.Vertices.push_back(vertices[p.Indices[i]]);
+                }
+                indexCount += p.Indices.size();
+                batch.Primitives.push_back(primitive);
+            }
+            mdl.mGraphNodes[0].mDrawElements[elementIDX].BatchIndex = mdl.mBatches.size();
+            mdl.mBatches[mdl.mBatches.size()] = batch;
+
+            if(shp.mesh.material_ids[0] != -1){
+                Material material;
+                Sampler sampler;
+                TextureHeader tex;
+                tex.Format = 0x0E;
+
+                // TODO: load ambient color
+                //material.Color = materials[shp.mesh.material_ids[0]].ambient
+                
+                int w, h, channels;
+                unsigned char* img = stbi_load(materials[shp.mesh.material_ids[0]].diffuse_texname.c_str(), &w, &h, &channels, 4);
+                tex.SetImage(img, w*h*4, w, h);
+                stbi_image_free(img);
+                
+                sampler.TextureIndex = mdl.mTexturesHeaders.size();
+                mdl.mTexturesHeaders[mdl.mTexturesHeaders.size()] = tex;
+                material.SamplerIndices[0] = mdl.mSamplers.size();
+                mdl.mSamplers[mdl.mSamplers.size()] = sampler;
+
+
+                mdl.mGraphNodes[0].mDrawElements[elementIDX].MaterialIndex = mdl.mMaterials.size();
+                mdl.mMaterials[mdl.mMaterials.size()] = material;
+            }
+
+            elementIDX++;
+        }
+        return mdl;
     }
 
     void ClearAnimation(){
