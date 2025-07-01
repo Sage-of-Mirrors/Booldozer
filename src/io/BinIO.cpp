@@ -1085,7 +1085,7 @@ namespace BIN {
 
         ufbx_load_opts opts = {};
         opts.target_axes = ufbx_axes_right_handed_y_up;
-        opts.target_unit_meters = 1.0f;
+        opts.target_unit_meters = 0.01f;
         ufbx_scene* scene = ufbx_load_file(path.c_str(), &opts, nullptr);
 
         // set up resources per node
@@ -1132,10 +1132,12 @@ namespace BIN {
         std::map<std::pair<uint32_t, uint32_t>, uint16_t> meshIdxRemap;
         uint16_t batchIdx = 0;
         for(ufbx_mesh* mesh : scene->meshes){
+            std::cout << "Adding Mesh " << mesh->name.data << std::endl;
             for(ufbx_mesh_part part : mesh->material_parts){
                 meshIdxRemap[{mesh->typed_id, part.index}] = batchIdx;
-                mdl.mBatches[batchIdx++] = {};
-                
+                mdl.mBatches[batchIdx] = {};
+                std::cout << "Batch IDX " << batchIdx << " remap[" << mesh->typed_id << ", " << part.index << "]" << std::endl;
+
                 std::vector<Vertex> vertices;
                 std::vector<uint32_t> triIndices;
                 triIndices.resize(mesh->max_face_triangles * 3);
@@ -1174,18 +1176,17 @@ namespace BIN {
                 triangle_stripper::primitive_vector primitives;
                 stripify.SetBackwardSearch(false);
                 stripify.Strip(&primitives);
-    
-                int indexCount = 0;
+
                 for(auto p : primitives){
                     BIN::Primitive primitive;
                     primitive.Opcode = (p.Type == triangle_stripper::TRIANGLE_STRIP ? GXPrimitiveType::TriangleStrip : GXPrimitiveType::Triangles);
                     for(int i = 0; i < p.Indices.size(); i++){
                         primitive.Vertices.push_back(vertices[p.Indices[i]]);
                     }
-                    indexCount += p.Indices.size();
-                    mdl.mBatches[mesh->typed_id+part.index].Primitives.push_back(primitive);
+                    mdl.mBatches[batchIdx].Primitives.push_back(primitive);
                 }
-
+                std::cout << "Primitives Size " << mdl.mBatches[batchIdx].Primitives.size() << std::endl;
+                batchIdx++;
             }
         }
 
