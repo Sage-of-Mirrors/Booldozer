@@ -20,38 +20,38 @@ namespace BIN {
 
     #pragma pack(push, 1)
     struct Header {
-        uint8_t Version;
-        std::string Name;
-        uint32_t TextureOffset;     // 0
-        uint32_t SamplerOffset;     // 1
-        uint32_t PositionOffset;    // 2
-        uint32_t NormalOffset;      // 3
-        uint32_t Color0Offset;      // 4
-        uint32_t Color1Offest;      // 5
-        uint32_t TexCoord0Offset;   // 6
-        uint32_t TexCoord1Offset;   // 7
-        uint32_t UnknownOffsets[2]; // 8, 9
-        uint32_t MaterialOffset;    // 10
-        uint32_t BatchOffset;       // 11
-        uint32_t SceneGraphOffset;  // 12
+        uint8_t Version { 0x02 };
+        std::string Name { "bin_model"};
+        uint32_t TextureOffset { 0 };     // 0
+        uint32_t SamplerOffset { 0 };     // 1
+        uint32_t PositionOffset { 0 };    // 2
+        uint32_t NormalOffset { 0 };      // 3
+        uint32_t Color0Offset { 0 };      // 4
+        uint32_t Color1Offest { 0 };      // 5
+        uint32_t TexCoord0Offset { 0 };   // 6
+        uint32_t TexCoord1Offset { 0 };   // 7
+        uint32_t UnknownOffsets[2] { 0 }; // 8, 9
+        uint32_t MaterialOffset { 0 };    // 10
+        uint32_t BatchOffset { 0 };       // 11
+        uint32_t SceneGraphOffset { 0 };  // 12
     };
     #pragma pack(pop)
 
     struct DrawElement : Readable {
-        int16_t MaterialIndex, BatchIndex;
+        int16_t MaterialIndex { -1 }, BatchIndex { -1 };
 
         void Read(bStream::CStream* stream) override;
     };
 
     struct TextureHeader : Readable {
-        uint16_t Width;
-        uint16_t Height;
-        uint8_t Format;
-        uint16_t Unknown;
+        uint16_t Width { 0 };
+        uint16_t Height { 0 };
+        uint8_t Format { 0 };
+        uint16_t Unknown { 0 };
 
-        uint32_t ImageOffset;
+        uint32_t ImageOffset { 0 };
         uint32_t TextureID { UINT32_MAX }; // Bind this for rendering
-        uint8_t* ImageData;
+        uint8_t* ImageData { nullptr };
 
         void Read(bStream::CStream* stream) override;
         void Write(bStream::CStream* stream);
@@ -64,21 +64,21 @@ namespace BIN {
     };
 
     struct Sampler : Readable {
-        int16_t TextureIndex;
-        uint16_t PaletteIndex;
-        uint8_t WrapU;
-        uint8_t WrapV;
-        uint16_t Unk;
+        int16_t TextureIndex { -1 };
+        int16_t PaletteIndex { -1 };;
+        uint8_t WrapU { 0 };
+        uint8_t WrapV { 0 };
+        uint16_t Unk { 0 };
 
         void Read(bStream::CStream* stream) override;
         void Write(bStream::CStream* stream);
     };
 
     struct Material : Readable {
-        uint8_t LightEnabled;
-        uint8_t Unk0, Unk1;
-        glm::vec4 Color;
-        int16_t SamplerIndices[8];
+        uint8_t LightEnabled { 1 };
+        uint8_t Unk0  { 0 }, Unk1 { 0 };
+        glm::vec4 Color { 1.0f, 1.0f, 1.0f, 1.0f };
+        int16_t SamplerIndices[8] { -1, -1, -1, -1, -1, -1, -1, -1 };
         //uint16_t Unk2, Unk3;
 
         void Read(bStream::CStream* stream) override;
@@ -91,19 +91,19 @@ namespace BIN {
     };
 
     struct Batch : Readable {
-        uint16_t TriangleCount;
-        uint16_t DisplayListSize;
-        uint32_t VertexAttributes;
+        uint16_t TriangleCount { 0 };
+        uint16_t DisplayListSize { 0 };
+        uint32_t VertexAttributes { (1 << (int)GXAttribute::Position) | (1 << (int)GXAttribute::Normal) | (1 << (int)GXAttribute::Tex0) };
 
-        uint8_t NormalFlag;
-        uint8_t PositionFlag;
-        uint8_t TexCoordFlag;
-        uint8_t NBTFlag;
+        uint8_t NormalFlag { 1 };
+        uint8_t PositionFlag { 2 };
+        uint8_t TexCoordFlag { 1 };
+        uint8_t NBTFlag { 0 };
 
-        uint32_t Vao;
-        uint32_t Vbo;
-        uint32_t VertexCount;
-        uint32_t PrimitiveOffset;
+        uint32_t Vao { 0 };
+        uint32_t Vbo { 0 };
+        uint32_t VertexCount { 0 };
+        uint32_t PrimitiveOffset { 0 };
 
         std::vector<Primitive> Primitives;
 
@@ -120,15 +120,15 @@ namespace BIN {
         int16_t NextSibIndex { -1 };
         int16_t PreviousSibIndex { -1 };
 
-        uint8_t RenderFlags;
+        uint8_t RenderFlags { 0 };
 
-        glm::vec3 Scale, Rotation, Position;
-        glm::vec3 BoundingBoxMin, BoundingBoxMax;
-        float Radius;
+        glm::vec3 Scale { 1.0f, 1.0f, 1.0f }, Rotation { 0.0f, 0.0f, 0.0f }, Position { 0.0f, 0.0f, 0.0f };
+        glm::vec3 BoundingBoxMin { 0.0f, 0.0f, 0.0f }, BoundingBoxMax { 0.0f, 0.0f, 0.0f };
+        float Radius { 0.0f };
         glm::mat4 Transform { 1.0f };
 
-        int16_t ElementCount;
-        int32_t ElementOffset;
+        int16_t ElementCount { 0 };
+        int32_t ElementOffset { 0 };
         std::vector<DrawElement> mDrawElements;
 
         inline bool CastShadow() { return (RenderFlags & (1 << 1)) != 0; }

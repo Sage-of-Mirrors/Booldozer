@@ -37,6 +37,8 @@ namespace PreviewWidget {
     void DoZoom(float amt);
     void DoRotate(float amt);
 
+    void NewFurnitureModel(); 
+
     uint32_t PreviewID();
 
 }

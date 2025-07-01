@@ -37,6 +37,11 @@ namespace PreviewWidget {
         return ModelFurniture;
     }
 
+    void NewFurnitureModel(){
+        delete ModelFurniture;
+        ModelFurniture = new BIN::Model();
+    }
+
     void SetActive(){
         Active = true;
         Rotate = -155.0f;
