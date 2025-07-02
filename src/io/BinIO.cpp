@@ -1084,8 +1084,8 @@ namespace BIN {
         Model mdl;
 
         ufbx_load_opts opts = {};
-        opts.target_axes = ufbx_axes_right_handed_y_up;
-        opts.target_unit_meters = 0.01f;
+        opts.target_axes = ufbx_axes_left_handed_y_up;
+        opts.target_unit_meters = 1.0f;
         ufbx_scene* scene = ufbx_load_file(path.c_str(), &opts, nullptr);
 
         // set up resources per node
@@ -1154,7 +1154,7 @@ namespace BIN {
                         uint32_t index = triIndices[i];
             
                         Vertex v;
-                        v.Position = { mesh->vertex_position[index].x, mesh->vertex_position[index].y, mesh->vertex_position[index].z };
+                        v.Position = { mesh->vertex_position[index].x*100, mesh->vertex_position[index].y*100, mesh->vertex_position[index].z*100 };
                         v.Normal = { mesh->vertex_normal[index].x, mesh->vertex_normal[index].y, mesh->vertex_normal[index].z };
                         v.Texcoord = { mesh->vertex_uv[index].x, mesh->vertex_uv[index].y };
                         vertices.push_back(v);
