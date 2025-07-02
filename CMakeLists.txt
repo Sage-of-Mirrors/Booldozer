@@ -8,6 +8,7 @@ add_subdirectory(lib)
 
 file(GLOB BOOLDOZER_SRC
     "src/*.cpp"
+    "src/*.c"
     "include/*.hpp"
     "include/*.h"
     "src/ui/*.cpp"
