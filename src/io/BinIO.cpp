@@ -1096,8 +1096,8 @@ namespace BIN {
             mdl.mTexturesHeaders[texture->typed_id] = {};
 
             mdl.mSamplers[texture->typed_id].TextureIndex = texture->typed_id;
-            mdl.mSamplers[texture->typed_id].WrapU = texture->wrap_u;
-            mdl.mSamplers[texture->typed_id].WrapV = texture->wrap_v;
+            mdl.mSamplers[texture->typed_id].WrapU = 1;//texture->wrap_u;
+            mdl.mSamplers[texture->typed_id].WrapV = 1;//texture->wrap_v;
             mdl.mTexturesHeaders[texture->typed_id].Format = 0x0E;
             
             // if the texture is embedded
@@ -1120,7 +1120,7 @@ namespace BIN {
 
         for(ufbx_material* material : scene->materials){
             mdl.mMaterials[material->typed_id] = {};
-            mdl.mMaterials[material->typed_id].Color = { material->fbx.ambient_color.value_vec4.x, material->fbx.ambient_color.value_vec4.y, material->fbx.ambient_color.value_vec4.z, material->fbx.ambient_color.value_vec4.w };
+            //mdl.mMaterials[material->typed_id].Color = { material->fbx.ambient_color.value_vec4.x, material->fbx.ambient_color.value_vec4.y, material->fbx.ambient_color.value_vec4.z, material->fbx.ambient_color.value_vec4.w };
             int idx = 0;
             for(ufbx_material_texture texture : material->textures){
                 if(idx >= 8) break;
