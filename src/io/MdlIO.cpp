@@ -271,7 +271,7 @@ namespace MDL {
 
         std::cout << "[MDL Loader]: Reading Model Start" << std::endl;
 
-        mTexturesHeaders = ReadSection<TextureHeader>(stream, mHeader.TextureOffsetArray, mHeader.TextureCount);
+        mTextureHeaders = ReadSection<TextureHeader>(stream, mHeader.TextureOffsetArray, mHeader.TextureCount);
         mSamplers = ReadSection<Sampler>(stream, mHeader.SamplerOffset, mHeader.SamplerCount);
         mShapes = ReadSection<Shape>(stream, mHeader.ShapeOffset, mHeader.ShapeCount);
         mPackets = ReadSection<Packet>(stream, mHeader.PacketOffset, mHeader.PacketCount);
@@ -585,11 +585,11 @@ namespace MDL {
 
             glActiveTexture(GL_TEXTURE0);
 
-            if(mTexturesHeaders.size() > 0){
-                if(mTexturesHeaders[sampler.TextureIndex].TextureID != UINT32_MAX){
-                    glBindTexture(GL_TEXTURE_2D, mTexturesHeaders[sampler.TextureIndex].TextureID);
+            if(mTextureHeaders.size() > 0){
+                if(mTextureHeaders[sampler.TextureIndex].TextureID != UINT32_MAX){
+                    glBindTexture(GL_TEXTURE_2D, mTextureHeaders[sampler.TextureIndex].TextureID);
                 } else {
-                    glBindTexture(GL_TEXTURE_2D, mTexturesHeaders[0].TextureID);
+                    glBindTexture(GL_TEXTURE_2D, mTextureHeaders[0].TextureID);
                 }
             }
 
@@ -606,7 +606,7 @@ namespace MDL {
             shape.Destroy();
         }
 
-        for(TextureHeader texture : mTexturesHeaders){
+        for(TextureHeader texture : mTextureHeaders){
             texture.Destroy();
         }
     }

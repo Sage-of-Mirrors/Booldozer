@@ -187,7 +187,7 @@ namespace BIN {
 
         AnimInfo mAnim;
 
-        std::map<uint16_t, TextureHeader> mTexturesHeaders;
+        std::map<uint16_t, TextureHeader> mTextureHeaders;
 
         std::map<uint16_t, Sampler> mSamplers;
         std::map<uint16_t, Batch> mBatches;
@@ -199,6 +199,7 @@ namespace BIN {
         std::vector<glm::vec3> mPositions;
         std::vector<glm::vec3> mNormals;
         std::vector<glm::vec2> mTexCoords;
+        std::vector<glm::vec4> mColors;
 
         void ReadSceneGraphNode(bStream::CStream* stream, uint32_t index);
         void DrawScenegraphNode(uint32_t idx, glm::mat4 transform);

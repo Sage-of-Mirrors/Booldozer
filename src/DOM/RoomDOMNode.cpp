@@ -194,7 +194,25 @@ void LRoomDOMNode::RoomResourceManagerHandleType(std::shared_ptr<LDOMNodeBase> s
 }
 
 void BinTreeNodeUI(BIN::Model* model, uint32_t index){
-    if(ImGui::TreeNode(std::format("Node {}", model->mGraphNodes[index].Index).c_str())){
+    bool open = ImGui::TreeNodeEx(std::format("Node {}", model->mGraphNodes[index].Index).c_str(), (BinSelectedResource == &model->mGraphNodes[index] ? ImGuiTreeNodeFlags_Selected : 0));
+    
+    if(index != 0 && ImGui::BeginPopupContextItem(std::format("##binScenegraphContextMenu{}", index).c_str())){
+        if(ImGui::Selectable("Delete")){
+            if(model->mGraphNodes[index].PreviousSibIndex != -1){
+                model->mGraphNodes[model->mGraphNodes[index].PreviousSibIndex].NextSibIndex = model->mGraphNodes[index].NextSibIndex;
+            }
+            if(model->mGraphNodes[index].NextSibIndex != -1){
+                model->mGraphNodes[model->mGraphNodes[index].NextSibIndex].PreviousSibIndex = model->mGraphNodes[index].PreviousSibIndex;
+            }
+            if(model->mGraphNodes[index].ParentIndex != -1 && model->mGraphNodes[model->mGraphNodes[index].ParentIndex].ChildIndex == index){
+                model->mGraphNodes[model->mGraphNodes[index].ParentIndex].ChildIndex = model->mGraphNodes[index].NextSibIndex;
+            }
+            model->mGraphNodes.erase(index);
+        }
+        ImGui::EndPopup();
+    }
+
+    if(open){
         if(ImGui::IsItemClicked(0)){
             SelectedType = SelectedResourceType::GraphNode;
             BinSelectedResource = &model->mGraphNodes[index];
@@ -226,9 +244,39 @@ void BinTreeNodeUI(BIN::Model* model, uint32_t index){
             model->mGraphNodes[index].mDrawElements.erase(model->mGraphNodes[index].mDrawElements.begin() + deleteIdx);
         }
 
-        if(model->mGraphNodes[index].ChildIndex != -1){
-            ImGui::Text(ICON_FK_LEAF " Children");
-            BinTreeNodeUI(model, model->mGraphNodes[index].ChildIndex);
+        bool childrenOpen = ImGui::TreeNodeEx(ICON_FK_LEAF " Children", model->mGraphNodes[index].ChildIndex == -1 ? ImGuiTreeNodeFlags_Leaf : 0);
+        ImGui::SameLine();
+        ImGui::Spacing();
+        ImGui::SameLine();
+        ImGui::Text(ICON_FK_PLUS_CIRCLE);
+        if(ImGui::IsItemClicked(0)){
+            int id = model->mGraphNodes.size();
+            for(int idx = 0; idx < model->mGraphNodes.size(); idx++){
+                if(!model->mGraphNodes.contains(idx)){
+                    id = idx;
+                    break;
+                }
+            }
+            model->mGraphNodes[id] = {};
+            model->mGraphNodes[id].Index = id;
+            model->mGraphNodes[id].ParentIndex = model->mGraphNodes[index].Index;
+            if(model->mGraphNodes[index].ChildIndex != -1){
+                for(int idx = model->mGraphNodes[index].ChildIndex; idx != -1;){
+                    int nextIdx = model->mGraphNodes[idx].NextSibIndex;
+                    if(model->mGraphNodes[idx].NextSibIndex == -1){
+                        model->mGraphNodes[idx].NextSibIndex = id;
+                        model->mGraphNodes[id].PreviousSibIndex = idx;
+                    }
+                    idx = nextIdx;
+                }
+            } else {
+                model->mGraphNodes[index].ChildIndex = id;
+            }
+
+        }
+        if(childrenOpen){
+            if(model->mGraphNodes[index].ChildIndex != -1) BinTreeNodeUI(model, model->mGraphNodes[index].ChildIndex);
+            ImGui::TreePop();
         }
 
         ImGui::TreePop();
@@ -323,7 +371,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 
                 if(PreviewWidget::GetFurnitureModel() != nullptr){
                     ImGui::SameLine();
-                    ImGui::BeginChild("##binEditorPanels", {180, 500});
+                    ImGui::BeginChild("##binEditorPanels", {250, 500});
                     ImGui::Text("SceneGraph");
                     ImGui::SameLine();
                     float widthNeeded = ImGui::CalcTextSize("Save").x + ImGui::GetStyle().FramePadding.x * 2.f;
@@ -340,12 +388,12 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                         }
                     }
                     ImGui::Separator();
-                    ImGui::BeginChild("##binTree", {180, 125});
+                    ImGui::BeginChild("##binTree", {250, 125});
                     BinTreeNodeUI(PreviewWidget::GetFurnitureModel(), 0);
                     ImGui::EndChild();
                     ImGui::Text("Resources");
                     ImGui::Separator();
-                    ImGui::BeginChild("##binResources", {180, 125});
+                    ImGui::BeginChild("##binResources", {250, 125});
                     bool  open = ImGui::TreeNode(ICON_FK_CUBE " Batches");
                     ImGui::SameLine();
                     ImGui::Spacing();
@@ -497,28 +545,28 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                     ImGui::SameLine();
                     ImGui::Text(ICON_FK_PLUS_CIRCLE);
                     if(ImGui::IsItemClicked(0)){
-                        int id = PreviewWidget::GetFurnitureModel()->mTexturesHeaders.size();
-                        for(int idx = 0; idx < PreviewWidget::GetFurnitureModel()->mTexturesHeaders.size(); idx++){
-                            if(!PreviewWidget::GetFurnitureModel()->mTexturesHeaders.contains(idx)){
+                        int id = PreviewWidget::GetFurnitureModel()->mTextureHeaders.size();
+                        for(int idx = 0; idx < PreviewWidget::GetFurnitureModel()->mTextureHeaders.size(); idx++){
+                            if(!PreviewWidget::GetFurnitureModel()->mTextureHeaders.contains(idx)){
                                 id = idx;
                                 break;
                             }
                         }
-                        PreviewWidget::GetFurnitureModel()->mTexturesHeaders[id] = {};
+                        PreviewWidget::GetFurnitureModel()->mTextureHeaders[id] = {};
                     }                        
                     if(open){
                         uint16_t deleteIdx = UINT16_MAX;
-                        for(auto [idx, texture] : PreviewWidget::GetFurnitureModel()->mTexturesHeaders){
+                        for(auto [idx, texture] : PreviewWidget::GetFurnitureModel()->mTextureHeaders){
                             ImGui::Image(static_cast<uintptr_t>(texture.TextureID), {16, 16});
                             ImGui::SameLine();
-                            if(&PreviewWidget::GetFurnitureModel()->mTexturesHeaders[idx] == BinSelectedResource){
+                            if(&PreviewWidget::GetFurnitureModel()->mTextureHeaders[idx] == BinSelectedResource){
                                 ImGui::TextColored({0x00, 0xFF, 0x00, 0xFF}, "Texture %d", idx);
                             } else {
                                 ImGui::Text("Texture %d", idx);
                             }
                             if(ImGui::IsItemClicked(0)){
                                 SelectedType = SelectedResourceType::Texture;
-                                BinSelectedResource = &PreviewWidget::GetFurnitureModel()->mTexturesHeaders[idx];
+                                BinSelectedResource = &PreviewWidget::GetFurnitureModel()->mTextureHeaders[idx];
                             }
                             if(ImGui::BeginPopupContextItem(std::format("##textureResourceContextMenu{}",idx).c_str())){
                                 if(ImGui::Selectable("Delete")){
@@ -526,18 +574,18 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                                 }
                                 if(ImGui::Selectable("Replace")){
                                     ImGuiFileDialog::Instance()->OpenModal("replaceTextureImageDialog", "Replace Texture", "PNG Image (*.png){.png}", OPTIONS.mRootPath);
-                                    BinSelectedResource = &PreviewWidget::GetFurnitureModel()->mTexturesHeaders[idx];
+                                    BinSelectedResource = &PreviewWidget::GetFurnitureModel()->mTextureHeaders[idx];
                                 }
                                 if(ImGui::Selectable("Export")){
                                     ImGuiFileDialog::Instance()->OpenModal("exportTextureImageDialog", "Export Texture", "PNG Image (*.png){.png}", OPTIONS.mRootPath);
-                                    BinSelectedResource = &PreviewWidget::GetFurnitureModel()->mTexturesHeaders[idx];
+                                    BinSelectedResource = &PreviewWidget::GetFurnitureModel()->mTextureHeaders[idx];
                                 }
                                 ImGui::EndPopup();
                             }
                         }
 
                         if(deleteIdx != UINT16_MAX){
-                            PreviewWidget::GetFurnitureModel()->mTexturesHeaders.erase(deleteIdx);
+                            PreviewWidget::GetFurnitureModel()->mTextureHeaders.erase(deleteIdx);
                             for(auto [idx, sampler] : PreviewWidget::GetFurnitureModel()->mSamplers){
                                 if(PreviewWidget::GetFurnitureModel()->mSamplers[idx].TextureIndex == deleteIdx){
                                     PreviewWidget::GetFurnitureModel()->mSamplers[idx].TextureIndex = -1;
@@ -658,7 +706,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                                    }
 
                                 if(ImGui::BeginCombo("Texture", std::format("Texture {}", sampler->TextureIndex).c_str())){
-                                    for(auto [idx, texture] : PreviewWidget::GetFurnitureModel()->mTexturesHeaders){
+                                    for(auto [idx, texture] : PreviewWidget::GetFurnitureModel()->mTextureHeaders){
                                         if(ImGui::Selectable(std::format("Texture {}", idx).c_str())){
                                             sampler->TextureIndex = idx;
                                         }

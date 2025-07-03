@@ -157,7 +157,7 @@ namespace MDL {
 
         MDLHeader mHeader;
 
-        std::vector<TextureHeader> mTexturesHeaders;
+        std::vector<TextureHeader> mTextureHeaders;
 
         std::vector<Sampler> mSamplers;
         std::vector<Shape> mShapes;

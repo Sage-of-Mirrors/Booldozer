@@ -55,9 +55,9 @@ struct Vertex {
     glm::vec3 Normal;
     glm::vec3 Binormal;
     glm::vec3 Tangent;
-    glm::vec4 Color;
+    glm::vec4 Color { 1.0f, 1.0f, 1.0f, 1.0f };
     glm::vec2 Texcoord;
-    glm::vec2 Texcoord1;
+	glm::vec2 Texcoord1;
 };
 
 struct PrimitiveVertex {
@@ -66,6 +66,7 @@ struct PrimitiveVertex {
     int16_t Normal;
     int16_t Color;
     int16_t Texcoord;
+	int16_t Texcoord1;
 };
 
 struct Readable {

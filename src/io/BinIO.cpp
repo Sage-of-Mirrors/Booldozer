@@ -439,7 +439,7 @@ namespace BIN {
         \
         void main()\n\
         {\n\
-            vec4 baseColor = texture(texSampler, vec2(fragTexCoord.x, fragTexCoord.y));\n\
+            vec4 baseColor = texture(texSampler, vec2(fragTexCoord.x, fragTexCoord.y)) * fragColor;\n\
             if(selected == 1){\n\
                 outColor = baseColor * vec4(1.0, 1.0, 0.2, 1.0);\n\
             } else {\n\
@@ -573,6 +573,8 @@ namespace BIN {
                                         vtxData.Binormal = mNormals[stream->readUInt16()];
                                         vtxData.Tangent = mNormals[stream->readUInt16()];
                                     }
+                                } else if((GXAttribute)a == GXAttribute::Color0){
+                                    vtxData.Color = mColors[stream->readUInt16()];
                                 } else if((GXAttribute)a == GXAttribute::Tex0){ // this can be done cleaner, should make this all 13
                                     vtx.Texcoord = stream->readUInt16();
                                     vtxData.Texcoord = mTexCoords[vtx.Texcoord];
@@ -597,6 +599,7 @@ namespace BIN {
 
                                 vtx.Position = mPositions[vtxIdx.Position];
                                 vtx.Normal = mNormals[vtxIdx.Normal];
+                                if(HasAttribute<GXAttribute::Color0>(batch->VertexAttributes)) vtx.Color = mColors[vtxIdx.Color];
                                 vtx.Texcoord = mTexCoords[vtxIdx.Texcoord];
 
                                 triangulatedPrimitives.push_back(vtx);
@@ -611,14 +614,17 @@ namespace BIN {
 
                                 vtx1.Position = mPositions[primitiveVertices[v-2].Position];
                                 vtx1.Normal = mNormals[primitiveVertices[v-2].Normal];
+                                if(HasAttribute<GXAttribute::Color0>(batch->VertexAttributes)) vtx1.Color = mColors[primitiveVertices[v-2].Color];
                                 vtx1.Texcoord = mTexCoords[primitiveVertices[v-2].Texcoord];
 
                                 vtx2.Position = mPositions[primitiveVertices[(v % 2 != 0 ? v : v-1)].Position];
                                 vtx2.Normal = mNormals[primitiveVertices[(v % 2 != 0 ? v : v-1)].Normal];
+                                if(HasAttribute<GXAttribute::Color0>(batch->VertexAttributes)) vtx2.Color = mColors[primitiveVertices[(v % 2 != 0 ? v : v-1)].Color];
                                 vtx2.Texcoord = mTexCoords[primitiveVertices[(v % 2 != 0 ? v : v-1)].Texcoord];
 
                                 vtx3.Position = mPositions[primitiveVertices[(v % 2 != 0 ? v-1 : v)].Position];
                                 vtx3.Normal = mNormals[primitiveVertices[(v % 2 != 0 ? v-1 : v)].Normal];
+                                if(HasAttribute<GXAttribute::Color0>(batch->VertexAttributes)) vtx3.Color = mColors[primitiveVertices[(v % 2 != 0 ? v-1 : v)].Color];
                                 vtx3.Texcoord = mTexCoords[primitiveVertices[(v % 2 != 0 ? v-1 : v)].Texcoord];
 
                                 triangulatedPrimitives.push_back(vtx1);
@@ -634,6 +640,7 @@ namespace BIN {
 
                                 vtx.Position = mPositions[primitiveVertices[v].Position];
                                 vtx.Normal = mNormals[primitiveVertices[v].Normal];
+                                if(HasAttribute<GXAttribute::Color0>(batch->VertexAttributes)) vtx.Color = mColors[primitiveVertices[v].Color];
                                 vtx.Texcoord = mTexCoords[primitiveVertices[v].Texcoord];
 
                                 triangulatedPrimitives.push_back(vtx);
@@ -652,14 +659,17 @@ namespace BIN {
 
                                 vtx1.Position = mPositions[primitiveVertices[0].Position];
                                 vtx1.Normal = mNormals[primitiveVertices[0].Normal];
+                                if(HasAttribute<GXAttribute::Color0>(batch->VertexAttributes)) vtx1.Color = mColors[primitiveVertices[0].Color];
                                 vtx1.Texcoord = mTexCoords[primitiveVertices[0].Texcoord];
 
                                 vtx2.Position = mPositions[primitiveVertices[v-1].Position];
                                 vtx2.Normal = mNormals[primitiveVertices[v-1].Normal];
+                                if(HasAttribute<GXAttribute::Color0>(batch->VertexAttributes)) vtx2.Color = mColors[primitiveVertices[v-1].Color];
                                 vtx2.Texcoord = mTexCoords[primitiveVertices[v-1].Texcoord];
 
                                 vtx3.Position = mPositions[primitiveVertices[v].Position];
                                 vtx3.Normal = mNormals[primitiveVertices[v].Normal];
+                                if(HasAttribute<GXAttribute::Color0>(batch->VertexAttributes)) vtx3.Color = mColors[primitiveVertices[v].Color];
                                 vtx3.Texcoord = mTexCoords[primitiveVertices[v].Texcoord];
 
                                 triangulatedPrimitives.push_back(vtx1);
@@ -707,8 +717,8 @@ namespace BIN {
                     int16_t samplerIdx = material->SamplerIndices[j];
                     if(samplerIdx >= 0 && !mSamplers.contains(samplerIdx)){
                         Sampler* sampler = Read<Sampler>(mSamplers, stream, mHeader.SamplerOffset, samplerIdx, 0x14);
-                        if(sampler->TextureIndex >= 0 && !mTexturesHeaders.contains(sampler->TextureIndex)){
-                            TextureHeader* texture = Read<TextureHeader>(mTexturesHeaders, stream, mHeader.TextureOffset, sampler->TextureIndex, 0xC);
+                        if(sampler->TextureIndex >= 0 && !mTextureHeaders.contains(sampler->TextureIndex)){
+                            TextureHeader* texture = Read<TextureHeader>(mTextureHeaders, stream, mHeader.TextureOffset, sampler->TextureIndex, 0xC);
 
                             stream->seek(mHeader.TextureOffset + texture->ImageOffset);
                             texture->Load(stream);
@@ -732,22 +742,24 @@ namespace BIN {
     }
 
     void Model::Write(bStream::CStream* stream){
-        bStream::CMemoryStream TextureStream((mTexturesHeaders.rbegin()->first * 0x0C), bStream::Endianess::Big, bStream::OpenMode::Out);
-        bStream::CMemoryStream SamplerStream((mSamplers.rbegin()->first * 0x14), bStream::Endianess::Big, bStream::OpenMode::Out);
-        bStream::CMemoryStream MaterialStream((mMaterials.rbegin()->first * 0x28), bStream::Endianess::Big, bStream::OpenMode::Out);
-        bStream::CMemoryStream BatchStream((mBatches.rbegin()->first * 0x18), bStream::Endianess::Big, bStream::OpenMode::Out); // this doesnt account for primitive size
-        bStream::CMemoryStream NodeStream((mGraphNodes.rbegin()->first * 0x8C) + (mGraphNodes.rbegin()->first * 0x4), bStream::Endianess::Big, bStream::OpenMode::Out);
+        // This will write one blank resource if there are none of that resource. Really, this should never happen, should add basic missing texture for imports if model has no textures.
+        bStream::CMemoryStream TextureStream(mTextureHeaders.size() > 0 ? (mTextureHeaders.rbegin()->first * 0x0C) : 0x0C, bStream::Endianess::Big, bStream::OpenMode::Out);
+        bStream::CMemoryStream SamplerStream(mSamplers.size() > 0 ? (mSamplers.rbegin()->first * 0x14) : 0x14, bStream::Endianess::Big, bStream::OpenMode::Out);
+        bStream::CMemoryStream MaterialStream(mMaterials.size() > 0 ? (mMaterials.rbegin()->first * 0x28) : 0x28, bStream::Endianess::Big, bStream::OpenMode::Out);
+        bStream::CMemoryStream BatchStream(mBatches.size() > 0 ? (mBatches.rbegin()->first * 0x18) : 0x18, bStream::Endianess::Big, bStream::OpenMode::Out); // this doesnt account for primitive size
+        bStream::CMemoryStream NodeStream(mGraphNodes.size() > 0 ? (mGraphNodes.rbegin()->first * 0x8C) + (mGraphNodes.rbegin()->first * 0x4) : 0x8C, bStream::Endianess::Big, bStream::OpenMode::Out);
 
         std::vector<glm::vec3> newPositions;
         std::vector<glm::vec3> newNormals;
+        std::vector<glm::vec4> newColors;
         std::vector<glm::vec2> newTexCoords;
 
-        for(auto [idx, texture] : mTexturesHeaders){
+        for(auto [idx, texture] : mTextureHeaders){
             texture.Write(&TextureStream);
         }
         TextureStream.alignTo(32);
 
-        for(auto [idx, texture] : mTexturesHeaders){
+        for(auto [idx, texture] : mTextureHeaders){
             TextureStream.writeOffsetAt32((0xC * idx) + 8);
             texture.Save(&TextureStream);
             TextureStream.alignTo(32);
@@ -812,6 +824,15 @@ namespace BIN {
                             } else {
                                 BatchStream.writeUInt16(pos - newNormals.begin());
                             }
+                        }
+                    }
+                    if(HasAttribute<GXAttribute::Color0>(batch.VertexAttributes)){
+                        std::vector<glm::vec4>::iterator pos = std::find(newColors.begin(), newColors.end(), vertex.Color);
+                        if(pos == newColors.end()){
+                            BatchStream.writeUInt16(newColors.size());
+                            newColors.push_back(vertex.Color);
+                        } else {
+                            BatchStream.writeUInt16(pos - newColors.begin());
                         }
                     }
                     if(HasAttribute<GXAttribute::Tex0>(batch.VertexAttributes)){
@@ -883,6 +904,17 @@ namespace BIN {
         }
         stream->alignTo(32);
 
+        if(newColors.size() > 0){
+            stream->writeOffsetAt32(28);
+            for(int i = 0; i < newColors.size(); i++){
+                stream->writeUInt8(newColors[i].x*0xFF);
+                stream->writeUInt8(newColors[i].y*0xFF);
+                stream->writeUInt8(newColors[i].z*0xFF);
+                stream->writeUInt8(newColors[i].w*0xFF);
+            }
+            stream->alignTo(32);
+        }
+
         stream->writeOffsetAt32(36);
         for(int i = 0; i < newTexCoords.size(); i++){
             stream->writeFloat(newTexCoords[i].x);
@@ -924,6 +956,7 @@ namespace BIN {
         uint32_t vertexCount = 0;
         uint32_t texcoordCount = 0;
         uint32_t normalCount = 0;
+        uint32_t colorCount = 0;
         {
             uint32_t chunkOffsets[21];
             stream->seek(12);
@@ -946,6 +979,12 @@ namespace BIN {
                 if(chunkOffsets[o] != 0) break;
             }
 
+            for(std::size_t o = 5; o < 21; o++)
+            {
+                colorCount = (uint32_t)((chunkOffsets[o] - chunkOffsets[4]) / 4);
+                if(chunkOffsets[o] != 0) break;
+            }
+
             for(std::size_t o = 7; o < 21; o++)
             {
                 texcoordCount = (uint32_t)((chunkOffsets[o] - chunkOffsets[6]) / 8);
@@ -961,6 +1000,13 @@ namespace BIN {
         stream->seek(mHeader.NormalOffset);
         for(int i = 0; i < normalCount; i++){
             mNormals.push_back({stream->readFloat(), stream->readFloat(), stream->readFloat()});
+        }
+
+        if(mHeader.Color0Offset != 0 && colorCount != 0){
+            stream->seek(mHeader.Color0Offset);
+            for(int i = 0; i < colorCount; i++){
+                mColors.push_back({static_cast<float>(stream->readUInt8()) / 0xFF, static_cast<float>(stream->readUInt8()) / 0xFF, static_cast<float>(stream->readUInt8()) / 0xFF, static_cast<float>(stream->readUInt8()) / 0xFF});
+            }
         }
 
         stream->seek(mHeader.TexCoord0Offset);
@@ -1014,7 +1060,7 @@ namespace BIN {
             if(element.MaterialIndex >= 0) samplerIdx = mMaterials[element.MaterialIndex].SamplerIndices[0];
             if(samplerIdx != -1 && mSamplers[samplerIdx].TextureIndex != -1){
                 glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, mTexturesHeaders[mSamplers[samplerIdx].TextureIndex].TextureID);
+                glBindTexture(GL_TEXTURE_2D, mTextureHeaders[mSamplers[samplerIdx].TextureIndex].TextureID);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (mSamplers[samplerIdx].WrapU == 2 ? GL_MIRRORED_REPEAT : (mSamplers[samplerIdx].WrapU == 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE)));
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (mSamplers[samplerIdx].WrapV == 2 ? GL_MIRRORED_REPEAT : (mSamplers[samplerIdx].WrapV == 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE)));
             } else {
@@ -1084,7 +1130,7 @@ namespace BIN {
         Model mdl;
 
         ufbx_load_opts opts = {};
-        opts.target_axes = ufbx_axes_left_handed_y_up;
+        opts.target_axes = ufbx_axes_right_handed_y_up;
         opts.target_unit_meters = 1.0f;
         ufbx_scene* scene = ufbx_load_file(path.c_str(), &opts, nullptr);
 
@@ -1093,27 +1139,27 @@ namespace BIN {
         for(ufbx_texture* texture : scene->textures){
             if(texture->content.data == nullptr && std::string(texture->absolute_filename.data) == "") continue;
             mdl.mSamplers[texture->typed_id] = {};
-            mdl.mTexturesHeaders[texture->typed_id] = {};
+            mdl.mTextureHeaders[texture->typed_id] = {};
 
             mdl.mSamplers[texture->typed_id].TextureIndex = texture->typed_id;
             mdl.mSamplers[texture->typed_id].WrapU = 1;//texture->wrap_u;
             mdl.mSamplers[texture->typed_id].WrapV = 1;//texture->wrap_v;
-            mdl.mTexturesHeaders[texture->typed_id].Format = 0x0E;
+            mdl.mTextureHeaders[texture->typed_id].Format = 0x0E;
             
             // if the texture is embedded
             if(texture->content.data != nullptr){
                 int x, y, c;
                 unsigned char* data = stbi_load_from_memory((const unsigned char*)texture->content.data, texture->content.size, &x, &y, &c, 4);
-                mdl.mTexturesHeaders[texture->typed_id].SetImage(data, x*y*4, x, y);
-                mdl.mTexturesHeaders[texture->typed_id].Width = x;
-                mdl.mTexturesHeaders[texture->typed_id].Height = y;
+                mdl.mTextureHeaders[texture->typed_id].SetImage(data, x*y*4, x, y);
+                mdl.mTextureHeaders[texture->typed_id].Width = x;
+                mdl.mTextureHeaders[texture->typed_id].Height = y;
                 stbi_image_free(data);
             } else {
                 int x, y, c;
                 unsigned char* data = stbi_load(texture->absolute_filename.data, &x, &y, &c, 4);
-                mdl.mTexturesHeaders[texture->typed_id].SetImage(data, x*y*4, x, y);
-                mdl.mTexturesHeaders[texture->typed_id].Width = x;
-                mdl.mTexturesHeaders[texture->typed_id].Height = y;
+                mdl.mTextureHeaders[texture->typed_id].SetImage(data, x*y*4, x, y);
+                mdl.mTextureHeaders[texture->typed_id].Width = x;
+                mdl.mTextureHeaders[texture->typed_id].Height = y;
                 stbi_image_free(data);
             }
         }
@@ -1132,11 +1178,12 @@ namespace BIN {
         std::map<std::pair<uint32_t, uint32_t>, uint16_t> meshIdxRemap;
         uint16_t batchIdx = 0;
         for(ufbx_mesh* mesh : scene->meshes){
-            std::cout << "Adding Mesh " << mesh->name.data << std::endl;
             for(ufbx_mesh_part part : mesh->material_parts){
                 meshIdxRemap[{mesh->typed_id, part.index}] = batchIdx;
                 mdl.mBatches[batchIdx] = {};
-                std::cout << "Batch IDX " << batchIdx << " remap[" << mesh->typed_id << ", " << part.index << "]" << std::endl;
+
+                if(mesh->vertex_color.exists) mdl.mBatches[batchIdx].VertexAttributes |= (1 << (int)GXAttribute::Color0);
+                if(mesh->vertex_tangent.exists && mesh->vertex_bitangent.exists) mdl.mBatches[batchIdx].NBTFlag = 1;
 
                 std::vector<Vertex> vertices;
                 std::vector<uint32_t> triIndices;
@@ -1156,6 +1203,11 @@ namespace BIN {
                         Vertex v;
                         v.Position = { mesh->vertex_position[index].x*100, mesh->vertex_position[index].y*100, mesh->vertex_position[index].z*100 };
                         v.Normal = { mesh->vertex_normal[index].x, mesh->vertex_normal[index].y, mesh->vertex_normal[index].z };
+                        if(mesh->vertex_color.exists) v.Color = { mesh->vertex_color[index].x, mesh->vertex_color[index].y, mesh->vertex_color[index].z, mesh->vertex_color[index].w };
+                        if(mesh->vertex_tangent.exists && mesh->vertex_bitangent.exists){
+                            v.Binormal = { mesh->vertex_bitangent[index].x, mesh->vertex_bitangent[index].y, mesh->vertex_bitangent[index].z };
+                            v.Tangent = { mesh->vertex_tangent[index].x, mesh->vertex_tangent[index].y, mesh->vertex_tangent[index].z };
+                        }
                         v.Texcoord = { mesh->vertex_uv[index].x, mesh->vertex_uv[index].y };
                         vertices.push_back(v);
                     }
@@ -1185,7 +1237,6 @@ namespace BIN {
                     }
                     mdl.mBatches[batchIdx].Primitives.push_back(primitive);
                 }
-                std::cout << "Primitives Size " << mdl.mBatches[batchIdx].Primitives.size() << std::endl;
                 batchIdx++;
             }
         }
@@ -1193,7 +1244,6 @@ namespace BIN {
         for(ufbx_node* node : scene->nodes) mdl.mGraphNodes[node->typed_id] = {}; // Initialize ndoes
 
         for(ufbx_node* node : scene->nodes){
-            std::cout << "Adding node " << node->typed_id << std::endl;
             mdl.mGraphNodes[node->typed_id].Index = node->typed_id;
             mdl.mGraphNodes[node->typed_id].Position = { node->local_transform.translation.x, node->local_transform.translation.y, node->local_transform.translation.z };
             mdl.mGraphNodes[node->typed_id].Rotation = { node->local_transform.rotation.x, node->local_transform.rotation.y, node->local_transform.rotation.z };
@@ -1306,8 +1356,8 @@ namespace BIN {
                 tex.SetImage(img, w*h*4, w, h);
                 stbi_image_free(img);
                 
-                sampler.TextureIndex = mdl.mTexturesHeaders.size();
-                mdl.mTexturesHeaders[mdl.mTexturesHeaders.size()] = tex;
+                sampler.TextureIndex = mdl.mTextureHeaders.size();
+                mdl.mTextureHeaders[mdl.mTextureHeaders.size()] = tex;
                 material.SamplerIndices[0] = mdl.mSamplers.size();
                 mdl.mSamplers[mdl.mSamplers.size()] = sampler;
 
@@ -1330,7 +1380,7 @@ namespace BIN {
             shape.Destroy();
         }
 
-        for(auto [idx, texture] : mTexturesHeaders){
+        for(auto [idx, texture] : mTextureHeaders){
             texture.Destroy();
         }
     }
