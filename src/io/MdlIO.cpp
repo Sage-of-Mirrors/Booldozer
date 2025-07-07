@@ -162,18 +162,31 @@ namespace MDL {
             vec4 HighlightColor;\n\
         };\n\
         uniform mat4 transform;\n\
+        uniform mat4 joints[255];\n\
         \
         layout(location = 0) in vec3 inPosition;\n\
         layout(location = 1) in vec3 inNormal;\n\
         layout(location = 2) in vec4 inColor;\n\
         layout(location = 3) in vec2 inTexCoord;\n\
+        layout(location = 4) in ivec4 inJoints;\n\
+        layout(location = 5) in vec4 inWeights;\n\
         \
         layout(location = 0) out vec2 fragTexCoord;\n\
         layout(location = 1) out vec4 fragColor;\n\
         \
         void main()\n\
         {\
-            gl_Position = Proj * View * transform * vec4(inPosition.z, inPosition.y, inPosition.x, 1.0);\n\
+            vec4 pos = vec4(0.0);\n\
+            for(int i = 0; i < 4; i++){\n\
+                if(inJoints[i] == -1){\n\
+                    break;\n\
+                }\n\
+                pos += (joints[inJoints[i]] * vec4(inPosition.z, inPosition.y, inPosition.x, 1.0)) * inWeights[i];\n\
+            }\n\
+            if(inJoints[0] == -1){\n\
+                pos = vec4(inPosition.z, inPosition.y, inPosition.x, 1.0);\n\
+            }\n\
+            gl_Position = Proj * View * transform * pos;\n\
             fragTexCoord = inTexCoord;\n\
             fragColor = inColor;\n\
         }\
@@ -214,15 +227,15 @@ namespace MDL {
         char glErrorLogBuffer[4096];
         GLuint vs = glCreateShader(GL_VERTEX_SHADER);
         GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(vs, 1, &default_mdl_vtx_shader_source, NULL);
-        glShaderSource(fs, 1, &default_mdl_frg_shader_source, NULL);
+        glShaderSource(vs, 1, &default_mdl_vtx_shader_source, nullptr);
+        glShaderSource(fs, 1, &default_mdl_frg_shader_source, nullptr);
         glCompileShader(vs);
         GLint status;
         glGetShaderiv(vs, GL_COMPILE_STATUS, &status);
         if(status == GL_FALSE){
             GLint infoLogLength;
             glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &infoLogLength);
-            glGetShaderInfoLog(vs, infoLogLength, NULL, glErrorLogBuffer);
+            glGetShaderInfoLog(vs, infoLogLength, nullptr, glErrorLogBuffer);
             printf("[MDL Loader]: Compile failure in mdl vertex shader:\n%s\n", glErrorLogBuffer);
         }
         glCompileShader(fs);
@@ -230,7 +243,7 @@ namespace MDL {
         if(status == GL_FALSE){
             GLint infoLogLength;
             glGetShaderiv(fs, GL_INFO_LOG_LENGTH, &infoLogLength);
-            glGetShaderInfoLog(fs, infoLogLength, NULL, glErrorLogBuffer);
+            glGetShaderInfoLog(fs, infoLogLength, nullptr, glErrorLogBuffer);
             printf("[MDL Loader]: Compile failure in mdl fragment shader:\n%s\n", glErrorLogBuffer);
         }
         mProgram = glCreateProgram();
@@ -241,7 +254,7 @@ namespace MDL {
         if(GL_FALSE == status) {
             GLint logLen;
             glGetProgramiv(mProgram, GL_INFO_LOG_LENGTH, &logLen);
-            glGetProgramInfoLog(mProgram, logLen, NULL, glErrorLogBuffer);
+            glGetProgramInfoLog(mProgram, logLen, nullptr, glErrorLogBuffer);
             printf("[MDL Loader]: Shader Program Linking Error:\n%s\n", glErrorLogBuffer);
         }
         glDetachShader(mProgram, vs);
@@ -269,6 +282,8 @@ namespace MDL {
     void Model::Load(bStream::CStream* stream){
         stream->readBytesTo((uint8_t*)&mHeader, sizeof(mHeader));
 
+        mSkeletonRenderer.Init();
+
         std::cout << "[MDL Loader]: Reading Model Start" << std::endl;
 
         mTextureHeaders = ReadSection<TextureHeader>(stream, mHeader.TextureOffsetArray, mHeader.TextureCount);
@@ -281,7 +296,7 @@ namespace MDL {
         mGraphNodes = ReadSection<SceneGraphNode>(stream, mHeader.SceneGraphOffset, mHeader.SceneGraphNodeCount);
 
         stream->seek(LGenUtility::SwapEndian<uint32_t>(mHeader.PositionOffset));
-        for (size_t i = 0; i < LGenUtility::SwapEndian<uint16_t>(mHeader.PositionCount); i++){
+        for (std::size_t i = 0; i < LGenUtility::SwapEndian<uint16_t>(mHeader.PositionCount); i++){
             mPositions.push_back({stream->readFloat(), stream->readFloat(), stream->readFloat()});
 
             bbMin.z = (mPositions.back().x < bbMin.x ? mPositions.back().x : bbMin.x);
@@ -294,34 +309,36 @@ namespace MDL {
         }
 
         stream->seek(LGenUtility::SwapEndian<uint32_t>(mHeader.NormalsOffset));
-        for (size_t i = 0; i < LGenUtility::SwapEndian<uint16_t>(mHeader.NormalCount); i++){
+        for (std::size_t i = 0; i < LGenUtility::SwapEndian<uint16_t>(mHeader.NormalCount); i++){
             mNormals.push_back({stream->readFloat(), stream->readFloat(), stream->readFloat()});
         }
 
         stream->seek(LGenUtility::SwapEndian<uint32_t>(mHeader.TexCoordsOffset));
-        for (size_t i = 0; i < LGenUtility::SwapEndian<uint16_t>(mHeader.TexCoordCount); i++){
+        for (std::size_t i = 0; i < LGenUtility::SwapEndian<uint16_t>(mHeader.TexCoordCount); i++){
             mTexCoords.push_back({stream->readFloat(), stream->readFloat()});
         }
 
         stream->seek(LGenUtility::SwapEndian<uint32_t>(mHeader.ColorsOffset));
-        for (size_t i = 0; i < LGenUtility::SwapEndian<uint16_t>(mHeader.ColorCount); i++){
+        for (std::size_t i = 0; i < LGenUtility::SwapEndian<uint16_t>(mHeader.ColorCount); i++){
             mColors.push_back({stream->readUInt8() / 255.0f, stream->readUInt8() / 255.0f, stream->readUInt8() / 255.0f, stream->readUInt8() / 255.0f});
         }
 
-        mMatrixTable.reserve(LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount) + LGenUtility::SwapEndian<uint16_t>(mHeader.WeightCount));
+        mMatrixTable.resize(LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount) + LGenUtility::SwapEndian<uint16_t>(mHeader.WeightCount));
 
         stream->seek(LGenUtility::SwapEndian<uint32_t>(mHeader.InverseMatrixOffset));
-        for (size_t i = 0; i < LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount); i++){
-            mMatrixTable.push_back(
-                {
+        for (std::size_t i = 0; i < LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount); i++){
+            mMatrixTable[i] = {
                     stream->readFloat(), stream->readFloat(), stream->readFloat(), stream->readFloat(),
                     stream->readFloat(), stream->readFloat(), stream->readFloat(), stream->readFloat(),
                     stream->readFloat(), stream->readFloat(), stream->readFloat(), stream->readFloat(),
                     0,                                     0,                   0,                   1
-                }
-            );
+            };
             mMatrixTable[i] = glm::inverseTranspose(mMatrixTable[i]);
+            mSkeleton.push_back({ nullptr, mMatrixTable[i] });
         }
+
+        BuildScenegraphSkeleton(0, -1);
+        ConvertBonesToLocalSpace();
 
         // This whole section of the code is broken I think, but it isn't needed unless skinning gets added
 
@@ -331,23 +348,24 @@ namespace MDL {
             stream->seek(LGenUtility::SwapEndian<uint32_t>(mHeader.WeightCountTableOffset));
 
             std::vector<uint8_t> weightCounters;
-            for (size_t i = 0; i < LGenUtility::SwapEndian<uint16_t>(mHeader.WeightCount); i++){
+            mWeights.resize(LGenUtility::SwapEndian<uint16_t>(mHeader.WeightCount));
+            for (std::size_t i = 0; i < LGenUtility::SwapEndian<uint16_t>(mHeader.WeightCount); i++){
                 weightCounters.push_back(stream->readUInt8());
-                mWeights.push_back(Weight());
             }
 
             stream->seek(LGenUtility::SwapEndian<uint32_t>(mHeader.WeightOffset));
-            for (size_t i = 0; i < weightCounters.size(); i++){
-                mWeights[i].Weights.reserve(weightCounters[i]);
-                for (size_t j = 0; j < weightCounters[i]; j++){
-                    mWeights[i].Weights.push_back(stream->readFloat());
+            for (std::size_t i = 0; i < weightCounters.size(); i++){
+                mWeights[i].Weights.resize(weightCounters[i]);
+                for (std::size_t j = 0; j < weightCounters[i]; j++){
+                    mWeights[i].Weights[j] = stream->readFloat();
                 }
             }
 
             stream->seek(LGenUtility::SwapEndian<uint32_t>(mHeader.JointIndexOffset));
-            for (size_t i = 0; i < weightCounters.size(); i++){
-                for (size_t j = 0; j < weightCounters[i]; j++){
-                    mWeights[i].JointIndices.push_back(stream->readUInt16());
+            for (std::size_t i = 0; i < weightCounters.size(); i++){
+                mWeights[i].JointIndices.resize(weightCounters[i]);
+                for (std::size_t j = 0; j < weightCounters[i]; j++){
+                    mWeights[i].JointIndices[j] = stream->readUInt16();
                 }
             }
         }
@@ -357,24 +375,26 @@ namespace MDL {
         for (DrawElement drawElement : mDrawElements){
             uint16_t matIndices[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-            std::vector<Vertex> triangulatedPrimitives;
-
-            for (size_t i = mShapes[drawElement.ShapeIndex].PacketBeginIndex; i < mShapes[drawElement.ShapeIndex].PacketBeginIndex + mShapes[drawElement.ShapeIndex].PacketCount; i++){
+            std::vector<Vertex> primitives;
+            
+            for (std::size_t i = mShapes[drawElement.ShapeIndex].PacketBeginIndex; i < mShapes[drawElement.ShapeIndex].PacketBeginIndex + mShapes[drawElement.ShapeIndex].PacketCount; i++){
                 //Read Packet
                 Packet packet = mPackets[i];
-
-
-                for (size_t m = 0; m < packet.MatrixCount; m++){
+                
+                
+                for (std::size_t m = 0; m < packet.MatrixCount; m++){
                     if(packet.MatrixIndices[m] == UINT16_MAX) continue;
                     matIndices[m] = packet.MatrixIndices[m];
                 }
 
+                std::vector<PrimitiveVertex> triangulated;
+                
                 stream->seek(packet.DataOffset);
                 while(stream->tell() < packet.DataOffset + packet.DataSize){
                     uint8_t opcode = stream->readUInt8();
-
+                    
                     if(opcode == 0) continue;
-
+                    
                     std::vector<PrimitiveVertex> primitiveVertices;
 
                     uint16_t vertexCount = stream->readUInt16();
@@ -411,130 +431,76 @@ namespace MDL {
                         primitiveVertices.push_back(vtx);
                     }
 
+                    
                     switch (opcode){
-                    case GXPrimitiveType::Triangles: {
-                            int8_t prevMtx = -1;
+                        case GXPrimitiveType::Triangles: {
                             for(PrimitiveVertex vtxIdx : primitiveVertices){
-                                Vertex vtx = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}};
-
-                                int8_t mtxIdx = vtxIdx.Matrix == -1 ? prevMtx : vtxIdx.Matrix;
-
-                                vtx.Position = glm::vec3(mMatrixTable[mtxIdx] * glm::vec4(mPositions[vtxIdx.Position], 1.0f));
-                                if(mHeader.NormalCount != 0) vtx.Normal = mNormals[vtxIdx.Normal];
-                                if(mHeader.TexCoordCount != 0) vtx.Texcoord = mTexCoords[vtxIdx.Texcoord];
-                                if(mHeader.ColorCount != 0) vtx.Color = mColors[vtxIdx.Color];
-
-                                triangulatedPrimitives.push_back(vtx);
+                                triangulated.push_back(vtxIdx);
                             }
                         }
                         break;
-                    case GXPrimitiveType::TriangleStrip: {
-                            for (size_t v = 2; v < primitiveVertices.size(); v++){
-                                Vertex vtx1 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}},
-                                       vtx2 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}},
-                                       vtx3 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}};
-
-                                glm::mat4 vtx1Mat(1.0f), vtx2Mat(1.0f), vtx3Mat(1.0f);
-                                if(primitiveVertices[v-2].Matrix != -1 && primitiveVertices[v-2].Matrix < LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount)){
-                                    vtx1Mat = mMatrixTable[primitiveVertices[v-2].Matrix];
-                                }
-                                if(primitiveVertices[(v % 2 != 0 ? v : v-1)].Matrix != -1 && primitiveVertices[(v % 2 != 0 ? v : v-1)].Matrix < LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount)){
-                                    vtx2Mat = mMatrixTable[primitiveVertices[(v % 2 != 0 ? v : v-1)].Matrix];
-                                }
-                                if(primitiveVertices[(v % 2 != 0 ? v-1 : v)].Matrix != -1 && primitiveVertices[(v % 2 != 0 ? v-1 : v)].Matrix < LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount)){
-                                    vtx3Mat = mMatrixTable[primitiveVertices[(v % 2 != 0 ? v-1 : v)].Matrix];
-                                }
-
-                                vtx1.Position = glm::vec3(vtx1Mat * glm::vec4(mPositions[primitiveVertices[v-2].Position], 1.0f));
-                                if(mHeader.NormalCount != 0) vtx1.Normal = mNormals[primitiveVertices[v-2].Normal];
-                                if(mHeader.TexCoordCount != 0) vtx1.Texcoord = mTexCoords[primitiveVertices[v-2].Texcoord];
-                                if(mHeader.ColorCount != 0) vtx1.Color = mColors[primitiveVertices[v-2].Color];
-
-                                vtx2.Position = glm::vec3(vtx2Mat * glm::vec4(mPositions[primitiveVertices[(v % 2 != 0 ? v : v-1)].Position], 1.0f));
-                                if(mHeader.NormalCount != 0) vtx2.Normal = mNormals[primitiveVertices[(v % 2 != 0 ? v : v-1)].Normal];
-                                if(mHeader.TexCoordCount != 0) vtx2.Texcoord = mTexCoords[primitiveVertices[(v % 2 != 0 ? v : v-1)].Texcoord];
-                                if(mHeader.ColorCount != 0) vtx2.Color = mColors[primitiveVertices[(v % 2 != 0 ? v : v-1)].Color];
-
-
-                                vtx3.Position = glm::vec3(vtx3Mat * glm::vec4(mPositions[primitiveVertices[(v % 2 != 0 ? v-1 : v)].Position], 1.0f));
-                                if(mHeader.NormalCount != 0) vtx3.Normal = mNormals[primitiveVertices[(v % 2 != 0 ? v-1 : v)].Normal];
-                                if(mHeader.TexCoordCount != 0) vtx3.Texcoord = mTexCoords[primitiveVertices[(v % 2 != 0 ? v-1 : v)].Texcoord];
-                                if(mHeader.ColorCount != 0) vtx3.Color = mColors[primitiveVertices[(v % 2 != 0 ? v-1 : v)].Color];
-
-                                triangulatedPrimitives.push_back(vtx1);
-                                triangulatedPrimitives.push_back(vtx2);
-                                triangulatedPrimitives.push_back(vtx3);
-
+                        case GXPrimitiveType::TriangleStrip: {
+                            for (std::size_t v = 2; v < primitiveVertices.size(); v++){
+                                triangulated.push_back(primitiveVertices[v - 2]);
+                                triangulated.push_back(primitiveVertices[(v % 2 != 0 ? v : v - 1)]);
+                                triangulated.push_back(primitiveVertices[(v % 2 != 0 ? v - 1 : v)]);
                             }
                         }
                         break;
-                    case GXPrimitiveType::TriangleFan:{
-                            for(size_t v = 0; v < 3; v++){
-                                Vertex vtx = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}};
-
-                                vtx.Position = glm::vec3(mMatrixTable[primitiveVertices[v].Matrix] * glm::vec4(mPositions[primitiveVertices[v].Position], 1.0f));
-                                if(mHeader.NormalCount != 0) vtx.Normal = mNormals[primitiveVertices[v].Normal];
-                                if(mHeader.TexCoordCount != 0) vtx.Texcoord = mTexCoords[primitiveVertices[v].Texcoord];
-                                if(mHeader.ColorCount != 0) vtx.Color = mColors[primitiveVertices[v].Color];
-
-                                triangulatedPrimitives.push_back(vtx);
+                        case GXPrimitiveType::TriangleFan:{
+                            for(std::size_t v = 0; v < 3; v++){
+                                triangulated.push_back(primitiveVertices[v]);
                             }
-
-                            for (size_t v = 2; v < primitiveVertices.size(); v++){
-                                Vertex vtx1 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}},
-                                       vtx2 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}},
-                                       vtx3 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}};
-
+                            
+                            for (std::size_t v = 2; v < primitiveVertices.size(); v++){
                                 if(primitiveVertices[v].Position == primitiveVertices[v-1].Position ||
-                                   primitiveVertices[v-1].Position == primitiveVertices[0].Position ||
-                                   primitiveVertices[v].Position == primitiveVertices[0].Position){
-                                    continue;
-                                }
-
-                                glm::mat4 vtx1Mat(1.0f), vtx2Mat(1.0f), vtx3Mat(1.0f);
-                                if(primitiveVertices[0].Matrix != -1 && primitiveVertices[0].Matrix < LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount)){
-                                    vtx1Mat = mMatrixTable[primitiveVertices[0].Matrix];
-                                }
-                                if(primitiveVertices[v-1].Matrix != -1 && primitiveVertices[v-1].Matrix < LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount)){
-                                    vtx2Mat = mMatrixTable[primitiveVertices[v-1].Matrix];
-                                }
-                                if(primitiveVertices[v].Matrix != -1 && primitiveVertices[v].Matrix < LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount)){
-                                    vtx3Mat = mMatrixTable[primitiveVertices[v].Matrix];
-                                }
-
-                                vtx1.Position = glm::vec3(vtx1Mat * glm::vec4(mPositions[primitiveVertices[0].Position], 1.0f));
-                                if(mHeader.NormalCount != 0) vtx1.Normal = mNormals[primitiveVertices[0].Normal];
-                                if(mHeader.TexCoordCount != 0) vtx1.Texcoord = mTexCoords[primitiveVertices[0].Texcoord];
-                                if(mHeader.ColorCount != 0) vtx1.Color = mColors[primitiveVertices[0].Color];
-
-                                vtx2.Position = glm::vec3(vtx2Mat * glm::vec4(mPositions[primitiveVertices[v-1].Position], 1.0f));
-                                if(mHeader.NormalCount != 0) vtx2.Normal = mNormals[primitiveVertices[v-1].Normal];
-                                if(mHeader.TexCoordCount != 0) vtx2.Texcoord = mTexCoords[primitiveVertices[v-1].Texcoord];
-                                if(mHeader.ColorCount != 0) vtx2.Color = mColors[primitiveVertices[v-1].Color];
-
-
-                                vtx3.Position = glm::vec3(vtx3Mat * glm::vec4(mPositions[primitiveVertices[v].Position], 1.0f));
-                                if(mHeader.NormalCount != 0) vtx3.Normal = mNormals[primitiveVertices[v].Normal];
-                                if(mHeader.TexCoordCount != 0) vtx3.Texcoord = mTexCoords[primitiveVertices[v].Texcoord];
-                                if(mHeader.ColorCount != 0) vtx3.Color = mColors[primitiveVertices[v].Color];
-
-                                triangulatedPrimitives.push_back(vtx1);
-                                triangulatedPrimitives.push_back(vtx2);
-                                triangulatedPrimitives.push_back(vtx3);
-
+                                    primitiveVertices[v-1].Position == primitiveVertices[0].Position ||
+                                    primitiveVertices[v].Position == primitiveVertices[0].Position){
+                                        continue;
+                                    }
+                                
+                                triangulated.push_back(primitiveVertices[0]);
+                                triangulated.push_back(primitiveVertices[v-1]);
+                                triangulated.push_back(primitiveVertices[v]);
+                                
                             }
                         }
                         break;
-                    default:
+                        default:
                         std::cout << "[MDL Loader]: Unimplemented primitive " << std::format("{0}", opcode) << std::endl;
                         break;
                     }
                 }
+                
+                for(PrimitiveVertex vtxIndices : triangulated){
+                    Vertex vtx = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {-1, -1, -1, -1}, {0, 0, 0, 0}, {0,0}, {0,0}};
 
+                    if(vtxIndices.Matrix >= LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount)){
+                        uint16_t weightIdx = vtxIndices.Matrix - LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount);
+                        Weight& weight = mWeights[weightIdx];
+                        for(int i = 0; i < 4; i++){
+                            if(i >= weight.JointIndices.size()) break;
+                            vtx.BoneIndices[i] = weight.JointIndices[i];
+                            vtx.Weights[i] = weight.Weights[i];
+                        }
+                        vtx.Position = mPositions[vtxIndices.Position], 1.0f;
+                    } else if(vtxIndices.Matrix > -1 && vtxIndices.Matrix < LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount)) {
+                        glm::mat4 mtx = mMatrixTable[vtxIndices.Matrix];
+                        vtx.Position = glm::vec3(mtx * glm::vec4(mPositions[vtxIndices.Position], 1.0f));
+                    }
+                    
+                    if(mHeader.NormalCount != 0) vtx.Normal = mNormals[vtxIndices.Normal];
+                    if(mHeader.TexCoordCount != 0) vtx.Texcoord = mTexCoords[vtxIndices.Texcoord];
+                    if(mHeader.ColorCount != 0) vtx.Color = mColors[vtxIndices.Color];
+                    
+                    primitives.push_back(vtx);
+                }
+                
             }
+            
             glGenVertexArrays(1, &mShapes[drawElement.ShapeIndex].Vao);
             glBindVertexArray(mShapes[drawElement.ShapeIndex].Vao);
-
+                
             glGenBuffers(1, &mShapes[drawElement.ShapeIndex].Vbo);
             glBindBuffer(GL_ARRAY_BUFFER, mShapes[drawElement.ShapeIndex].Vbo);
 
@@ -549,22 +515,55 @@ namespace MDL {
 
             glEnableVertexAttribArray(3);
             glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Texcoord));
+            
+            glEnableVertexAttribArray(4);
+            glVertexAttribIPointer(4, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, BoneIndices));
 
-            glBufferData(GL_ARRAY_BUFFER, triangulatedPrimitives.size() * sizeof(Vertex), triangulatedPrimitives.data(), GL_STATIC_DRAW);
+            glEnableVertexAttribArray(5);
+            glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Weights));
+
+            glBufferData(GL_ARRAY_BUFFER, primitives.size() * sizeof(Vertex), primitives.data(), GL_STATIC_DRAW);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
 
-            mShapes[drawElement.ShapeIndex].VertexCount = triangulatedPrimitives.size();
+            mShapes[drawElement.ShapeIndex].VertexCount = primitives.size();
 
         }
-
     }
 
+    void Model::ConvertBonesToLocalSpace(){
+        for(auto bone : mSkeleton){
+            if(bone.Parent != nullptr){
+                bone.Transform *= glm::inverse(bone.Parent->GetTransform());
+            }
+        }
+    }
+
+    void Model::BuildScenegraphSkeleton(uint32_t index, uint32_t parentIndex){
+        auto node = mGraphNodes[index];
+        
+        if(parentIndex != -1){
+            mSkeleton[index].Parent = &mSkeleton[parentIndex];
+        }
+        
+        if(node.ChildIndexShift > 0){
+            BuildScenegraphSkeleton(index + node.ChildIndexShift, index);
+        }
+        
+        if(node.SiblingIndexShift > 0){
+            BuildScenegraphSkeleton(index + node.SiblingIndexShift, parentIndex);
+        }
+        
+    }
 
     void Model::Draw(glm::mat4* transform, int32_t id, bool selected, TXP::Animation* materialAnimtion){
 
+        std::vector<glm::mat4> skeleton;
+        for(int i = 0; i < mSkeleton.size(); i++) skeleton.push_back(mSkeleton[i].Transform);
+
         glUseProgram(mProgram);
         glUniformMatrix4fv(glGetUniformLocation(mProgram, "transform"), 1, 0, &(*transform)[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(mProgram, "joints"), skeleton.size(), 0, &skeleton[0][0][0]);
         glUniform1i(glGetUniformLocation(mProgram, "pickID"), id);
         glUniform1i(glGetUniformLocation(mProgram, "selected"), selected);
 
@@ -586,7 +585,7 @@ namespace MDL {
             glActiveTexture(GL_TEXTURE0);
 
             if(mTextureHeaders.size() > 0){
-                if(mTextureHeaders[sampler.TextureIndex].TextureID != UINT32_MAX){
+                if(sampler.TextureIndex != -1 && sampler.TextureIndex < mTextureHeaders.size() && mTextureHeaders[sampler.TextureIndex].TextureID != UINT32_MAX){
                     glBindTexture(GL_TEXTURE_2D, mTextureHeaders[sampler.TextureIndex].TextureID);
                 } else {
                     glBindTexture(GL_TEXTURE_2D, mTextureHeaders[0].TextureID);
@@ -597,7 +596,6 @@ namespace MDL {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (sampler.WrapV == 2 ? GL_MIRRORED_REPEAT : GL_REPEAT));
 
             glDrawArrays(GL_TRIANGLES, 0, mShapes[element.ShapeIndex].VertexCount);
-
         }
     }
 

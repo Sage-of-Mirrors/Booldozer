@@ -595,7 +595,7 @@ namespace BIN {
                     case GXPrimitiveType::Triangles: {
                             int8_t prevMtx = -1;
                             for(PrimitiveVertex vtxIdx : primitiveVertices){
-                                Vertex vtx = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}};
+                                Vertex vtx = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {-1, -1, -1, -1}, {0, 0, 0, 0}, {0,0}, {0,0}};
 
                                 vtx.Position = mPositions[vtxIdx.Position];
                                 vtx.Normal = mNormals[vtxIdx.Normal];
@@ -608,9 +608,9 @@ namespace BIN {
                         break;
                     case GXPrimitiveType::TriangleStrip: {
                             for (std::size_t v = 2; v < primitiveVertices.size(); v++){
-                                Vertex vtx1 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}},
-                                       vtx2 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}},
-                                       vtx3 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}};
+                                Vertex vtx1 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {-1, -1, -1, -1}, {0, 0, 0, 0}, {0,0}, {0,0}},
+                                       vtx2 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {-1, -1, -1, -1}, {0, 0, 0, 0}, {0,0}, {0,0}},
+                                       vtx3 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {-1, -1, -1, -1}, {0, 0, 0, 0}, {0,0}, {0,0}};
 
                                 vtx1.Position = mPositions[primitiveVertices[v-2].Position];
                                 vtx1.Normal = mNormals[primitiveVertices[v-2].Normal];
@@ -636,7 +636,7 @@ namespace BIN {
                         break;
                     case GXPrimitiveType::TriangleFan:{
                             for(std::size_t v = 0; v < 3; v++){
-                                Vertex vtx = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}};
+                                Vertex vtx = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {-1, -1, -1, -1}, {0, 0, 0, 0}, {0,0}, {0,0}};
 
                                 vtx.Position = mPositions[primitiveVertices[v].Position];
                                 vtx.Normal = mNormals[primitiveVertices[v].Normal];
@@ -647,9 +647,9 @@ namespace BIN {
                             }
 
                             for (std::size_t v = 2; v < primitiveVertices.size(); v++){
-                                Vertex vtx1 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}},
-                                       vtx2 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}},
-                                       vtx3 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {0,0}, {0,0}};
+                                Vertex vtx1 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {-1, -1, -1, -1}, {0, 0, 0, 0}, {0,0}, {0,0}},
+                                       vtx2 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {-1, -1, -1, -1}, {0, 0, 0, 0}, {0,0}, {0,0}},
+                                       vtx3 = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {-1, -1, -1, -1}, {0, 0, 0, 0}, {0,0}, {0,0}};
 
                                 if(primitiveVertices[v].Position == primitiveVertices[v-1].Position ||
                                    primitiveVertices[v-1].Position == primitiveVertices[0].Position ||

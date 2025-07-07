@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <GenUtil.hpp>
 #include "io/TxpIO.hpp"
+#include "UPathRenderer.hpp"
 
 namespace MDL {
 
@@ -141,6 +142,20 @@ namespace MDL {
         void Destroy();
     };
 
+    struct Bone {
+        Bone* Parent { nullptr };
+        glm::mat4 Transform { 1.0f };
+
+        glm::mat4 GetTransform(){
+            if(Parent == nullptr){
+                return Transform;
+            } else {
+                return Transform * Parent->GetTransform();
+            }
+        }
+
+    };
+
     struct Weight {
         std::vector<uint32_t> JointIndices;
         std::vector<float> Weights;
@@ -174,12 +189,17 @@ namespace MDL {
 
         std::vector<glm::mat4> mMatrixTable;
         std::vector<Weight> mWeights;
+        std::vector<Bone> mSkeleton;
 
+        void ConvertBonesToLocalSpace();
+        void BuildScenegraphSkeleton(uint32_t index, uint32_t parentIndex);
 
-    public:
+        
+        public:
         glm::vec3 bbMax {0, 0, 0}, bbMin {0, 0, 0};
-
-        void Draw(glm::mat4* transform, int32_t id, bool selected, TXP::Animation* materialAnimtion);
+        
+        CPathRenderer mSkeletonRenderer;
+        void Draw(glm::mat4* transform, int32_t id, bool selected, TXP::Animation* materialAnimtion = nullptr);
 
         void Load(bStream::CStream* stream);
 
