@@ -3,6 +3,7 @@
 #include <Bti.hpp>
 #include <glad/glad.h>
 #include <glm/gtc/matrix_inverse.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 #include <format>
 
 namespace MDL {
@@ -181,12 +182,12 @@ namespace MDL {
                 if(inJoints[i] == -1){\n\
                     break;\n\
                 }\n\
-                pos += (joints[inJoints[i]] * vec4(inPosition.z, inPosition.y, inPosition.x, 1.0)) * inWeights[i];\n\
+                pos += (joints[inJoints[i]] * vec4(inPosition.x, inPosition.y, inPosition.z, 1.0)) * inWeights[i];\n\
             }\n\
             if(inJoints[0] == -1){\n\
-                pos = vec4(inPosition.z, inPosition.y, inPosition.x, 1.0);\n\
+                pos = vec4(inPosition.x, inPosition.y, inPosition.z, 1.0);\n\
             }\n\
-            gl_Position = Proj * View * transform * pos;\n\
+            gl_Position = Proj * View * transform * vec4(pos.z, pos.y, pos.x, 1.0);\n\
             fragTexCoord = inTexCoord;\n\
             fragColor = inColor;\n\
         }\
@@ -334,11 +335,17 @@ namespace MDL {
                     0,                                     0,                   0,                   1
             };
             mMatrixTable[i] = glm::inverseTranspose(mMatrixTable[i]);
-            mSkeleton.push_back({ nullptr, mMatrixTable[i] });
+            Bone bone { nullptr, glm::vec3(0.0f), glm::identity<glm::quat>(), glm::vec3(1.0f)};
+            glm::vec3 skew;
+            glm::vec4 persp;
+            glm::decompose(mMatrixTable[i], bone.Scale, bone.Rotation, bone.Translation, skew, persp);
+            mSkeleton.push_back(bone);
         }
 
         BuildScenegraphSkeleton(0, -1);
         ConvertBonesToLocalSpace();
+        ConvertBonesToWorldSpace();
+        InitSkeletonRenderer(0, -1);
 
         // This whole section of the code is broken I think, but it isn't needed unless skinning gets added
 
@@ -483,10 +490,13 @@ namespace MDL {
                             vtx.BoneIndices[i] = weight.JointIndices[i];
                             vtx.Weights[i] = weight.Weights[i];
                         }
-                        vtx.Position = mPositions[vtxIndices.Position], 1.0f;
+                        vtx.Position = mPositions[vtxIndices.Position];
                     } else if(vtxIndices.Matrix > -1 && vtxIndices.Matrix < LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount)) {
                         glm::mat4 mtx = mMatrixTable[vtxIndices.Matrix];
                         vtx.Position = glm::vec3(mtx * glm::vec4(mPositions[vtxIndices.Position], 1.0f));
+                        //vtx.BoneIndices[0] = vtxIndices.Matrix;
+                        //vtx.Weights[0] = 1.0f;
+
                     }
                     
                     if(mHeader.NormalCount != 0) vtx.Normal = mNormals[vtxIndices.Normal];
@@ -532,9 +542,23 @@ namespace MDL {
     }
 
     void Model::ConvertBonesToLocalSpace(){
-        for(auto bone : mSkeleton){
+        for(auto& bone : mSkeleton){
             if(bone.Parent != nullptr){
-                bone.Transform *= glm::inverse(bone.Parent->GetTransform());
+                glm::mat4 transform = bone.Transform() * glm::inverse(bone.Parent->GetTransform());
+                glm::vec3 scale, skew;
+                glm::vec4 persp;
+                glm::decompose(transform, scale, bone.Rotation, bone.Translation, skew, persp);
+            }
+        }
+    }
+
+    void Model::ConvertBonesToWorldSpace(){
+        for(auto& bone : mSkeleton){
+            if(bone.Parent != nullptr){
+                glm::mat4 transform = bone.Transform() * bone.Parent->GetTransform();
+                glm::vec3 scale, skew;
+                glm::vec4 persp;
+                glm::decompose(transform, scale, bone.Rotation, bone.Translation, skew, persp);
             }
         }
     }
@@ -556,10 +580,31 @@ namespace MDL {
         
     }
 
+    void Model::InitSkeletonRenderer(uint32_t index, uint32_t parentIndex){
+        auto node = mGraphNodes[index];
+        
+        if(parentIndex != -1){
+            mSkeletonRenderer.mPaths.push_back({
+                { { mSkeleton[index].Translation.z, mSkeleton[index].Translation.y, mSkeleton[index].Translation.x }, {0xFF, 0x00, 0xFF, 0xFF}, 6400, -1 },
+                { { mSkeleton[parentIndex].Translation.z, mSkeleton[parentIndex].Translation.y, mSkeleton[parentIndex].Translation.x }, {0xFF, 0x00, 0xFF, 0xFF}, 6400, -1 }
+            });
+        }
+        
+        if(node.ChildIndexShift > 0){
+            InitSkeletonRenderer(index + node.ChildIndexShift, index);
+        }
+        
+        if(node.SiblingIndexShift > 0){
+            InitSkeletonRenderer(index + node.SiblingIndexShift, parentIndex);
+        }
+
+        if(index == 0) mSkeletonRenderer.UpdateData();
+    }
+
     void Model::Draw(glm::mat4* transform, int32_t id, bool selected, TXP::Animation* materialAnimtion){
 
         std::vector<glm::mat4> skeleton;
-        for(int i = 0; i < mSkeleton.size(); i++) skeleton.push_back(mSkeleton[i].Transform);
+        for(int i = 0; i < mSkeleton.size(); i++) skeleton.push_back(mSkeleton[i].Transform());
 
         glUseProgram(mProgram);
         glUniformMatrix4fv(glGetUniformLocation(mProgram, "transform"), 1, 0, &(*transform)[0][0]);

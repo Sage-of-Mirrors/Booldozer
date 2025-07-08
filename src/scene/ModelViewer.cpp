@@ -222,7 +222,8 @@ namespace PreviewWidget {
 	            J3DUniformBufferObject::SetProjAndViewMatrices(Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
 	            J3DUniformBufferObject::SubmitUBO();
 
-                ModelActor->Draw(&Identity, 0, false, ActorTxp);
+                if(!ImGui::IsKeyDown(ImGuiKey_Space)) ModelActor->Draw(&Identity, 0, false, ActorTxp);
+                ModelActor->mSkeletonRenderer.Draw(&Camera);
                 Grid->Render({(sin(Rotate) * (Zoom * 2)), Zoom, (cos(Rotate) * (Zoom * 2))}, Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
             } else {
 	            J3DUniformBufferObject::SetProjAndViewMatrices(Camera.GetProjectionMatrix(), Camera.GetViewMatrix());

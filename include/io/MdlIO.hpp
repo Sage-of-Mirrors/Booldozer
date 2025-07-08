@@ -4,6 +4,7 @@
 #include <GenUtil.hpp>
 #include "io/TxpIO.hpp"
 #include "UPathRenderer.hpp"
+#include <glm/gtx/quaternion.hpp>
 
 namespace MDL {
 
@@ -144,13 +145,20 @@ namespace MDL {
 
     struct Bone {
         Bone* Parent { nullptr };
-        glm::mat4 Transform { 1.0f };
+        glm::vec3 Translation;
+        glm::quat Rotation;
+        glm::vec3 Scale;
 
+        glm::mat4 Transform(){
+            return glm::scale(glm::mat4(1.0f), Scale) * glm::toMat4(Rotation) * glm::translate(glm::mat4(1.0f), Translation);
+        }
+
+        
         glm::mat4 GetTransform(){
             if(Parent == nullptr){
-                return Transform;
+                return Transform();
             } else {
-                return Transform * Parent->GetTransform();
+                return Transform() * Parent->GetTransform();
             }
         }
 
@@ -192,15 +200,16 @@ namespace MDL {
         std::vector<Bone> mSkeleton;
 
         void ConvertBonesToLocalSpace();
+        void ConvertBonesToWorldSpace();
         void BuildScenegraphSkeleton(uint32_t index, uint32_t parentIndex);
+        void InitSkeletonRenderer(uint32_t index, uint32_t parentIndex);
 
         
-        public:
+    public:
         glm::vec3 bbMax {0, 0, 0}, bbMin {0, 0, 0};
         
         CPathRenderer mSkeletonRenderer;
         void Draw(glm::mat4* transform, int32_t id, bool selected, TXP::Animation* materialAnimtion = nullptr);
-
         void Load(bStream::CStream* stream);
 
         Model(){}
