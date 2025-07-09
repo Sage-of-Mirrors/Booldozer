@@ -325,7 +325,7 @@ namespace MDL {
         }
 
         mMatrixTable.resize(LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount) + LGenUtility::SwapEndian<uint16_t>(mHeader.WeightCount));
-
+        mSkeleton.resize(mMatrixTable.size());
         stream->seek(LGenUtility::SwapEndian<uint32_t>(mHeader.InverseMatrixOffset));
         for (std::size_t i = 0; i < LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount); i++){
             mMatrixTable[i] = {
@@ -335,16 +335,9 @@ namespace MDL {
                     0,                                     0,                   0,                   1
             };
             mMatrixTable[i] = glm::inverseTranspose(mMatrixTable[i]);
-            Bone bone { nullptr, glm::vec3(0.0f), glm::identity<glm::quat>(), glm::vec3(1.0f)};
-            glm::vec3 skew;
-            glm::vec4 persp;
-            glm::decompose(mMatrixTable[i], bone.Scale, bone.Rotation, bone.Translation, skew, persp);
-            mSkeleton.push_back(bone);
         }
 
         BuildScenegraphSkeleton(0, -1);
-        ConvertBonesToLocalSpace();
-        ConvertBonesToWorldSpace();
         InitSkeletonRenderer(0, -1);
 
         // This whole section of the code is broken I think, but it isn't needed unless skinning gets added
@@ -541,33 +534,15 @@ namespace MDL {
         }
     }
 
-    void Model::ConvertBonesToLocalSpace(){
-        for(auto& bone : mSkeleton){
-            if(bone.Parent != nullptr){
-                glm::mat4 transform = bone.Transform() * glm::inverse(bone.Parent->GetTransform());
-                glm::vec3 scale, skew;
-                glm::vec4 persp;
-                glm::decompose(transform, scale, bone.Rotation, bone.Translation, skew, persp);
-            }
-        }
-    }
-
-    void Model::ConvertBonesToWorldSpace(){
-        for(auto& bone : mSkeleton){
-            if(bone.Parent != nullptr){
-                glm::mat4 transform = bone.Transform() * bone.Parent->GetTransform();
-                glm::vec3 scale, skew;
-                glm::vec4 persp;
-                glm::decompose(transform, scale, bone.Rotation, bone.Translation, skew, persp);
-            }
-        }
-    }
-
     void Model::BuildScenegraphSkeleton(uint32_t index, uint32_t parentIndex){
         auto node = mGraphNodes[index];
         
         if(parentIndex != -1){
             mSkeleton[index].Parent = &mSkeleton[parentIndex];
+            glm::mat4 transform = mMatrixTable[parentIndex] * glm::inverse(mMatrixTable[parentIndex]);
+            glm::vec3 skew;
+            glm::vec4 persp;
+            glm::decompose(transform, mSkeleton[index].Scale, mSkeleton[index].Rotation, mSkeleton[index].Translation, skew, persp);            
         }
         
         if(node.ChildIndexShift > 0){
@@ -585,9 +560,11 @@ namespace MDL {
         
         if(parentIndex != -1){
             mSkeletonRenderer.mPaths.push_back({
-                { { mSkeleton[index].Translation.z, mSkeleton[index].Translation.y, mSkeleton[index].Translation.x }, {0xFF, 0x00, 0xFF, 0xFF}, 6400, -1 },
-                { { mSkeleton[parentIndex].Translation.z, mSkeleton[parentIndex].Translation.y, mSkeleton[parentIndex].Translation.x }, {0xFF, 0x00, 0xFF, 0xFF}, 6400, -1 }
+                { { glm::vec3(mMatrixTable[index][3].z, mMatrixTable[index][3].y, mMatrixTable[index][3].x) }, {0xFF, 0x00, 0xFF, 0xFF}, 6400, -1 },
+                { { glm::vec3(mMatrixTable[parentIndex][3].z, mMatrixTable[parentIndex][3].y, mMatrixTable[parentIndex][3].x) }, {0xFF, 0x00, 0xFF, 0xFF}, 6400, -1 }
             });
+        } else {
+            mSkeletonRenderer.mPaths.push_back({{{ glm::vec3(mMatrixTable[index][3].z, mMatrixTable[index][3].y, mMatrixTable[index][3].x) }, {0xFF, 0x00, 0xFF, 0xFF}, 6400, -1 }});
         }
         
         if(node.ChildIndexShift > 0){
@@ -601,10 +578,19 @@ namespace MDL {
         if(index == 0) mSkeletonRenderer.UpdateData();
     }
 
-    void Model::Draw(glm::mat4* transform, int32_t id, bool selected, TXP::Animation* materialAnimtion){
+    void Model::Draw(glm::mat4* transform, int32_t id, bool selected, TXP::Animation* materialAnimtion, Animation* skeletalAnimation){
 
         std::vector<glm::mat4> skeleton;
-        for(int i = 0; i < mSkeleton.size(); i++) skeleton.push_back(mSkeleton[i].Transform());
+        for(int i = 0; i < mSkeleton.size(); i++){
+            glm::mat4 bone = mSkeleton[i].Transform();
+            if(skeletalAnimation != nullptr){
+                glm::mat4 frameTransform = skeletalAnimation->GetJoint(i);
+                bone *= frameTransform;
+            }
+            skeleton.push_back(bone);
+        }
+
+        if(skeletalAnimation != nullptr) skeletalAnimation->Step();
 
         glUseProgram(mProgram);
         glUniformMatrix4fv(glGetUniformLocation(mProgram, "transform"), 1, 0, &(*transform)[0][0]);
@@ -651,6 +637,87 @@ namespace MDL {
 
         for(TextureHeader texture : mTextureHeaders){
             texture.Destroy();
+        }
+    }
+
+    glm::mat4 Animation::GetJoint(uint32_t id){
+        JointTrack& joint = mJointAnimations[id];
+        glm::mat4 keyframe(1.0f);
+        
+        float sx = MixTrack(joint.ScaleX, joint.ScaleX.mKeys.size(), mTime, joint.mPreviousScaleKeyX, joint.mNextScaleKeyX);
+        float sy = MixTrack(joint.ScaleY, joint.ScaleY.mKeys.size(), mTime, joint.mPreviousScaleKeyY, joint.mNextScaleKeyY);
+        float sz = MixTrack(joint.ScaleZ, joint.ScaleZ.mKeys.size(), mTime, joint.mPreviousScaleKeyZ, joint.mNextScaleKeyZ);
+
+        float rz = MixTrack(joint.RotationX, joint.RotationX.mKeys.size(), mTime, joint.mPreviousRotKeyX, joint.mNextRotKeyX);
+        float ry = MixTrack(joint.RotationY, joint.RotationY.mKeys.size(), mTime, joint.mPreviousRotKeyY, joint.mNextRotKeyY);
+        float rx = MixTrack(joint.RotationZ, joint.RotationZ.mKeys.size(), mTime, joint.mPreviousRotKeyZ, joint.mNextRotKeyZ);
+
+        float px = MixTrack(joint.PositionX, joint.PositionX.mKeys.size(), mTime, joint.mPreviousPosKeyX, joint.mNextPosKeyX);
+        float py = MixTrack(joint.PositionY, joint.PositionY.mKeys.size(), mTime, joint.mPreviousPosKeyY, joint.mNextPosKeyY);
+        float pz = MixTrack(joint.PositionZ, joint.PositionZ.mKeys.size(), mTime, joint.mPreviousPosKeyZ, joint.mNextPosKeyZ);
+
+        keyframe = glm::scale(keyframe, glm::vec3(sz, sy, sx));
+        keyframe = glm::rotate(keyframe, glm::radians(rz), glm::vec3(1, 0, 0));
+        keyframe = glm::rotate(keyframe, glm::radians(ry), glm::vec3(0, 1, 0));
+        keyframe = glm::rotate(keyframe, glm::radians(rx), glm::vec3(0, 0, 1));
+        keyframe = glm::translate(keyframe, glm::vec3(sz, sy, sx));
+
+        return keyframe;
+    }
+
+    void Animation::Load(bStream::CStream* stream){
+        uint32_t jointCount = stream->readUInt32();
+        uint16_t frameCount = stream->readUInt16();
+        uint16_t frameSpeed = stream->readUInt16();
+        uint32_t flags = stream->readUInt32();
+
+        mSpeed = frameSpeed;
+        
+        uint32_t scaleKeyframeOffset = stream->readUInt32();
+        uint32_t rotationKeyframeOffset = stream->readUInt32();
+        uint32_t positionKeyframeOffset = stream->readUInt32();
+
+        uint32_t keyStartOffset = stream->readUInt32();
+        uint32_t keyCountOffset = stream->readUInt32();
+
+
+        std::vector<std::array<uint32_t, 9>> beginIndices;
+        std::vector<std::array<std::tuple<uint8_t, uint8_t>, 9>> trackFlags;
+
+        stream->seek(keyStartOffset);
+        for(uint32_t i = 0; i < jointCount; i++){
+            std::array<uint32_t, 9> indices;
+            for(uint32_t j = 0; j < 9; j++) indices[j] = stream->readUInt32();
+            beginIndices.push_back(indices);
+        }
+        stream->seek(keyCountOffset);
+        for(uint32_t i = 0; i < jointCount; i++){
+            std::array<std::tuple<uint8_t, uint8_t>, 9> flags;
+            for(uint32_t j = 0; j < 9; j++){
+                std::get<0>(flags[j]) = stream->readUInt8();
+                std::get<1>(flags[j]) = stream->readUInt8();
+            }
+            trackFlags.push_back(flags);
+        }
+        
+        mJointAnimations.resize(jointCount);
+
+        for(int f = 0; f < frameCount; f++){
+            for(int j = 0; j < jointCount; j++){
+                JointTrack& joint = mJointAnimations[j];
+
+                joint.ScaleX.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][0], std::get<0>(trackFlags[j][0]), true, std::get<1>(trackFlags[j][0]) == 0x80);
+                joint.ScaleY.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][1], std::get<0>(trackFlags[j][1]), true, std::get<1>(trackFlags[j][1]) == 0x80);
+                joint.ScaleZ.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][2], std::get<0>(trackFlags[j][2]), true, std::get<1>(trackFlags[j][2]) == 0x80);
+
+                joint.RotationX.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][3], std::get<0>(trackFlags[j][3]), true, std::get<1>(trackFlags[j][3]) == 0x80, 2);
+                joint.RotationY.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][4], std::get<0>(trackFlags[j][4]), true, std::get<1>(trackFlags[j][4]) == 0x80, 2);
+                joint.RotationZ.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][5], std::get<0>(trackFlags[j][5]), true, std::get<1>(trackFlags[j][5]) == 0x80, 2);
+            
+                joint.PositionX.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][6], std::get<0>(trackFlags[j][6]), true, std::get<1>(trackFlags[j][6]) == 0x80);
+                joint.PositionY.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][7], std::get<0>(trackFlags[j][7]), true, std::get<1>(trackFlags[j][7]) == 0x80);
+                joint.PositionZ.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][8], std::get<0>(trackFlags[j][8]), true, std::get<1>(trackFlags[j][8]) == 0x80);
+            }
         }
     }
 };

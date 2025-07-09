@@ -30,11 +30,16 @@ namespace PreviewWidget {
     static EModelType CurrentEModelType { EModelType::None };
     static BIN::Model* ModelFurniture { nullptr };
     static MDL::Model* ModelActor { nullptr };
+    static MDL::Animation* ActorSkeletalAnimation { nullptr };
     static TXP::Animation* ActorTxp { nullptr };
     static UGrid* Grid { nullptr };
 
     BIN::Model* GetFurnitureModel(){
         return ModelFurniture;
+    }
+
+    MDL::Model* GetActorModel(){
+        return ModelActor;
     }
 
     void NewFurnitureModel(){
@@ -166,6 +171,11 @@ namespace PreviewWidget {
         }
     }
 
+    void SetSkeletalAnimation(bStream::CMemoryStream* AnimStream){
+        ActorSkeletalAnimation = new MDL::Animation();
+        ActorSkeletalAnimation->Load(AnimStream);
+    }
+
     void UnloadModel(){
         if(ModelFurniture != nullptr){
             delete ModelFurniture;
@@ -179,6 +189,11 @@ namespace PreviewWidget {
         if(ActorTxp != nullptr){
             delete ActorTxp;
             ActorTxp = nullptr;
+        }
+
+        if(ActorSkeletalAnimation != nullptr){
+            delete ActorSkeletalAnimation;
+            ActorSkeletalAnimation = nullptr;
         }
 
         CurrentEModelType = EModelType::None;
@@ -222,8 +237,10 @@ namespace PreviewWidget {
 	            J3DUniformBufferObject::SetProjAndViewMatrices(Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
 	            J3DUniformBufferObject::SubmitUBO();
 
-                if(!ImGui::IsKeyDown(ImGuiKey_Space)) ModelActor->Draw(&Identity, 0, false, ActorTxp);
-                ModelActor->mSkeletonRenderer.Draw(&Camera);
+                if(!ImGui::IsKeyDown(ImGuiKey_Space)) ModelActor->Draw(&Identity, 0, false, ActorTxp, ActorSkeletalAnimation);
+                //glDisable(GL_DEPTH_TEST);
+                //ModelActor->mSkeletonRenderer.Draw(&Camera, false);
+                //glEnable(GL_DEPTH_TEST);
                 Grid->Render({(sin(Rotate) * (Zoom * 2)), Zoom, (cos(Rotate) * (Zoom * 2))}, Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
             } else {
 	            J3DUniformBufferObject::SetProjAndViewMatrices(Camera.GetProjectionMatrix(), Camera.GetViewMatrix());

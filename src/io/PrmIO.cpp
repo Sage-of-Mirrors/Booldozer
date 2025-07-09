@@ -451,6 +451,13 @@ bool LPrmIO::RenderUI()
                                 bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
                                 PreviewWidget::LoadModel(&modelData, EModelType::Actor);
                             }
+
+                            if(modelName == "obake01"){
+                                std::shared_ptr<Archive::File> animFile = modelArchive->GetFile(std::filesystem::path("key") / "appear.key");
+                                bStream::CMemoryStream animStream(animFile->GetData(), animFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+                                PreviewWidget::SetSkeletalAnimation(&animStream);
+                            }
+
                             if(materialName != ""){
                                 std::shared_ptr<Archive::File> txpFile = modelArchive->GetFile(std::filesystem::path("txp") / (materialName + ".txp"));
                                 if(txpFile == nullptr){

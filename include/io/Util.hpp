@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <GenUtil.hpp>
 #include <bstream.h>
+#include "io/KeyframeIO.hpp"
 
 enum class GXAttribute : int {
 	PositionMatrixIndex,
@@ -75,3 +76,6 @@ struct Readable {
     virtual void Read(bStream::CStream* stream) = 0;
     virtual ~Readable(){}
 };
+
+float InterpolateHermite(float factor, float timeA, float valueA, float outTangent, float timeB, float valueB, float inTangent);
+float MixTrack(LTrackCommon& track, uint32_t frameCount, float time, uint32_t& previousKey, uint32_t& nextKey);

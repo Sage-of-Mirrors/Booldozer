@@ -7,7 +7,8 @@ enum class ETrackType
 {
 	CMN,
 	PTH,
-    ANM
+    ANM,
+    KEY
 };
 
 struct LKeyframeCommon
@@ -21,14 +22,12 @@ struct LKeyframeCommon
 class LTrackCommon
 {
     ETrackType mType;
-    bool mUnifiedSlope;
-    
-
 public:
     std::vector<int32_t> mKeys;
     std::map<int32_t, LKeyframeCommon> mFrames;
 
     void LoadTrack(bStream::CStream* stream, uint32_t keyframeDataOffset, ETrackType type);
+    void LoadTrackEx(bStream::CStream* stream, uint32_t keyframeDataOffset, uint32_t beginIndex, uint8_t count, bool hasSlopeIn, bool hasSlopeOut, uint32_t valueSize=4);
 
     LTrackCommon(){}
     ~LTrackCommon(){}

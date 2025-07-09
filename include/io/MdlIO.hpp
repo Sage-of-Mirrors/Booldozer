@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <GenUtil.hpp>
 #include "io/TxpIO.hpp"
+#include "KeyframeIO.hpp"
 #include "UPathRenderer.hpp"
 #include <glm/gtx/quaternion.hpp>
 
@@ -153,15 +154,6 @@ namespace MDL {
             return glm::scale(glm::mat4(1.0f), Scale) * glm::toMat4(Rotation) * glm::translate(glm::mat4(1.0f), Translation);
         }
 
-        
-        glm::mat4 GetTransform(){
-            if(Parent == nullptr){
-                return Transform();
-            } else {
-                return Transform() * Parent->GetTransform();
-            }
-        }
-
     };
 
     struct Weight {
@@ -174,8 +166,62 @@ namespace MDL {
     void InitShaders();
     void DestroyShaders();
 
-    class Model
-    {
+    struct JointTrack {
+        LTrackCommon ScaleX;
+        LTrackCommon ScaleY;
+        LTrackCommon ScaleZ;
+        
+        LTrackCommon RotationX;
+        LTrackCommon RotationY;
+        LTrackCommon RotationZ;
+
+        LTrackCommon PositionX;
+        LTrackCommon PositionY;
+        LTrackCommon PositionZ;
+
+        uint32_t mPreviousScaleKeyX { 0 };
+        uint32_t mPreviousScaleKeyY { 0 };
+        uint32_t mPreviousScaleKeyZ { 0 };
+
+        uint32_t mNextScaleKeyX { 1 };
+        uint32_t mNextScaleKeyY { 1 };
+        uint32_t mNextScaleKeyZ { 1 };
+
+        uint32_t mPreviousPosKeyX { 0 };
+        uint32_t mPreviousPosKeyY { 0 };
+        uint32_t mPreviousPosKeyZ { 0 };
+
+        uint32_t mNextPosKeyX { 1 };
+        uint32_t mNextPosKeyY { 1 };
+        uint32_t mNextPosKeyZ { 1 };
+
+        uint32_t mPreviousRotKeyX { 0 };
+        uint32_t mPreviousRotKeyY { 0 };
+        uint32_t mPreviousRotKeyZ { 0 };
+
+        uint32_t mNextRotKeyX { 1 };
+        uint32_t mNextRotKeyY { 1 };
+        uint32_t mNextRotKeyZ { 1 };
+    };
+
+    class Animation {
+    private:
+        float mTime { 0.0f };
+        float mSpeed { 0.1f };
+
+        uint32_t mPreviousKeyframe { 0 };
+        uint32_t mNextKeyframe { 1 };
+
+        std::vector<JointTrack> mJointAnimations;
+    public:
+        void Step(){ mSpeed += mTime; }
+        glm::mat4 GetJoint(uint32_t id);
+        void Load(bStream::CStream* stream);
+        Animation(){}
+        ~Animation(){}
+    };
+
+    class Model {
     private:
 
         MDLHeader mHeader;
@@ -204,12 +250,11 @@ namespace MDL {
         void BuildScenegraphSkeleton(uint32_t index, uint32_t parentIndex);
         void InitSkeletonRenderer(uint32_t index, uint32_t parentIndex);
 
-        
     public:
         glm::vec3 bbMax {0, 0, 0}, bbMin {0, 0, 0};
         
         CPathRenderer mSkeletonRenderer;
-        void Draw(glm::mat4* transform, int32_t id, bool selected, TXP::Animation* materialAnimtion = nullptr);
+        void Draw(glm::mat4* transform, int32_t id, bool selected, TXP::Animation* materialAnimtion = nullptr, Animation* skeletalAnimation = nullptr);
         void Load(bStream::CStream* stream);
 
         Model(){}

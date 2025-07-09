@@ -417,6 +417,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 
 
 	auto packets = J3D::Rendering::SortPackets(renderables, Camera.GetCenter());
+	glDisable(GL_CULL_FACE);
 	J3D::Rendering::Render(1, view, proj, packets);
 }
 

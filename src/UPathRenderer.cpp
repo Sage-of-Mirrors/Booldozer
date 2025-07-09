@@ -146,8 +146,8 @@ void CPathRenderer::UpdateData(){
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void CPathRenderer::Draw(LSceneCamera *Camera) {
-    glEnable(GL_DEPTH_TEST);
+void CPathRenderer::Draw(LSceneCamera *Camera, bool enableDepth) {
+    if(enableDepth) glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
     glEnable(GL_BLEND);

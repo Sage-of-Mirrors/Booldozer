@@ -5,6 +5,7 @@
 #include "bstream.h"
 #include "imgui.h"
 #include "io/BinIO.hpp"
+#include "io/MdlIO.hpp"
 
 enum class EModelType {
     Actor,
@@ -15,6 +16,7 @@ enum class EModelType {
 namespace PreviewWidget {
 
     BIN::Model* GetFurnitureModel();
+    MDL::Model* GetActorModel();
 
     void SetActive();
     void SetInactive();
@@ -32,6 +34,7 @@ namespace PreviewWidget {
     void LoadModel(bStream::CMemoryStream* ModelStream, EModelType Type);
     void SaveModel(bStream::CMemoryStream* ModelStream);
     void SetModelAnimation(bStream::CMemoryStream* AnimStream);
+    void SetSkeletalAnimation(bStream::CMemoryStream* AnimStream);
     void UnloadModel();
 
     void DoZoom(float amt);

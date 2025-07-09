@@ -1,5 +1,50 @@
 #include "io/KeyframeIO.hpp"
 
+namespace KeyframeIO { // TODO: Reorg so all classes and functions are in animation NS
+    inline float ReadValue(bStream::CStream* stream, uint32_t valueSize){
+        if(valueSize == 4){
+            return stream->readFloat();
+        } else {
+            return static_cast<float>(stream->readInt16()) * 0.001533981f;
+        }
+    }
+}
+
+void LTrackCommon::LoadTrackEx(bStream::CStream* stream, uint32_t keyframeDataOffset, uint32_t beginIndex, uint8_t count, bool hasSlopeIn, bool hasSlopeOut, uint32_t valueSize){
+    std::size_t streamPosition = stream->tell();
+    stream->seek(keyframeDataOffset + (valueSize * beginIndex));
+    for (std::size_t frame = 0; frame < count; frame++){
+        
+        LKeyframeCommon keyframe;
+
+        keyframe.frame = stream->readFloat();
+
+        if(count == 1) {
+            keyframe.frame = 0;
+            keyframe.value = keyframe.frame;
+        } else {
+            keyframe.value = KeyframeIO::ReadValue(stream, valueSize);
+        }
+        
+        if(hasSlopeIn){
+            keyframe.inslope = KeyframeIO::ReadValue(stream, valueSize);
+            
+            if(hasSlopeOut){
+                keyframe.outslope = KeyframeIO::ReadValue(stream, valueSize);
+            } else {
+                keyframe.outslope = keyframe.inslope;
+            }
+        }            
+        mFrames.insert(std::make_pair((uint32_t)keyframe.frame, keyframe));
+    }
+    
+    for (auto& frame : mFrames)
+    {
+        mKeys.push_back(frame.first);
+    }
+
+    stream->seek(streamPosition);
+}
 
 void LTrackCommon::LoadTrack(bStream::CStream* stream, uint32_t keyframeDataOffset, ETrackType type)
 {
@@ -8,76 +53,17 @@ void LTrackCommon::LoadTrack(bStream::CStream* stream, uint32_t keyframeDataOffs
     uint16_t beginIndex = stream->readUInt16();
     uint16_t elementCountFlags = stream->readUInt16();
 
-    size_t group = stream->tell();
-
-    //LGenUtility::Log << "Track Properties:\nKey Count: " << std::dec << keyCount << "\nBegin Index: " << beginIndex << "\nElement Count/Flags: " << elementCountFlags << std::endl;
-
+    bool inSlope = false;
+    bool outSlope = false;
     if(mType == ETrackType::CMN || mType == ETrackType::PTH)
     {
-        mUnifiedSlope = (elementCountFlags == 3);
+        inSlope = (elementCountFlags == 3);
+        outSlope = (elementCountFlags == 4);
     } else if(type == ETrackType::ANM) {
-        mUnifiedSlope = (elementCountFlags == 0x80);
+        inSlope = true;
+        outSlope = (elementCountFlags == 0x80);
     }
-
-    //LGenUtility::Log << "Reading keyframe at " << std::hex << keyframeDataOffset + (4 * beginIndex) << std::endl;
-
-    stream->seek(keyframeDataOffset + (4 * beginIndex));
-    for (size_t frame = 0; frame < keyCount; frame++)
-    {
-        
-        LKeyframeCommon keyframe;
-
-        keyframe.frame = stream->readFloat();
-
-        if(mType == ETrackType::CMN || mType == ETrackType::PTH)
-        {
-            //LGenUtility::Log << "uh" << std::endl;
-            if(elementCountFlags == 1) {
-                keyframe.frame = 0;
-                keyframe.value = keyframe.frame;
-
-                //LGenUtility::Log << "Single frame track value: " << keyframe.value << std::endl;
-            } else {
-                keyframe.value = stream->readFloat();
-
-                //LGenUtility::Log << "Frame: " << keyframe.frame << "\nValue: " << keyframe.value << std::endl;
-            }
-
-            if(elementCountFlags == 3){
-                float slope = stream->readFloat();
-
-                keyframe.inslope = slope;
-                keyframe.outslope = slope;
-
-                //LGenUtility::Log << "Slope: " << slope << std::endl;
-            } else if (elementCountFlags == 4) {
-                keyframe.inslope = stream->readFloat();
-                keyframe.outslope = stream->readFloat();
-
-                //LGenUtility::Log << "In Slope: " << keyframe.inslope << std::endl;
-                //LGenUtility::Log << "Out Slope: " << keyframe.outslope << std::endl;
-            }
-        } else if(mType == ETrackType::ANM && keyCount > 1) {
-            keyframe.value = stream->readFloat();
-            float slope = stream->readFloat();
-
-            keyframe.inslope = slope;
-            keyframe.outslope = slope;
-
-            if(elementCountFlags == 0x80)
-            {
-                keyframe.outslope = stream->readFloat();
-            }
-        }
-        
-        mFrames.insert(std::make_pair((uint32_t)keyframe.frame, keyframe));
-    }
-
-    stream->seek(group);
-
-    for (auto& frame : mFrames)
-    {
-        mKeys.push_back(frame.first);
-    }
-
+    
+    // As far as I know only KEY anims use int16s for any value type, for the util function just pass size 4, can edit later if needed
+    LoadTrackEx(stream, keyframeDataOffset, beginIndex, keyCount, inSlope, outSlope, 4);
 }

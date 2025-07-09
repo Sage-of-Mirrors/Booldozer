@@ -26,41 +26,6 @@
 #include "tri_stripper.h"
 
 namespace BIN {
-    // from https://github.com/Sage-of-Mirrors/libjstudio/blob/main/src/engine/value/interpolation.cpp
-    float InterpolateHermite(float factor, float timeA, float valueA, float outTangent, float timeB, float valueB, float inTangent){
-    	float a = factor - timeA;
-    	float b = a * (1.0f / (timeB - timeA));
-    	float c = b - 1.0f;
-    	float d = (3.0f + -2.0f * b) * (b * b);
-
-    	float cab = c * a * b;
-    	float coeffx3 = cab * inTangent;
-    	float cca = c * c * a;
-    	float coeffc2 = cca * outTangent;
-
-    	return b * c * a * inTangent + a * c * c * outTangent + (1.0f - d) * valueA + d * valueB;
-    }
-
-    float MixTrack(LTrackCommon* track, uint32_t frameCount, float curFrame, uint32_t& mNextKey){
-        if(mNextKey < track->mKeys.size()){
-            float v = InterpolateHermite(
-                (uint32_t)(((uint32_t)curFrame - track->mFrames[track->mKeys[mNextKey - 1]].frame) / (track->mFrames[track->mKeys[mNextKey]].frame - track->mFrames[track->mKeys[mNextKey - 1]].frame)),
-                track->mFrames[track->mKeys[mNextKey - 1]].frame,
-                track->mFrames[track->mKeys[mNextKey - 1]].value,
-                track->mFrames[track->mKeys[mNextKey - 1]].outslope,
-                track->mFrames[track->mKeys[mNextKey]].frame,
-                track->mFrames[track->mKeys[mNextKey]].value,
-                track->mFrames[track->mKeys[mNextKey]].inslope
-            );
-
-            if(std::floor(curFrame) >= track->mFrames[track->mKeys[mNextKey]].frame){
-                mNextKey += 1;
-            }
-            return v;
-        } else {
-            return track->mFrames[track->mKeys[mNextKey - 1]].value;
-        }
-    }
 
     void SceneGraphNode::Read(bStream::CStream* stream){
         ParentIndex = stream->readInt16();
@@ -1026,17 +991,18 @@ namespace BIN {
 
         if(mAnim.mLoaded && mAnim.mPlaying){
             GraphNodeTrack* track = &mAnimationTracks[idx];
-            float sx = MixTrack(&track->mXScaleTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mNextScaleKeyX);
-            float sy = MixTrack(&track->mYScaleTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mNextScaleKeyY);
-            float sz = MixTrack(&track->mZScaleTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mNextScaleKeyZ);
+            // This could be way better
+            float sx = MixTrack(track->mXScaleTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mPreviousScaleKeyX, track->mNextScaleKeyX);
+            float sy = MixTrack(track->mYScaleTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mPreviousScaleKeyY, track->mNextScaleKeyY);
+            float sz = MixTrack(track->mZScaleTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mPreviousScaleKeyZ, track->mNextScaleKeyZ);
 
-            float rz = MixTrack(&track->mXRotTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mNextRotKeyX);
-            float ry = MixTrack(&track->mYRotTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mNextRotKeyY);
-            float rx = MixTrack(&track->mZRotTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mNextRotKeyZ);
+            float rz = MixTrack(track->mXRotTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mPreviousRotKeyX, track->mNextRotKeyX);
+            float ry = MixTrack(track->mYRotTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mPreviousRotKeyY, track->mNextRotKeyY);
+            float rx = MixTrack(track->mZRotTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mPreviousRotKeyZ, track->mNextRotKeyZ);
 
-            float px = MixTrack(&track->mXPosTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mNextPosKeyX);
-            float py = MixTrack(&track->mYPosTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mNextPosKeyY);
-            float pz = MixTrack(&track->mZPosTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mNextPosKeyZ);
+            float px = MixTrack(track->mXPosTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mPreviousPosKeyX, track->mNextPosKeyX);
+            float py = MixTrack(track->mYPosTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mPreviousPosKeyY, track->mNextPosKeyY);
+            float pz = MixTrack(track->mZPosTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mPreviousPosKeyZ, track->mNextPosKeyZ);
 
             glm::mat4 animTrasform(1.0f);
             //animTrasform = glm::scale(animTrasform, glm::vec3(sx, sy, sz));

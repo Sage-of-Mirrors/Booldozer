@@ -161,13 +161,25 @@ namespace BIN {
         LTrackCommon mYPosTrack;
         LTrackCommon mZPosTrack;
 
+        uint32_t mPreviousScaleKeyX { 0 };
+        uint32_t mPreviousScaleKeyY { 0 };
+        uint32_t mPreviousScaleKeyZ { 0 };
+
         uint32_t mNextScaleKeyX { 1 };
         uint32_t mNextScaleKeyY { 1 };
         uint32_t mNextScaleKeyZ { 1 };
 
+        uint32_t mPreviousPosKeyX { 0 };
+        uint32_t mPreviousPosKeyY { 0 };
+        uint32_t mPreviousPosKeyZ { 0 };
+
         uint32_t mNextPosKeyX { 1 };
         uint32_t mNextPosKeyY { 1 };
         uint32_t mNextPosKeyZ { 1 };
+
+        uint32_t mPreviousRotKeyX { 0 };
+        uint32_t mPreviousRotKeyY { 0 };
+        uint32_t mPreviousRotKeyZ { 0 };
 
         uint32_t mNextRotKeyX { 1 };
         uint32_t mNextRotKeyY { 1 };
