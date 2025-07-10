@@ -5,6 +5,7 @@
 #include "misc/cpp/imgui_stdlib.h"
 #include "imgui_neo_internal.h"
 #include "imgui_neo_sequencer.h"
+#include "io/Util.hpp"
 
 static bool mAnimPlayerReady { false };
 static uint32_t mPreviewFbo { 0 }, mPreviewRbo { 0 }, mPreviewTex { 0 };

@@ -147,19 +147,14 @@ namespace MDL {
     struct Bone {
         int32_t ParentIndex { -1 };
         Bone* Parent { nullptr };
-        glm::vec3 Translation;
-        glm::quat Rotation;
-        glm::vec3 Scale;
-
-        glm::mat4 Transform(){
-            return glm::scale(glm::mat4(1.0f), Scale) * glm::toMat4(Rotation) * glm::translate(glm::mat4(1.0f), Translation);
-        }
+        glm::mat4 Transform;
+        glm::mat4 InverseTransform;
 
         glm::mat4 ParentTransform(){
             if(Parent != nullptr){
-                return Transform() * Parent->ParentTransform();
+                return Transform * Parent->ParentTransform();
             } else {
-                return Transform();
+                return Transform;
             }
         }
 

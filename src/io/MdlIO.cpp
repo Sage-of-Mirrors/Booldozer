@@ -335,17 +335,14 @@ namespace MDL {
                     0,                                     0,                   0,                   1
             };
             mMatrixTable[i] = glm::inverseTranspose(mMatrixTable[i]);
+            mSkeleton[i].Transform = mMatrixTable[i];
         }
 
         BuildScenegraphSkeleton(0, -1);
 
         for(auto& bone : mSkeleton){
-            glm::mat4 transform = bone.Transform() * glm::inverse(bone.ParentTransform());
-            glm::vec3 skew;
-            glm::vec4 persp;
-            glm::decompose(transform, bone.Scale, bone.Rotation, bone.Translation, skew, persp);
-            bone.Rotation = glm::conjugate(bone.Rotation);
-            //std::cout << std::format("Bone Translation [{}, {}, {}], Rotation [{}, {}, {}]", bone.Translation.x, bone.Translation.y, bone.Translation.z, bone.Rotation.x, bone.Rotation.y, bone.Rotation.z) << std::endl;
+            bone.InverseTransform = glm::inverse(bone.ParentTransform());
+            bone.Transform *= bone.InverseTransform;
         }
 
         InitSkeletonRenderer(0, -1);
@@ -547,10 +544,6 @@ namespace MDL {
     void Model::BuildScenegraphSkeleton(uint32_t index, uint32_t parentIndex){
         auto node = mGraphNodes[index];
         
-        glm::vec3 skew;
-        glm::vec4 persp;
-        glm::decompose(mMatrixTable[index], mSkeleton[index].Scale, mSkeleton[index].Rotation, mSkeleton[index].Translation, skew, persp);
-        mSkeleton[index].Rotation = glm::conjugate(mSkeleton[index].Rotation);
         mSkeleton[index].ParentIndex = parentIndex;
         if(parentIndex != -1){
             mSkeleton[index].Parent = &mSkeleton[parentIndex];
@@ -594,11 +587,10 @@ namespace MDL {
         std::vector<glm::mat4> skeleton;
         skeleton.resize(mSkeleton.size());
         for(int i = 0; i < mSkeleton.size(); i++){
-            glm::mat4 bone = mSkeleton[i].Transform();
             if(skeletalAnimation != nullptr){
-                skeleton[i] = bone * skeletalAnimation->GetJoint(i);
+                skeleton[i] = skeletalAnimation->GetJoint(i) * mSkeleton[i].InverseTransform;
             } else {
-                skeleton[i] = bone;
+                skeleton[i] = mSkeleton[i].Transform;
             }
         }
 
@@ -692,7 +684,7 @@ namespace MDL {
         float py = joint.PositionY.mKeys.size() > 0 ? MixTrack(joint.PositionY, mTime, joint.mPreviousPosKeyY, joint.mNextPosKeyY) : 0.0f;
         float pz = joint.PositionZ.mKeys.size() > 0 ? MixTrack(joint.PositionZ, mTime, joint.mPreviousPosKeyZ, joint.mNextPosKeyZ) : 0.0f;
 
-        //std::cout << std::format("Frame Data: [{}, {}, {}][{}, {}, {}][{}, {}, {}]", pz, py, px, rz, ry, rx, sz, sy, sx) << std::endl;
+        std::cout << std::format("Frame Data: [{}, {}, {}][{}, {}, {}][{}, {}, {}]", pz, py, px, rz, ry, rx, sz, sy, sx) << std::endl;
 
         keyframe = glm::scale(keyframe, glm::vec3(sz, sy, sx));
         keyframe = glm::rotate(keyframe, glm::radians(-rz), glm::vec3(1, 0, 0));
@@ -722,7 +714,7 @@ namespace MDL {
 
 
         std::vector<std::array<uint32_t, 9>> beginIndices;
-        std::vector<std::array<std::tuple<uint8_t, uint8_t>, 9>> trackFlags;
+        std::vector<std::array<std::pair<uint8_t, uint8_t>, 9>> trackFlags;
 
         stream->seek(keyStartOffset);
         for(uint32_t i = 0; i < jointCount; i++){
@@ -732,7 +724,7 @@ namespace MDL {
         }
         stream->seek(keyCountOffset);
         for(uint32_t i = 0; i < jointCount; i++){
-            std::array<std::tuple<uint8_t, uint8_t>, 9> flags;
+            std::array<std::pair<uint8_t, uint8_t>, 9> flags;
             for(uint32_t j = 0; j < 9; j++){
                 std::get<0>(flags[j]) = stream->readUInt8();
                 std::get<1>(flags[j]) = stream->readUInt8();
@@ -746,17 +738,17 @@ namespace MDL {
             for(int j = 0; j < jointCount; j++){
                 JointTrack& joint = mJointAnimations[j];
 
-                joint.ScaleX.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][0], std::get<1>(trackFlags[j][0]), true, std::get<0>(trackFlags[j][0]) == 0x80);
-                joint.ScaleY.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][1], std::get<1>(trackFlags[j][1]), true, std::get<0>(trackFlags[j][1]) == 0x80);
-                joint.ScaleZ.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][2], std::get<1>(trackFlags[j][2]), true, std::get<0>(trackFlags[j][2]) == 0x80);
+                joint.ScaleX.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][0], trackFlags[j][0].second, true, trackFlags[j][0].first == 0x80);
+                joint.ScaleY.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][1], trackFlags[j][1].second, true, trackFlags[j][1].first == 0x80);
+                joint.ScaleZ.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][2], trackFlags[j][2].second, true, trackFlags[j][2].first == 0x80);
 
-                joint.RotationX.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][3], std::get<1>(trackFlags[j][3]), true, std::get<0>(trackFlags[j][3]) == 0x80, 2);
-                joint.RotationY.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][4], std::get<1>(trackFlags[j][4]), true, std::get<0>(trackFlags[j][4]) == 0x80, 2);
-                joint.RotationZ.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][5], std::get<1>(trackFlags[j][5]), true, std::get<0>(trackFlags[j][5]) == 0x80, 2);
+                joint.RotationX.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][3], trackFlags[j][3].second, true, trackFlags[j][3].first == 0x80, 2);
+                joint.RotationY.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][4], trackFlags[j][4].second, true, trackFlags[j][4].first == 0x80, 2);
+                joint.RotationZ.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][5], trackFlags[j][5].second, true, trackFlags[j][5].first == 0x80, 2);
             
-                joint.PositionX.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][6], std::get<1>(trackFlags[j][6]), true, std::get<0>(trackFlags[j][6]) == 0x80);
-                joint.PositionY.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][7], std::get<1>(trackFlags[j][7]), true, std::get<0>(trackFlags[j][7]) == 0x80);
-                joint.PositionZ.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][8], std::get<1>(trackFlags[j][8]), true, std::get<0>(trackFlags[j][8]) == 0x80);
+                joint.PositionX.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][6], trackFlags[j][6].second, true, trackFlags[j][6].first == 0x80);
+                joint.PositionY.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][7], trackFlags[j][7].second, true, trackFlags[j][7].first == 0x80);
+                joint.PositionZ.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][8], trackFlags[j][8].second, true, trackFlags[j][8].first == 0x80);
             }
         }
     }
