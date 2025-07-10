@@ -78,4 +78,4 @@ struct Readable {
 };
 
 float InterpolateHermite(float factor, float timeA, float valueA, float outTangent, float timeB, float valueB, float inTangent);
-float MixTrack(LTrackCommon& track, uint32_t frameCount, float time, uint32_t& previousKey, uint32_t& nextKey);
+float MixTrack(LTrackCommon& track, float time, uint32_t& previousKey, uint32_t& nextKey);

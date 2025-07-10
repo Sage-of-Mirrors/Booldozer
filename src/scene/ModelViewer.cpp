@@ -29,6 +29,7 @@ namespace PreviewWidget {
 
     static EModelType CurrentEModelType { EModelType::None };
     static BIN::Model* ModelFurniture { nullptr };
+    static BIN::Animation* FurnitureSkeletalAnimation { nullptr };
     static MDL::Model* ModelActor { nullptr };
     static MDL::Animation* ActorSkeletalAnimation { nullptr };
     static TXP::Animation* ActorTxp { nullptr };
@@ -54,16 +55,14 @@ namespace PreviewWidget {
     }
 
     void PlayAnimation(){
-        if(CurrentEModelType == EModelType::Furniture && ModelFurniture != nullptr){
-            ModelFurniture->mAnim.mPlaying = true;
-            ModelFurniture->mAnim.mCurrentFrame = 0.0f;
-            //ModelFurniture->ResetAnimation();
+        if(CurrentEModelType == EModelType::Furniture && FurnitureSkeletalAnimation != nullptr){
+            FurnitureSkeletalAnimation->Play();
         }
     }
 
     void PauseAnimation(){
-        if(CurrentEModelType == EModelType::Furniture && ModelFurniture != nullptr){
-            ModelFurniture->mAnim.mPlaying = false;
+        if(CurrentEModelType == EModelType::Furniture && FurnitureSkeletalAnimation != nullptr){
+            FurnitureSkeletalAnimation->Stop();
         }
     }
 
@@ -143,8 +142,6 @@ namespace PreviewWidget {
         if(Type == EModelType::Furniture){
             ModelFurniture = new BIN::Model();
             ModelFurniture->Load(ModelStream);
-            ModelFurniture->mAnim.mCurrentFrame = 0;
-            //ModelFurniture->ResetAnimation();
             Camera.SetCenter(ModelFurniture->mGraphNodes[0].Position);
             CurrentEModelType = Type;
         } else if(Type == EModelType::Actor){
@@ -163,15 +160,27 @@ namespace PreviewWidget {
 
     void SetModelAnimation(bStream::CMemoryStream* AnimStream){
         if(CurrentEModelType == EModelType::Furniture && ModelFurniture != nullptr){
-            ModelFurniture->LoadAnimation(AnimStream);
-            //ModelFurniture->ResetAnimation();
+            if(FurnitureSkeletalAnimation != nullptr){
+                delete FurnitureSkeletalAnimation;
+                FurnitureSkeletalAnimation = nullptr;
+            }
+            FurnitureSkeletalAnimation = new BIN::Animation();
+            FurnitureSkeletalAnimation->Load(ModelFurniture, AnimStream);
         } else if(CurrentEModelType == EModelType::Actor && ModelActor != nullptr){
+            if(ActorTxp != nullptr){
+                delete ActorTxp;
+                ActorTxp = nullptr;
+            }
             ActorTxp = new TXP::Animation();
             ActorTxp->Load(AnimStream);
         }
     }
 
     void SetSkeletalAnimation(bStream::CMemoryStream* AnimStream){
+        if(ActorSkeletalAnimation != nullptr){
+            delete ActorSkeletalAnimation;
+            ActorSkeletalAnimation = nullptr;
+        }
         ActorSkeletalAnimation = new MDL::Animation();
         ActorSkeletalAnimation->Load(AnimStream);
     }
@@ -196,10 +205,15 @@ namespace PreviewWidget {
             ActorSkeletalAnimation = nullptr;
         }
 
+        if(FurnitureSkeletalAnimation != nullptr){
+            delete FurnitureSkeletalAnimation;
+            FurnitureSkeletalAnimation = nullptr;
+        }
+
         CurrentEModelType = EModelType::None;
     }
 
-    void RenderPreview(){
+    void RenderPreview(float dt){
         if(Active){
 
             glDisable(GL_CULL_FACE);
@@ -228,7 +242,8 @@ namespace PreviewWidget {
 	            J3DUniformBufferObject::SetProjAndViewMatrices(Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
 	            J3DUniformBufferObject::SubmitUBO();
 
-                ModelFurniture->Draw(&Identity, 0, false);
+                ModelFurniture->Draw(&Identity, 0, false, FurnitureSkeletalAnimation);
+                if(FurnitureSkeletalAnimation != nullptr && FurnitureSkeletalAnimation->Playing()) FurnitureSkeletalAnimation->Step(dt);
                 Grid->Render({ModelFurniture->mGraphNodes[0].Position.x + (sin(Rotate) * (Zoom * 2)), ModelFurniture->mGraphNodes[0].Position.y + Zoom, ModelFurniture->mGraphNodes[0].Position.z - (cos(Rotate) * (Zoom * 2))}, Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
             } else if(CurrentEModelType == EModelType::Actor && ModelActor != nullptr) {
                 Camera.SetEye({sin(Rotate) * (Zoom * 2), Zoom, cos(Rotate) * (Zoom * 2)});
@@ -237,10 +252,11 @@ namespace PreviewWidget {
 	            J3DUniformBufferObject::SetProjAndViewMatrices(Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
 	            J3DUniformBufferObject::SubmitUBO();
 
-                if(!ImGui::IsKeyDown(ImGuiKey_Space)) ModelActor->Draw(&Identity, 0, false, ActorTxp, ActorSkeletalAnimation);
-                //glDisable(GL_DEPTH_TEST);
-                //ModelActor->mSkeletonRenderer.Draw(&Camera, false);
-                //glEnable(GL_DEPTH_TEST);
+                //ModelActor->Draw(&Identity, 0, false, ActorTxp, nullptr);
+                ModelActor->Draw(&Identity, 0, false, ActorTxp, ActorSkeletalAnimation);
+                if(ActorSkeletalAnimation != nullptr){
+                    ActorSkeletalAnimation->Step(dt);
+                }
                 Grid->Render({(sin(Rotate) * (Zoom * 2)), Zoom, (cos(Rotate) * (Zoom * 2))}, Camera.GetProjectionMatrix(), Camera.GetViewMatrix());
             } else {
 	            J3DUniformBufferObject::SetProjAndViewMatrices(Camera.GetProjectionMatrix(), Camera.GetViewMatrix());

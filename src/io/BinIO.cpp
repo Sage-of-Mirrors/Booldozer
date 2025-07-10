@@ -983,40 +983,19 @@ namespace BIN {
         ReadSceneGraphNode(stream, 0);
     }
 
-    void Model::DrawScenegraphNode(uint32_t idx, glm::mat4 transform){
+    void Model::DrawScenegraphNode(uint32_t idx, glm::mat4 transform, Animation* animation){
         if(idx == -1) return;
 
         SceneGraphNode* node = &mGraphNodes[idx];
         glm::mat4 mtx = transform * node->Transform;
 
-        if(mAnim.mLoaded && mAnim.mPlaying){
-            GraphNodeTrack* track = &mAnimationTracks[idx];
-            // This could be way better
-            float sx = MixTrack(track->mXScaleTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mPreviousScaleKeyX, track->mNextScaleKeyX);
-            float sy = MixTrack(track->mYScaleTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mPreviousScaleKeyY, track->mNextScaleKeyY);
-            float sz = MixTrack(track->mZScaleTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mPreviousScaleKeyZ, track->mNextScaleKeyZ);
-
-            float rz = MixTrack(track->mXRotTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mPreviousRotKeyX, track->mNextRotKeyX);
-            float ry = MixTrack(track->mYRotTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mPreviousRotKeyY, track->mNextRotKeyY);
-            float rx = MixTrack(track->mZRotTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mPreviousRotKeyZ, track->mNextRotKeyZ);
-
-            float px = MixTrack(track->mXPosTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mPreviousPosKeyX, track->mNextPosKeyX);
-            float py = MixTrack(track->mYPosTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mPreviousPosKeyY, track->mNextPosKeyY);
-            float pz = MixTrack(track->mZPosTrack, mAnim.mFrameCount, mAnim.mCurrentFrame, track->mPreviousPosKeyZ, track->mNextPosKeyZ);
-
-            glm::mat4 animTrasform(1.0f);
-            //animTrasform = glm::scale(animTrasform, glm::vec3(sx, sy, sz));
-            //animTrasform = glm::rotate(animTrasform, glm::radians(rx * 0.0001533981f), glm::vec3(1, 0, 0));
-            //animTrasform = glm::rotate(animTrasform, glm::radians(ry * 0.0001533981f), glm::vec3(0, 1, 0));
-            //animTrasform = glm::rotate(animTrasform, glm::radians(rz * 0.0001533981f), glm::vec3(0, 0, 1));
-            animTrasform = glm::translate(animTrasform, glm::vec3(px, py, pz));
-
-            glUniformMatrix4fv(glGetUniformLocation(mProgram, "transform"), 1, 0, &(mtx * animTrasform)[0][0]);
-        } else {
-
-            glUniformMatrix4fv(glGetUniformLocation(mProgram, "transform"), 1, 0, &(mtx)[0][0]);
+        if(animation != nullptr && animation->Playing()){
+            glm::mat4 frame = animation->GetNodeFrame(idx);
+            mtx *= (frame * glm::inverse(node->Transform));
+            glUniformMatrix4fv(glGetUniformLocation(mProgram, "transform"), 1, 0, &mtx[0][0]);
         }
-
+        
+        glUniformMatrix4fv(glGetUniformLocation(mProgram, "transform"), 1, 0, &(mtx)[0][0]);
 
         for(auto element : node->mDrawElements){
             if(element.BatchIndex == -1) continue;
@@ -1040,56 +1019,20 @@ namespace BIN {
         }
 
         if(node->ChildIndex != -1 && node->ChildIndex != 0 && node->ChildIndex != node->Index){
-            DrawScenegraphNode(node->ChildIndex, mtx);
+            DrawScenegraphNode(node->ChildIndex, mtx, animation);
         }
 
         if(node->NextSibIndex != -1 && node->NextSibIndex != 0 && node->NextSibIndex != node->Index){
-            DrawScenegraphNode(node->NextSibIndex, transform);
+            DrawScenegraphNode(node->NextSibIndex, transform, animation);
         }
     }
 
-    void Model::Draw(glm::mat4* transform, int32_t id, bool selected){
+    void Model::Draw(glm::mat4* transform, int32_t id, bool selected, Animation* animation){
         glUseProgram(mProgram);
         glUniform1i(glGetUniformLocation(mProgram, "pickID"), id);
         glUniform1i(glGetUniformLocation(mProgram, "selected"), selected);
 
-        DrawScenegraphNode(0, *transform);
-    }
-
-    void Model::LoadAnimation(bStream::CStream* stream){
-        mAnim.mLoaded = true;
-
-        stream->readUInt8(); // version
-        mAnim.mLoop = stream->readUInt8(); // loop
-
-        stream->readUInt16(); // padding
-        mAnim.mFrameCount = stream->readUInt32(); // frame count
-
-        uint32_t scaleKeyOffset = stream->readUInt32();
-        uint32_t rotateKeyOffset = stream->readUInt32();
-        uint32_t translateKeyOffset = stream->readUInt32();
-        uint32_t groupOffset = stream->readUInt32();
-
-        for(int i = 0; i < mGraphNodes.rbegin()->first+1; i++){
-            stream->seek(groupOffset + (i * 0x36));
-
-            GraphNodeTrack track;
-
-            track.mXScaleTrack.LoadTrack(stream, scaleKeyOffset, ETrackType::ANM);
-            track.mYScaleTrack.LoadTrack(stream, scaleKeyOffset, ETrackType::ANM);
-            track.mZScaleTrack.LoadTrack(stream, scaleKeyOffset, ETrackType::ANM);
-
-            track.mXRotTrack.LoadTrack(stream, rotateKeyOffset, ETrackType::ANM);
-            track.mYRotTrack.LoadTrack(stream, rotateKeyOffset, ETrackType::ANM);
-            track.mZRotTrack.LoadTrack(stream, rotateKeyOffset, ETrackType::ANM);
-
-            track.mXPosTrack.LoadTrack(stream, translateKeyOffset, ETrackType::ANM);
-            track.mYPosTrack.LoadTrack(stream, translateKeyOffset, ETrackType::ANM);
-            track.mZPosTrack.LoadTrack(stream, translateKeyOffset, ETrackType::ANM);
-
-            mAnimationTracks[i] = track;
-        }
-
+        DrawScenegraphNode(0, *transform, animation);
     }
 
     Model Model::FromFBX(std::string path){
@@ -1337,10 +1280,6 @@ namespace BIN {
         return mdl;
     }
 
-    void ClearAnimation(){
-
-    }
-
     Model::~Model(){
         for(auto [idx, shape] : mBatches){
             shape.Destroy();
@@ -1350,4 +1289,101 @@ namespace BIN {
             texture.Destroy();
         }
     }
+
+    glm::mat4 Animation::GetNodeFrame(uint16_t node){
+        if(node > mAnimationTracks.size()) return glm::mat4(1.0f);
+
+        GraphNodeTrack& track = mAnimationTracks[node];
+        float sx = track.mXScaleTrack.mKeys.size() > 0 ? MixTrack(track.mXScaleTrack, mTime, track.mPreviousScaleKeyX, track.mNextScaleKeyX) : 1.0f;
+        float sy = track.mYScaleTrack.mKeys.size() > 0 ? MixTrack(track.mYScaleTrack, mTime, track.mPreviousScaleKeyY, track.mNextScaleKeyY) : 1.0f;
+        float sz = track.mZScaleTrack.mKeys.size() > 0 ? MixTrack(track.mZScaleTrack, mTime, track.mPreviousScaleKeyZ, track.mNextScaleKeyZ) : 1.0f;
+
+        float rz = track.mXRotTrack.mKeys.size() > 0 ? MixTrack(track.mXRotTrack, mTime, track.mPreviousRotKeyX, track.mNextRotKeyX) : 0.0f;
+        float ry = track.mYRotTrack.mKeys.size() > 0 ? MixTrack(track.mYRotTrack, mTime, track.mPreviousRotKeyY, track.mNextRotKeyY) : 0.0f;
+        float rx = track.mZRotTrack.mKeys.size() > 0 ? MixTrack(track.mZRotTrack, mTime, track.mPreviousRotKeyZ, track.mNextRotKeyZ) : 0.0f;
+
+        float px = track.mXPosTrack.mKeys.size() > 0 ? MixTrack(track.mXPosTrack, mTime, track.mPreviousPosKeyX, track.mNextPosKeyX) : 0.0f;
+        float py = track.mYPosTrack.mKeys.size() > 0 ? MixTrack(track.mYPosTrack, mTime, track.mPreviousPosKeyY, track.mNextPosKeyY) : 0.0f;
+        float pz = track.mZPosTrack.mKeys.size() > 0 ? MixTrack(track.mZPosTrack, mTime, track.mPreviousPosKeyZ, track.mNextPosKeyZ) : 0.0f;
+
+        glm::mat4 frame(1.0f);
+        frame = glm::scale(frame, glm::vec3(sx, sy, sz));
+        frame = glm::rotate(frame, glm::radians(-rx), glm::vec3(1, 0, 0));
+        frame = glm::rotate(frame, glm::radians(-ry), glm::vec3(0, 1, 0));
+        frame = glm::rotate(frame, glm::radians(-rz), glm::vec3(0, 0, 1));
+        frame = glm::translate(frame, glm::vec3(pz, py, px));
+        return frame;
+    }
+    
+    void Animation::ResetTracks(){
+        for(auto& track : mAnimationTracks){
+            track.second.mPreviousScaleKeyX = 0;
+            track.second.mNextScaleKeyX = 1;
+            track.second.mPreviousScaleKeyY = 0;
+            track.second.mNextScaleKeyY = 1;
+            track.second.mPreviousScaleKeyZ = 0;
+            track.second.mNextScaleKeyZ = 1;
+            track.second.mPreviousRotKeyX = 0;
+            track.second.mNextRotKeyX = 1;
+            track.second.mPreviousRotKeyY = 0;
+            track.second.mNextRotKeyY = 1;
+            track.second.mPreviousRotKeyZ = 0;
+            track.second.mNextRotKeyZ = 1;
+            track.second.mPreviousPosKeyX = 0;
+            track.second.mNextPosKeyX = 1;
+            track.second.mPreviousPosKeyY = 0;
+            track.second.mNextPosKeyY = 1;
+            track.second.mPreviousPosKeyZ = 0;
+            track.second.mNextPosKeyZ = 1;
+        }
+    }
+
+    void Animation::Play() { 
+        mPlaying = true; 
+        mTime = 0.0f;
+        ResetTracks();
+    }
+    
+
+    void Animation::Stop() { 
+        mPlaying = false; 
+        mTime = 0.0f;
+        ResetTracks();
+    }   
+
+    void Animation::Load(Model* model, bStream::CStream* stream){
+        if(model == nullptr) return;
+        stream->readUInt8(); // version
+        mLoop = stream->readUInt8(); // loop
+
+        stream->readUInt16(); // padding
+        mFrameCount = stream->readUInt32(); // frame count
+
+        uint32_t scaleKeyOffset = stream->readUInt32();
+        uint32_t rotateKeyOffset = stream->readUInt32();
+        uint32_t translateKeyOffset = stream->readUInt32();
+        uint32_t groupOffset = stream->readUInt32();
+
+        for(int i = 0; i <= model->mGraphNodes.rbegin()->first; i++){
+            stream->seek(groupOffset + (i * 0x36));
+
+            GraphNodeTrack track;
+
+            track.mXScaleTrack.LoadTrack(stream, scaleKeyOffset, ETrackType::ANM);
+            track.mYScaleTrack.LoadTrack(stream, scaleKeyOffset, ETrackType::ANM);
+            track.mZScaleTrack.LoadTrack(stream, scaleKeyOffset, ETrackType::ANM);
+
+            track.mXRotTrack.LoadTrack(stream, rotateKeyOffset, ETrackType::ANM);
+            track.mYRotTrack.LoadTrack(stream, rotateKeyOffset, ETrackType::ANM);
+            track.mZRotTrack.LoadTrack(stream, rotateKeyOffset, ETrackType::ANM);
+
+            track.mXPosTrack.LoadTrack(stream, translateKeyOffset, ETrackType::ANM);
+            track.mYPosTrack.LoadTrack(stream, translateKeyOffset, ETrackType::ANM);
+            track.mZPosTrack.LoadTrack(stream, translateKeyOffset, ETrackType::ANM);
+
+            mAnimationTracks[i] = track;
+        }
+
+    }
+
 };

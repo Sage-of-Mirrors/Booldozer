@@ -817,7 +817,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	mSaveConfigsClicked = mGhostConfigs.RenderUI();
 
 	CameraAnimation::RenderPreview();
-	PreviewWidget::RenderPreview();
+	PreviewWidget::RenderPreview(dt);
 
 	ImGuiWindowClass mainWindowOverride;
 	mainWindowOverride.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;

@@ -17,22 +17,24 @@ void LTrackCommon::LoadTrackEx(bStream::CStream* stream, uint32_t keyframeDataOf
         
         LKeyframeCommon keyframe;
 
-        keyframe.frame = stream->readFloat();
+        if(valueSize == 2){
+            keyframe.frame = stream->readUInt16();
+        } else {
+            keyframe.frame = stream->readFloat();
+        }
 
         if(count == 1) {
-            keyframe.frame = 0;
             keyframe.value = keyframe.frame;
+            keyframe.frame = 0;
         } else {
             keyframe.value = KeyframeIO::ReadValue(stream, valueSize);
         }
         
-        if(hasSlopeIn){
-            keyframe.inslope = KeyframeIO::ReadValue(stream, valueSize);
-            
+        if(hasSlopeIn && count > 1){
+            keyframe.inslope = KeyframeIO::ReadValue(stream, valueSize) * 0.001533981f; /// huh????
+            keyframe.outslope = keyframe.inslope;
             if(hasSlopeOut){
-                keyframe.outslope = KeyframeIO::ReadValue(stream, valueSize);
-            } else {
-                keyframe.outslope = keyframe.inslope;
+                keyframe.outslope = KeyframeIO::ReadValue(stream, valueSize) * 0.001533981f;
             }
         }            
         mFrames.insert(std::make_pair((uint32_t)keyframe.frame, keyframe));

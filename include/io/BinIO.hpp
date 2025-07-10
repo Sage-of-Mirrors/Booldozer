@@ -9,15 +9,6 @@
 
 namespace BIN {
 
-    struct AnimInfo {
-    	bool mLoop { 0 };
-    	bool mPlaying { false };
-    	bool mLoaded { false };
-    	float mCurrentFrame { 0.0f }; // float so that we can change speed more easily
-    	float mPlaybackSpeed { 0.5f };
-    	uint32_t mFrameCount { 0 };
-    };
-
     #pragma pack(push, 1)
     struct Header {
         uint8_t Version { 0x02 };
@@ -192,12 +183,13 @@ namespace BIN {
     void InitShaders();
     void DestroyShaders();
 
+    class Animation;
+
     class Model
     {
     public:
         Header mHeader;
 
-        AnimInfo mAnim;
 
         std::map<uint16_t, TextureHeader> mTextureHeaders;
 
@@ -206,7 +198,6 @@ namespace BIN {
 
         std::map<uint16_t, Material> mMaterials;
         std::map<uint16_t, SceneGraphNode> mGraphNodes;
-        std::map<uint16_t, GraphNodeTrack> mAnimationTracks;
 
         std::vector<glm::vec3> mPositions;
         std::vector<glm::vec3> mNormals;
@@ -214,14 +205,11 @@ namespace BIN {
         std::vector<glm::vec4> mColors;
 
         void ReadSceneGraphNode(bStream::CStream* stream, uint32_t index);
-        void DrawScenegraphNode(uint32_t idx, glm::mat4 transform);
+        void DrawScenegraphNode(uint32_t idx, glm::mat4 transform, Animation* animation);
 
         glm::vec3 bbMax {0, 0, 0}, bbMin {0, 0, 0};
 
-        void LoadAnimation(bStream::CStream* stream);
-        void ClearAnimation();
-
-        void Draw(glm::mat4* transform, int32_t id, bool selected);
+        void Draw(glm::mat4* transform, int32_t id, bool selected, Animation* animation = nullptr);
 
         void Load(bStream::CStream* stream);
         void Write(bStream::CStream* stream);
@@ -231,6 +219,31 @@ namespace BIN {
 		Model(bStream::CStream* stream){ Load(stream); }
         Model(){}
         ~Model();
+    };
+
+    class Animation
+    {
+        bool mLoop { 0 };
+        bool mPlaying { false };
+        bool mLoaded { false };
+        float mTime { 0.0f }; // float so that we can change speed more easily
+        uint32_t mFrameCount { 0 };
+
+        std::map<uint16_t, GraphNodeTrack> mAnimationTracks;
+
+    public:
+        bool Playing() { return mPlaying; }
+        void ResetTracks();
+        void Play();
+        void Stop();    
+
+        glm::mat4 GetNodeFrame(uint16_t node);
+        void Step(float dt) { mTime += dt * 10; if(mTime >= mFrameCount && mLoop) { mTime = 0.0f; ResetTracks(); } else if(mTime >= mFrameCount) { mPlaying = false; } }
+
+        void Load(Model* model, bStream::CStream* stream);
+        
+        Animation(){}
+        ~Animation(){}
     };
 
 }

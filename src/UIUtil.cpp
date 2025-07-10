@@ -234,6 +234,7 @@ void LUIUtility::RenderTransformUI(glm::mat4* transform, glm::vec3& translation,
 	glm::vec4 persp;
 
 	glm::decompose(*transform, oldScale, oldRot, oldPos, skew, persp);
+	oldRot = glm::conjugate(oldRot);
 
 	if (ImGui::TreeNode("Transform"))
 	{

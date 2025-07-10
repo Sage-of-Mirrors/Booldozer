@@ -25,7 +25,7 @@ namespace PreviewWidget {
 
     void InitPreview();
     void CleanupPreview();
-    void RenderPreview();
+    void RenderPreview(float dt);
 
     void PlayAnimation();
     void PauseAnimation();

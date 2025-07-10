@@ -338,6 +338,16 @@ namespace MDL {
         }
 
         BuildScenegraphSkeleton(0, -1);
+
+        for(auto& bone : mSkeleton){
+            glm::mat4 transform = bone.Transform() * glm::inverse(bone.ParentTransform());
+            glm::vec3 skew;
+            glm::vec4 persp;
+            glm::decompose(transform, bone.Scale, bone.Rotation, bone.Translation, skew, persp);
+            bone.Rotation = glm::conjugate(bone.Rotation);
+            //std::cout << std::format("Bone Translation [{}, {}, {}], Rotation [{}, {}, {}]", bone.Translation.x, bone.Translation.y, bone.Translation.z, bone.Rotation.x, bone.Rotation.y, bone.Rotation.z) << std::endl;
+        }
+
         InitSkeletonRenderer(0, -1);
 
         // This whole section of the code is broken I think, but it isn't needed unless skinning gets added
@@ -537,12 +547,13 @@ namespace MDL {
     void Model::BuildScenegraphSkeleton(uint32_t index, uint32_t parentIndex){
         auto node = mGraphNodes[index];
         
+        glm::vec3 skew;
+        glm::vec4 persp;
+        glm::decompose(mMatrixTable[index], mSkeleton[index].Scale, mSkeleton[index].Rotation, mSkeleton[index].Translation, skew, persp);
+        mSkeleton[index].Rotation = glm::conjugate(mSkeleton[index].Rotation);
+        mSkeleton[index].ParentIndex = parentIndex;
         if(parentIndex != -1){
             mSkeleton[index].Parent = &mSkeleton[parentIndex];
-            glm::mat4 transform = mMatrixTable[parentIndex] * glm::inverse(mMatrixTable[parentIndex]);
-            glm::vec3 skew;
-            glm::vec4 persp;
-            glm::decompose(transform, mSkeleton[index].Scale, mSkeleton[index].Rotation, mSkeleton[index].Translation, skew, persp);            
         }
         
         if(node.ChildIndexShift > 0){
@@ -581,16 +592,15 @@ namespace MDL {
     void Model::Draw(glm::mat4* transform, int32_t id, bool selected, TXP::Animation* materialAnimtion, Animation* skeletalAnimation){
 
         std::vector<glm::mat4> skeleton;
+        skeleton.resize(mSkeleton.size());
         for(int i = 0; i < mSkeleton.size(); i++){
             glm::mat4 bone = mSkeleton[i].Transform();
             if(skeletalAnimation != nullptr){
-                glm::mat4 frameTransform = skeletalAnimation->GetJoint(i);
-                bone *= frameTransform;
+                skeleton[i] = bone * skeletalAnimation->GetJoint(i);
+            } else {
+                skeleton[i] = bone;
             }
-            skeleton.push_back(bone);
         }
-
-        if(skeletalAnimation != nullptr) skeletalAnimation->Step();
 
         glUseProgram(mProgram);
         glUniformMatrix4fv(glGetUniformLocation(mProgram, "transform"), 1, 0, &(*transform)[0][0]);
@@ -640,26 +650,54 @@ namespace MDL {
         }
     }
 
+    void Animation::ResetTracks(){
+        for(auto& joint : mJointAnimations){
+            joint.mPreviousScaleKeyX = 0;
+            joint.mPreviousScaleKeyY = 0;
+            joint.mPreviousScaleKeyZ = 0;
+            joint.mPreviousRotKeyX = 0;
+            joint.mPreviousRotKeyY = 0;
+            joint.mPreviousRotKeyZ = 0;
+            joint.mPreviousPosKeyX = 0;
+            joint.mPreviousPosKeyY = 0;
+            joint.mPreviousPosKeyZ = 0;        
+        
+            joint.mNextScaleKeyX = 1;
+            joint.mNextScaleKeyY = 1;
+            joint.mNextScaleKeyZ = 1;
+            joint.mNextRotKeyX = 1;
+            joint.mNextRotKeyY = 1;
+            joint.mNextRotKeyZ = 1;
+            joint.mNextPosKeyX = 1;
+            joint.mNextPosKeyY = 1;
+            joint.mNextPosKeyZ = 1;
+        }
+    }
+
     glm::mat4 Animation::GetJoint(uint32_t id){
+        if(id >= mJointAnimations.size()) return glm::mat4(1.0f);
+        //std::cout << "Id is " << id << std::endl;
         JointTrack& joint = mJointAnimations[id];
         glm::mat4 keyframe(1.0f);
         
-        float sx = MixTrack(joint.ScaleX, joint.ScaleX.mKeys.size(), mTime, joint.mPreviousScaleKeyX, joint.mNextScaleKeyX);
-        float sy = MixTrack(joint.ScaleY, joint.ScaleY.mKeys.size(), mTime, joint.mPreviousScaleKeyY, joint.mNextScaleKeyY);
-        float sz = MixTrack(joint.ScaleZ, joint.ScaleZ.mKeys.size(), mTime, joint.mPreviousScaleKeyZ, joint.mNextScaleKeyZ);
+        float sx = joint.ScaleX.mKeys.size() > 0 ? MixTrack(joint.ScaleX, mTime, joint.mPreviousScaleKeyX, joint.mNextScaleKeyX) : 1.0f;
+        float sy = joint.ScaleY.mKeys.size() > 0 ? MixTrack(joint.ScaleY, mTime, joint.mPreviousScaleKeyY, joint.mNextScaleKeyY) : 1.0f;
+        float sz = joint.ScaleZ.mKeys.size() > 0 ? MixTrack(joint.ScaleZ, mTime, joint.mPreviousScaleKeyZ, joint.mNextScaleKeyZ) : 1.0f;
 
-        float rz = MixTrack(joint.RotationX, joint.RotationX.mKeys.size(), mTime, joint.mPreviousRotKeyX, joint.mNextRotKeyX);
-        float ry = MixTrack(joint.RotationY, joint.RotationY.mKeys.size(), mTime, joint.mPreviousRotKeyY, joint.mNextRotKeyY);
-        float rx = MixTrack(joint.RotationZ, joint.RotationZ.mKeys.size(), mTime, joint.mPreviousRotKeyZ, joint.mNextRotKeyZ);
+        float rz = joint.RotationX.mKeys.size() > 0 ? MixTrack(joint.RotationX, mTime, joint.mPreviousRotKeyX, joint.mNextRotKeyX) : 0.0f;
+        float ry = joint.RotationY.mKeys.size() > 0 ? MixTrack(joint.RotationY, mTime, joint.mPreviousRotKeyY, joint.mNextRotKeyY) : 0.0f;
+        float rx = joint.RotationZ.mKeys.size() > 0 ? MixTrack(joint.RotationZ, mTime, joint.mPreviousRotKeyZ, joint.mNextRotKeyZ) : 0.0f;
 
-        float px = MixTrack(joint.PositionX, joint.PositionX.mKeys.size(), mTime, joint.mPreviousPosKeyX, joint.mNextPosKeyX);
-        float py = MixTrack(joint.PositionY, joint.PositionY.mKeys.size(), mTime, joint.mPreviousPosKeyY, joint.mNextPosKeyY);
-        float pz = MixTrack(joint.PositionZ, joint.PositionZ.mKeys.size(), mTime, joint.mPreviousPosKeyZ, joint.mNextPosKeyZ);
+        float px = joint.PositionX.mKeys.size() > 0 ? MixTrack(joint.PositionX, mTime, joint.mPreviousPosKeyX, joint.mNextPosKeyX) : 0.0f;
+        float py = joint.PositionY.mKeys.size() > 0 ? MixTrack(joint.PositionY, mTime, joint.mPreviousPosKeyY, joint.mNextPosKeyY) : 0.0f;
+        float pz = joint.PositionZ.mKeys.size() > 0 ? MixTrack(joint.PositionZ, mTime, joint.mPreviousPosKeyZ, joint.mNextPosKeyZ) : 0.0f;
+
+        //std::cout << std::format("Frame Data: [{}, {}, {}][{}, {}, {}][{}, {}, {}]", pz, py, px, rz, ry, rx, sz, sy, sx) << std::endl;
 
         keyframe = glm::scale(keyframe, glm::vec3(sz, sy, sx));
-        keyframe = glm::rotate(keyframe, glm::radians(rz), glm::vec3(1, 0, 0));
-        keyframe = glm::rotate(keyframe, glm::radians(ry), glm::vec3(0, 1, 0));
-        keyframe = glm::rotate(keyframe, glm::radians(rx), glm::vec3(0, 0, 1));
+        keyframe = glm::rotate(keyframe, glm::radians(-rz), glm::vec3(1, 0, 0));
+        keyframe = glm::rotate(keyframe, glm::radians(-ry), glm::vec3(0, 1, 0));
+        keyframe = glm::rotate(keyframe, glm::radians(-rx), glm::vec3(0, 0, 1));
         keyframe = glm::translate(keyframe, glm::vec3(sz, sy, sx));
 
         return keyframe;
@@ -667,11 +705,13 @@ namespace MDL {
 
     void Animation::Load(bStream::CStream* stream){
         uint32_t jointCount = stream->readUInt32();
+        std::cout << std::format("Joint Count: {}", jointCount) << std::endl;
         uint16_t frameCount = stream->readUInt16();
         uint16_t frameSpeed = stream->readUInt16();
         uint32_t flags = stream->readUInt32();
 
         mSpeed = frameSpeed;
+        mEnd = frameCount;
         
         uint32_t scaleKeyframeOffset = stream->readUInt32();
         uint32_t rotationKeyframeOffset = stream->readUInt32();
@@ -706,17 +746,17 @@ namespace MDL {
             for(int j = 0; j < jointCount; j++){
                 JointTrack& joint = mJointAnimations[j];
 
-                joint.ScaleX.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][0], std::get<0>(trackFlags[j][0]), true, std::get<1>(trackFlags[j][0]) == 0x80);
-                joint.ScaleY.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][1], std::get<0>(trackFlags[j][1]), true, std::get<1>(trackFlags[j][1]) == 0x80);
-                joint.ScaleZ.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][2], std::get<0>(trackFlags[j][2]), true, std::get<1>(trackFlags[j][2]) == 0x80);
+                joint.ScaleX.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][0], std::get<1>(trackFlags[j][0]), true, std::get<0>(trackFlags[j][0]) == 0x80);
+                joint.ScaleY.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][1], std::get<1>(trackFlags[j][1]), true, std::get<0>(trackFlags[j][1]) == 0x80);
+                joint.ScaleZ.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][2], std::get<1>(trackFlags[j][2]), true, std::get<0>(trackFlags[j][2]) == 0x80);
 
-                joint.RotationX.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][3], std::get<0>(trackFlags[j][3]), true, std::get<1>(trackFlags[j][3]) == 0x80, 2);
-                joint.RotationY.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][4], std::get<0>(trackFlags[j][4]), true, std::get<1>(trackFlags[j][4]) == 0x80, 2);
-                joint.RotationZ.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][5], std::get<0>(trackFlags[j][5]), true, std::get<1>(trackFlags[j][5]) == 0x80, 2);
+                joint.RotationX.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][3], std::get<1>(trackFlags[j][3]), true, std::get<0>(trackFlags[j][3]) == 0x80, 2);
+                joint.RotationY.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][4], std::get<1>(trackFlags[j][4]), true, std::get<0>(trackFlags[j][4]) == 0x80, 2);
+                joint.RotationZ.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][5], std::get<1>(trackFlags[j][5]), true, std::get<0>(trackFlags[j][5]) == 0x80, 2);
             
-                joint.PositionX.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][6], std::get<0>(trackFlags[j][6]), true, std::get<1>(trackFlags[j][6]) == 0x80);
-                joint.PositionY.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][7], std::get<0>(trackFlags[j][7]), true, std::get<1>(trackFlags[j][7]) == 0x80);
-                joint.PositionZ.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][8], std::get<0>(trackFlags[j][8]), true, std::get<1>(trackFlags[j][8]) == 0x80);
+                joint.PositionX.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][6], std::get<1>(trackFlags[j][6]), true, std::get<0>(trackFlags[j][6]) == 0x80);
+                joint.PositionY.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][7], std::get<1>(trackFlags[j][7]), true, std::get<0>(trackFlags[j][7]) == 0x80);
+                joint.PositionZ.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][8], std::get<1>(trackFlags[j][8]), true, std::get<0>(trackFlags[j][8]) == 0x80);
             }
         }
     }

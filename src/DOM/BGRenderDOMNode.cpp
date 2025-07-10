@@ -34,6 +34,7 @@ void LBGRenderDOMNode::RenderBG(float dt)
 		glm::vec3 skew;
 		glm::vec4 persp;
 		glm::decompose(*mTransform.get(), mScale, rotQuat, mPosition, skew, persp);
+		rotQuat = glm::conjugate(rotQuat);
 
 		glm::vec3 rot = glm::eulerAngles(rotQuat);
 		mRotation.x = (glm::degrees(rot.x) == 180.0f ? 0.0f : glm::degrees(rot.x));

@@ -452,8 +452,8 @@ bool LPrmIO::RenderUI()
                                 PreviewWidget::LoadModel(&modelData, EModelType::Actor);
                             }
 
-                            if(modelName == "obake01"){
-                                std::shared_ptr<Archive::File> animFile = modelArchive->GetFile(std::filesystem::path("key") / "appear.key");
+                            if(modelArchive->GetFolder("key") != nullptr && modelArchive->GetFolder("key")->GetFileCount() > 0){
+                                std::shared_ptr<Archive::File> animFile = modelArchive->GetFolder("key")->GetFiles()[0];
                                 bStream::CMemoryStream animStream(animFile->GetData(), animFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
                                 PreviewWidget::SetSkeletalAnimation(&animStream);
                             }
