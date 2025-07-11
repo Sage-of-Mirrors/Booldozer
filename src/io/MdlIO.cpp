@@ -5,6 +5,7 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 #include <format>
+#include <array>
 
 namespace MDL {
     void SceneGraphNode::Read(bStream::CStream* stream){
@@ -726,8 +727,8 @@ namespace MDL {
         for(uint32_t i = 0; i < jointCount; i++){
             std::array<std::pair<uint8_t, uint8_t>, 9> flags;
             for(uint32_t j = 0; j < 9; j++){
-                std::get<0>(flags[j]) = stream->readUInt8();
-                std::get<1>(flags[j]) = stream->readUInt8();
+                flags[j].first = stream->readUInt8();
+                flags[j].second = stream->readUInt8();
             }
             trackFlags.push_back(flags);
         }
