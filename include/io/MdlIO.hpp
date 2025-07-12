@@ -147,14 +147,15 @@ namespace MDL {
     struct Bone {
         int32_t ParentIndex { -1 };
         Bone* Parent { nullptr };
-        glm::mat4 Transform;
-        glm::mat4 InverseTransform;
+        glm::mat4 Model { 1.0f };
+        glm::mat4 Local { 1.0f };
+        glm::mat4 InverseModel { 1.0f };
 
-        glm::mat4 ParentTransform(){
-            if(Parent != nullptr){
-                return Transform * Parent->ParentTransform();
+        glm::mat4 Transform(){
+            if(Parent == nullptr){
+                return Local;
             } else {
-                return Transform;
+                return Parent->Transform() * Local;
             }
         }
 
@@ -214,10 +215,10 @@ namespace MDL {
         float mSpeed { 0.1f };
         float mEnd { 0.0f };
 
-        std::vector<JointTrack> mJointAnimations;
     public:
+        std::vector<JointTrack> mJointAnimations;
         void ResetTracks();
-        glm::mat4 GetJoint(uint32_t id);
+        glm::mat4 GetJoint(glm::mat4 local, uint32_t id);
         void Load(bStream::CStream* stream);
         void Step(float dt){ mTime += dt; if(mTime > mEnd){ mTime = 0.0f; ResetTracks(); } }
         Animation(){}
@@ -248,7 +249,6 @@ namespace MDL {
         std::vector<Weight> mWeights;
         std::vector<Bone> mSkeleton;
 
-        void SetupInverseBindPose();
         void BuildScenegraphSkeleton(uint32_t index, uint32_t parentIndex);
         void InitSkeletonRenderer(uint32_t index, uint32_t parentIndex);
 

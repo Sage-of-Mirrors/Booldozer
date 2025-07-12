@@ -336,14 +336,18 @@ namespace MDL {
                     0,                                     0,                   0,                   1
             };
             mMatrixTable[i] = glm::inverseTranspose(mMatrixTable[i]);
-            mSkeleton[i].Transform = mMatrixTable[i];
+            mSkeleton[i].Model = mMatrixTable[i];
+            mSkeleton[i].InverseModel = glm::inverse(mMatrixTable[i]);
         }
 
         BuildScenegraphSkeleton(0, -1);
 
-        for(auto& bone : mSkeleton){
-            bone.InverseTransform = glm::inverse(bone.ParentTransform());
-            bone.Transform *= bone.InverseTransform;
+        for(auto& bone : mSkeleton){ // Generate local matrices for each bone in the
+            if(bone.Parent != nullptr){
+                bone.Local = glm::inverse(bone.Parent->Transform()) * bone.Model;
+            } else {
+                bone.Local = glm::mat4(1.0f);
+            }
         }
 
         InitSkeletonRenderer(0, -1);
@@ -585,14 +589,16 @@ namespace MDL {
 
     void Model::Draw(glm::mat4* transform, int32_t id, bool selected, TXP::Animation* materialAnimtion, Animation* skeletalAnimation){
 
-        std::vector<glm::mat4> skeleton;
-        skeleton.resize(mSkeleton.size());
-        for(int i = 0; i < mSkeleton.size(); i++){
-            if(skeletalAnimation != nullptr){
-                skeleton[i] = (mSkeleton[i].Transform * skeletalAnimation->GetJoint(i)) * mSkeleton[i].InverseTransform;
+        std::vector<glm::mat4> skeleton(mSkeleton.size());
+        for(int i = 0; i < skeleton.size(); i++){
+            if(mSkeleton[i].ParentIndex != -1){
+                skeleton[i] = skeleton[mSkeleton[i].ParentIndex] * (skeletalAnimation != nullptr && skeletalAnimation->mJointAnimations.size() >= i ? skeletalAnimation->GetJoint(mSkeleton[i].Local, i) : mSkeleton[i].Local);
             } else {
-                skeleton[i] = mSkeleton[i].Transform;
+                skeleton[i] = mSkeleton[i].Local;
             }
+        }
+        for(int i = 0; i < skeleton.size(); i++){
+            skeleton[i] = skeleton[i] * mSkeleton[i].InverseModel;
         }
 
         glUseProgram(mProgram);
@@ -667,31 +673,37 @@ namespace MDL {
         }
     }
 
-    glm::mat4 Animation::GetJoint(uint32_t id){
-        if(id >= mJointAnimations.size()) return glm::mat4(1.0f);
+    glm::mat4 Animation::GetJoint(glm::mat4 local, uint32_t id){
+        if(id >= mJointAnimations.size()) return local;
         //std::cout << "Id is " << id << std::endl;
         JointTrack& joint = mJointAnimations[id];
         glm::mat4 keyframe(1.0f);
+
+        glm::vec3 translation, scale, skew;
+        glm::vec4 persp;
+        glm::quat rot;
+
+        glm::decompose(local, scale, rot, translation, skew, persp);
+
+        glm::vec3 rotEuler = glm::eulerAngles(rot);
         
-        float sx = joint.ScaleX.mKeys.size() > 0 ? MixTrack(joint.ScaleX, mTime, joint.mPreviousScaleKeyX, joint.mNextScaleKeyX) : 1.0f;
-        float sy = joint.ScaleY.mKeys.size() > 0 ? MixTrack(joint.ScaleY, mTime, joint.mPreviousScaleKeyY, joint.mNextScaleKeyY) : 1.0f;
-        float sz = joint.ScaleZ.mKeys.size() > 0 ? MixTrack(joint.ScaleZ, mTime, joint.mPreviousScaleKeyZ, joint.mNextScaleKeyZ) : 1.0f;
+        if(joint.ScaleX.mKeys.size() > 0) scale.z = MixTrack(joint.ScaleX, mTime, joint.mPreviousScaleKeyX, joint.mNextScaleKeyX);
+        if(joint.ScaleY.mKeys.size() > 0) scale.y = MixTrack(joint.ScaleY, mTime, joint.mPreviousScaleKeyY, joint.mNextScaleKeyY);
+        if(joint.ScaleZ.mKeys.size() > 0) scale.x = MixTrack(joint.ScaleZ, mTime, joint.mPreviousScaleKeyZ, joint.mNextScaleKeyZ);
 
-        float rz = joint.RotationX.mKeys.size() > 0 ? MixTrack(joint.RotationX, mTime, joint.mPreviousRotKeyX, joint.mNextRotKeyX) : 0.0f;
-        float ry = joint.RotationY.mKeys.size() > 0 ? MixTrack(joint.RotationY, mTime, joint.mPreviousRotKeyY, joint.mNextRotKeyY) : 0.0f;
-        float rx = joint.RotationZ.mKeys.size() > 0 ? MixTrack(joint.RotationZ, mTime, joint.mPreviousRotKeyZ, joint.mNextRotKeyZ) : 0.0f;
+        if(joint.RotationX.mKeys.size() > 0) rotEuler.z = glm::radians(MixTrack(joint.RotationX, mTime, joint.mPreviousRotKeyX, joint.mNextRotKeyX));
+        if(joint.RotationY.mKeys.size() > 0) rotEuler.y = glm::radians(MixTrack(joint.RotationY, mTime, joint.mPreviousRotKeyY, joint.mNextRotKeyY));
+        if(joint.RotationZ.mKeys.size() > 0) rotEuler.x = glm::radians(MixTrack(joint.RotationZ, mTime, joint.mPreviousRotKeyZ, joint.mNextRotKeyZ));
 
-        float px = joint.PositionX.mKeys.size() > 0 ? MixTrack(joint.PositionX, mTime, joint.mPreviousPosKeyX, joint.mNextPosKeyX) : 0.0f;
-        float py = joint.PositionY.mKeys.size() > 0 ? MixTrack(joint.PositionY, mTime, joint.mPreviousPosKeyY, joint.mNextPosKeyY) : 0.0f;
-        float pz = joint.PositionZ.mKeys.size() > 0 ? MixTrack(joint.PositionZ, mTime, joint.mPreviousPosKeyZ, joint.mNextPosKeyZ) : 0.0f;
+        if(joint.PositionX.mKeys.size() > 0) translation.z = MixTrack(joint.PositionX, mTime, joint.mPreviousPosKeyX, joint.mNextPosKeyX);
+        if(joint.PositionY.mKeys.size() > 0) translation.y = MixTrack(joint.PositionY, mTime, joint.mPreviousPosKeyY, joint.mNextPosKeyY);
+        if(joint.PositionZ.mKeys.size() > 0) translation.x = MixTrack(joint.PositionZ, mTime, joint.mPreviousPosKeyZ, joint.mNextPosKeyZ);
 
-        std::cout << std::format("Frame Data: [{}, {}, {}][{}, {}, {}][{}, {}, {}]", pz, py, px, rz, ry, rx, sz, sy, sx) << std::endl;
-
-        keyframe = glm::scale(keyframe, glm::vec3(sz, sy, sx));
-        keyframe = glm::rotate(keyframe, glm::radians(-rz), glm::vec3(1, 0, 0));
-        keyframe = glm::rotate(keyframe, glm::radians(-ry), glm::vec3(0, 1, 0));
-        keyframe = glm::rotate(keyframe, glm::radians(-rx), glm::vec3(0, 0, 1));
-        keyframe = glm::translate(keyframe, glm::vec3(sz, sy, sx));
+        keyframe = glm::scale(keyframe, scale);
+        keyframe = glm::rotate(keyframe, rotEuler.x, glm::vec3(1, 0, 0));
+        keyframe = glm::rotate(keyframe, rotEuler.y, glm::vec3(0, 1, 0));
+        keyframe = glm::rotate(keyframe, rotEuler.z, glm::vec3(0, 0, 1));
+        keyframe = glm::translate(keyframe, translation);
 
         return keyframe;
     }
