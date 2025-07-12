@@ -589,7 +589,7 @@ namespace MDL {
         skeleton.resize(mSkeleton.size());
         for(int i = 0; i < mSkeleton.size(); i++){
             if(skeletalAnimation != nullptr){
-                skeleton[i] = skeletalAnimation->GetJoint(i) * mSkeleton[i].InverseTransform;
+                skeleton[i] = (mSkeleton[i].Transform * skeletalAnimation->GetJoint(i)) * mSkeleton[i].InverseTransform;
             } else {
                 skeleton[i] = mSkeleton[i].Transform;
             }
