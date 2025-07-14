@@ -183,6 +183,7 @@ namespace PreviewWidget {
         }
         ActorSkeletalAnimation = new MDL::Animation();
         ActorSkeletalAnimation->Load(AnimStream);
+        ActorSkeletalAnimation->ResetTracks();
     }
 
     void UnloadModel(){
@@ -254,6 +255,9 @@ namespace PreviewWidget {
 
                 //ModelActor->Draw(&Identity, 0, false, ActorTxp, nullptr);
                 ModelActor->Draw(&Identity, 0, false, ActorTxp, ActorSkeletalAnimation);
+                glDisable(GL_DEPTH_TEST);
+                ModelActor->mSkeletonRenderer.Draw(&Camera, false);
+                glEnable(GL_DEPTH_TEST);
                 if(ActorSkeletalAnimation != nullptr){
                     ActorSkeletalAnimation->Step(dt);
                 }

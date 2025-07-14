@@ -17,18 +17,19 @@ void LTrackCommon::LoadTrackEx(bStream::CStream* stream, uint32_t keyframeDataOf
         
         LKeyframeCommon keyframe;
 
-        if(valueSize == 2){
-            keyframe.frame = stream->readUInt16();
-        } else {
-            keyframe.frame = stream->readFloat();
-        }
-
         if(count == 1) {
-            keyframe.value = keyframe.frame;
+            keyframe.value = KeyframeIO::ReadValue(stream, valueSize);
             keyframe.frame = 0;
         } else {
+            if(valueSize == 2){
+                keyframe.frame = stream->readUInt16();
+            } else {
+                keyframe.frame = stream->readFloat();
+            }
             keyframe.value = KeyframeIO::ReadValue(stream, valueSize);
         }
+        
+
         
         if(hasSlopeIn && count > 1){
             keyframe.inslope = KeyframeIO::ReadValue(stream, valueSize) * 0.001533981f; /// huh????

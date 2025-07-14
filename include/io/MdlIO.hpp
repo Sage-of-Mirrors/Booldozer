@@ -209,6 +209,12 @@ namespace MDL {
         uint32_t mNextRotKeyZ { 1 };
     };
 
+    struct AnimJoint {
+        uint32_t BeginIndex;
+        uint8_t Flags;
+        uint8_t FrameCount;
+    };
+
     class Animation {
     private:
         float mTime { 0.0f };
@@ -220,7 +226,7 @@ namespace MDL {
         void ResetTracks();
         glm::mat4 GetJoint(glm::mat4 local, uint32_t id);
         void Load(bStream::CStream* stream);
-        void Step(float dt){ mTime += dt; if(mTime > mEnd){ mTime = 0.0f; ResetTracks(); } }
+        void Step(float dt){ mTime += dt*10; if(mTime >= mEnd){ mTime = 0.0f; ResetTracks(); } }
         Animation(){}
         ~Animation(){}
     };

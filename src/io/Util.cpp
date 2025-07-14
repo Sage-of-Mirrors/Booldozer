@@ -22,9 +22,6 @@ float InterpolateHermite(float factor, float timeA, float valueA, float outTange
 float MixTrack(LTrackCommon& track, float time, uint32_t& previousKey, uint32_t& nextKey){
 	if(track.mKeys.size() == 1) track.mFrames[track.mKeys[0]];
 	if(nextKey < track.mKeys.size()){
-		float v = glm::mix(track.mFrames[track.mKeys[previousKey]].value, track.mFrames[track.mKeys[nextKey]].value, (time - track.mFrames[track.mKeys[previousKey]].frame) / (track.mFrames[track.mKeys[nextKey]].frame - track.mFrames[track.mKeys[previousKey]].frame));
-		
-		/*
 		float v = InterpolateHermite(
 			(time - track.mFrames[track.mKeys[previousKey]].frame) / (track.mFrames[track.mKeys[nextKey]].frame - track.mFrames[track.mKeys[previousKey]].frame),
 			track.mFrames[track.mKeys[previousKey]].frame,
@@ -34,8 +31,7 @@ float MixTrack(LTrackCommon& track, float time, uint32_t& previousKey, uint32_t&
 			track.mFrames[track.mKeys[nextKey]].value,
 			track.mFrames[track.mKeys[nextKey]].inslope
 		);
-		*/
-
+		
 		if(time >= track.mFrames[track.mKeys[nextKey]].frame){
 			nextKey += 1;
 			previousKey +=1;

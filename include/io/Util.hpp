@@ -58,7 +58,7 @@ struct Vertex {
     glm::vec3 Tangent;
     glm::vec4 Color { 1.0f, 1.0f, 1.0f, 1.0f };
 	int BoneIndices[4] { -1, -1, -1, -1 };
-	glm::vec4 Weights { 0.0f };
+	float Weights[4] { 0.0f, 0.0f, 0.0f, 0.0f };
     glm::vec2 Texcoord;
 	glm::vec2 Texcoord1;
 };
