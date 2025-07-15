@@ -11,43 +11,43 @@ namespace MDL {
 
     #pragma pack(push, 1)
     struct MDLHeader {
-        uint32_t Magic;
-        uint16_t FaceCount;
-        uint16_t Padding;
-        uint16_t SceneGraphNodeCount;
-        uint16_t PacketCount;
-        uint16_t WeightCount;
-        uint16_t JointCount;
-        uint16_t PositionCount;
-        uint16_t NormalCount;
-        uint16_t ColorCount;
-        uint16_t TexCoordCount;
-        uint8_t Padding2[8];
-        uint16_t TextureCount;
-        uint16_t Padding3;
-        uint16_t SamplerCount;
-        uint16_t DrawElementCount;
-        uint16_t MaterialCount;
-        uint16_t ShapeCount;
-        uint32_t Padding4;
-        uint32_t SceneGraphOffset;
-        uint32_t PacketOffset;
-        uint32_t InverseMatrixOffset;
-        uint32_t WeightOffset;
-        uint32_t JointIndexOffset;
-        uint32_t WeightCountTableOffset;
-        uint32_t PositionOffset;
-        uint32_t NormalsOffset;
-        uint32_t ColorsOffset;
-        uint32_t TexCoordsOffset;
-        uint8_t Padding5[8];
-        uint32_t TextureOffsetArray;
-        uint32_t Padding6;
-        uint32_t MaterialOffset;
-        uint32_t SamplerOffset;
-        uint32_t ShapeOffset;
-        uint32_t DrawElementOffset;
-        uint8_t Padding7[8];
+        uint32_t Magic { 0 };
+        uint16_t FaceCount { 0 };
+        uint16_t Padding { 0 };
+        uint16_t SceneGraphNodeCount { 0 };
+        uint16_t PacketCount { 0 };
+        uint16_t WeightCount { 0 };
+        uint16_t JointCount { 0 };
+        uint16_t PositionCount { 0 };
+        uint16_t NormalCount { 0 };
+        uint16_t ColorCount { 0 };
+        uint16_t TexCoordCount { 0 };
+        uint8_t Padding2 { 0 }[8];
+        uint16_t TextureCount { 0 };
+        uint16_t Padding3 { 0 };
+        uint16_t SamplerCount { 0 };
+        uint16_t DrawElementCount { 0 };
+        uint16_t MaterialCount { 0 };
+        uint16_t ShapeCount { 0 };
+        uint32_t Padding4 { 0 };
+        uint32_t SceneGraphOffset { 0 };
+        uint32_t PacketOffset { 0 };
+        uint32_t InverseMatrixOffset { 0 };
+        uint32_t WeightOffset { 0 };
+        uint32_t JointIndexOffset { 0 };
+        uint32_t WeightCountTableOffset { 0 };
+        uint32_t PositionOffset { 0 };
+        uint32_t NormalsOffset { 0 };
+        uint32_t ColorsOffset { 0 };
+        uint32_t TexCoordsOffset { 0 };
+        uint8_t Padding5 { 0 }[8];
+        uint32_t TextureOffsetArray { 0 };
+        uint32_t Padding6 { 0 };
+        uint32_t MaterialOffset { 0 };
+        uint32_t SamplerOffset { 0 };
+        uint32_t ShapeOffset { 0 };
+        uint32_t DrawElementOffset { 0 };
+        uint8_t Padding7 { 0 }[8];
     };
     #pragma pack(pop)
 
@@ -66,6 +66,7 @@ namespace MDL {
         uint32_t PaddingSecond;
 
         void Read(bStream::CStream* stream) override;
+        void Save(bStream::CStream* stream);
     };
 
     struct DrawElement : Readable {
@@ -73,6 +74,7 @@ namespace MDL {
         uint16_t ShapeIndex;
 
         void Read(bStream::CStream* stream) override;
+        void Save(bStream::CStream* stream);
     };
 
     struct Shape : Readable {
@@ -86,6 +88,7 @@ namespace MDL {
         uint32_t Vao, Vbo, VertexCount; // Bind these for rendering
 
         void Read(bStream::CStream* stream) override;
+        void Save(bStream::CStream* stream);
         void Destroy();
     };
 
@@ -96,8 +99,10 @@ namespace MDL {
         uint16_t MatrixCount;
         uint16_t MatrixIndices[10];
 
+        std::vector<Primitive> Primitives;
 
         void Read(bStream::CStream* stream) override;
+        void Save(bStream::CStream* stream);
         void Destroy(); // Delete arrays
     };
 
@@ -117,6 +122,7 @@ namespace MDL {
         std::vector<TevStage> TevStages;
 
         void Read(bStream::CStream* stream) override;
+        void Save(bStream::CStream* stream);
     };
 
     struct Sampler : Readable {
@@ -128,6 +134,7 @@ namespace MDL {
         uint8_t Unknown2;
 
         void Read(bStream::CStream* stream) override;
+        void Save(bStream::CStream* stream);
     };
 
     struct TextureHeader : Readable {
@@ -137,9 +144,11 @@ namespace MDL {
         uint16_t Height;
         uint8_t Padding2[26];
 
+        uint8_t* ImageData { nullptr };
         uint32_t TextureID { UINT32_MAX }; // Bind this for rendering
 
         void Read(bStream::CStream* stream) override;
+        void Save(bStream::CStream* stream);
 
         void Destroy();
     };
@@ -236,15 +245,15 @@ namespace MDL {
 
         MDLHeader mHeader;
 
-        std::vector<TextureHeader> mTextureHeaders;
+        std::map<int, TextureHeader> mTextureHeaders;
 
-        std::vector<Sampler> mSamplers;
-        std::vector<Shape> mShapes;
-        std::vector<Packet> mPackets;
-        std::vector<DrawElement> mDrawElements;
+        std::map<int, Sampler> mSamplers;
+        std::map<int, Shape> mShapes;
+        std::map<int, Packet> mPackets;
+        std::map<int, DrawElement> mDrawElements;
 
-        std::vector<Material> mMaterials;
-        std::vector<SceneGraphNode> mGraphNodes;
+        std::map<int, Material> mMaterials;
+        std::map<int, SceneGraphNode> mGraphNodes;
 
         std::vector<glm::vec3> mPositions;
         std::vector<glm::vec3> mNormals;
@@ -264,6 +273,7 @@ namespace MDL {
         CPathRenderer mSkeletonRenderer;
         void Draw(glm::mat4* transform, int32_t id, bool selected, TXP::Animation* materialAnimtion = nullptr, Animation* skeletalAnimation = nullptr);
         void Load(bStream::CStream* stream);
+        void Save(bStream::CStream* stream);
 
         Model(){}
         ~Model();

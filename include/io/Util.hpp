@@ -52,13 +52,14 @@ enum GXPrimitiveType {
 };
 
 struct Vertex {
+	int32_t Matrix;
     glm::vec3 Position;
     glm::vec3 Normal;
     glm::vec3 Binormal;
     glm::vec3 Tangent;
     glm::vec4 Color { 1.0f, 1.0f, 1.0f, 1.0f };
-	int BoneIndices[4] { -1, -1, -1, -1 };
-	float Weights[4] { 0.0f, 0.0f, 0.0f, 0.0f };
+	int BoneIndices[10] { -1, -1, -1, -1 };
+	float Weights[10] { 0.0f, 0.0f, 0.0f, 0.0f };
     glm::vec2 Texcoord;
 	glm::vec2 Texcoord1;
 };
@@ -67,9 +68,16 @@ struct PrimitiveVertex {
     int8_t Matrix;
     int16_t Position;
     int16_t Normal;
+	int16_t Binormal;
+	int16_t Tangent;
     int16_t Color;
     int16_t Texcoord;
 	int16_t Texcoord1;
+};
+
+struct Primitive {
+	uint8_t Opcode;
+	std::vector<Vertex> Vertices;
 };
 
 struct Readable {

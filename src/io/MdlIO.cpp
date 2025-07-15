@@ -21,6 +21,16 @@ namespace MDL {
         PaddingSecond = stream->readUInt32();
     }
 
+    void SceneGraphNode::Save(bStream::CStream* stream){
+        stream->writeUInt16(InverseMatrixIndex);
+        stream->writeUInt16(ChildIndexShift);
+        stream->writeUInt16(SiblingIndexShift);
+        stream->writeUInt16(PaddingFirst);
+        stream->writeUInt16(DrawElementCount);
+        stream->writeUInt16(DrawElementBeginIndex);
+        stream->writeUInt32(PaddingSecond);
+    }
+
     void Sampler::Read(bStream::CStream* stream){
         TextureIndex = stream->readUInt16();
         UnknownIndex = stream->readUInt16();
@@ -28,6 +38,15 @@ namespace MDL {
         WrapV = stream->readUInt8();
         Unknown1 = stream->readUInt8();
         Unknown2 = stream->readUInt8();
+    }
+
+    void Sampler::Save(bStream::CStream* stream){
+        stream->writeUInt16(TextureIndex);
+        stream->writeUInt16(UnknownIndex);
+        stream->writeUInt8(WrapU);
+        stream->writeUInt8(WrapV);
+        stream->writeUInt8(Unknown1);
+        stream->writeUInt8(Unknown2);
     }
 
     void Material::Read(bStream::CStream* stream){
@@ -54,9 +73,39 @@ namespace MDL {
 
     }
 
+    void Material::Save(bStream::CStream* stream){
+        stream->writeUInt8(DiffuseColor.r * 255);
+        stream->writeUInt8(DiffuseColor.g * 255);
+        stream->writeUInt8(DiffuseColor.b * 255);
+        stream->writeUInt8(DiffuseColor.a * 255);
+        stream->writeUInt16(Unknown);
+        stream->writeUInt8(AlphaFlag);
+        stream->writeUInt8(TevStageCount);
+        stream->writeUInt8(Unknown2);
+        stream->readBytesTo(Padding, sizeof(Padding));
+
+        for(int i = 0; i < 8; i++){
+            stream->writeUInt16(TevStages[i].Unknown);
+            stream->writeUInt16(TevStages[i].SamplerIndex);
+            stream->writeFloat(TevStages[i].UnknownFloats[0]);
+            stream->writeFloat(TevStages[i].UnknownFloats[1]);
+            stream->writeFloat(TevStages[i].UnknownFloats[2]);
+            stream->writeFloat(TevStages[i].UnknownFloats[3]);
+            stream->writeFloat(TevStages[i].UnknownFloats[4]);
+            stream->writeFloat(TevStages[i].UnknownFloats[5]);
+            stream->writeFloat(TevStages[i].UnknownFloats[6]);
+        }
+
+    }
+
     void DrawElement::Read(bStream::CStream* stream){
         MaterialIndex = stream->readUInt16();
         ShapeIndex = stream->readUInt16();
+    }
+
+    void DrawElement::Save(bStream::CStream* stream){
+        stream->writeUInt16(MaterialIndex);
+        stream->writeUInt16(ShapeIndex);
     }
 
     void Shape::Read(bStream::CStream* stream){
@@ -68,14 +117,30 @@ namespace MDL {
         PacketBeginIndex = stream->readUInt16();
     }
 
+    void Shape::Save(bStream::CStream* stream){
+        stream->writeUInt8(NormalFlag);
+        stream->writeUInt8(Unknown);
+        stream->writeUInt8(SurfaceFlags);
+        stream->writeUInt8(UnknownFlag);
+        stream->writeUInt16(PacketCount);
+        stream->writeUInt16(PacketBeginIndex);
+    }
+
     void Packet::Read(bStream::CStream* stream){
         DataOffset = stream->readUInt32();
         DataSize = stream->readUInt32();
         Unknown = stream->readUInt16();
         MatrixCount = stream->readUInt16();
         for(int i = 0; i < 10; i++) MatrixIndices[i] = stream->readUInt16();
-
     }
+
+    void Packet::Save(bStream::CStream* stream){
+        stream->writeUInt32(DataOffset);
+        stream->writeUInt32(DataSize);
+        stream->writeUInt16(Unknown);
+        stream->writeUInt16(MatrixCount);
+        for(int i = 0; i < 10; i++) stream->writeUInt16(MatrixIndices[i]);
+    }    
 
     void TextureHeader::Read(bStream::CStream* stream){
 
@@ -98,42 +163,77 @@ namespace MDL {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 
-        uint8_t* imageData = new uint8_t[Width * Height * 4]{};
+        ImageData = new uint8_t[Width * Height * 4]{0};
 
         //todo read image
         switch (Format)
         {
         case 0x07:
-            ImageFormat::Decode::RGB565(stream, Width, Height, imageData);
+            ImageFormat::Decode::RGB565(stream, Width, Height, ImageData);
             break;
         case 0x08:
-            ImageFormat::Decode::RGB5A3(stream, Width, Height, imageData);
+            ImageFormat::Decode::RGB5A3(stream, Width, Height, ImageData);
             break;
         case 0x0A:
-            ImageFormat::Decode::CMPR(stream, Width, Height, imageData);
+            ImageFormat::Decode::CMPR(stream, Width, Height, ImageData);
             break;
         case 0x03:
-            ImageFormat::Decode::I4(stream, Width, Height, imageData);
+            ImageFormat::Decode::I4(stream, Width, Height, ImageData);
             break;
         case 0x04:
-            ImageFormat::Decode::I8(stream, Width, Height, imageData);
+            ImageFormat::Decode::I8(stream, Width, Height, ImageData);
             break;
         default:
             std::cout << "[MDL Loader]: No Decoder for 0x" << (int)Format << std::endl;
             break;
         }
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ImageData);
 
         glBindTexture(GL_TEXTURE_2D, 0);
 
-        delete[] imageData;
+        //delete[] imageData;
         stream->seek(returnOffset);
 
         //Loaded = true;
     }
 
+    void TextureHeader::Save(bStream::CStream* stream){
+        stream->writeUInt8(Format);
+        stream->writeUInt8(Padding);
+        stream->writeUInt16(Width);
+        stream->writeUInt16(Height);
+        stream->writeBytes(Padding2, sizeof(Padding2));
+
+        switch (Format)
+        {
+        case 0x07:
+            ImageFormat::Encode::RGB565(stream, Width, Height, ImageData);
+            break;
+        case 0x08:
+            ImageFormat::Encode::RGB5A3(stream, Width, Height, ImageData);
+            break;
+        case 0x0A:
+            ImageFormat::Encode::CMPR(stream, Width, Height, ImageData);
+            break;
+        case 0x03:
+            ImageFormat::Encode::I4(stream, Width, Height, ImageData);
+            break;
+        case 0x04:
+            ImageFormat::Encode::I8(stream, Width, Height, ImageData);
+            break;
+        default:
+            std::cout << "[MDL Loader]: No Encoder for 0x" << (int)Format << std::endl;
+            break;
+        }
+
+    }
+
     void TextureHeader::Destroy(){
+        if(ImageData != nullptr){
+            delete[] ImageData;
+            ImageData = nullptr;
+        }
         glDeleteTextures(1, &TextureID);
     }
 
@@ -269,20 +369,186 @@ namespace MDL {
     }
 
     template<class T>
-    std::vector<T> ReadSection(bStream::CStream* stream, uint32_t offset, uint16_t count){
-        std::vector<T> collection;
+    std::map<int, T> ReadSection(bStream::CStream* stream, uint32_t offset, uint16_t count){
+        std::map<int, T> collection;
 
         stream->seek(LGenUtility::SwapEndian<uint32_t>(offset));
         for (size_t i = 0; i < LGenUtility::SwapEndian<uint16_t>(count); i++)
         {
             T item;
             item.Read(stream);
-            collection.push_back(item);
+            collection[i] = item;
         }
 
         return collection;
     };
 
+    template<class T>
+    uint32_t WriteSection(bStream::CStream* stream, std::map<int, T>& items, std::size_t itemSize){
+        offset = stream->tell()
+        for (auto [index, item] : items)
+        {
+            stream->seek(offset + (index * itemSize));
+            item.Write(stream);
+        }
+        return offset;
+    };
+    
+    void Model::Save(bStream::CStream* stream){
+        
+        std::vector<glm::vec3> newPositions;
+        std::vector<glm::vec3> newNormals;
+        std::vector<glm::vec4> newColors;
+        std::vector<glm::vec2> newTexCoords;
+        
+        mHeader.SceneGraphNodeCount = mGraphNodes.size();
+        mHeader.PacketCount = mPackets.size();
+        mHeader.WeightCount = mWeights.size();
+        mHeader.JointCount = mMatrixTable.size();
+        mHeader.PositionCount = newPositions.size();
+        mHeader.NormalCount = newNormals.size();
+        mHeader.ColorCount = newColors.size();
+        mHeader.TexCoordCount = newTexCoords.size();
+        mHeader.SamplerCount = mSamplers.size();
+        mHeader.DrawElementCount = mDrawElements.size();
+        mHeader.MaterialCount = mMaterials.size();
+        mHeader.ShapeCount = mShapes.size();
+        stream->seek(128); // go past header and it's padding
+        
+        uint32_t runningPacketIndex = 0;
+        for(auto [idx, shape] : mShapes){
+            for(int i = 0; i < shape.PacketCount; i++){
+                std::size_t packetPos = stream->tell();
+                
+                for(Primitive& primitive : mPackets[i].Primitives){
+                    stream->writeUInt8(primitive.Opcode);
+                    stream->writeUInt16(primitive.Vertices.size());
+                    for(auto vertex : primitive.Vertices){
+                        stream->writeUInt8(vertex.Matrix);
+                        
+                        std::vector<glm::vec3>::iterator pos = std::find(newPositions.begin(), newPositions.end(), vertex.Position);
+                        if(pos == newPositions.end()){
+                            stream->writeUInt16(newPositions.size());
+                            newPositions.push_back(vertex.Position);
+                        } else {
+                            stream->writeUInt16((pos - newPositions.begin()));
+                        }
+                        if(mNormals.size() > 0){
+                            std::vector<glm::vec3>::iterator pos = std::find(newNormals.begin(), newNormals.end(), vertex.Normal);
+                            if(pos == newNormals.end()){
+                                stream->writeUInt16(newNormals.size());
+                                newNormals.push_back(vertex.Normal);
+                            } else {
+                                stream->writeUInt16(pos - newNormals.begin());
+                            }
+                            if(shape.NormalFlag > 1){
+                                pos = std::find(newNormals.begin(), newNormals.end(), vertex.Binormal);
+                                if(pos == newNormals.end()){
+                                    stream->writeUInt16(newNormals.size());
+                                    newNormals.push_back(vertex.Binormal);
+                                } else {
+                                    stream->writeUInt16(pos - newNormals.begin());
+                                }
+                                pos = std::find(newNormals.begin(), newNormals.end(), vertex.Tangent);
+                                if(pos == newNormals.end()){
+                                    stream->writeUInt16(newNormals.size());
+                                    newNormals.push_back(vertex.Tangent);
+                                } else {
+                                    stream->writeUInt16(pos - newNormals.begin());
+                                }
+                            }
+                        }
+                        if(mColors.size() > 0){
+                            std::vector<glm::vec4>::iterator pos = std::find(newColors.begin(), newColors.end(), vertex.Color);
+                            if(pos == newColors.end()){
+                                stream->writeUInt16(newColors.size());
+                                newColors.push_back(vertex.Color);
+                            } else {
+                                stream->writeUInt16(pos - newColors.begin());
+                            }
+                        }
+                        if(mTexCoords.size() > 0){
+                            std::vector<glm::vec2>::iterator pos = std::find(newTexCoords.begin(), newTexCoords.end(), vertex.Texcoord);
+                            if(pos == newTexCoords.end()){
+                                stream->writeUInt16(newTexCoords.size());
+                                newTexCoords.push_back(vertex.Texcoord);
+                            } else {
+                                stream->writeUInt16(pos - newTexCoords.begin());
+                            }
+                        }
+                    }
+                }
+                
+                
+                std::size_t packetEnd = stream->tell();
+                
+                mPackets[shape.PacketBeginIndex + i].DataOffset = packetPos;
+                mPackets[shape.PacketBeginIndex + i].DataSize = packetEnd - packetPos;
+            }
+        }
+        stream->alignTo(32);
+        
+        std::vector<uint32_t> textureOffsets; 
+        for(auto [idx, texture] : mTextureHeaders){
+            textureOffsets.push_back(stream->tell());
+            texture.Save(stream);
+        }
+
+        mHeader.MaterialOffset = stream->tell();
+        for(auto& [idx, material] : mMaterials){
+            material.Save(stream);
+        }
+
+        mHeader.SamplerOffset = WriteSection<Sampler>(stream, mSamplers, 0x08);
+        mHeader.ShapeOffset = WriteSection<Shape>(stream, mShapes, 0x08);
+        mHeader.DrawElementOffset = WriteSection<DrawElement>(stream, mDrawElements, 0x04);
+        mHeader.PacketOffset = WriteSection<Packet>(stream, mPackets, 0x20);
+
+        mHeader.TextureOffsetArray = stream->tell();
+        for(auto offset : textureOffsets){
+            stream->writeUInt32(offset);
+        }
+        
+        //positions
+
+        // normals
+
+        // colors
+
+        // texcoords
+
+        mHeader.SceneGraphOffset = WriteSection<SceneGraphNode>(stream, mGraphNodes, 0x10);
+        
+        mHeader.InverseMatrixOffset = stream->tell();
+        for(int m = 0; m < mMatrixTable.size(); m++){
+            glm::mat4 mtx = glm::inverseTranspose(mMatrixTable[m]);
+            for (std::size_t r = 0; r < 3; r++){
+                for (std::size_t c = 0; c < 4; c++){
+                    stream->writeFloat(mtx[r][c]);
+                }
+            }           
+        }
+        
+        mHeader.WeightOffset = stream->tell();
+        for(int m = 0; m < mWeights.size(); m++){
+            for(int w = 0; w < mWeights[m].Weights.size(); w++){
+                stream->writeFloat(mWeights[m].Weights[w]);
+            }
+        }
+        
+        mHeader.JointCount = stream->tell();
+        for(int m = 0; m < mWeights.size(); m++){
+            for(int w = 0; w < mWeights[m].JointIndices.size(); w++){
+                stream->writeUInt16(mWeights[m].JointIndices[w]);
+            }
+        }
+        
+        mHeader.WeightCountTableOffset = stream->tell();
+        for(int m = 0; m < mWeights.size(); m++){
+            stream->writeUInt8(mWeights[m].Weights.size());
+        }
+
+    }
 
     void Model::Load(bStream::CStream* stream){
         stream->readBytesTo((uint8_t*)&mHeader, sizeof(mHeader));
@@ -387,7 +653,7 @@ namespace MDL {
 
 
         // Setup OpenGL Meshes for rendering
-        for (DrawElement drawElement : mDrawElements){
+        for (auto [idx, drawElement] : mDrawElements){
             uint16_t matIndices[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
             std::vector<Vertex> primitives;
@@ -409,38 +675,50 @@ namespace MDL {
                     uint8_t opcode = stream->readUInt8();
                     
                     if(opcode == 0) continue;
+
+                    Primitive& primitive = packet.Primitives.emplace_back();
+                    primitive.Opcode = opcode;
                     
                     std::vector<PrimitiveVertex> primitiveVertices;
 
                     uint16_t vertexCount = stream->readUInt16();
                     for(int v = 0; v < vertexCount; v++){
                         PrimitiveVertex vtx = {0};
+                        Vertex& pvtx = primitive.Vertices.emplace_back();
                         //TODO: LOD Check
                         vtx.Matrix = stream->readInt8();
                         if(vtx.Matrix != -1){
                             vtx.Matrix = matIndices[vtx.Matrix / 3];
                         }
 
+                        pvtx.Matrix = vtx.Matrix;
+
                         int8_t tex0MatrixIndex = stream->readInt8();
                         int8_t tex1MatrixIndex = stream->readInt8();
 
                         vtx.Position = stream->readInt16();
+                        pvtx.Position = mPositions[vtx.Position];
 
                         if(LGenUtility::SwapEndian<uint16_t>(mHeader.NormalCount) > 0){
                             vtx.Normal = stream->readInt16();
+                            pvtx.Normal = mNormals[vtx.Normal];
                         }
 
                         if(mShapes[drawElement.ShapeIndex].NormalFlag > 1){
-                            stream->readInt16();
-                            stream->readInt16();
+                            vtx.Binormal = stream->readInt16();
+                            vtx.Tangent = stream->readInt16();
+                            pvtx.Binormal = mNormals[vtx.Binormal];
+                            pvtx.Tangent = mNormals[vtx.Tangent];
                         }
 
                         if(LGenUtility::SwapEndian<uint16_t>(mHeader.ColorCount) > 0){
                             vtx.Color = stream->readInt16();
+                            pvtx.Color = mColors[vtx.Color];
                         }
 
                         if(LGenUtility::SwapEndian<uint16_t>(mHeader.TexCoordCount) > 0){
                             vtx.Texcoord = stream->readInt16();
+                            pvtx.Texcoord = mTexCoords[vtx.Texcoord];
                         }
 
                         primitiveVertices.push_back(vtx);
@@ -620,7 +898,7 @@ namespace MDL {
         glUniform1i(glGetUniformLocation(mProgram, "pickID"), id);
         glUniform1i(glGetUniformLocation(mProgram, "selected"), selected);
 
-        for (DrawElement element : mDrawElements){
+        for (auto [idx, element] : mDrawElements){
             if(mShapes[element.ShapeIndex].VertexCount == 0) continue;
 
             Sampler sampler;
@@ -653,11 +931,11 @@ namespace MDL {
     }
 
     Model::~Model(){
-        for(Shape shape : mShapes){
+        for(auto [idx, shape] : mShapes){
             shape.Destroy();
         }
 
-        for(TextureHeader texture : mTextureHeaders){
+        for(auto [idx, texture] : mTextureHeaders){
             texture.Destroy();
         }
     }
@@ -764,7 +1042,7 @@ namespace MDL {
             joint.ScaleX.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][0], trackFlags[j][0].second, true, trackFlags[j][0].first == 0x80);
             joint.ScaleY.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][1], trackFlags[j][1].second, true, trackFlags[j][1].first == 0x80);
             joint.ScaleZ.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][2], trackFlags[j][2].second, true, trackFlags[j][2].first == 0x80);
-            
+
             joint.RotationX.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][3], trackFlags[j][3].second, true, trackFlags[j][3].first == 0x80, 2);
             joint.RotationY.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][4], trackFlags[j][4].second, true, trackFlags[j][4].first == 0x80, 2);
             joint.RotationZ.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][5], trackFlags[j][5].second, true, trackFlags[j][5].first == 0x80, 2);

@@ -76,11 +76,6 @@ namespace BIN {
         void Write(bStream::CStream* stream);
     };
 
-    struct Primitive {
-        uint8_t Opcode;
-        std::vector<Vertex> Vertices;
-    };
-
     struct Batch : Readable {
         uint16_t TriangleCount { 0 };
         uint16_t DisplayListSize { 0 };
