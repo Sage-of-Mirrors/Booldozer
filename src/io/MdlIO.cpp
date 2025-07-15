@@ -596,16 +596,16 @@ namespace MDL {
         mSkeletonRenderer.mPaths.clear();        
         for(int i = 0; i < skeleton.size(); i++){
             if(mSkeleton[i].ParentIndex != -1){
-                skeleton[i] = skeleton[mSkeleton[i].ParentIndex] * (skeletalAnimation != nullptr && skeletalAnimation->mJointAnimations.size() > i ? skeletalAnimation->GetJoint(mSkeleton[i].Local, i) : mSkeleton[i].Local);
+                skeleton[i] = skeleton[mSkeleton[i].ParentIndex] * (skeletalAnimation != nullptr && i < skeletalAnimation->mJointAnimations.size() ? skeletalAnimation->GetJoint(mSkeleton[i].Local, i) : mSkeleton[i].Local);
                 mSkeletonRenderer.mPaths.push_back({
                     { glm::vec3(skeleton[mSkeleton[i].ParentIndex][3].z, skeleton[mSkeleton[i].ParentIndex][3].y, skeleton[mSkeleton[i].ParentIndex][3].x), {0xFF, 0x00, 0xFF, 0xFF}, 6400, -1 },
                     { glm::vec3(skeleton[i][3].z, skeleton[i][3].y, skeleton[i][3].x), {0xFF, 0x00, 0xFF, 0xFF}, 6400, -1 }
                 });
             } else {
-                skeleton[i] = mSkeleton[i].Local;
+                skeleton[i] = (skeletalAnimation != nullptr && i < skeletalAnimation->mJointAnimations.size() ? skeletalAnimation->GetJoint(mSkeleton[i].Local, i) : mSkeleton[i].Local);
                 mSkeletonRenderer.mPaths.push_back({
-                    { glm::vec3(skeleton[i][3].z, skeleton[i][3].y, skeleton[i][3].x), {0xFF, 0x00, 0xFF, 0xFF}, 10400, -1 },
-                    { glm::vec3(skeleton[i][3].z, skeleton[i][3].y, skeleton[i][3].x), {0xFF, 0x00, 0xFF, 0xFF}, 10400, -1 }
+                    { glm::vec3(skeleton[i][3].z, skeleton[i][3].y, skeleton[i][3].x), {0xFF, 0x00, 0xFF, 0xFF}, 12800, -1 },
+                    { glm::vec3(skeleton[i][3].z, skeleton[i][3].y, skeleton[i][3].x), {0xFF, 0x00, 0xFF, 0xFF}, 12800, -1 }
                 });
             }
         }
@@ -714,9 +714,7 @@ namespace MDL {
         if(joint.PositionZ.mKeys.size() > 0) translation.z = MixTrack(joint.PositionZ, mTime, joint.mPreviousPosKeyZ, joint.mNextPosKeyZ);
 
         keyframe = glm::scale(keyframe, scale);
-        keyframe = glm::rotate(keyframe, rotEuler.z, glm::vec3(0.0f, 0.0f, 1.0f));
-        keyframe = glm::rotate(keyframe, rotEuler.y, glm::vec3(0.0f, 1.0f, 0.0f));
-        keyframe = glm::rotate(keyframe, rotEuler.x, glm::vec3(1.0f, 0.0f, 0.0f));
+        keyframe *= glm::toMat4(glm::quat(rotEuler));
         keyframe = glm::translate(keyframe, translation);
 
         return keyframe;
@@ -761,22 +759,19 @@ namespace MDL {
         
         mJointAnimations.resize(jointCount);
 
-        for(int f = 0; f < frameCount; f++){
-            for(int j = 0; j < jointCount; j++){
-                JointTrack& joint = mJointAnimations[j];
-
-                joint.ScaleX.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][0], trackFlags[j][0].second, true, trackFlags[j][0].first == 0x80);
-                joint.ScaleY.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][1], trackFlags[j][1].second, true, trackFlags[j][1].first == 0x80);
-                joint.ScaleZ.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][2], trackFlags[j][2].second, true, trackFlags[j][2].first == 0x80);
-
-                joint.RotationX.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][3], trackFlags[j][3].second, true, trackFlags[j][3].first == 0x80, 2);
-                joint.RotationY.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][4], trackFlags[j][4].second, true, trackFlags[j][4].first == 0x80, 2);
-                joint.RotationZ.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][5], trackFlags[j][5].second, true, trackFlags[j][5].first == 0x80, 2);
+        for(int j = 0; j < jointCount; j++){
+            JointTrack& joint = mJointAnimations[j];
+            joint.ScaleX.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][0], trackFlags[j][0].second, true, trackFlags[j][0].first == 0x80);
+            joint.ScaleY.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][1], trackFlags[j][1].second, true, trackFlags[j][1].first == 0x80);
+            joint.ScaleZ.LoadTrackEx(stream, scaleKeyframeOffset, beginIndices[j][2], trackFlags[j][2].second, true, trackFlags[j][2].first == 0x80);
             
-                joint.PositionX.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][6], trackFlags[j][6].second, true, trackFlags[j][6].first == 0x80);
-                joint.PositionY.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][7], trackFlags[j][7].second, true, trackFlags[j][7].first == 0x80);
-                joint.PositionZ.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][8], trackFlags[j][8].second, true, trackFlags[j][8].first == 0x80);
-            }
+            joint.RotationX.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][3], trackFlags[j][3].second, true, trackFlags[j][3].first == 0x80, 2);
+            joint.RotationY.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][4], trackFlags[j][4].second, true, trackFlags[j][4].first == 0x80, 2);
+            joint.RotationZ.LoadTrackEx(stream, rotationKeyframeOffset, beginIndices[j][5], trackFlags[j][5].second, true, trackFlags[j][5].first == 0x80, 2);
+        
+            joint.PositionX.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][6], trackFlags[j][6].second, true, trackFlags[j][6].first == 0x80);
+            joint.PositionY.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][7], trackFlags[j][7].second, true, trackFlags[j][7].first == 0x80);
+            joint.PositionZ.LoadTrackEx(stream, positionKeyframeOffset, beginIndices[j][8], trackFlags[j][8].second, true, trackFlags[j][8].first == 0x80);
         }
     }
 };
