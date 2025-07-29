@@ -385,11 +385,11 @@ namespace MDL {
 
     template<class T>
     uint32_t WriteSection(bStream::CStream* stream, std::map<int, T>& items, std::size_t itemSize){
-        offset = stream->tell()
+        uint32_t offset = stream->tell();
         for (auto [index, item] : items)
         {
             stream->seek(offset + (index * itemSize));
-            item.Write(stream);
+            item.Save(stream);
         }
         return offset;
     };
@@ -510,13 +510,33 @@ namespace MDL {
         }
         
         //positions
+        for(int i = 0; i < newPositions.size(); i++){
+            stream->writeFloat(newPositions[i].x);
+            stream->writeFloat(newPositions[i].y);
+            stream->writeFloat(newPositions[i].z);
+        }
 
         // normals
+        for(int i = 0; i < newNormals.size(); i++){
+            stream->writeFloat(newNormals[i].x);
+            stream->writeFloat(newNormals[i].y);
+            stream->writeFloat(newNormals[i].z);
+        }
 
         // colors
+        for(int i = 0; i < newColors.size(); i++){
+            stream->writeUInt8(newColors[i].r * 255);
+            stream->writeUInt8(newColors[i].g * 255);
+            stream->writeUInt8(newColors[i].b * 255);
+            stream->writeUInt8(newColors[i].a * 255);
+        }
 
         // texcoords
-
+        for(int i = 0; i < newTexCoords.size(); i++){
+            stream->writeFloat(newTexCoords[i].x);
+            stream->writeFloat(newTexCoords[i].y);
+        }
+        
         mHeader.SceneGraphOffset = WriteSection<SceneGraphNode>(stream, mGraphNodes, 0x10);
         
         mHeader.InverseMatrixOffset = stream->tell();
@@ -547,6 +567,8 @@ namespace MDL {
         for(int m = 0; m < mWeights.size(); m++){
             stream->writeUInt8(mWeights[m].Weights.size());
         }
+
+        stream->alignTo(32);
 
     }
 
@@ -766,8 +788,8 @@ namespace MDL {
                 }
                 
                 for(PrimitiveVertex vtxIndices : triangulated){
-                    Vertex vtx = {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {-1, -1, -1, -1}, {0, 0, 0, 0}, {0,0}, {0,0}};
-
+                    Vertex vtx = {-1, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {1,1,1,1}, {-1, -1, -1, -1}, {0, 0, 0, 0}, {0,0}, {0,0}};
+                    vtx.Matrix = vtxIndices.Matrix;
                     if(vtxIndices.Matrix >= LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount)){
                         uint16_t weightIdx = vtxIndices.Matrix - LGenUtility::SwapEndian<uint16_t>(mHeader.JointCount);
                         Weight& weight = mWeights[weightIdx];

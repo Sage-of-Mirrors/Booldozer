@@ -801,7 +801,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 
                     int indexCount = 0;
                     for(auto p : primitives){
-                        BIN::Primitive primitive;
+                        Primitive primitive;
                         primitive.Opcode = (p.Type == triangle_stripper::TRIANGLE_STRIP ? GXPrimitiveType::TriangleStrip : GXPrimitiveType::Triangles);
                         for(int i = 0; i < p.Indices.size(); i++){
                             primitive.Vertices.push_back(vertices[p.Indices[i]]);

@@ -19,17 +19,23 @@ float InterpolateHermite(float factor, float timeA, float valueA, float outTange
     return result.x + result.y + result.z + result.w;
 }
 
-float MixTrack(LTrackCommon& track, float time, uint32_t& previousKey, uint32_t& nextKey){
+float MixTrack(LTrackCommon& track, float time, uint32_t& previousKey, uint32_t& nextKey, bool adjustSlope){
 	if(track.mKeys.size() == 1) track.mFrames[track.mKeys[0]];
 	if(nextKey < track.mKeys.size()){
+		float slopeOut = track.mFrames[track.mKeys[previousKey]].outslope;
+		float slopeIn = track.mFrames[track.mKeys[nextKey]].inslope;
+		if(adjustSlope){
+			slopeOut = slopeOut * (track.mKeys[nextKey] - track.mKeys[previousKey]);
+			slopeIn = slopeIn * (track.mKeys[nextKey] - track.mKeys[previousKey]);
+		}
 		float v = InterpolateHermite(
 			(time - track.mFrames[track.mKeys[previousKey]].frame) / (track.mFrames[track.mKeys[nextKey]].frame - track.mFrames[track.mKeys[previousKey]].frame),
 			track.mFrames[track.mKeys[previousKey]].frame,
 			track.mFrames[track.mKeys[previousKey]].value,
-			track.mFrames[track.mKeys[previousKey]].outslope,
+			slopeOut,
 			track.mFrames[track.mKeys[nextKey]].frame,
 			track.mFrames[track.mKeys[nextKey]].value,
-			track.mFrames[track.mKeys[nextKey]].inslope
+			slopeIn
 		);
 		
 		if(time >= track.mFrames[track.mKeys[nextKey]].frame){

@@ -22,7 +22,7 @@ namespace MDL {
         uint16_t NormalCount { 0 };
         uint16_t ColorCount { 0 };
         uint16_t TexCoordCount { 0 };
-        uint8_t Padding2 { 0 }[8];
+        uint8_t Padding2[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
         uint16_t TextureCount { 0 };
         uint16_t Padding3 { 0 };
         uint16_t SamplerCount { 0 };
@@ -40,14 +40,14 @@ namespace MDL {
         uint32_t NormalsOffset { 0 };
         uint32_t ColorsOffset { 0 };
         uint32_t TexCoordsOffset { 0 };
-        uint8_t Padding5 { 0 }[8];
+        uint8_t Padding5[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
         uint32_t TextureOffsetArray { 0 };
         uint32_t Padding6 { 0 };
         uint32_t MaterialOffset { 0 };
         uint32_t SamplerOffset { 0 };
         uint32_t ShapeOffset { 0 };
         uint32_t DrawElementOffset { 0 };
-        uint8_t Padding7 { 0 }[8];
+        uint8_t Padding7[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
     };
     #pragma pack(pop)
 
