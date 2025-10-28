@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "../lib/bStream/bstream.h"
+#include "bstream.h"
 
 namespace TXP {
     struct AnimationGroup {

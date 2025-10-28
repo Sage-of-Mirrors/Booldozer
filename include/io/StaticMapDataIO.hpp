@@ -1,7 +1,7 @@
 #pragma once
 
 #include "DOL.hpp"
-#include "../lib/bStream/bstream.h"
+#include "bstream.h"
 #include "glm/glm.hpp"
 
 #include <filesystem>

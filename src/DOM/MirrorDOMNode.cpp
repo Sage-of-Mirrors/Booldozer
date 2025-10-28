@@ -4,7 +4,7 @@
 #include "UIUtil.hpp"
 #include "GenUtil.hpp"
 #include "imgui.h"
-#include "../lib/bStream/bstream.h"
+#include "bstream.h"
 
 LMirrorDOMNode::LMirrorDOMNode(std::string name) : Super(name),
 	mCameraHeightOffset(0), mResolutionWidth(128), mResolutionHeight(128),

@@ -1,6 +1,6 @@
 #include "ui/BooldozerEditor.hpp"
 #include <io/JmpIO.hpp>
-#include <../lib/bStream/bstream.h>
+#include <bstream.h>
 #include <iostream>
 #include <vector>
 
@@ -16,7 +16,7 @@
 
 #include "imgui.h"
 #include "imgui_internal.h"
-#include "ImGuiFileDialog/ImGuiFileDialog.h"
+#include "ImGuiFileDialog.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include <glad/glad.h>
 
@@ -247,7 +247,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		mLoadedMap = nullptr;
 	}
 
-	if (ImGui::BeginPopupModal("Map Extraction Error", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	if (ImGui::BeginPopupModal("Map Extraction Error", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		ImGui::NewLine();
 		ImGui::Text("Couldn't rip static map data from dol. Did you edit your DOL already?");
@@ -314,7 +314,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ProjectManager::JustClosed = false;
 	}
 
-	if (ImGui::BeginPopupModal("Unpatched DOL", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	if (ImGui::BeginPopupModal("Unpatched DOL", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		ImGui::Text("This root has a clean DOL. Certain edits will not be reflected in game!");
 		ImGui::Text("Apply externalized map data patch?");
@@ -338,7 +338,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 			if(std::filesystem::exists(patchPath)){
 				patchErrorMsg = bspatch(dolPath.string().c_str(), patchedPath.string().c_str(), patchPath.string().c_str());
-				if(patchErrorMsg == NULL){
+				if(patchErrorMsg == nullptr){
 					std::filesystem::remove(dolPath);
 					std::filesystem::copy(patchedPath, dolPath);
 					std::filesystem::remove(patchedPath);
@@ -360,7 +360,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::EndPopup();
 	}
 
-	if (ImGui::BeginPopupModal("Patching Error", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	if (ImGui::BeginPopupModal("Patching Error", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		ImGui::Text("Error Applying Patch: %s", patchErrorMsg);
 		ImGui::Separator();
@@ -370,7 +370,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::EndPopup();
 	}
 
-	if (ImGui::BeginPopupModal("Missing Patch File", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	if (ImGui::BeginPopupModal("Missing Patch File", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		ImGui::Text("Patch file not found!");
 		ImGui::Separator();
@@ -382,7 +382,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
     ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal("Loading Map", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
+	if (ImGui::BeginPopupModal("Loading Map", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
 	{
         const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
 		ImGui::AlignTextToFramePadding();
@@ -409,7 +409,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	}
 
     ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal("Saving Map", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
+	if (ImGui::BeginPopupModal("Saving Map", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
 	{
         const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
 		ImGui::AlignTextToFramePadding();
@@ -429,7 +429,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	}
 
     ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal("SavingConfigsModal", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
+	if (ImGui::BeginPopupModal("SavingConfigsModal", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
 	{
         const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
 		ImGui::AlignTextToFramePadding();
@@ -450,7 +450,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 
     ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal("ControlsDialog", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
+	if (ImGui::BeginPopupModal("ControlsDialog", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
 	{
         const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
 		ImGui::AlignTextToFramePadding();
@@ -477,7 +477,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	}
 
     ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal("ExportGCMPopup", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
+	if (ImGui::BeginPopupModal("ExportGCMPopup", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
 	{
         const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
 		ImGui::AlignTextToFramePadding();
@@ -555,7 +555,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
     ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize({ImGui::GetMainViewport()->Size.x * 0.32f, ImGui::GetMainViewport()->Size.y * 0.8f}, ImGuiCond_Always);
-	if (ImGui::BeginPopupModal("Map Select", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	if (ImGui::BeginPopupModal("Map Select", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		auto mapNames = LResUtility::GetNameMap("MapNames");
 		bool openedMap = false;
@@ -633,7 +633,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
     center = ImGui::GetMainViewport()->GetCenter();
     ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal("Clear Map", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	if (ImGui::BeginPopupModal("Clear Map", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		ImGui::Text("You are about to clear *everything* from this map, including all room archives, are you sure?");
 
@@ -708,7 +708,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 
 	center = ImGui::GetMainViewport()->GetCenter();
     ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal("BannerEditor", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiChildFlags_AlwaysAutoResize))
+	if (ImGui::BeginPopupModal("BannerEditor", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiChildFlags_AlwaysAutoResize))
 	{
 		ImGui::Text("Banner");
 		ImGui::Separator();
@@ -718,12 +718,14 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::BeginGroup();
 		ImGui::Text(ICON_FK_FOLDER_OPEN);
 		if(ImGui::IsItemClicked()){
-			ImGuiFileDialog::Instance()->OpenModal("openNewBanner", "Open Banner Image", "Image (*.png){.png}", ".");
+			IGFD::FileDialogConfig cfg { .path = std::filesystem::current_path(), .flags = ImGuiFileDialogFlags_Modal };
+			ImGuiFileDialog::Instance()->OpenDialog("openNewBanner", "Open Banner Image", "Image (*.png){.png}", cfg);
 			ImGui::CloseCurrentPopup();
 		}
 		ImGui::Text(ICON_FK_FLOPPY_O);
 		if(ImGui::IsItemClicked()){
-			ImGuiFileDialog::Instance()->OpenModal("saveBannerImage", "Save Banner Image Titlecard", "Image (*.png){.png}", ".");
+			IGFD::FileDialogConfig cfg { .path = std::filesystem::current_path(), .flags = ImGuiFileDialogFlags_Modal };
+			ImGuiFileDialog::Instance()->OpenDialog("saveBannerImage", "Save Banner Image Titlecard", "Image (*.png){.png}", cfg);
 			ImGui::CloseCurrentPopup();
 		}
 		ImGui::EndGroup();
@@ -1009,7 +1011,8 @@ void LBooldozerEditor::onOpenMapCB()
 
 void LBooldozerEditor::onAppendMapCB()
 {
-	ImGuiFileDialog::Instance()->OpenDialog("appendMapDlg", "Append Map Archive to Current Map", "Archives (*.arc *.szs *.szp){.arc,.szs,.szp}", OPTIONS.mLastOpenedMap);
+	IGFD::FileDialogConfig cfg { .path = OPTIONS.mLastOpenedMap, .flags = ImGuiFileDialogFlags_Modal };
+	ImGuiFileDialog::Instance()->OpenDialog("appendMapDlg", "Append Map Archive to Current Map", "Archives (*.arc *.szs *.szp){.arc,.szs,.szp}", cfg);
 }
 
 void LBooldozerEditor::onClearMapCB()
@@ -1026,7 +1029,8 @@ void LBooldozerEditor::onSaveMapArchiveCB()
 
 void LBooldozerEditor::onGCMExportCB()
 {
-	ImGuiFileDialog::Instance()->OpenDialog("exportGCMDlg", "Export GCM", "GameCube Disk Image (*.gcm *.iso *.szp){.iso,.gcm}", OPTIONS.mLastOpenedMap);
+	IGFD::FileDialogConfig cfg { .path = std::filesystem::current_path(), .flags = ImGuiFileDialogFlags_Modal };
+	ImGuiFileDialog::Instance()->OpenDialog("exportGCMDlg", "Export GCM", "GameCube Disk Image (*.gcm *.iso *.szp){.iso,.gcm}", cfg);
 }
 
 void LBooldozerEditor::onPlaytestCB()
@@ -1086,7 +1090,7 @@ void LBooldozerEditor::ChangeMode()
 
 void LBooldozerEditor::RenderNoRootPopup()
 {
-	if (ImGui::BeginPopupModal("Root Not Set", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	if (ImGui::BeginPopupModal("Root Not Set", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		ImGui::Text("You currently do not have a valid Game Root set.\n");
 

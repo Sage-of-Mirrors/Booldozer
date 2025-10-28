@@ -1,7 +1,7 @@
 #include "Options.hpp"
 #include "UIUtil.hpp"
 #include "ResUtil.hpp"
-#include "ImGuiFileDialog/ImGuiFileDialog.h"
+#include "ImGuiFileDialog.h"
 #include <imgui.h>
 
 LUserOptions OPTIONS;

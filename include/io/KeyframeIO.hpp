@@ -1,5 +1,5 @@
 #pragma once
-#include "../lib/bStream/bstream.h"
+#include "bstream.h"
 #include <map>
 #include <vector>
 
@@ -25,6 +25,8 @@ class LTrackCommon
 public:
     std::vector<int32_t> mKeys;
     std::map<int32_t, LKeyframeCommon> mFrames;
+
+    float GetFrame(uint32_t frame);
 
     void LoadTrack(bStream::CStream* stream, uint32_t keyframeDataOffset, ETrackType type);
     void LoadTrackEx(bStream::CStream* stream, uint32_t keyframeDataOffset, uint32_t beginIndex, uint8_t count, bool hasSlopeIn, bool hasSlopeOut, uint32_t valueSize=4);

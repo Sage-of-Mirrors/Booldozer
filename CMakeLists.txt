@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 project(booldozer)
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_compile_definitions(-DGLM_ENABLE_EXPERIMENTAL -DIMGUI_DEFINE_MATH_OPERATORS)
@@ -29,14 +30,15 @@ file(GLOB BOOLDOZER_SRC
     "lib/bsdifflib/bsdifflib.c"
     "lib/bsdifflib/bspatchlib.c"
 
+    "lib/ImGuiFileDialog/ImGuiFileDialog.cpp"
+
     # glad
     "lib/glad/src/*.c"
 )
 
-
 add_executable(booldozer ${BOOLDOZER_SRC})
-target_include_directories(booldozer PUBLIC include lib/libflipper/include lib/libflipper/include/geometry lib/imgui lib/imgui/backends lib/glfw/include lib/glad/include lib/glm lib/J3DUltra/include lib/gctoolsplusplus/include lib/TriStripper/include)
+target_include_directories(booldozer PUBLIC include lib/bStream lib/libflipper/include lib/libflipper/include/geometry lib/imgui lib/imgui/backends lib/ImGuiFileDialog lib/glfw/include lib/glad/include lib/glm lib/J3DUltra/include lib/gctoolsplusplus/include lib/TriStripper/include)
 
 find_package(ICU 61.0 COMPONENTS uc i18n REQUIRED)
 find_package(BZip2 REQUIRED)
-target_link_libraries(booldozer PUBLIC imgui glfw gctools++ ICU::uc ICU::i18n BZip2::BZip2 j3dultra TriStripper)
+target_link_libraries(booldozer PUBLIC X11 glfw imgui gctools++ ICU::uc ICU::i18n BZip2::BZip2 j3dultra TriStripper)

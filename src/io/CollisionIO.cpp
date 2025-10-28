@@ -32,14 +32,18 @@ void LCollisionIO::LoadMp(std::filesystem::path path, std::weak_ptr<LMapDOMNode>
     delete[] importColData;
 }
 
-void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map, std::map<std::string, std::string> propertyMap, bool bakeFurniture){    
-    
+void LoadFBX(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map, std::map<std::string, std::string> propertyMap, bool bakeFurniture){
+
+}
+
+void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map, std::map<std::string, std::string> propertyMap, bool bakeFurniture){
+
     glm::vec3 bbmin, bbmax;
 
     std::vector<glm::vec3> positions {};
     std::vector<glm::vec3> normals {};
     std::vector<CollisionTriangle> triangles;
-    std::vector<GridCell> grid; 
+    std::vector<GridCell> grid;
 
     tinyobj::attrib_t attributes;
     std::vector<tinyobj::shape_t> shapes;
@@ -56,7 +60,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
     for(auto shp : shapes){
         for(int poly = 0; poly < shp.mesh.indices.size() / 3; poly++){
             CollisionTriangle tri;
-            
+
             if(shp.mesh.indices.size() == 0) continue;
 
             tri.mVtx1 = shp.mesh.indices[(3*poly)+0].vertex_index;
@@ -74,11 +78,11 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
             glm::vec3 e10 = v2 - v1; // u
             glm::vec3 e20 = v3 - v1; // v
             glm::vec3 e01 = v1 - v2;
-            glm::vec3 e21 = v3 - v2; 
+            glm::vec3 e21 = v3 - v2;
 
             glm::vec3 normal1 = glm::normalize(glm::cross(e10, e20));
             glm::vec3 normal2 = glm::normalize(glm::cross(e01, e21));
-            
+
             if(!LGenUtility::VectorContains<glm::vec3>(normals, normal1)) normals.push_back(normal1);
             tri.mNormal = LGenUtility::VectorIndexOf<glm::vec3>(normals, normal1);
 
@@ -86,7 +90,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
             glm::vec3 tan1 = -glm::normalize(glm::cross(normal1, e10));
             glm::vec3 tan2 = glm::normalize(glm::cross(normal1, e20));
             glm::vec3 tan3 = glm::normalize(glm::cross(normal2, e21));
-            
+
             if(!LGenUtility::VectorContains<glm::vec3>(normals, tan1)) normals.push_back(tan1);
             tri.mEdgeTan1 = LGenUtility::VectorIndexOf<glm::vec3>(normals, tan1);
 
@@ -95,7 +99,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
 
             if(!LGenUtility::VectorContains<glm::vec3>(normals, tan3)) normals.push_back(tan3);
             tri.mEdgeTan3 = LGenUtility::VectorIndexOf<glm::vec3>(normals, tan3);
-            
+
             glm::vec3 up(0.0f, 1.0f, 0.0f);
             float angle = (float)glm::acos(glm::dot(normal1, up));
 
@@ -113,7 +117,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
             } else {
                 tri.mFloor = false;
             }
-            
+
             tri.mDot = glm::dot(tan3, e10);
 
             tri.mMask = 0x8000;
@@ -149,7 +153,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
                             tri.mIgnorePointer = std::stoi(val);
                         } else if(prop == propertyMap["SurfaceMaterial"]){
                             tri.mSurfMaterial = std::stoi(val);
-                        } 
+                        }
                     } catch(std::invalid_argument e){
                         continue;
                     }
@@ -163,7 +167,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
             tri.mVtx2 = LGenUtility::VectorIndexOf<glm::vec3>(positions, tri.v2);
 
             if(!LGenUtility::VectorContains<glm::vec3>(positions, tri.v3)) positions.push_back(tri.v3);
-            tri.mVtx3 = LGenUtility::VectorIndexOf<glm::vec3>(positions, tri.v3);            
+            tri.mVtx3 = LGenUtility::VectorIndexOf<glm::vec3>(positions, tri.v3);
 
             triangles.push_back(tri);
         }
@@ -200,11 +204,11 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
                     glm::vec3 e10 = newTri.v2 - newTri.v1; // u
                     glm::vec3 e20 = newTri.v3 - newTri.v1; // v
                     glm::vec3 e01 = newTri.v1 - newTri.v2;
-                    glm::vec3 e21 = newTri.v3 - newTri.v2; 
+                    glm::vec3 e21 = newTri.v3 - newTri.v2;
 
                     glm::vec3 normal1 = glm::normalize(glm::cross(e10, e20));
                     glm::vec3 normal2 = glm::normalize(glm::cross(e01, e21));
-                    
+
                     if(!LGenUtility::VectorContains<glm::vec3>(normals, normal1)) normals.push_back(normal1);
                     newTri.mNormal = LGenUtility::VectorIndexOf<glm::vec3>(normals, normal1);
 
@@ -212,7 +216,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
                     glm::vec3 tan1 = -glm::normalize(glm::cross(normal1, e10));
                     glm::vec3 tan2 = glm::normalize(glm::cross(normal1, e20));
                     glm::vec3 tan3 = glm::normalize(glm::cross(normal2, e21));
-                    
+
                     if(!LGenUtility::VectorContains<glm::vec3>(normals, tan1)) normals.push_back(tan1);
                     newTri.mEdgeTan1 = LGenUtility::VectorIndexOf<glm::vec3>(normals, tan1);
 
@@ -221,7 +225,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
 
                     if(!LGenUtility::VectorContains<glm::vec3>(normals, tan3)) normals.push_back(tan3);
                     newTri.mEdgeTan3 = LGenUtility::VectorIndexOf<glm::vec3>(normals, tan3);
-                    
+
                     glm::vec3 up(0.0f, 1.0f, 0.0f);
                     float angle = (float)glm::acos(glm::dot(normal1, up));
 
@@ -239,7 +243,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
                     } else {
                         newTri.mFloor = false;
                     }
-                    
+
                     newTri.mDot = glm::dot(tan3, e21);
 
                     newTri.mMask = 0x8000;
@@ -276,7 +280,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
 
     LGenUtility::Log << "[CollisionIO:ObjImport]: Bounding Box ["
         << bbmin.x << ", " << bbmin.y << ", " << bbmin.z << "] ["
-        << bbmax.x << ", " << bbmax.y << ", " << bbmax.z << "]" << std::endl; 
+        << bbmax.x << ", " << bbmax.y << ", " << bbmax.z << "]" << std::endl;
 
 
     glm::vec3 axisLengths((bbmax.x - bbmin.x), (bbmax.y - bbmin.y), (bbmax.z - bbmin.z));
@@ -330,7 +334,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
     }
 
     groupData.push_back(0xFFFF);
-    
+
     // gen grid
     for (int z = 0; z < zCellCount; z++){
         for (int y = 0; y < yCellCount; y++){
@@ -376,7 +380,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
 
     // Write structures to file
     auto mapArc = map.lock()->GetArchive().lock();
-    
+
     {
         bStream::CMemoryStream stream(1024, bStream::Endianess::Big, bStream::OpenMode::Out);
 
@@ -447,7 +451,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
         }
 
         uint32_t gridOffset = stream.tell();
-        
+
         for(std::vector<uint32_t>::iterator t = gridData.begin(); t != gridData.end(); t++){
             stream.writeUInt32(*t);
         }
@@ -480,7 +484,7 @@ void LCollisionIO::LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode
 
     {
         bStream::CMemoryStream polygoninfo(100, bStream::Endianess::Big, bStream::OpenMode::Out);
-        
+
         // Write polygoninfo jmp header
         polygoninfo.writeUInt32(triangles.size());
         polygoninfo.writeUInt32(3);

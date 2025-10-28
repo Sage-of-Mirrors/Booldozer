@@ -1,5 +1,5 @@
 #define BSTREAM_IMPLEMENTATION
-#include "../lib/bStream/bstream.h"
+#include "bstream.h"
 
 #include "ui/BooldozerApp.hpp"
 

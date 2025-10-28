@@ -14,25 +14,35 @@ namespace CameraAnimation {
     bool GetPreviewActive();
 }
 
-class LCameraAnimationDOMNode : public LBGRenderDOMNode 
+class LCameraAnimationDOMNode : public LBGRenderDOMNode
 {
 private:
 
     bool mPlaying;
-    int32_t mCurrentFrame;
-    
-    int32_t mStartFrame;
-    int32_t mFrameCount;
+    float mTime { 0.0f };
+    int32_t mCurrentFrame { 0 };
 
-    uint32_t mNextPosKeyX;
-    uint32_t mNextPosKeyY;
-    uint32_t mNextPosKeyZ;
+    int32_t mStartFrame { 0 };
+    int32_t mFrameCount { 0 };
 
-    uint32_t mNextTargetKeyX;
-    uint32_t mNextTargetKeyY;
-    uint32_t mNextTargetKeyZ;
+    uint32_t mPrevPosKeyX { 0 };
+    uint32_t mPrevPosKeyY { 0 };
+    uint32_t mPrevPosKeyZ { 0 };
 
-    uint32_t mNextFovKey;
+    uint32_t mNextPosKeyX { 1 };
+    uint32_t mNextPosKeyY { 1 };
+    uint32_t mNextPosKeyZ { 1 };
+
+    uint32_t mPrevTargetKeyX { 0 };
+    uint32_t mPrevTargetKeyY { 0 };
+    uint32_t mPrevTargetKeyZ { 0 };
+
+    uint32_t mNextTargetKeyX { 1 };
+    uint32_t mNextTargetKeyY { 1 };
+    uint32_t mNextTargetKeyZ { 1 };
+
+    uint32_t mPrevFovKey { 0 };
+    uint32_t mNextFovKey { 1 };
 
     LTrackCommon mPosFramesX;
     LTrackCommon mPosFramesY;

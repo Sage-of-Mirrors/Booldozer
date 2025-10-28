@@ -2,7 +2,7 @@
 
 #include "BGRenderDOMNode.hpp"
 #include "io/JmpIO.hpp"
-#include "../lib/bStream/bstream.h"
+#include "bstream.h"
 
 enum LEntityType
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../lib/bStream/bstream.h"
+#include "bstream.h"
 #include "GenUtil.hpp"
 #include "DOM/MapDOMNode.hpp"
 #include <filesystem>
@@ -47,6 +47,7 @@ class LCollisionIO {
 public:
     void LoadMp(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map);
     void LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map, std::map<std::string, std::string> propertyMap, bool bakeFurniture);
+    void LoadFBX(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map, std::map<std::string, std::string> propertyMap, bool bakeFurniture){}
 
     LCollisionIO(){}
     ~LCollisionIO(){}

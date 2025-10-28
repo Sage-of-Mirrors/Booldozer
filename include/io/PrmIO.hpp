@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../lib/bStream/bstream.h"
+#include "bstream.h"
 #include "GenUtil.hpp"
 #include "DOM/MapDOMNode.hpp"
 #include "DOM/ItemAppearDOMNode.hpp"

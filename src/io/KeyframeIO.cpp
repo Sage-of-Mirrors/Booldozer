@@ -14,7 +14,7 @@ void LTrackCommon::LoadTrackEx(bStream::CStream* stream, uint32_t keyframeDataOf
     std::size_t streamPosition = stream->tell();
     stream->seek(keyframeDataOffset + (valueSize * beginIndex));
     for (std::size_t frame = 0; frame < count; frame++){
-        
+
         LKeyframeCommon keyframe;
 
         if(count == 1) {
@@ -28,19 +28,19 @@ void LTrackCommon::LoadTrackEx(bStream::CStream* stream, uint32_t keyframeDataOf
             }
             keyframe.value = KeyframeIO::ReadValue(stream, valueSize);
         }
-        
 
-        
+
+
         if(hasSlopeIn && count > 1){
             keyframe.inslope = KeyframeIO::ReadValue(stream, valueSize) * 0.001533981f; /// huh????
             keyframe.outslope = keyframe.inslope;
             if(hasSlopeOut){
                 keyframe.outslope = KeyframeIO::ReadValue(stream, valueSize) * 0.001533981f;
             }
-        }            
+        }
         mFrames.insert(std::make_pair((uint32_t)keyframe.frame, keyframe));
     }
-    
+
     for (auto& frame : mFrames)
     {
         mKeys.push_back(frame.first);
@@ -66,7 +66,7 @@ void LTrackCommon::LoadTrack(bStream::CStream* stream, uint32_t keyframeDataOffs
         inSlope = true;
         outSlope = (elementCountFlags == 0x80);
     }
-    
+
     // As far as I know only KEY anims use int16s for any value type, for the util function just pass size 4, can edit later if needed
     LoadTrackEx(stream, keyframeDataOffset, beginIndex, keyCount, inSlope, outSlope, 4);
 }

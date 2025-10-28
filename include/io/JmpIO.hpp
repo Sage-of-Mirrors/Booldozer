@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../lib/bStream/bstream.h"
+#include "bstream.h"
 #include <json.hpp>
 #include "GenUtil.hpp"
 #include <memory>

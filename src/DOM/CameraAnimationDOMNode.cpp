@@ -1,17 +1,19 @@
 
 #include "DOM/CameraAnimationDOMNode.hpp"
+#include "glm/trigonometric.hpp"
 #include "imgui.h"
 #include <glad/glad.h>
 #include "misc/cpp/imgui_stdlib.h"
 #include "imgui_neo_internal.h"
 #include "imgui_neo_sequencer.h"
+#include "IconsForkAwesome.h"
 #include "io/Util.hpp"
 
 static bool mAnimPlayerReady { false };
 static uint32_t mPreviewFbo { 0 }, mPreviewRbo { 0 }, mPreviewTex { 0 };
 
 static glm::vec3 mEye, mCenter;
-static float mFovY { 90.0f }; 
+static float mFovY { 90.0f };
 static bool Active { false };
 
 namespace CameraAnimation {
@@ -82,7 +84,7 @@ namespace CameraAnimation {
 
             scene->Camera.SetEye(mEye);
             scene->Camera.SetCenter(mCenter);
-            scene->Camera.Fovy = mFovY;
+            scene->Camera.Fovy = glm::radians(mFovY);
 
             scene->Camera.UnRotate();
             scene->RenderSubmit(640, 480);
@@ -97,7 +99,7 @@ namespace CameraAnimation {
             glBindRenderbuffer(GL_RENDERBUFFER, 0);
         }
     }
-    
+
 }
 
 LCameraAnimationDOMNode::LCameraAnimationDOMNode(std::string name) : Super(name)
@@ -118,34 +120,21 @@ LCameraAnimationDOMNode::LCameraAnimationDOMNode(std::string name) : Super(name)
 
 void LCameraAnimationDOMNode::RenderDetailsUI(float dt, LSceneCamera* camera)
 {
-    ImGui::Image(static_cast<uintptr_t>(mPreviewTex), ImVec2(640, 480), {0.0f, 1.0f}, {1.0f, 0.0f});
+    if(ImGui::TreeNode("Preview (Experimental)")){
+        ImGui::Image(static_cast<uintptr_t>(mPreviewTex), ImVec2(640, 480), {0.0f, 1.0f}, {1.0f, 0.0f});
 
-    if(ImGui::Button(">"))
-    {
-        mPlaying = true;
-        mCurrentFrame = 0;
-        mNextPosKeyX = 1;
-        mNextPosKeyY = 1;
-        mNextPosKeyZ = 1;
-        mNextTargetKeyX = 1;
-        mNextTargetKeyY = 1;
-        mNextTargetKeyZ = 1;
-        mNextFovKey = 1;
-    }
-
-    ImGui::SameLine();
-
-    if(ImGui::Button("||")){
-        mPlaying = false;
-    }
-
-    if(mPlaying)
-    {
-
-        if(mCurrentFrame++ > mFrameCount)
+        ImGui::Text(ICON_FK_PLAY);
+        if(ImGui::IsItemClicked())
         {
-            mPlaying = false;
+            mPlaying = true;
             mCurrentFrame = 0;
+            mPrevPosKeyX = 0;
+            mPrevPosKeyY = 0;
+            mPrevPosKeyZ = 0;
+            mPrevTargetKeyX = 0;
+            mPrevTargetKeyY = 0;
+            mPrevTargetKeyZ = 0;
+            mPrevFovKey = 0;
             mNextPosKeyX = 1;
             mNextPosKeyY = 1;
             mNextPosKeyZ = 1;
@@ -153,176 +142,104 @@ void LCameraAnimationDOMNode::RenderDetailsUI(float dt, LSceneCamera* camera)
             mNextTargetKeyY = 1;
             mNextTargetKeyZ = 1;
             mNextFovKey = 1;
-        } 
-        else 
+        }
+
+        ImGui::SameLine();
+
+        ImGui::Text(ICON_FK_PAUSE);
+        if(ImGui::IsItemClicked()){
+            mPlaying = false;
+        }
+
+        if(mPlaying)
         {
-            if(mCurrentFrame == mPosFramesX.mKeys[mNextPosKeyX]) 
+            if(mCurrentFrame >= mFrameCount)
             {
-                mNextPosKeyX++;
-            }
+                mPlaying = false;
+                mCurrentFrame = 0;
+                mPrevPosKeyX = 0;
+                mPrevPosKeyY = 0;
+                mPrevPosKeyZ = 0;
+                mPrevTargetKeyX = 0;
+                mPrevTargetKeyY = 0;
+                mPrevTargetKeyZ = 0;
+                mPrevFovKey = 0;
 
-            if(mCurrentFrame == mPosFramesY.mKeys[mNextPosKeyY]) 
-            {
-                mNextPosKeyY++;
+                mNextPosKeyX = 1;
+                mNextPosKeyY = 1;
+                mNextPosKeyZ = 1;
+                mNextTargetKeyX = 1;
+                mNextTargetKeyY = 1;
+                mNextTargetKeyZ = 1;
+                mNextFovKey = 1;
             }
-
-            if(mCurrentFrame == mPosFramesZ.mKeys[mNextPosKeyZ]) 
+            else
             {
-                mNextPosKeyZ++;
-            }
-
-            if(mCurrentFrame == mTargetFramesX.mKeys[mNextTargetKeyX]) 
-            {
-                mNextTargetKeyX++;
-            }
-
-            if(mCurrentFrame == mTargetFramesY.mKeys[mNextTargetKeyY]) 
-            {
-                mNextTargetKeyY++;
-            }
-
-            if(mCurrentFrame == mTargetFramesZ.mKeys[mNextTargetKeyZ]) 
-            {
-                mNextTargetKeyZ++;
-            }
-
-            if(mCurrentFrame == mFovFrames.mKeys[mNextFovKey]) 
-            {
-                mNextFovKey++;
+                mCurrentFrame++;
             }
         }
-    } else {
-        if(mCurrentFrame >= mPosFramesX.mKeys[mNextPosKeyX]) 
+
+        glm::vec3 eyePos = camera->GetEye();
+        glm::vec3 targetPos = camera->GetCenter();
+
+        eyePos.x = MixTrack(mPosFramesX, mCurrentFrame, mPrevPosKeyX, mNextPosKeyX, true, false);
+        eyePos.y = MixTrack(mPosFramesY, mCurrentFrame, mPrevPosKeyY, mNextPosKeyY, true, false);
+        eyePos.z = MixTrack(mPosFramesZ, mCurrentFrame, mPrevPosKeyZ, mNextPosKeyZ, true, false);
+
+        targetPos.x = MixTrack(mTargetFramesX, mCurrentFrame, mPrevTargetKeyX, mNextTargetKeyX, true, false);
+        targetPos.y = MixTrack(mTargetFramesY, mCurrentFrame, mPrevTargetKeyY, mNextTargetKeyY, true, false);
+        targetPos.z = MixTrack(mTargetFramesZ, mCurrentFrame, mPrevTargetKeyZ, mNextTargetKeyZ, true, false);
+
+        mFovY = MixTrack(mFovFrames, mCurrentFrame, mPrevFovKey, mNextFovKey, true, false);
+
+        mEye = eyePos;
+        mCenter = targetPos;
+
+        if(ImGui::BeginNeoSequencer("Camera Animation", &mCurrentFrame, &mStartFrame, &mFrameCount))
         {
-            mNextPosKeyX++;
-        } else if(mCurrentFrame < mPosFramesX.mKeys[mNextPosKeyX-1]){
-            mNextPosKeyX--;
-        }
-
-        if(mCurrentFrame >= mPosFramesY.mKeys[mNextPosKeyY]) 
-        {
-            mNextPosKeyY++;
-        } else if(mCurrentFrame < mPosFramesY.mKeys[mNextPosKeyY-1]){
-            mNextPosKeyY--;
-        }
-
-        if(mCurrentFrame >= mPosFramesZ.mKeys[mNextPosKeyZ]) 
-        {
-            mNextPosKeyZ++;
-        } else if(mCurrentFrame < mPosFramesZ.mKeys[mNextPosKeyZ-1]){
-            mNextPosKeyZ--;
-        }
-
-        if(mCurrentFrame >= mTargetFramesX.mKeys[mNextTargetKeyX]) 
-        {
-            mNextTargetKeyX++;
-        } else if(mCurrentFrame < mTargetFramesX.mKeys[mNextTargetKeyX-1]){
-            mNextTargetKeyX--;
-        }
-
-        if(mCurrentFrame >= mTargetFramesY.mKeys[mNextTargetKeyY]) 
-        {
-            mNextTargetKeyY++;
-        } else if(mCurrentFrame < mTargetFramesY.mKeys[mNextTargetKeyY-1]){
-            mNextTargetKeyY--;
-        }
-
-        if(mCurrentFrame >= mTargetFramesZ.mKeys[mNextTargetKeyZ]) 
-        {
-            mNextTargetKeyZ++;
-        } else if(mCurrentFrame < mTargetFramesZ.mKeys[mNextTargetKeyZ-1]){
-            mNextTargetKeyZ--;
-        }
-
-        if(mCurrentFrame >= mFovFrames.mKeys[mNextFovKey]) 
-        {
-            mNextFovKey++;
-        } else if(mCurrentFrame < mFovFrames.mKeys[mNextFovKey-1]){
-            mNextFovKey--;
-        }
-    }
+            if(ImGui::BeginNeoGroup("Camera Position", &mCameraPosCollapsed)){
+                if(ImGui::BeginNeoTimeline("\tX", mPosFramesX.mKeys)){
+                    ImGui::EndNeoTimeLine();
+                }
+                if(ImGui::BeginNeoTimeline("\tY", mPosFramesY.mKeys)){
+                    ImGui::EndNeoTimeLine();
+                }
+                if(ImGui::BeginNeoTimeline("\tZ", mPosFramesZ.mKeys)){
+                    ImGui::EndNeoTimeLine();
+                }
+                ImGui::EndNeoGroup();
+            }
 
 
-    glm::vec3 eyePos = camera->GetEye();
-
-    if(mNextPosKeyX < mPosFramesX.mKeys.size()){
-        eyePos.x = glm::mix(mPosFramesX.mFrames[mPosFramesX.mKeys[mNextPosKeyX - 1]].value, mPosFramesX.mFrames[mPosFramesX.mKeys[mNextPosKeyX]].value, (mCurrentFrame - mPosFramesX.mFrames[mPosFramesX.mKeys[mNextPosKeyX - 1]].frame) / (mPosFramesX.mFrames[mPosFramesX.mKeys[mNextPosKeyX]].frame - mPosFramesX.mFrames[mPosFramesX.mKeys[mNextPosKeyX - 1]].frame));
-    }
-
-    if(mNextPosKeyY < mPosFramesY.mKeys.size()){
-        eyePos.y = glm::mix(mPosFramesY.mFrames[mPosFramesY.mKeys[mNextPosKeyY - 1]].value, mPosFramesY.mFrames[mPosFramesY.mKeys[mNextPosKeyY]].value, (mCurrentFrame - mPosFramesY.mFrames[mPosFramesY.mKeys[mNextPosKeyY - 1]].frame) / (mPosFramesY.mFrames[mPosFramesY.mKeys[mNextPosKeyY]].frame - mPosFramesY.mFrames[mPosFramesY.mKeys[mNextPosKeyY - 1]].frame));
-    }
-
-    if(mNextPosKeyZ < mPosFramesZ.mKeys.size()){
-        eyePos.z = glm::mix(mPosFramesZ.mFrames[mPosFramesZ.mKeys[mNextPosKeyZ - 1]].value, mPosFramesZ.mFrames[mPosFramesZ.mKeys[mNextPosKeyZ]].value, (mCurrentFrame - mPosFramesZ.mFrames[mPosFramesZ.mKeys[mNextPosKeyZ - 1]].frame) / (mPosFramesZ.mFrames[mPosFramesZ.mKeys[mNextPosKeyZ]].frame - mPosFramesZ.mFrames[mPosFramesZ.mKeys[mNextPosKeyZ - 1]].frame));
-    }
-
-    glm::vec3 targetPos = camera->GetCenter();
-            
-    if(mNextTargetKeyX < mTargetFramesX.mKeys.size()){
-        targetPos.x = glm::mix(mTargetFramesX.mFrames[mTargetFramesX.mKeys[mNextTargetKeyX - 1]].value, mTargetFramesX.mFrames[mTargetFramesX.mKeys[mNextTargetKeyX]].value, (mCurrentFrame - mTargetFramesX.mFrames[mTargetFramesX.mKeys[mNextTargetKeyX - 1]].frame) / (mTargetFramesX.mFrames[mTargetFramesX.mKeys[mNextTargetKeyX]].frame - mTargetFramesX.mFrames[mTargetFramesX.mKeys[mNextTargetKeyX - 1]].frame));
-    }
-
-    if(mNextTargetKeyY < mTargetFramesY.mKeys.size()){
-        targetPos.y = glm::mix(mTargetFramesY.mFrames[mTargetFramesY.mKeys[mNextTargetKeyY - 1]].value, mTargetFramesY.mFrames[mTargetFramesY.mKeys[mNextTargetKeyY]].value, (mCurrentFrame - mTargetFramesY.mFrames[mTargetFramesY.mKeys[mNextTargetKeyY - 1]].frame) / (mTargetFramesY.mFrames[mTargetFramesY.mKeys[mNextTargetKeyY]].frame - mTargetFramesY.mFrames[mTargetFramesY.mKeys[mNextTargetKeyY - 1]].frame));
-    }
-
-    if(mNextTargetKeyZ < mTargetFramesZ.mKeys.size()){
-        targetPos.z = glm::mix(mTargetFramesZ.mFrames[mTargetFramesZ.mKeys[mNextTargetKeyZ - 1]].value, mTargetFramesZ.mFrames[mTargetFramesZ.mKeys[mNextTargetKeyZ]].value, (mCurrentFrame - mTargetFramesZ.mFrames[mTargetFramesZ.mKeys[mNextTargetKeyZ - 1]].frame) / (mTargetFramesZ.mFrames[mTargetFramesZ.mKeys[mNextTargetKeyZ]].frame - mTargetFramesZ.mFrames[mTargetFramesZ.mKeys[mNextTargetKeyZ - 1]].frame));
-    }
-
-    if(mNextFovKey < mFovFrames.mKeys.size()){
-        mFovY = glm::radians(glm::mix(mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey - 1]].value, mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey]].value, (mCurrentFrame - mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey - 1]].frame) / (mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey]].frame - mFovFrames.mFrames[mFovFrames.mKeys[mNextFovKey - 1]].frame)));
-    }
-
-        
-    mEye = eyePos;
-    mCenter = targetPos;
-
-
-    if(ImGui::BeginNeoSequencer("Camera Animation", &mCurrentFrame, &mStartFrame, &mFrameCount))
-    {
-        if(ImGui::BeginNeoGroup("Camera Position", &mCameraPosCollapsed)){
-            if(ImGui::BeginNeoTimeline("\tX", mPosFramesX.mKeys)){
+            if(ImGui::BeginNeoTimeline("Target Position X", mTargetFramesX.mKeys)){
                 ImGui::EndNeoTimeLine();
             }
-            if(ImGui::BeginNeoTimeline("\tY", mPosFramesY.mKeys)){
+            if(ImGui::BeginNeoTimeline("Target Position Y", mTargetFramesY.mKeys)){
                 ImGui::EndNeoTimeLine();
             }
-            if(ImGui::BeginNeoTimeline("\tZ", mPosFramesZ.mKeys)){
+            if(ImGui::BeginNeoTimeline("Target Position Z", mTargetFramesZ.mKeys)){
                 ImGui::EndNeoTimeLine();
             }
-            ImGui::EndNeoGroup();
-        }
 
 
-        if(ImGui::BeginNeoTimeline("Target Position X", mTargetFramesX.mKeys)){
-            ImGui::EndNeoTimeLine();
-        }
-        if(ImGui::BeginNeoTimeline("Target Position Y", mTargetFramesY.mKeys)){
-            ImGui::EndNeoTimeLine();
-        }
-        if(ImGui::BeginNeoTimeline("Target Position Z", mTargetFramesZ.mKeys)){
-            ImGui::EndNeoTimeLine();
-        }
+            if(ImGui::BeginNeoTimeline("Camera FOV", mFovFrames.mKeys)){
+                ImGui::EndNeoTimeLine();
+            }
 
+            if(ImGui::BeginNeoTimeline("Near Frame", mZNearFrames.mKeys)){
+                ImGui::EndNeoTimeLine();
+            }
+            if(ImGui::BeginNeoTimeline("Far Plane", mZFarFrames.mKeys)){
+                ImGui::EndNeoTimeLine();
+            }
 
-        if(ImGui::BeginNeoTimeline("Camera FOV", mFovFrames.mKeys)){
-            ImGui::EndNeoTimeLine();
-        }
+            if(ImGui::BeginNeoTimeline("Unknown Data", mUnkownDataFrames.mKeys)){
+                ImGui::EndNeoTimeLine();
+            }
 
-        if(ImGui::BeginNeoTimeline("Near Frame", mZNearFrames.mKeys)){
-            ImGui::EndNeoTimeLine();
+            ImGui::EndNeoSequencer();
         }
-        if(ImGui::BeginNeoTimeline("Far Plane", mZFarFrames.mKeys)){
-            ImGui::EndNeoTimeLine();
-        }
-
-        if(ImGui::BeginNeoTimeline("Unknown Data", mUnkownDataFrames.mKeys)){
-            ImGui::EndNeoTimeLine();
-        }
-
-        ImGui::EndNeoSequencer();
+        ImGui::TreePop();
     }
     //TODO: edit keyframe data
 }
@@ -334,7 +251,7 @@ void LCameraAnimationDOMNode::Load(bStream::CStream* stream)
     mStartFrame = 0;
 
     mFrameCount = stream->readUInt16();
-    
+
     stream->readUInt16();
 
     // Frame Data for Camera Animations always starts at offset 68
@@ -352,7 +269,7 @@ void LCameraAnimationDOMNode::Load(bStream::CStream* stream)
     mTargetFramesY.LoadTrack(stream, 68, ETrackType::CMN);
     //LGenUtility::Log << "==Reading Track Target Z==" << std::endl;
     mTargetFramesX.LoadTrack(stream, 68, ETrackType::CMN);
-    
+
     //LGenUtility::Log << "==Reading Track Unk Data==" << std::endl;
     mUnkownDataFrames.LoadTrack(stream, 68, ETrackType::CMN);
 
@@ -361,7 +278,7 @@ void LCameraAnimationDOMNode::Load(bStream::CStream* stream)
 
     //LGenUtility::Log << "==Reading Track ZNear==" << std::endl;
     mZNearFrames.LoadTrack(stream, 68, ETrackType::CMN);
-    
+
     //LGenUtility::Log << "==Reading Track ZFar==" << std::endl;
     mZFarFrames.LoadTrack(stream, 68, ETrackType::CMN);
 

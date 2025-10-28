@@ -4,7 +4,7 @@
 #include "imgui_internal.h"
 #include <filesystem>
 #include "Options.hpp"
-#include "ImGuiFileDialog/ImGuiFileDialog.h"
+#include "ImGuiFileDialog.h"
 #include "stb_image.h"
 #include <glad/glad.h>
 #include "scene/ModelViewer.hpp"

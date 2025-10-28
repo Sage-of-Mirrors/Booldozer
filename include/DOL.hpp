@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../lib/bStream/bstream.h"
+#include "bstream.h"
 #include <filesystem>
 
 constexpr size_t DOL_SECTION_COUNT = 18;

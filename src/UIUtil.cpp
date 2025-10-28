@@ -1,7 +1,7 @@
 #include "UIUtil.hpp"
 #include <glm/gtx/matrix_decompose.hpp>
 #include "GenUtil.hpp"
-#include "ImGuiFileDialog/ImGuiFileDialog.h"
+#include "ImGuiFileDialog.h"
 #include <IconsForkAwesome.h>
 #include <imgui_internal.h>
 

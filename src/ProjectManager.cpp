@@ -1,5 +1,5 @@
 #include "imgui.h"
-#include "ImGuiFileDialog/ImGuiFileDialog.h"
+#include "ImGuiFileDialog.h"
 #include "IconsForkAwesome.h"
 #include "Options.hpp"
 #include "ProjectManager.hpp"
@@ -99,7 +99,7 @@ void Render(){
     ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize({ImGui::GetMainViewport()->Size.x * 0.65f, ImGui::GetMainViewport()->Size.y * 0.75f}, ImGuiCond_Always);
 
-	if (ImGui::BeginPopupModal("ProjectManager", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
+	if (ImGui::BeginPopupModal("ProjectManager", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
 	{
 		ImGui::Text("Game Roots");
 		ImGui::Separator();
@@ -183,13 +183,14 @@ void Render(){
     }
 
     ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-    if(ImGui::BeginPopupModal("NewRootNameDiag", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar)){
+    if(ImGui::BeginPopupModal("NewRootNameDiag", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar)){
         ImGui::Text("Root Name");
         LUIUtility::RenderTooltip("Name of the folder booldozer will create, can't conflict with other root dir names!");
         ImGui::Separator();
         LUIUtility::RenderTextInput("##projectRootName", &NewProjectRootName);
         if(ImGui::Button("Next")){
-            ImGuiFileDialog::Instance()->OpenModal("newRootDialog", "Create Project Root", "GameCube Disk Image (*.gcm *.iso){.gcm,.iso}", std::filesystem::current_path().string());
+            IGFD::FileDialogConfig cfg { .path = std::filesystem::current_path().string(), .flags = ImGuiFileDialogFlags_Modal };
+            ImGuiFileDialog::Instance()->OpenDialog("newRootDialog", "Create Project Root", "GameCube Disk Image (*.gcm *.iso){.gcm,.iso}", cfg);
             OpenNewRoot = true;
             ImGui::CloseCurrentPopup();
         }

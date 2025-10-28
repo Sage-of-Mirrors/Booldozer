@@ -5,7 +5,7 @@
 #include "imgui.h"
 #include <map>
 #include <format>
-#include "ImGuiFileDialog/ImGuiFileDialog.h"
+#include "ImGuiFileDialog.h"
 #include <Bti.hpp>
 #include "stb_image.h"
 
@@ -201,7 +201,8 @@ void Render(){
                 }
                 ImGui::Text(ICON_FK_PLUS_CIRCLE);
                 if(ImGui::IsItemClicked(0) && MenuArc != nullptr){
-                    ImGuiFileDialog::Instance()->OpenModal("ImportBloPNG", "Import PNG", "PNG Image (*.png){.png}", std::filesystem::current_path().string());
+                    IGFD::FileDialogConfig cfg { .path = std::filesystem::current_path().string(), .flags = ImGuiFileDialogFlags_Modal };
+                    ImGuiFileDialog::Instance()->OpenDialog("ImportBloPNG", "Import PNG", "PNG Image (*.png){.png}", cfg);
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::TreePop();
@@ -223,7 +224,8 @@ void Render(){
                 }
                 ImGui::Text(ICON_FK_PLUS_CIRCLE);
                 if(ImGui::IsItemClicked(0) && MenuArc != nullptr){
-                    ImGuiFileDialog::Instance()->OpenModal("ImportBfnFont", "Import BFN", "BFN Font (*.bfn){.bfn}", std::filesystem::current_path().string());
+                    IGFD::FileDialogConfig cfg { .path = std::filesystem::current_path().string(), .flags = ImGuiFileDialogFlags_Modal };
+                    ImGuiFileDialog::Instance()->OpenDialog("ImportBfnFont", "Import BFN", "BFN Font (*.bfn){.bfn}", cfg);
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::TreePop();

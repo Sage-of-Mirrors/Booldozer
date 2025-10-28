@@ -56,7 +56,7 @@ namespace BIN {
 
     struct Sampler : Readable {
         int16_t TextureIndex { -1 };
-        int16_t PaletteIndex { -1 };;
+        int16_t PaletteIndex { -1 };
         uint8_t WrapU { 0 };
         uint8_t WrapV { 0 };
         uint16_t Unk { 0 };
@@ -197,6 +197,7 @@ namespace BIN {
         std::vector<glm::vec3> mPositions;
         std::vector<glm::vec3> mNormals;
         std::vector<glm::vec2> mTexCoords;
+        std::vector<glm::vec2> mTexCoords1;
         std::vector<glm::vec4> mColors;
 
         void ReadSceneGraphNode(bStream::CStream* stream, uint32_t index);
@@ -210,7 +211,7 @@ namespace BIN {
         void Write(bStream::CStream* stream);
 
         static Model FromOBJ(std::string path);
-        static Model FromFBX(std::string path);
+        static Model FromFBX(std::string path, bool enableVertexColors=false);
 		Model(bStream::CStream* stream){ Load(stream); }
         Model(){}
         ~Model();
@@ -230,13 +231,13 @@ namespace BIN {
         bool Playing() { return mPlaying; }
         void ResetTracks();
         void Play();
-        void Stop();    
+        void Stop();
 
         glm::mat4 GetNodeFrame(uint16_t node);
         void Step(float dt) { mTime += dt * 10; if(mTime >= mFrameCount && mLoop) { mTime = 0.0f; ResetTracks(); } else if(mTime >= mFrameCount) { mPlaying = false; } }
 
         void Load(Model* model, bStream::CStream* stream);
-        
+
         Animation(){}
         ~Animation(){}
     };
