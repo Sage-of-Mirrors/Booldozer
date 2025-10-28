@@ -43,7 +43,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt update
-          sudo apt install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev mesa-common-dev libicu-dev libwayland-dev libxkbcommon-dev libegl1-mesa-dev libbz2-dev
+          sudo apt install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev mesa-common-dev libicu-dev libwayland-dev libxkbcommon-dev libegl1-mesa-dev libbz2-dev libx11-dev
       - name: Set up MSVC for Windows
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
