@@ -56,13 +56,14 @@ void LOptionsMenu::RenderOptionsPopup(LEditorScene* scene)
 
 		// Button for file dialog
 		if (ImGui::Button("...##Dolphin")){
-			ImGuiFileDialog::Instance()->OpenModal("SetDolphinPath", "Choose Dolphin Installation", "Executables (*.exe){.exe}", mTempOptions.mDolphinPath);
+			IGFD::FileDialogConfig cfg { .path = mTempOptions.mDolphinPath, .flags = ImGuiFileDialogFlags_Modal };
+            ImGuiFileDialog::Instance()->OpenDialog("SetDolphinPath", "Choose Dolphin Executable", "Executables (*.exe){.exe}", cfg);
 		}
 		#else
 		LUIUtility::RenderTextInput("Dolphin Command (ex, dolphin-emu)", &mTempOptions.mDolphinPath, 500);
 		ImGui::SameLine(605);
 		#endif
-		
+
 		// Render file dialog if open
 		if (LUIUtility::RenderFileDialog("SetDolphinPath", path))
 			mTempOptions.mDolphinPath = path;
