@@ -718,13 +718,13 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::BeginGroup();
 		ImGui::Text(ICON_FK_FOLDER_OPEN);
 		if(ImGui::IsItemClicked()){
-			IGFD::FileDialogConfig cfg { .path = std::filesystem::current_path(), .flags = ImGuiFileDialogFlags_Modal };
+			IGFD::FileDialogConfig cfg { .path = std::filesystem::current_path().string(), .flags = ImGuiFileDialogFlags_Modal };
 			ImGuiFileDialog::Instance()->OpenDialog("openNewBanner", "Open Banner Image", "Image (*.png){.png}", cfg);
 			ImGui::CloseCurrentPopup();
 		}
 		ImGui::Text(ICON_FK_FLOPPY_O);
 		if(ImGui::IsItemClicked()){
-			IGFD::FileDialogConfig cfg { .path = std::filesystem::current_path(), .flags = ImGuiFileDialogFlags_Modal };
+			IGFD::FileDialogConfig cfg { .path = std::filesystem::current_path().string(), .flags = ImGuiFileDialogFlags_Modal };
 			ImGuiFileDialog::Instance()->OpenDialog("saveBannerImage", "Save Banner Image Titlecard", "Image (*.png){.png}", cfg);
 			ImGui::CloseCurrentPopup();
 		}
@@ -1029,7 +1029,7 @@ void LBooldozerEditor::onSaveMapArchiveCB()
 
 void LBooldozerEditor::onGCMExportCB()
 {
-	IGFD::FileDialogConfig cfg { .path = std::filesystem::current_path(), .flags = ImGuiFileDialogFlags_Modal };
+	IGFD::FileDialogConfig cfg { .path = std::filesystem::current_path().string(), .flags = ImGuiFileDialogFlags_Modal };
 	ImGuiFileDialog::Instance()->OpenDialog("exportGCMDlg", "Export GCM", "GameCube Disk Image (*.gcm *.iso *.szp){.iso,.gcm}", cfg);
 }
 
