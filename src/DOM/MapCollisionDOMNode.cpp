@@ -4,7 +4,7 @@
 #include "GenUtil.hpp"
 #include "imgui.h"
 #include "../lib/bStream/bstream.h"
-#include "ImGuiFileDialog/ImGuiFileDialog.h"
+#include "ImGuiFileDialog.h"
 #include "io/CollisionIO.hpp"
 #include <thread>
 #include <mutex>
@@ -108,7 +108,7 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 			ImGui::SameLine();
 			LUIUtility::RenderTextInput("##matPropertyLadder", &mMatColProp["Ladder"]);
 			LUIUtility::RenderTooltip("Name of material property with ladder flag. Unused.");
-			
+
 			ImGui::Text("IgnorePointer");
 			ImGui::SameLine();
 			LUIUtility::RenderTextInput("##matPropertyIgnorePointer", &mMatColProp["IgnorePointer"]);
@@ -138,7 +138,7 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 		ImGui::Spinner("##loadmapSpinner", 5.0f, 2, col);
 		ImGui::SameLine();
 		ImGui::Text("Importing Obj Collision...");
-		
+
 		importLock.lock();
 		if(isImportingCol == false){
 			LGenUtility::Log << "[BooldozerEditor]: Joining Import Thread" << std::endl;
@@ -162,7 +162,7 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 
 		bStream::CMemoryStream colStream(colFile->GetData(), colFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 		Load(&colStream);
-	
+
 		LEditorScene::SetDirty();
 
 	}
@@ -175,7 +175,7 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 		importLock.unlock();
 
 		importModelThread = std::thread(&LMapCollisionDOMNode::ImportObj, std::ref(*this), path);
-		
+
 		ImGui::OpenPopup("Importing Obj");
 
 	}
@@ -188,7 +188,7 @@ bool LMapCollisionDOMNode::Load(bStream::CMemoryStream* stream)
 	mModel.mVertices.clear();
 	mModel.mNormals.clear();
 	mModel.mTriangles.clear();
-    
+
 	mGridScale = glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat());
 	mMinBounds = glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat());
 	mAxisLengths = glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat());
@@ -198,7 +198,7 @@ bool LMapCollisionDOMNode::Load(bStream::CMemoryStream* stream)
 	uint32_t triangleDataOffset = stream->readUInt32();
 	uint32_t triangleGroupOffset = stream->readUInt32();
 	uint32_t gridIndexOffset = stream->readUInt32();
-	
+
 	//	duplicated for some reason
 	gridIndexOffset = stream->readUInt32();
 
@@ -210,7 +210,7 @@ bool LMapCollisionDOMNode::Load(bStream::CMemoryStream* stream)
 	{
 		mModel.mVertices.push_back(glm::vec3(stream->readFloat(), stream->readFloat(), stream->readFloat()));
 	}
-	
+
 	stream->seek(normalDataOffset);
 	for (size_t i = 0; i < (triangleDataOffset - normalDataOffset) / 0x0C; i++)
 	{
