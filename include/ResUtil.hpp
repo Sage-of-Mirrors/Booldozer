@@ -37,7 +37,7 @@ namespace LResUtility
 
 	nlohmann::ordered_json DeserializeJSON(std::filesystem::path file_path);
 
-	nlohmann::ordered_json GetNameMap(std::string name);
+	nlohmann::ordered_json& GetNameMap(std::string name);
 	void SetNameMap(std::string name, nlohmann::ordered_json json);
 	nlohmann::ordered_json GetMirrorTemplate(std::string name);
 
@@ -53,10 +53,10 @@ namespace LResUtility
 		public:
 			bool mLoadedGameArchive = false;
 			std::shared_ptr<Archive::Rarc> mGameArchive { nullptr };
-			
+
 			GCBanner mBanner;
 			uint8_t mBannerImage[96*32*4] { 0 };
-			
+
 			void Init();
 			void Cleanup();
 	};

@@ -24,7 +24,7 @@ class LBooldozerApp
 
 public:
 	LBooldozerApp();
-	virtual ~LBooldozerApp() {}
+	~LBooldozerApp(){}
 
 	bool Setup();
 	void Run();

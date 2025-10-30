@@ -17,6 +17,8 @@ public:
 
     void Draw(glm::mat4* transform, uint32_t id, uint32_t selected, int32_t texScaleX, int32_t texScaleY);
 
+    void CleanUp();
+
     CPlaneRenderer() {}
     ~CPlaneRenderer();
 };

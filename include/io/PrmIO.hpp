@@ -92,6 +92,7 @@ public:
     void Load(std::string name, bStream::CStream* stream);
     void Save(std::string name, bStream::CStream* stream);
     bool RenderUI();
+    void CleanUp();
 
     LPrmIO();
     ~LPrmIO();

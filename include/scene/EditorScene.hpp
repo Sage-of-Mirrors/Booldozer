@@ -37,10 +37,10 @@ class LEditorScene {
     CPlaneRenderer mMirrorRenderer;
     CPointSpriteManager mPointManager;
     CPathRenderer mPathRenderer;
-    
+
     std::vector<std::weak_ptr<LDoorDOMNode>> mRoomDoors;
     std::vector<std::weak_ptr<LRoomDOMNode>> mCurrentRooms;
-    
+
     std::vector<std::shared_ptr<BIN::Model>> mDoorModels;
     std::map<std::string, std::shared_ptr<BIN::Model>> mRoomModels;
 
@@ -59,7 +59,7 @@ class LEditorScene {
 public:
     LSceneCamera Camera;
     std::map<std::string, std::shared_ptr<BIN::Model>> mRoomFurniture;
-    
+
     glm::mat4 getCameraView();
     glm::mat4 getCameraProj();
 
@@ -77,6 +77,7 @@ public:
     void Clear();
     void Update(GLFWwindow* window, float dt, LEditorSelection* selection);
     void LoadResFromRoot();
+    void CleanUp();
 
     static LEditorScene* GetEditorScene();
 

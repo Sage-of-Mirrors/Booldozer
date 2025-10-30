@@ -118,6 +118,9 @@ bool LBooldozerApp::Teardown() {
 	Discord_Shutdown();
 	*/
 
+	mEditorContext.CleanUp();
+	mEditorScene.CleanUp();
+
 	GCResourceManager.Cleanup();
 
 	ImGui_ImplOpenGL3_Shutdown();

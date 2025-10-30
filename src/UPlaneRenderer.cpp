@@ -83,13 +83,13 @@ void CPlaneRenderer::Init(std::string texPath){
 
 	glLinkProgram(mProgramID);
 
-	glGetProgramiv(mProgramID, GL_LINK_STATUS, &status); 
+	glGetProgramiv(mProgramID, GL_LINK_STATUS, &status);
 	if(GL_FALSE == status) {
-		GLint logLen; 
-		glGetProgramiv(mProgramID, GL_INFO_LOG_LENGTH, &logLen); 
-		glGetProgramInfoLog(mProgramID, logLen, nullptr, glErrorLogBuffer); 
+		GLint logLen;
+		glGetProgramiv(mProgramID, GL_INFO_LOG_LENGTH, &logLen);
+		glGetProgramInfoLog(mProgramID, logLen, nullptr, glErrorLogBuffer);
 		printf("[EditorScene]: Mirror Shader Program Linking Error:\n%s\n", glErrorLogBuffer);
-	} 
+	}
 
 	glDetachShader(mProgramID, vs);
 	glDetachShader(mProgramID, fs);
@@ -164,9 +164,11 @@ void CPlaneRenderer::Draw(glm::mat4* transform, uint32_t id, uint32_t selected, 
     glUseProgram(0);
 }
 
-CPlaneRenderer::~CPlaneRenderer(){
+void CPlaneRenderer::CleanUp(){
     glDeleteTextures(1, &mTexture);
     glDeleteProgram(mProgramID);
     glDeleteVertexArrays(1, &mVao);
     glDeleteBuffers(1, &mVbo);
 }
+
+CPlaneRenderer::~CPlaneRenderer(){}

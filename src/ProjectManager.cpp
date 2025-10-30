@@ -8,6 +8,7 @@
 #include <scene/EditorScene.hpp>
 #include "UIUtil.hpp"
 #include "GCM.hpp"
+#include "ImGuiNotify.hpp"
 
 namespace ProjectManager {
 
@@ -118,6 +119,7 @@ void Render(){
                     auto project = ProjectsJson["projects"][id];
                     ImGui::SetCursorPosX((ImGui::GetContentRegionAvail().x - (ImGui::GetContentRegionAvail().x * 0.90f)) * 0.65f);
                     ImGui::BeginChild(std::format("{}##{}", project.get<std::string>(), id).c_str(), ImVec2(ImGui::GetContentRegionAvail().x * 0.90f, 82.0f), ImGuiChildFlags_Border);
+                        bool clickedProj = false;
                         if(ImGui::IsWindowHovered()){
                             float ypos = ImGui::GetCursorPosY();
                             ImGui::SetCursorPosY(ypos + 24);
@@ -125,19 +127,8 @@ void Render(){
                             ImGui::Text(ICON_FK_TRASH);
                             if(ImGui::IsItemClicked(ImGuiMouseButton_Left)){
                                 toDelete = id;
-                            } else if(ImGui::IsMouseClicked(ImGuiMouseButton_Left)){
-
-                                OPTIONS.mRootPath = project.get<std::string>();
-                                GCResourceManager.Init();
-                                LEditorScene::GetEditorScene()->LoadResFromRoot();
-
-                                LResUtility::LoadMapThumbnails(project.get<std::string>());
-                                ImGui::CloseCurrentPopup();
-
-                                DOL dol;
-                                dol.LoadDOLFile(std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol");
-
-                                JustClosed = true;
+                            } else if(ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+                                clickedProj = true;
                             }
                             ImGui::SetCursorPosY(ypos);
                             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10);
@@ -146,7 +137,27 @@ void Render(){
                         ImGui::SameLine();
                         ImGui::BeginGroup();
                         ImGui::Text(ProjectNames[project.get<std::string>()].c_str());
-                        ImGui::Text(project.get<std::string>().c_str());
+                        ImGui::TextDisabled(project.get<std::string>().c_str());
+                        bool clickedPath = ImGui::IsItemClicked();
+                        if(clickedProj && !clickedPath){
+
+                            OPTIONS.mRootPath = project.get<std::string>();
+                            GCResourceManager.Init();
+                            LEditorScene::GetEditorScene()->LoadResFromRoot();
+
+                            LResUtility::LoadMapThumbnails(project.get<std::string>());
+                            ImGui::CloseCurrentPopup();
+
+                            DOL dol;
+                            dol.LoadDOLFile(std::filesystem::path(OPTIONS.mRootPath) / "sys" / "main.dol");
+
+                            JustClosed = true;
+                        } else if(clickedPath){
+                            // open path in explorer
+                            ImGui::InsertNotification({ImGuiToastType::Info, 3000, "Copied Root Path to Clipboard"});
+                            ImGui::SetClipboardText(project.get<std::string>().c_str());
+                        }
+
                         ImGui::EndGroup();
                     ImGui::EndChild();
                 }

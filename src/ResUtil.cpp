@@ -86,7 +86,7 @@ void LResUtility::SetNameMap(std::string name, nlohmann::ordered_json json){
 	NameMaps[name] = json;
 }
 
-nlohmann::ordered_json LResUtility::GetNameMap(std::string name)
+nlohmann::ordered_json& LResUtility::GetNameMap(std::string name)
 {
 	if (NameMaps.count(name) != 0)
 		return NameMaps[name];
@@ -97,7 +97,7 @@ nlohmann::ordered_json LResUtility::GetNameMap(std::string name)
 	if (!json.empty())
 		NameMaps.emplace(name, json);
 
-	return json;
+	return NameMaps[name];
 }
 
 nlohmann::ordered_json LResUtility::GetMirrorTemplate(std::string name)

@@ -56,53 +56,53 @@ void CPointSpriteManager::Init(int BillboardResolution, int BillboardImageCount)
 	    char glErrorLogBuffer[4096];
 	    GLuint vs = glCreateShader(GL_VERTEX_SHADER);
 	    GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-	
+
 	    glShaderSource(vs, 1, &default_ps_vtx_shader_source, NULL);
 	    glShaderSource(fs, 1, &default_ps_frg_shader_source, NULL);
-	
+
 	    glCompileShader(vs);
-	
+
 	    GLint status;
 	    glGetShaderiv(vs, GL_COMPILE_STATUS, &status);
 	    if(status == GL_FALSE){
 	        GLint infoLogLength;
 	        glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &infoLogLength);
-	
+
 	        glGetShaderInfoLog(vs, infoLogLength, NULL, glErrorLogBuffer);
-	
+
 	        printf("[Billboard Renderer]: Compile failure in vertex shader:\n%s\n", glErrorLogBuffer);
 	    }
-	
+
 	    glCompileShader(fs);
-	
+
 	    glGetShaderiv(fs, GL_COMPILE_STATUS, &status);
 	    if(status == GL_FALSE){
 	        GLint infoLogLength;
 	        glGetShaderiv(fs, GL_INFO_LOG_LENGTH, &infoLogLength);
-	
+
 	        glGetShaderInfoLog(fs, infoLogLength, NULL, glErrorLogBuffer);
-	
+
 	        printf("[Billboard Renderer]: Compile failure in fragment shader:\n%s\n", glErrorLogBuffer);
 	    }
-	
+
 	    mShaderID = glCreateProgram();
-	
+
 	    glAttachShader(mShaderID, vs);
 	    glAttachShader(mShaderID, fs);
-	
+
 	    glLinkProgram(mShaderID);
-	
-	    glGetProgramiv(mShaderID, GL_LINK_STATUS, &status); 
+
+	    glGetProgramiv(mShaderID, GL_LINK_STATUS, &status);
 	    if(GL_FALSE == status) {
-	        GLint logLen; 
-	        glGetProgramiv(mShaderID, GL_INFO_LOG_LENGTH, &logLen); 
-	        glGetProgramInfoLog(mShaderID, logLen, NULL, glErrorLogBuffer); 
+	        GLint logLen;
+	        glGetProgramiv(mShaderID, GL_INFO_LOG_LENGTH, &logLen);
+	        glGetProgramInfoLog(mShaderID, logLen, NULL, glErrorLogBuffer);
 	        printf("[Billboard Renderer]: Point Shader Program Linking Error:\n%s\n", glErrorLogBuffer);
-	    } 
-	
+	    }
+
 	    glDetachShader(mShaderID, vs);
 	    glDetachShader(mShaderID, fs);
-	
+
 	    glDeleteShader(vs);
 	    glDeleteShader(fs);
 
@@ -130,11 +130,13 @@ void CPointSpriteManager::Init(int BillboardResolution, int BillboardImageCount)
 
 }
 
-CPointSpriteManager::CPointSpriteManager() {}
-
-CPointSpriteManager::~CPointSpriteManager() {
+void CPointSpriteManager::CleanUp(){
 	glDeleteTextures(1, &mTextureID);
 }
+
+CPointSpriteManager::CPointSpriteManager() {}
+
+CPointSpriteManager::~CPointSpriteManager() {}
 
 void CPointSpriteManager::SetBillboardTexture(std::filesystem::path ImagePath, int TextureIndex){
 	if(TextureIndex > mTextureCount || !std::filesystem::exists(ImagePath)) return;

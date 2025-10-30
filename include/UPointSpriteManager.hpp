@@ -25,12 +25,13 @@ class CPointSpriteManager {
 
 public:
 	std::vector<CPointSprite> mBillboards;
-	
+
 	void SetBillboardTexture(std::filesystem::path ImagePath, int TextureIndex);
 	void Draw(LSceneCamera* Camera);
 
     void UpdateData();
 	void Init(int BillboardResolution, int BillboardImageCount);
+	void CleanUp();
 
 	CPointSpriteManager();
 	~CPointSpriteManager();

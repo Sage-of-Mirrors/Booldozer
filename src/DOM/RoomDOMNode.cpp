@@ -2,6 +2,9 @@
 #include <bstream.h>
 #include <cstdint>
 #include <format>
+#include "DOM/DOMNodeBase.hpp"
+#include "DOM/MapDOMNode.hpp"
+#include "DOM/RoomDataDOMNode.hpp"
 #include "GXGeometryData.hpp"
 #include "GenUtil.hpp"
 #include "ImGuiFileDialog.h"
@@ -14,12 +17,14 @@
 #include "imgui.h"
 #include "io/BinIO.hpp"
 #include "io/Util.hpp"
+#include "json.hpp"
 #include "modes/ActorMode.hpp"
 #include "scene/ModelViewer.hpp"
 #include <Bti.hpp>
 #include <memory>
 #include "ResUtil.hpp"
 #include <vector>
+#include "misc/cpp/imgui_stdlib.h"
 
 #include "stb_image.h"
 #include "stb_image_write.h"
@@ -59,6 +64,7 @@ namespace {
     uint32_t CurRoomNameImgID = 0x00000000;
 
     Bti RoomTitlecard;
+
 }
 
 std::vector<const char*> WrapModes {
@@ -361,6 +367,27 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
     // Room tree start
     bool treeSelected = false;
     bool treeOpened = LUIUtility::RenderNodeSelectableTreeNode(GetName(), GetIsSelected(), treeSelected);
+
+    if(ImGui::IsItemClicked(ImGuiMouseButton_Right)){
+        ImGui::OpenPopup("##popupRoomNameEdit");
+    }
+
+    if(ImGui::BeginPopupContextItem("##popupRoomNameEdit")){
+        ImGui::Text("Edit Room Name");
+        ImGui::InputText("##roomName", &mName, 0);
+        ImGui::SameLine();
+        ImGui::Text(ICON_FK_ARROW_CIRCLE_O_RIGHT);
+        if(ImGui::IsItemClicked() || ImGui::IsKeyDown(ImGuiKey_Enter)){
+            auto map = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
+            auto id = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0]->GetRoomID();
+            nlohmann::ordered_json nameMap = LResUtility::GetNameMap(std::format("{0}_rooms", map.lock()->GetName()));
+            nameMap[std::format("room_{:02}", id)] = mName;
+			std::ofstream namesConfig((RES_BASE_PATH / "names" / std::format("{0}_rooms.json", map.lock()->GetName())).string());
+			namesConfig << nameMap;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
 
     bool openRoomRes = false;
     if(GetIsSelected()){

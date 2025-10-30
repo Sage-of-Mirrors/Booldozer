@@ -1,4 +1,5 @@
 #include "history/RoomMoveHistoryItem.hpp"
+#include "ImGuiNotify.hpp"
 
 LRoomMoveHistoryItem::LRoomMoveHistoryItem(std::shared_ptr<LRoomDOMNode> node, glm::vec3 delta, LEditorScene* scene) :
 	mAffectedNode(node), mDelta(delta), mScene(scene)
@@ -12,6 +13,11 @@ void LRoomMoveHistoryItem::Undo()
 		return;
 
     std::shared_ptr<LRoomDataDOMNode> data = mAffectedNode->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+
+    ImGuiToast undoNotif(ImGuiToastType::Success, 3000);
+    undoNotif.setTitle("Undo");
+    undoNotif.setContent("Transform %s", mAffectedNode->GetName().c_str());
+    ImGui::InsertNotification(undoNotif);
 
 	data->SetMax(data->GetMax() - mDelta);
 	data->SetMin(data->GetMin() - mDelta);

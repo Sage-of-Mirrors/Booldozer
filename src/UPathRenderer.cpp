@@ -51,53 +51,53 @@ void CPathRenderer::Init() {
 	    char glErrorLogBuffer[4096];
 	    GLuint vs = glCreateShader(GL_VERTEX_SHADER);
 	    GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-	
+
 	    glShaderSource(vs, 1, &default_path_vtx_shader_source, NULL);
 	    glShaderSource(fs, 1, &default_path_frg_shader_source, NULL);
-	
+
 	    glCompileShader(vs);
-	
+
 	    GLint status;
 	    glGetShaderiv(vs, GL_COMPILE_STATUS, &status);
 	    if(status == GL_FALSE){
 	        GLint infoLogLength;
 	        glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &infoLogLength);
-	
+
 	        glGetShaderInfoLog(vs, infoLogLength, NULL, glErrorLogBuffer);
-	
+
 	        printf("[Path Renderer]: Compile failure in vertex shader:\n%s\n", glErrorLogBuffer);
 	    }
-	
+
 	    glCompileShader(fs);
-	
+
 	    glGetShaderiv(fs, GL_COMPILE_STATUS, &status);
 	    if(status == GL_FALSE){
 	        GLint infoLogLength;
 	        glGetShaderiv(fs, GL_INFO_LOG_LENGTH, &infoLogLength);
-	
+
 	        glGetShaderInfoLog(fs, infoLogLength, NULL, glErrorLogBuffer);
-	
+
 	        printf("[Path Renderer]: Compile failure in fragment shader:\n%s\n", glErrorLogBuffer);
 	    }
-	
+
 	    mShaderID = glCreateProgram();
-	
+
 	    glAttachShader(mShaderID, vs);
 	    glAttachShader(mShaderID, fs);
-	
+
 	    glLinkProgram(mShaderID);
-	
-	    glGetProgramiv(mShaderID, GL_LINK_STATUS, &status); 
+
+	    glGetProgramiv(mShaderID, GL_LINK_STATUS, &status);
 	    if(GL_FALSE == status) {
-	        GLint logLen; 
-	        glGetProgramiv(mShaderID, GL_INFO_LOG_LENGTH, &logLen); 
-	        glGetProgramInfoLog(mShaderID, logLen, NULL, glErrorLogBuffer); 
+	        GLint logLen;
+	        glGetProgramiv(mShaderID, GL_INFO_LOG_LENGTH, &logLen);
+	        glGetProgramInfoLog(mShaderID, logLen, NULL, glErrorLogBuffer);
 	        printf("[Path Renderer]: Path Shader Program Linking Error:\n%s\n", glErrorLogBuffer);
-	    } 
-	
+	    }
+
 	    glDetachShader(mShaderID, vs);
 	    glDetachShader(mShaderID, fs);
-	
+
 	    glDeleteShader(vs);
 	    glDeleteShader(fs);
 
@@ -126,12 +126,14 @@ void CPathRenderer::Init() {
 
 }
 
-CPathRenderer::CPathRenderer() {}
-
-CPathRenderer::~CPathRenderer() {
+void CPathRenderer::CleanUp(){
     glDeleteBuffers(1, &mVbo);
     glDeleteVertexArrays(1, &mVao);
 }
+
+CPathRenderer::CPathRenderer() {}
+
+CPathRenderer::~CPathRenderer() {}
 
 void CPathRenderer::UpdateData(){
     glBindBuffer(GL_ARRAY_BUFFER, mVbo);
@@ -167,7 +169,7 @@ void CPathRenderer::Draw(LSceneCamera *Camera, bool enableDepth) {
 
     glUniformMatrix4fv(mMVPUniform, 1, 0, (float*)&mvp[0]);
 
- 
+
     uint32_t start = 0;
     glUniform1i(mPointModeUniform, 1);
     for(auto& line : mPaths){

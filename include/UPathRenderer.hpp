@@ -23,11 +23,12 @@ class CPathRenderer {
 
 public:
 	std::vector<std::vector<CPathPoint>> mPaths;
-	
+
     void UpdateData();
 	void Draw(LSceneCamera* Camera, bool enableDepth = true);
 
 	void Init();
+	void CleanUp();
 	CPathRenderer();
 	~CPathRenderer();
 };

@@ -72,13 +72,14 @@ class LBooldozerEditor
 public:
 	LBooldozerEditor();
 	~LBooldozerEditor();
-	
+
 	// Param files for this root
 	LPrmIO mGhostConfigs;
 
 	EEditorMode CurrentMode;
 
 	void Render(float dt, LEditorScene* renderer_scene);
+	void CleanUp();
 
 	// Callback for when the user requests to open a map folder.
 	void onOpenMapCB();

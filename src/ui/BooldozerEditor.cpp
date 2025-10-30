@@ -36,6 +36,7 @@
 #include "picosha2.h"
 #include "ProjectManager.hpp"
 #include "ui/BloEditor.hpp"
+#include "ImGuiNotify.hpp"
 
 namespace {
 	char* patchErrorMsg { nullptr };
@@ -53,7 +54,9 @@ LBooldozerEditor::LBooldozerEditor()
 	LResUtility::LoadUserSettings();
 }
 
-LBooldozerEditor::~LBooldozerEditor(){
+LBooldozerEditor::~LBooldozerEditor(){}
+
+void LBooldozerEditor::CleanUp(){
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
@@ -64,6 +67,8 @@ LBooldozerEditor::~LBooldozerEditor(){
 
 	CameraAnimation::CleanupPreview();
 	PreviewWidget::CleanupPreview();
+
+	mGhostConfigs.CleanUp();
 
 	LResUtility::CleanupThumbnails();
 }
@@ -162,6 +167,7 @@ void LBooldozerEditor::SaveMap(std::string path){
 
 	loadLock.lock();
 	mapLoading = false;
+	ImGui::InsertNotification({ImGuiToastType::Success, 3000, "Map Saved"});
 	loadLock.unlock();
 }
 
@@ -497,6 +503,9 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::EndPopup();
 	}
 
+	if(ImGui::IsKeyChordPressed(ImGuiKey_S | ImGuiMod_Ctrl)){
+        mSaveMapClicked = true;
+	}
 
 	if(mOpenControlsDialog){
 		ImGui::OpenPopup("ControlsDialog");
@@ -543,7 +552,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::OpenPopup("SavingConfigsModal");
 	}
 
-	if(mSaveMapClicked){
+	if(mSaveMapClicked && mLoadedMap != nullptr){
 		loadLock.lock();
 		mapLoading = true;
 		loadLock.unlock();
@@ -551,6 +560,8 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		mapOperationThread = std::thread(&LBooldozerEditor::SaveMap, std::ref(*this), (std::filesystem::path(OPTIONS.mRootPath) / "files" / "Map" / std::format("map{}.szp", mSelectedMap)).string());
 		ImGui::OpenPopup("Saving Map");
 		// This gets set later after we save the thumbnail SaveMapClicked = false;
+	} else if(mSaveMapClicked && mLoadedMap == nullptr){
+	    ImGui::InsertNotification({ImGuiToastType::Error, 3000, "No Map Open"});
 	}
 
     ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -614,7 +625,6 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		}
 		if(closeEdit){
 			mapNames["names"][mMapNameDialogEditingNameIdx] = nlohmann::json(mMapNameDialogEditingNameStr);
-			LResUtility::SetNameMap("MapNames", mapNames);
 			std::ofstream namesConfig((RES_BASE_PATH / "names" / "MapNames.json").string());
 			namesConfig << mapNames;
 			mMapNameDialogEditingNameIdx = -1;
@@ -973,6 +983,14 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 	// Popups
 	RenderNoRootPopup();
 
+
+	// Notifications style setup
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 3.f); // Disable round borders
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.f); // Disable borders
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.10f, 0.10f, 0.10f, 1.00f)); // Background color
+    ImGui::RenderNotifications();
+    ImGui::PopStyleVar(2);
+    ImGui::PopStyleColor(1);
 
 
 	//fbo copy

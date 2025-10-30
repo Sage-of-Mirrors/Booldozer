@@ -52,9 +52,10 @@ bool AngleVisualizer(const char* label, float* angle)
 	return true;
 }
 
-LPrmIO::LPrmIO() : mConfigsLoaded(false), mSelectedConfig(0) {
-}
-LPrmIO::~LPrmIO() {
+LPrmIO::LPrmIO() : mConfigsLoaded(false), mSelectedConfig(0) {}
+LPrmIO::~LPrmIO() {}
+
+void LPrmIO::CleanUp(){
     glDeleteTextures(1, &mGhostImg);
 }
 
@@ -75,7 +76,7 @@ void LPrmIO::LoadConfigs(std::shared_ptr<LMapDOMNode>& map)
             }
         }
     }
-    
+
     mConfigsLoaded = true;
 }
 
@@ -88,14 +89,14 @@ void LPrmIO::SaveConfigsToFile()
             for(auto paramFile : ctpFolder->GetFiles()){
                 auto name = std::filesystem::path(paramFile->GetName()).filename().stem();
                 bStream::CMemoryStream prm(700, bStream::Endianess::Big, bStream::OpenMode::Out);
-                Save(name.string(), &prm); 
+                Save(name.string(), &prm);
                 paramFile->SetData(prm.getBuffer(), prm.getSize());
             }
         }
     	std::filesystem::path gameArcPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "Game" / "game_usa.szp";
         GCResourceManager.mGameArchive->SaveToFile(gameArcPath.string(), Compression::Format::YAY0);
     }
-    
+
 }
 
 // Because these properties are consistent, we can write all of them and the game wont really care, so long as the ones it is looking for are present.
@@ -364,7 +365,7 @@ bool LPrmIO::RenderUI()
     if(mGhostImg == 0){
         int x, y, n;
         uint8_t* data = stbi_load_from_memory(&ghostImgData[0], ghostImgData_size, &x, &y, &n, 4);
-        
+
         glCreateTextures(GL_TEXTURE_2D, 1, &mGhostImg);
         glTextureStorage2D(mGhostImg, 1, GL_RGBA8, x, y);
         glTextureSubImage2D(mGhostImg, 0, 0, 0, x, y, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -435,9 +436,9 @@ bool LPrmIO::RenderUI()
                         materialName = std::get<1>(actorRef);
                         fromGameArchive = std::get<2>(actorRef);
                     }
-                    
+
                     std::filesystem::path modelPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / "model" / (modelName + ".szp");
-                    
+
                     if(!fromGameArchive && std::filesystem::exists(modelPath)){
                         std::shared_ptr<Archive::Rarc> modelArchive = Archive::Rarc::Create();
                         bStream::CFileStream modelArchiveStream(modelPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
@@ -452,11 +453,12 @@ bool LPrmIO::RenderUI()
                                 PreviewWidget::LoadModel(&modelData, EModelType::Actor);
                             }
 
-                            if(modelArchive->GetFolder("key") != nullptr && modelArchive->GetFolder("key")->GetFileCount() > 0){
-                                std::shared_ptr<Archive::File> animFile = modelArchive->GetFolder("key")->GetFiles()[0];
-                                bStream::CMemoryStream animStream(animFile->GetData(), animFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
-                                PreviewWidget::SetSkeletalAnimation(&animStream);
-                            }
+                            // TODO: fix animations!
+                            //if(modelArchive->GetFolder("key") != nullptr && modelArchive->GetFolder("key")->GetFileCount() > 0){
+                            //    std::shared_ptr<Archive::File> animFile = modelArchive->GetFolder("key")->GetFiles()[0];
+                            //    bStream::CMemoryStream animStream(animFile->GetData(), animFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+                            //    PreviewWidget::SetSkeletalAnimation(&animStream);
+                            //}
 
                             if(materialName != ""){
                                 std::shared_ptr<Archive::File> txpFile = modelArchive->GetFile(std::filesystem::path("txp") / (materialName + ".txp"));
@@ -471,10 +473,10 @@ bool LPrmIO::RenderUI()
                         }
                     } else {
                         std::filesystem::path fullModelPath = std::filesystem::path("model") / (modelName + ".arc") / "model" / (modelName + ".mdl");
-                        
+
                         if(GCResourceManager.mLoadedGameArchive){
                             std::shared_ptr<Archive::File> modelFile = GCResourceManager.mGameArchive->GetFile(fullModelPath);
-                            
+
                             if(modelFile == nullptr){
                                 LGenUtility::Log << "[PRMIO]: Couldn't find " << modelName<< ".mdl in game archive" << std::endl;
                             } else {
@@ -604,7 +606,7 @@ bool LPrmIO::RenderUI()
 		ImGui::EndChild();
 
 		ImGui::SameLine();
-        
+
 		ImGui::Image(static_cast<uintptr_t>(PreviewWidget::PreviewID()), {600, 500},  {0.0f, 1.0f}, {1.0f, 0.0f});
 		if(ImGui::IsItemHovered()){
 			if(ImGui::IsKeyDown(ImGuiKey_ModShift)){

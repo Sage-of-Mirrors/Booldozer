@@ -37,10 +37,7 @@ LEditorScene* LEditorScene::GetEditorScene(){
 
 LEditorScene::LEditorScene() : Initialized(false) {}
 
-LEditorScene::~LEditorScene(){
-	BIN::DestroyShaders();
-	MDL::DestroyShaders();
-}
+LEditorScene::~LEditorScene(){}
 
 void LEditorScene::LoadResFromRoot(){
 	mDoorModels.reserve(14);
@@ -107,6 +104,26 @@ void LEditorScene::Init(){
 	MDL::InitShaders();
 
 	mScene = this;
+}
+
+void LEditorScene::CleanUp(){
+    mSkyboxModel = nullptr;
+    mCoinModel = nullptr;
+
+    mSkyBox = nullptr;
+    mCoin = nullptr;
+
+	mActorModels.clear();
+	mDoorModels.clear();
+	mRoomModels.clear();
+	mMaterialAnimations.clear();
+
+    Clear();
+    BIN::DestroyShaders();
+	MDL::DestroyShaders();
+	mPathRenderer.CleanUp();
+	mPointManager.CleanUp();
+	mMirrorRenderer.CleanUp();
 }
 
 void LEditorScene::Clear(){
@@ -291,6 +308,7 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 		}
 	}
 
+	glFrontFace(GL_CCW);
 	glDisable(GL_CULL_FACE);
 
 	glEnable(GL_DEPTH_TEST);
@@ -415,9 +433,8 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 	mPointManager.Draw(&Camera);
 	mPathRenderer.Draw(&Camera);
 
-
+	glFrontFace(GL_CW);
 	auto packets = J3D::Rendering::SortPackets(renderables, Camera.GetCenter());
-	glDisable(GL_CULL_FACE);
 	J3D::Rendering::Render(1, view, proj, packets);
 }
 
