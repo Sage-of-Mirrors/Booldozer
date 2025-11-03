@@ -3,6 +3,7 @@
 #include "IconsForkAwesome.h"
 #include "Options.hpp"
 #include "ProjectManager.hpp"
+#include <filesystem>
 #include <format>
 #include <iostream>
 #include <scene/EditorScene.hpp>
@@ -56,6 +57,12 @@ void Init(){
 
     // Load Project Banners
     for(auto project : ProjectsJson["projects"]){
+
+        if(!std::filesystem::exists(std::filesystem::path(project.get<std::string>()))){
+            ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Found Missing Project\nPath: {}", project.get<std::string>()).data()});
+            continue;
+        }
+
         uint32_t thumbId;
 		glGenTextures(1, &thumbId);
 		glBindTexture(GL_TEXTURE_2D, thumbId);
