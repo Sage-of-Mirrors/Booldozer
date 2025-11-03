@@ -11,6 +11,12 @@
 
 namespace LUIUtility
 {
+    enum FileDialogResult {
+        None,
+        Ok,
+        Cancel
+    };
+
 	// Renders a checkbox for the given boolean. Returns whether the checkbox was modified, in which case the bool pointer
 	// now contains the new state.
 	bool RenderCheckBox(bool* c);
@@ -37,7 +43,7 @@ namespace LUIUtility
 
 	uint32_t RenderGizmoToggle();
 
-	bool RenderFileDialog(const std::string& dialogName, std::string& outPath);
+	FileDialogResult RenderFileDialog(const std::string& dialogName, std::string& outPath);
 
 	// Renders a combobox for the given enum.
 	template<typename T>
@@ -182,7 +188,7 @@ namespace LUIUtility
 	}
 };
 
-namespace ImGui {    
+namespace ImGui {
     bool BufferingBar(const char* label, float value,  const ImVec2& size_arg, const ImU32& bg_col, const ImU32& fg_col);
 	bool Spinner(const char* label, float radius, int thickness, const ImU32& color);
 }

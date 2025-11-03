@@ -333,9 +333,8 @@ uint32_t LUIUtility::RenderGizmoToggle()
 	return t;
 }
 
-bool LUIUtility::RenderFileDialog(const std::string& dialogKey, std::string& outPath)
+LUIUtility::FileDialogResult LUIUtility::RenderFileDialog(const std::string& dialogKey, std::string& outPath)
 {
-	bool success = false;
 
 	// Render file dialog for opening map
 	if (ImGuiFileDialog::Instance()->IsOpened() && ImGuiFileDialog::Instance()->Display(dialogKey.c_str()))
@@ -343,15 +342,17 @@ bool LUIUtility::RenderFileDialog(const std::string& dialogKey, std::string& out
 		// action if OK
 		if (ImGuiFileDialog::Instance()->IsOk())
 		{
+			ImGuiFileDialog::Instance()->Close();
 			outPath = ImGuiFileDialog::Instance()->GetFilePathName();
-			success = true;
+			return FileDialogResult::Ok;
+		} else {
+		    ImGuiFileDialog::Instance()->Close();
+		    return FileDialogResult::Cancel;
 		}
 
-		// close
-		ImGuiFileDialog::Instance()->Close();
 	}
 
-	return success;
+	return FileDialogResult::None;
 }
 
 // Loading spinners from https://github.com/ocornut/imgui/issues/1901

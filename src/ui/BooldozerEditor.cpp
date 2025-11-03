@@ -475,6 +475,18 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::SameLine();
 		ImGui::BulletText("3: Scale");
 
+		ImGui::NewLine();
+		ImGui::Separator();
+		ImGui::NewLine();
+
+		if(ImGui::TreeNode("Room Bound Editing (With Room Node Selected)")){
+		    ImGui::Text("CTRL: Move Room Bounds Max");
+			ImGui::Text("ALT: Move Room Bounds Min");
+		    ImGui::TreePop();
+		}
+		ImGui::NewLine();
+
+
 		if(ImGui::Button("Close")){
 			ImGui::CloseCurrentPopup();
 		}
@@ -653,58 +665,62 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 			GetSelectionManager()->ClearSelection();
 
 			auto rooms = mLoadedMap->GetChildrenOfType<LRoomDOMNode>(EDOMNodeType::Room);
+			if(rooms.size() == 0){
+			    ImGui::InsertNotification({ImGuiToastType::Error, 3000, "No Rooms Found in Map. Is this a non-Booldozer Root?"});
+			} else {
+    			std::shared_ptr<LRoomDOMNode> newRoom = std::make_shared<LRoomDOMNode>("Room 0");
+    			std::shared_ptr<LRoomDataDOMNode> newRoomData = std::make_shared<LRoomDataDOMNode>("Room 0");
 
-			std::shared_ptr<LRoomDOMNode> newRoom = std::make_shared<LRoomDOMNode>("Room 0");
-			std::shared_ptr<LRoomDataDOMNode> newRoomData = std::make_shared<LRoomDataDOMNode>("Room 0");
 
-			std::string resourcePathRoot = std::filesystem::path(rooms[0]->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0]->GetResourcePath()).parent_path().string();
-			newRoomData->SetRoomResourcePath(std::format("{}/room_00.arc", resourcePathRoot));
+    			std::string resourcePathRoot = std::filesystem::path(rooms[0]->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0]->GetResourcePath()).parent_path().string();
+    			newRoomData->SetRoomResourcePath(std::format("{}/room_00.arc", resourcePathRoot));
 
-			std::string resPathInRoot = std::format("{}/{}{}", OPTIONS.mRootPath, "files", newRoomData->GetResourcePath());
+    			std::string resPathInRoot = std::format("{}/{}{}", OPTIONS.mRootPath, "files", newRoomData->GetResourcePath());
 
-			for(auto ent : mLoadedMap->GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Entity)){
-				mLoadedMap->RemoveChild(ent);
+    			for(auto ent : mLoadedMap->GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Entity)){
+    				mLoadedMap->RemoveChild(ent);
+    			}
+
+    			for(auto mirror : mLoadedMap->GetChildrenOfType<LMirrorDOMNode>(EDOMNodeType::Mirror)){
+    				mLoadedMap->RemoveChild(mirror);
+    			}
+
+    			for(auto door : mLoadedMap->GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door)){
+    				mLoadedMap->RemoveChild(door);
+    			}
+
+    			for(auto room : rooms){
+    				mLoadedMap->RemoveChild(room);
+    			}
+
+    			// Clear all room resources
+    			std::filesystem::remove_all(std::filesystem::path(resPathInRoot).parent_path());
+
+    			if(!std::filesystem::exists(std::filesystem::path(resPathInRoot).parent_path())){
+    				std::filesystem::create_directories(std::filesystem::path(resPathInRoot).parent_path());
+    			}
+
+    			LGenUtility::Log << "[Editor]: Room resource path " << resPathInRoot << std::endl;
+    			if(!std::filesystem::exists(resPathInRoot)){
+    				std::shared_ptr<Archive::Rarc> arc = Archive::Rarc::Create();
+    				std::shared_ptr<Archive::Folder> root = Archive::Folder::Create(arc);
+    				arc->SetRoot(root);
+    				// now before save, construct as path to replace directory seperators with proper system seps
+    				arc->SaveToFile(std::filesystem::path(resPathInRoot).string());
+    			}
+
+    			// Setup default room
+    			newRoomData->SetRoomID(0);
+    			newRoomData->SetRoomIndex(0);
+
+    			newRoomData->SetMin({-1000, 0, -1000});
+    			newRoomData->SetMax({1000, 1000, 1000});
+    			newRoom->AddChild(newRoomData);
+    			newRoom->SetRoomNumber(0);
+    			newRoomData->GetAdjacencyList().push_back(newRoom);
+
+    			mLoadedMap->AddChild(newRoom);
 			}
-
-			for(auto mirror : mLoadedMap->GetChildrenOfType<LMirrorDOMNode>(EDOMNodeType::Mirror)){
-				mLoadedMap->RemoveChild(mirror);
-			}
-
-			for(auto door : mLoadedMap->GetChildrenOfType<LDoorDOMNode>(EDOMNodeType::Door)){
-				mLoadedMap->RemoveChild(door);
-			}
-
-			for(auto room : rooms){
-				mLoadedMap->RemoveChild(room);
-			}
-
-			// Clear all room resources
-			std::filesystem::remove_all(std::filesystem::path(resPathInRoot).parent_path());
-
-			if(!std::filesystem::exists(std::filesystem::path(resPathInRoot).parent_path())){
-				std::filesystem::create_directories(std::filesystem::path(resPathInRoot).parent_path());
-			}
-
-			LGenUtility::Log << "[Editor]: Room resource path " << resPathInRoot << std::endl;
-			if(!std::filesystem::exists(resPathInRoot)){
-				std::shared_ptr<Archive::Rarc> arc = Archive::Rarc::Create();
-				std::shared_ptr<Archive::Folder> root = Archive::Folder::Create(arc);
-				arc->SetRoot(root);
-				// now before save, construct as path to replace directory seperators with proper system seps
-				arc->SaveToFile(std::filesystem::path(resPathInRoot).string());
-			}
-
-			// Setup default room
-			newRoomData->SetRoomID(0);
-			newRoomData->SetRoomIndex(0);
-
-			newRoomData->SetMin({-1000, 0, -1000});
-			newRoomData->SetMax({1000, 1000, 1000});
-			newRoom->AddChild(newRoomData);
-			newRoom->SetRoomNumber(0);
-			newRoomData->GetAdjacencyList().push_back(newRoom);
-
-			mLoadedMap->AddChild(newRoom);
 
 			ImGui::CloseCurrentPopup();
 		}

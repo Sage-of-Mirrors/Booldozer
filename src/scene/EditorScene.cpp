@@ -116,6 +116,7 @@ void LEditorScene::CleanUp(){
 	mActorModels.clear();
 	mDoorModels.clear();
 	mRoomModels.clear();
+	mRoomFurniture.clear();
 	mMaterialAnimations.clear();
 
     Clear();

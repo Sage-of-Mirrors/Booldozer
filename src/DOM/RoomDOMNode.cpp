@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <bstream.h>
 #include <cstdint>
+#include <filesystem>
 #include <format>
 #include "DOM/DOMNodeBase.hpp"
 #include "DOM/MapDOMNode.hpp"
@@ -11,6 +12,7 @@
 #include "DOM/RoomDOMNode.hpp"
 #include "DOM/ObserverDOMNode.hpp"
 #include "DOM/EnemyDOMNode.hpp"
+#include "ImGuiNotify.hpp"
 #include "UIUtil.hpp"
 #include "Options.hpp"
 #include "IconsForkAwesome.h"
@@ -66,6 +68,8 @@ namespace {
     Bti RoomTitlecard;
 
 }
+
+constexpr uint32_t MaxRoomArcSize = 460800;
 
 std::vector<const char*> WrapModes {
     "Clamp",
@@ -870,15 +874,21 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                 }
 
                 if(ImGui::Button("Done")){
-                    auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
-                    ResourceManager::ActiveRoomArchive->SaveToFile(std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path());
-                    ResourceManager::ActiveRoomArchive = nullptr;
+                    if(ResourceManager::ActiveRoomArchive->GetFile("room.bin") == nullptr){
+                        ImGui::InsertNotification({ImGuiToastType::Error, 3000, "Room requires a 'room.bin' file!"});
+                    }  else if (ResourceManager::ActiveRoomArchive->Size() > MaxRoomArcSize) {
+                        ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Room archive too big! Game will crash!\nDelete resources then save. {}kb/450kb", ResourceManager::ActiveRoomArchive->Size()/1024).data()});
+                    } else {
+                        auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+                        ResourceManager::ActiveRoomArchive->SaveToFile(std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path());
+                        ResourceManager::ActiveRoomArchive = nullptr;
 
-                    ResourceManager::EditFileName = nullptr;
-                    ResourceManager::FileName = "";
-                    PreviewWidget::UnloadModel();
-                    PreviewWidget::SetInactive();
-                    ImGui::CloseCurrentPopup();
+                        ResourceManager::EditFileName = nullptr;
+                        ResourceManager::FileName = "";
+                        PreviewWidget::UnloadModel();
+                        PreviewWidget::SetInactive();
+                        ImGui::CloseCurrentPopup();
+                    }
                 }
 
                 if(ResourceManager::SelectedAnimation != nullptr){
@@ -895,14 +905,14 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                     }
                 }
 
-                ImGui::EndPopup();
             }
+            ImGui::EndPopup();
         }
 
-        std::string modelPath;
-        if(LUIUtility::RenderFileDialog("replaceBatchDialog", modelPath)){// error check should be here oops!
+        std::string filePath;
+        auto fileRes = LUIUtility::RenderFileDialog("replaceBatchDialog", filePath);
+        if(fileRes == LUIUtility::FileDialogResult::Ok){// error check should be here oops!
             if(ResourceManager::BinSelectedResource != nullptr){
-
                 auto batch = reinterpret_cast<BIN::Batch*>(ResourceManager::BinSelectedResource);
                 batch->Primitives.clear();
 
@@ -912,109 +922,136 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 
                 std::string warn;
                 std::string err;
-                bool ret = tinyobj::LoadObj(&attributes, &shapes, &materials, &warn, &err, std::filesystem::path(modelPath).string().c_str(), std::filesystem::path(modelPath).parent_path().string().c_str(), true);
+                bool ret = tinyobj::LoadObj(&attributes, &shapes, &materials, &warn, &err, std::filesystem::path(filePath).string().c_str(), std::filesystem::path(filePath).parent_path().string().c_str(), true);
                 if(!ret){
-                    return;
+                    ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Failed to load OBJ\nErr: {}\nPath: {}", err, filePath).data()});
+                } else {
+
+                    std::vector<Vertex> vertices;
+                    std::vector<std::size_t> indices;
+                    uint32_t stripCount = 0;
+                    uint32_t triangleCount = 0;
+                    for(auto shp : shapes){
+                        if(shp.mesh.indices.size() == 0) continue;
+                        for(int i = 0; i < shp.mesh.indices.size(); i++){
+                            Vertex vtx;
+                            int v = shp.mesh.indices[i].vertex_index;
+                            int n = shp.mesh.indices[i].normal_index;
+                            int t = shp.mesh.indices[i].texcoord_index;
+                            vtx.Position = glm::vec3(attributes.vertices[v * 3], attributes.vertices[(v * 3) + 1], attributes.vertices[(v * 3) + 2]);
+                            vtx.Normal = glm::vec3(attributes.normals[n * 3], attributes.normals[(n * 3) + 1], attributes.normals[(n * 3) + 2]);
+                            vtx.Texcoord = glm::vec2(attributes.texcoords[t * 2], attributes.texcoords[(t * 2) + 1]);
+
+                            auto vtxIdx = std::find_if(vertices.begin(), vertices.end(), [i=vtx](const Vertex& o){
+                                return i.Position == o.Position && i.Normal == o.Normal && i.Texcoord == o.Texcoord;
+                            });
+
+                            if(vtxIdx != vertices.end()){
+                                indices.push_back(vtxIdx - vertices.begin());
+                            } else {
+                                indices.push_back(vertices.size());
+                                vertices.push_back(vtx);
+                            }
+                        }
+
+                        triangle_stripper::tri_stripper stripify(indices);
+                        triangle_stripper::primitive_vector primitives;
+                        stripify.SetBackwardSearch(false);
+                        stripify.Strip(&primitives);
+
+                        int indexCount = 0;
+                        for(auto p : primitives){
+                            Primitive primitive;
+                            primitive.Opcode = (p.Type == triangle_stripper::TRIANGLE_STRIP ? GXPrimitiveType::TriangleStrip : GXPrimitiveType::Triangles);
+                            for(int i = 0; i < p.Indices.size(); i++){
+                                primitive.Vertices.push_back(vertices[p.Indices[i]]);
+                            }
+                            indexCount += p.Indices.size();
+                            batch->Primitives.push_back(primitive);
+                        }
+
+                        stripCount += indexCount;
+                        triangleCount += shp.mesh.indices.size();
+                    }
+                    ImGui::InsertNotification({ImGuiToastType::Info, 1000, std::format("TriStripped Faces {} / {}", stripCount, triangleCount).data()});
+
+                    batch->ReloadMeshes();
                 }
 
-                std::vector<Vertex> vertices;
-                std::vector<std::size_t> indices;
-                for(auto shp : shapes){
-                    if(shp.mesh.indices.size() == 0) continue;
-                    for(int i = 0; i < shp.mesh.indices.size(); i++){
-                        Vertex vtx;
-                        int v = shp.mesh.indices[i].vertex_index;
-                        int n = shp.mesh.indices[i].normal_index;
-                        int t = shp.mesh.indices[i].texcoord_index;
-                        vtx.Position = glm::vec3(attributes.vertices[v * 3], attributes.vertices[(v * 3) + 1], attributes.vertices[(v * 3) + 2]);
-                        vtx.Normal = glm::vec3(attributes.normals[n * 3], attributes.normals[(n * 3) + 1], attributes.normals[(n * 3) + 2]);
-                        vtx.Texcoord = glm::vec2(attributes.texcoords[t * 2], attributes.texcoords[(t * 2) + 1]);
-
-                        auto vtxIdx = std::find_if(vertices.begin(), vertices.end(), [i=vtx](const Vertex& o){
-                            return i.Position == o.Position && i.Normal == o.Normal && i.Texcoord == o.Texcoord;
-                        });
-
-                        if(vtxIdx != vertices.end()){
-                            indices.push_back(vtxIdx - vertices.begin());
-                        } else {
-                            indices.push_back(vertices.size());
-                            vertices.push_back(vtx);
-                        }
-                    }
-
-                    triangle_stripper::tri_stripper stripify(indices);
-                    triangle_stripper::primitive_vector primitives;
-                    stripify.SetBackwardSearch(false);
-                    stripify.Strip(&primitives);
-
-                    int indexCount = 0;
-                    for(auto p : primitives){
-                        Primitive primitive;
-                        primitive.Opcode = (p.Type == triangle_stripper::TRIANGLE_STRIP ? GXPrimitiveType::TriangleStrip : GXPrimitiveType::Triangles);
-                        for(int i = 0; i < p.Indices.size(); i++){
-                            primitive.Vertices.push_back(vertices[p.Indices[i]]);
-                        }
-                        indexCount += p.Indices.size();
-                        batch->Primitives.push_back(primitive);
-                    }
-                    LGenUtility::Log << "Stripped count " << indexCount << " Triangle Count " << shp.mesh.indices.size() << std::endl;
-                }
-
-                batch->ReloadMeshes();
                 ImGui::OpenPopup("##roomResources");
             }
+        } else if(fileRes == LUIUtility::FileDialogResult::Cancel){
+            ImGui::OpenPopup("##roomResources");
         }
 
-        if(LUIUtility::RenderFileDialog("replaceTextureImageDialog", modelPath)){// error check should be here oops!
+        fileRes = LUIUtility::RenderFileDialog("replaceTextureImageDialog", filePath);
+        if(fileRes == LUIUtility::FileDialogResult::Ok){
             if(ResourceManager::BinSelectedResource != nullptr){
                 int w, h, channels;
-                unsigned char* img = stbi_load(modelPath.c_str(), &w, &h, &channels, 4);
-                reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->SetImage(img, w*h*4, w, h);
-                stbi_image_free(img);
+                unsigned char* img = stbi_load(filePath.c_str(), &w, &h, &channels, 4);
+                if(img != nullptr){
+                    reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->SetImage(img, w*h*4, w, h);
+                    stbi_image_free(img);
+                } else {
+                    ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Failed to load image\nPath: {}", filePath).data()});
+                }
             }
             ImGui::OpenPopup("##roomResources");
-        }
-
-        if(LUIUtility::RenderFileDialog("exportTextureImageDialog", modelPath)){// error check should be here oops!
-            if(ResourceManager::BinSelectedResource != nullptr && reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->ImageData != nullptr) stbi_write_png(modelPath.c_str(), reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->Width, reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->Height, 4, reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->ImageData, 4*reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->Width);
+        } else if(fileRes == LUIUtility::FileDialogResult::Cancel){
             ImGui::OpenPopup("##roomResources");
         }
 
-        if(LUIUtility::RenderFileDialog("addModelToRoomArchiveDialog", modelPath)){
+        fileRes = LUIUtility::RenderFileDialog("exportTextureImageDialog", filePath);
+        if(fileRes == LUIUtility::FileDialogResult::Ok){
+            if(ResourceManager::BinSelectedResource != nullptr && reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->ImageData != nullptr){
+                if(!stbi_write_png(filePath.c_str(), reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->Width, reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->Height, 4, reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->ImageData, 4*reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->Width)){
+                    ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Failed to Write Image\nPath: {}", filePath).data()});
+                }
+            }
+            ImGui::OpenPopup("##roomResources");
+        } else if(fileRes == LUIUtility::FileDialogResult::Cancel) {
+            ImGui::OpenPopup("##roomResources");
+        }
+
+        fileRes = LUIUtility::RenderFileDialog("addModelToRoomArchiveDialog", filePath);
+        if(fileRes == LUIUtility::FileDialogResult::Ok){
             auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
 
             std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
             LGenUtility::Log << "[RoomDOMNode]: Loading arc " << resPath.string() << std::endl;
-            if(std::filesystem::exists(resPath) && resPath.extension().string() == ".arc"){
+
+            if(!std::filesystem::exists(std::filesystem::path(filePath))) {
+                ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Couldn't Open Resource\nPath: {}", resPath.string()).data()});
+            } else if(std::filesystem::exists(resPath) && resPath.extension().string() == ".arc"){
                 if(ResourceManager::ActiveRoomArchive != nullptr){
                     std::shared_ptr<Archive::File> newFile = Archive::File::Create();
-                    std::string ext = std::filesystem::path(modelPath).extension().string();
+                    std::string ext = std::filesystem::path(filePath).extension().string();
                     if(ext == ".obj"){
-                        BIN::Model model = BIN::Model::FromOBJ(modelPath);
+                        BIN::Model model = BIN::Model::FromOBJ(filePath);
                         bStream::CMemoryStream modelData(0x24, bStream::Endianess::Big, bStream::OpenMode::Out);
                         model.Write(&modelData);
-                        newFile->SetName(std::filesystem::path(modelPath).filename().replace_extension(".bin").string());
+                        newFile->SetName(std::filesystem::path(filePath).filename().replace_extension(".bin").string());
                         newFile->SetData(modelData.getBuffer(), modelData.tell());
-                        mRoomModels.push_back(std::filesystem::path(modelPath).filename().stem().string());
+                        mRoomModels.push_back(std::filesystem::path(filePath).filename().stem().string());
                     } else if(ext == ".fbx"){
-                        BIN::Model model = BIN::Model::FromFBX(modelPath, ImportSettings::EnableVertexColors);
+                        BIN::Model model = BIN::Model::FromFBX(filePath, ImportSettings::EnableVertexColors);
                         bStream::CMemoryStream modelData(0x24, bStream::Endianess::Big, bStream::OpenMode::Out);
                         model.Write(&modelData);
-                        newFile->SetName(std::filesystem::path(modelPath).filename().replace_extension(".bin").string());
+                        newFile->SetName(std::filesystem::path(filePath).filename().replace_extension(".bin").string());
                         newFile->SetData(modelData.getBuffer(), modelData.tell());
-                        mRoomModels.push_back(std::filesystem::path(modelPath).filename().stem().string());
+                        mRoomModels.push_back(std::filesystem::path(filePath).filename().stem().string());
                     } else {
-                        bStream::CFileStream modelFile(modelPath, bStream::Endianess::Big, bStream::OpenMode::In);
+                        bStream::CFileStream modelFile(filePath, bStream::Endianess::Big, bStream::OpenMode::In);
 
                         uint8_t* modelData = new uint8_t[modelFile.getSize()]{};
                         modelFile.readBytesTo(modelData, modelFile.getSize());
 
 
-                        LGenUtility::Log << "[RoomDOMNode]: Adding model " << std::filesystem::path(modelPath).filename().string() << " to archive" << resPath.string() << std::endl;
+                        LGenUtility::Log << "[RoomDOMNode]: Adding model " << std::filesystem::path(filePath).filename().string() << " to archive" << resPath.string() << std::endl;
                         if(ext == ".bin"){
-                            mRoomModels.push_back(std::filesystem::path(modelPath).filename().stem().string());
+                            mRoomModels.push_back(std::filesystem::path(filePath).filename().stem().string());
                         }
-                        newFile->SetName(std::filesystem::path(modelPath).filename().string());
+                        newFile->SetName(std::filesystem::path(filePath).filename().string());
                         newFile->SetData(modelData, modelFile.getSize());
 
                         delete[] modelData;
@@ -1037,6 +1074,8 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                     ResourceManager::ActiveRoomArchive->SaveToFile(resPath.string());
                 }
             }
+            ImGui::OpenPopup("##roomResources");
+        } else if(fileRes == LUIUtility::FileDialogResult::Cancel) {
             ImGui::OpenPopup("##roomResources");
         }
     }
@@ -1095,16 +1134,23 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                                     bStream::CFileStream oldArcFile(oldResPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
                                     if(!oldResArc->Load(&oldArcFile)){
                                         LGenUtility::Log << "[RoomDOMNode]: Failed to load room archive " << oldResPath.string() << std::endl;
+                                        ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Failed to load source archive\nPath: {}", oldResPath.string()).data()});
                                     }
                                     bStream::CFileStream newArcFile(newResPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
                                     if(!newResArc->Load(&newArcFile)){
                                         LGenUtility::Log << "[RoomDOMNode]: Failed to load room archive " << newResPath.string() << std::endl;
+                                        ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Failed to load dest archive\nPath: {}", newResPath.string()).data()});
                                     }
                                 }
 
                                 if(newResArc->GetFile(furnitureNode->GetModelName()+".bin") == nullptr && oldResArc->GetFile(furnitureNode->GetModelName()+".bin") != nullptr){
                                     newResArc->GetRoot()->AddFile(oldResArc->GetFile(furnitureNode->GetModelName()+".bin"));
-                                    newResArc->SaveToFile(newResPath);
+                                    uint32_t newSize = newResArc->Size();
+                                    if(newSize <= MaxRoomArcSize){
+                                        newResArc->SaveToFile(newResPath);
+                                    } else {
+                                        ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Room archive too big! Delete some resources then save. {}kb/450kb", newResArc->Size()/1024).data()});
+                                    }
                                 }
                             } else if(oldResPath.extension() == ".arc" && newResPath.extension() == ".bin") {
 
@@ -1165,7 +1211,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                         ResourceManager::ActiveRoomArchive = Archive::Rarc::Create();
                         bStream::CFileStream arcFile(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
                         if(!ResourceManager::ActiveRoomArchive->Load(&arcFile)){
-                            LGenUtility::Log << "[RoomDOMNode]: Failed to load room archive " << resPath.string() << std::endl;
+                            ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Failed to load Room Archive\nPath: {}", resPath.string()).data()});
                             ResourceManager::ActiveRoomArchive = nullptr;
                         }
                     } else {
@@ -1200,10 +1246,14 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 
                         ResourceManager::ActiveRoomArchive->SaveToFile(resPath.string());
                     }
+                } else {
+                    ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Couldn't find Room Archive\nPath: {}", resPath.string()).data()});
                 }
             }
 
-            if(openRoomRes) ImGui::OpenPopup("##roomResources");
+            if(openRoomRes && ResourceManager::ActiveRoomArchive != nullptr){
+                ImGui::OpenPopup("##roomResources");
+            }
         }
 
         // Iterating all of the entity types
