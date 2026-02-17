@@ -922,6 +922,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                         ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Room archive too big! Game will crash!\nDelete resources then save. {}kb/450kb", ResourceManager::ActiveRoomArchive->Size()/1024).data()});
                     } else {
                         auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+                        ImGui::InsertNotification({ImGuiToastType::Success, 3000, std::format("Saved Room Archive {}", data->GetResourcePath()).c_str()});
                         ResourceManager::ActiveRoomArchive->SaveToFile(std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path());
                         ResourceManager::ActiveRoomArchive = nullptr;
 
