@@ -2,9 +2,10 @@
 #include "UIUtil.hpp"
 #include "imgui.h"
 #include "imgui_internal.h"
+#include "ImGuiFileDialog.h"
+#include "ImGuiNotify.hpp"
 #include <filesystem>
 #include "Options.hpp"
-#include "ImGuiFileDialog.h"
 #include "stb_image.h"
 #include <glad/glad.h>
 #include "scene/ModelViewer.hpp"
@@ -14,6 +15,7 @@ constexpr float pi = 3.14159f;
 
 namespace {
     uint32_t mGhostImg = 0;
+    uint32_t mSelectedGroupIndex = 0;
 }
 
 void SwapVec4(glm::vec4* s)
@@ -380,7 +382,7 @@ bool LPrmIO::RenderUI()
         if(ImGui::BeginPopupModal("ActorEditor", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiChildFlags_AlwaysAutoResize)){
             ImGui::Text("Actor Editor");
             ImGui::Separator();
-            ImGui::Text("Open a Map first!");
+            ImGui::Text("Open a Map first! Required for Item Table Ghost Drops.");
             if(ImGui::Button("Close")){
                 ImGui::CloseCurrentPopup();
                 PreviewWidget::UnloadModel();
@@ -447,6 +449,7 @@ bool LPrmIO::RenderUI()
                         } else {
                             std::shared_ptr<Archive::File> modelFile = modelArchive->GetFile(std::filesystem::path("model") / (modelName + ".mdl"));
                             if(modelFile == nullptr){
+                                ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Failed to find Model {} in Game Archive", modelPath.string()).data()});
                                 LGenUtility::Log << "[PRMIO]: Couldn't find model/" << modelName << ".mdl in archive" << std::endl;
                             } else {
                                 bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
@@ -463,6 +466,7 @@ bool LPrmIO::RenderUI()
                             if(materialName != ""){
                                 std::shared_ptr<Archive::File> txpFile = modelArchive->GetFile(std::filesystem::path("txp") / (materialName + ".txp"));
                                 if(txpFile == nullptr){
+                                    ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Failed to find TXP {} in Model Archive", materialName).data()});
                                     LGenUtility::Log << "[PRMIO]: Couldn't find txp/" << materialName << ".txp in archive" << std::endl;
                                 } else {
                                     LGenUtility::Log << "[PRMIO]: Loading txp " << materialName << std::endl;
@@ -478,7 +482,8 @@ bool LPrmIO::RenderUI()
                             std::shared_ptr<Archive::File> modelFile = GCResourceManager.mGameArchive->GetFile(fullModelPath);
 
                             if(modelFile == nullptr){
-                                LGenUtility::Log << "[PRMIO]: Couldn't find " << modelName<< ".mdl in game archive" << std::endl;
+                                ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Failed to find Model {} in Game Archive", modelPath.string()).data()});
+                                LGenUtility::Log << "[PRMIO]: Couldn't find " << modelName << ".mdl in game archive" << std::endl;
                             } else {
                                 bStream::CMemoryStream modelData(modelFile->GetData(), modelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
                                 PreviewWidget::LoadModel(&modelData, EModelType::Actor);

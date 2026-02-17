@@ -18,6 +18,20 @@ namespace TXP {
         stream->seek(r);
     }
 
+    void AnimationGroup::WriteHeader(bStream::CStream* stream){
+        stream->writeUInt16(KeyBufferSize);
+        stream->writeUInt16(MaterialIndex);
+        stream->writeUInt16(Padding);
+        stream->writeUInt16(KeyCount);
+        stream->writeUInt32(0);
+    }
+
+    void AnimationGroup::WriteData(bStream::CStream* stream){
+        for (size_t i = 0; i < KeyBufferSize; i++){
+            stream->writeUInt16(Frames[i]);
+        }
+    }
+
     void Header::Read(bStream::CStream* stream){
         Version = stream->readUInt16();
         Unknown = stream->readUInt16();
@@ -26,13 +40,34 @@ namespace TXP {
         KeyDataOffset = stream->readUInt32();
     }
 
+    void Header::Write(bStream::CStream* stream){
+        stream->writeUInt16(Version);
+        stream->writeUInt16(Unknown);
+        stream->writeUInt16(GroupCount);
+        stream->writeUInt16(FrameCount);
+        stream->writeUInt32(KeyDataOffset);
+    }
+
     void Animation::Load(bStream::CStream* stream){
         TxpHeader.Read(stream);
-        
+
         for (size_t i = 0; i < TxpHeader.GroupCount; i++){
             AnimationGroup group;
             group.Read(stream);
             Groups.push_back(group);
+        }
+    }
+
+    void Animation::Save(bStream::CStream* stream){
+        TxpHeader.GroupCount = Groups.size();
+        TxpHeader.Write(stream);
+        std::size_t groupsOffset = stream->tell();
+        for (int i = 0; i < Groups.size(); i++){
+            Groups[i].WriteHeader(stream);
+        }
+        for (int i = 0; i < Groups.size(); i++){
+            stream->writeOffsetAt32(groupsOffset + (0x0C*Groups.size())+8);
+            Groups[i].WriteData(stream);
         }
     }
 

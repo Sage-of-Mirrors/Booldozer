@@ -5,6 +5,7 @@
 #include <bstream.h>
 #include <vector>
 #include "Util.hpp"
+#include "glm/fwd.hpp"
 #include "io/KeyframeIO.hpp"
 
 namespace BIN {
@@ -90,6 +91,8 @@ namespace BIN {
         uint32_t Vbo { 0 };
         uint32_t VertexCount { 0 };
         uint32_t PrimitiveOffset { 0 };
+
+        glm::vec3 mMin { 0, 0, 0 }, mMax { 0, 0, 0 };
 
         std::vector<Primitive> Primitives;
 

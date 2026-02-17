@@ -10,6 +10,7 @@
 #include "bstream.h"
 #include "constants.hpp"
 #include "glm/ext/matrix_transform.hpp"
+#include "glm/fwd.hpp"
 #include "glm/glm.hpp"
 #include "glm/gtx/quaternion.hpp"
 #include "glm/trigonometric.hpp"
@@ -1099,7 +1100,6 @@ namespace BIN {
 
         isBlender = (scene->metadata.exporter == UFBX_EXPORTER_BLENDER_BINARY || scene->metadata.exporter == UFBX_EXPORTER_BLENDER_ASCII);
 
-
         opts.target_axes = ufbx_axes_right_handed_y_up;
         opts.target_camera_axes = ufbx_axes_right_handed_y_up;
         opts.target_unit_meters = 0.01f;
@@ -1183,6 +1183,28 @@ namespace BIN {
                             v.Texcoord1 = { mesh->uv_sets[1].vertex_uv[index].x, mesh->uv_sets[1].vertex_uv[index].y };
                         }
                         v.Texcoord = { mesh->vertex_uv[index].x, mesh->vertex_uv[index].y };
+
+                        // Check bounding box
+                        if(v.Position.x < mdl.mBatches[batchIdx].mMin.x){
+                            mdl.mBatches[batchIdx].mMin.x = v.Position.x;
+                        }
+                        if(v.Position.y < mdl.mBatches[batchIdx].mMin.y){
+                            mdl.mBatches[batchIdx].mMin.y = v.Position.y;
+                        }
+                        if(v.Position.z < mdl.mBatches[batchIdx].mMin.z){
+                            mdl.mBatches[batchIdx].mMin.z = v.Position.z;
+                        }
+
+                        if(v.Position.x > mdl.mBatches[batchIdx].mMax.x){
+                            mdl.mBatches[batchIdx].mMax.x = v.Position.x;
+                        }
+                        if(v.Position.y > mdl.mBatches[batchIdx].mMax.y){
+                            mdl.mBatches[batchIdx].mMax.y = v.Position.y;
+                        }
+                        if(v.Position.z > mdl.mBatches[batchIdx].mMax.z){
+                            mdl.mBatches[batchIdx].mMax.z = v.Position.z;
+                        }
+
                         vertices.push_back(v);
                     }
                 }
@@ -1226,6 +1248,12 @@ namespace BIN {
             mdl.mGraphNodes[node->typed_id].Rotation = { rot.x, rot.y, rot.z };
             mdl.mGraphNodes[node->typed_id].Scale = { node->local_transform.scale.x, node->local_transform.scale.y, node->local_transform.scale.z };
 
+            mdl.mGraphNodes[node->typed_id].Transform = glm::scale(mdl.mGraphNodes[node->typed_id].Transform, mdl.mGraphNodes[node->typed_id].Scale);
+            mdl.mGraphNodes[node->typed_id].Transform = glm::rotate(mdl.mGraphNodes[node->typed_id].Transform, mdl.mGraphNodes[node->typed_id].Rotation.x, glm::vec3(1,0,0));
+            mdl.mGraphNodes[node->typed_id].Transform = glm::rotate(mdl.mGraphNodes[node->typed_id].Transform, mdl.mGraphNodes[node->typed_id].Rotation.y, glm::vec3(0,1,0));
+            mdl.mGraphNodes[node->typed_id].Transform = glm::rotate(mdl.mGraphNodes[node->typed_id].Transform, mdl.mGraphNodes[node->typed_id].Rotation.z, glm::vec3(0,0,1));
+            mdl.mGraphNodes[node->typed_id].Transform = glm::translate(mdl.mGraphNodes[node->typed_id].Transform, mdl.mGraphNodes[node->typed_id].Position);
+
             if(node->parent != nullptr){
                 mdl.mGraphNodes[node->typed_id].ParentIndex = node->parent->typed_id;
             }
@@ -1249,11 +1277,67 @@ namespace BIN {
                 DrawElement element;
                 element.BatchIndex = meshIdxRemap[{node->mesh->typed_id, part.index}];
                 element.MaterialIndex = node->mesh->materials[part.index]->typed_id;
+
+                // Generate AA/BB for this node based on batch min/maxes transformed by node
+                glm::vec3* bbmin = &mdl.mGraphNodes[node->typed_id].BoundingBoxMin;
+                glm::vec3* bbmax = &mdl.mGraphNodes[node->typed_id].BoundingBoxMax;
+
+                glm::vec4 batchMin = mdl.mGraphNodes[node->typed_id].Transform * glm::vec4(mdl.mBatches[element.BatchIndex].mMin, 0);
+                glm::vec4 batchMax = mdl.mGraphNodes[node->typed_id].Transform * glm::vec4(mdl.mBatches[element.BatchIndex].mMax, 0);
+
+                if(bbmin->x > batchMin.x){
+                    bbmin->x = batchMin.x;
+                }
+                if(bbmin->y > batchMin.y){
+                    bbmin->y = batchMin.y;
+                }
+                if(bbmin->z > batchMin.z){
+                    bbmin->z = batchMin.z;
+                }
+
+                if(bbmax->x < batchMax.x){
+                    bbmax->x = batchMax.x;
+                }
+                if(bbmax->y < batchMax.y){
+                    bbmax->y = batchMax.y;
+                }
+                if(bbmax->z < batchMax.z){
+                    bbmax->z = batchMax.z;
+                }
+
+
+
                 mdl.mGraphNodes[node->typed_id].mDrawElements.push_back(element);
             }
-
         }
 
+        // Generate AA/BB for root node based on batch min/maxes
+        glm::vec3* bbmin = &mdl.mGraphNodes[0].BoundingBoxMin;
+        glm::vec3* bbmax = &mdl.mGraphNodes[0].BoundingBoxMax;
+
+        for(int i = 1; i < mdl.mGraphNodes.size(); i++){
+            glm::vec3 childMin = mdl.mGraphNodes[i].BoundingBoxMin;
+            glm::vec3 childMax = mdl.mGraphNodes[i].BoundingBoxMax;
+            if(bbmin->x > childMin.x){
+                bbmin->x = childMin.x;
+            }
+            if(bbmin->y > childMin.y){
+                bbmin->y = childMin.y;
+            }
+            if(bbmin->z > childMin.z){
+                bbmin->z = childMin.z;
+            }
+
+            if(bbmax->x < childMax.x){
+                bbmax->x = childMax.x;
+            }
+            if(bbmax->y < childMax.y){
+                bbmax->y = childMax.y;
+            }
+            if(bbmax->z < childMax.z){
+                bbmax->z = childMax.z;
+            }
+        }
 
         ufbx_free_scene(scene);
 

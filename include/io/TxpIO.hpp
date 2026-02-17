@@ -13,6 +13,8 @@ namespace TXP {
         std::vector<uint16_t> Frames;
 
         void Read(bStream::CStream* stream);
+        void WriteHeader(bStream::CStream* stream);
+        void WriteData(bStream::CStream* stream);
     };
 
     struct Header {
@@ -21,8 +23,9 @@ namespace TXP {
         uint16_t GroupCount;
         uint16_t FrameCount;
         uint32_t KeyDataOffset;
-    
-        void Read(bStream::CStream* stream); 
+
+        void Read(bStream::CStream* stream);
+        void Write(bStream::CStream* stream);
     };
 
     class Animation {
@@ -32,12 +35,15 @@ namespace TXP {
 
     public:
 
+        std::vector<AnimationGroup>& GetGroups() { return Groups; }
+
         void SetFrame(uint32_t frame) { CurrentFrame = frame; }
         uint32_t GetFrame() { return CurrentFrame; }
         uint32_t GetFrameCount() { return TxpHeader.FrameCount; }
-        
+
         uint32_t GetSamplerIndex(uint32_t materialIndex);
         void Load(bStream::CStream* stream);
+        void Save(bStream::CStream* stream);
 
         void Update(float dt);
 

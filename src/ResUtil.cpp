@@ -1,6 +1,7 @@
 #include "ResUtil.hpp"
 #include "Options.hpp"
 #include "imgui.h"
+#include "ImGuiNotify.hpp"
 #include <format>
 
 #include <glad/glad.h>
@@ -180,10 +181,12 @@ void LResUtility::SaveUserSettings()
 	LUserOptions::ToJson(serialize, OPTIONS);
 
 	std::ofstream destFile(fullPath);
-	if (destFile.is_open())
+	if (destFile.is_open()){
 		destFile << serialize;
-	else
+        ImGui::InsertNotification({ImGuiToastType::Success, 3000, std::format("Saved Settings\nPath: {}", fullPath.string()).data()});
+	} else {
 		LGenUtility::Log << std::format("[ResUtil]: Error saving user settings to {0}", fullPath.string());
+	}
 }
 
 // Thumbnails

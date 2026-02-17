@@ -35,6 +35,7 @@ void DealWithGLErrors(GLenum source, GLenum type, GLuint id, GLenum severity, GL
 
 bool LBooldozerApp::Setup() {
     InitResourcePaths();
+    LResUtility::LoadUserSettings();
 
     LGenUtility::Log = std::fstream((USER_DATA_PATH / "booldozer.log").string(), std::ios::out);
 

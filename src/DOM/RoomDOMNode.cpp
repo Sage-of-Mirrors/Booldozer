@@ -21,6 +21,7 @@
 #include "io/Util.hpp"
 #include "json.hpp"
 #include "modes/ActorMode.hpp"
+#include "scene/EditorScene.hpp"
 #include "scene/ModelViewer.hpp"
 #include <Bti.hpp>
 #include <memory>
@@ -390,6 +391,46 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 			namesConfig << nameMap;
             ImGui::CloseCurrentPopup();
         }
+
+        if(ImGui::Button("Snap Bounds to Model")){
+            auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+
+            std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
+            LGenUtility::Log << "[RoomDOMNode]: Loading arc " << resPath.string() << std::endl;
+
+            if(!std::filesystem::exists(std::filesystem::path(resPath))) {
+                ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Couldn't Find Room Archive\nPath: {}", resPath.string()).data()});
+            } else if(std::filesystem::exists(resPath) && resPath.extension().string() == ".arc"){
+                std::shared_ptr<Archive::Rarc> arc  = Archive::Rarc::Create();
+                bStream::CFileStream arcFile(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
+                if(arc->Load(&arcFile)){
+                    std::shared_ptr<Archive::File> file = arc->GetFile("room.bin");
+                    bStream::CMemoryStream modelStream(file->GetData(), file->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+                    BIN::Model roomModel;
+                    roomModel.Load(&modelStream);
+
+                    if(roomModel.mGraphNodes.size() > 0){
+
+                        glm::vec4 modelMin = glm::vec4(roomModel.mGraphNodes[0].BoundingBoxMin, 0);
+                        glm::vec4 modelMax = glm::vec4(roomModel.mGraphNodes[0].BoundingBoxMax, 0);
+
+                        modelMin = roomModel.mGraphNodes[0].Transform * modelMin;
+                        modelMax = roomModel.mGraphNodes[0].Transform * modelMax;
+
+                        data->SetMin(glm::vec3(modelMin));
+                        data->SetMax(glm::vec3(modelMax));
+                        LEditorScene::GetEditorScene()->SetDirty();
+                        ImGui::InsertNotification({ImGuiToastType::Info, 3000, std::format("Set Room Bounds to ({}, {}, {}), ({}, {}, {})", modelMin.x, modelMin.y, modelMin.z, modelMax.x, modelMax.y, modelMax.z).data() });
+                    } else {
+                        ImGui::InsertNotification({ImGuiToastType::Error, 3000, "Couldn't find root graph node"});
+                    }
+                } else {
+                    ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Couldn't Open Room Archive\nPath: {}", resPath.string()).data()});
+                }
+
+            }
+        }
+
         ImGui::EndPopup();
     }
 
@@ -412,6 +453,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
             glTextureSubImage2D(CurRoomNameImgID, 0, 0, 0, RoomTitlecard.mWidth, RoomTitlecard.mHeight, GL_RGBA, GL_UNSIGNED_BYTE, roomImage);
 
         }
+
         ImVec2 center = ImGui::GetMainViewport()->GetCenter();
         ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
         if(ImGui::BeginPopupModal("##roomResources", nullptr, ImGuiWindowFlags_AlwaysAutoResize)){

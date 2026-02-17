@@ -1,5 +1,6 @@
 
 #include "scene/ModelViewer.hpp"
+#include "io/TxpIO.hpp"
 #include "scene/Camera.hpp"
 #include "imgui.h"
 #include <glad/glad.h>
@@ -41,6 +42,10 @@ namespace PreviewWidget {
 
     MDL::Model* GetActorModel(){
         return ModelActor;
+    }
+
+    TXP::Animation* GetActorMaterialAnimation(){
+        return ActorTxp;
     }
 
     void NewFurnitureModel(){

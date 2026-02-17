@@ -17,6 +17,7 @@ namespace PreviewWidget {
 
     BIN::Model* GetFurnitureModel();
     MDL::Model* GetActorModel();
+    TXP::Animation* GetActorMaterialAnimation();
 
     void SetActive();
     void SetInactive();
@@ -40,7 +41,7 @@ namespace PreviewWidget {
     void DoZoom(float amt);
     void DoRotate(float amt);
 
-    void NewFurnitureModel(); 
+    void NewFurnitureModel();
 
     uint32_t PreviewID();
 

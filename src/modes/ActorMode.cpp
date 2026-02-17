@@ -1,4 +1,7 @@
 #include "modes/ActorMode.hpp"
+#include "DOM/RoomDataDOMNode.hpp"
+#include "glm/ext/matrix_transform.hpp"
+#include "glm/fwd.hpp"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "ImGuizmo.h"
@@ -23,7 +26,7 @@ LActorMode::LActorMode()
 
 void LActorMode::RenderSceneHierarchy(std::shared_ptr<LMapDOMNode> current_map, EEditorMode& mode)
 {
-	
+
 	ImGui::Begin("sceneHierarchy", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
 
 	if(ImGui::BeginTabBar("##modeTabs")){
@@ -187,9 +190,9 @@ void LActorMode::Render(std::shared_ptr<LMapDOMNode> current_map, LEditorScene* 
 	}
 
 	ImGui::SetNextWindowClass(&mainWindowOverride);
-	
+
 	RenderDetailsWindow();
-	
+
 	for(auto& node : current_map.get()->GetChildrenOfType<LBGRenderDOMNode>(EDOMNodeType::BGRender)){
 		node->RenderBG(0);
 	}
@@ -208,14 +211,14 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 		if(mPreviousSelection != nullptr && mPreviousSelection != mSelectionManager.GetPrimarySelection()){
 			ImGui::SetWindowFocus(nullptr);
 			if(!mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).expired() && !renderer_scene->HasRoomLoaded(mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock()->GetRoomNumber())){
-				renderer_scene->SetRoom(mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock());				
+				renderer_scene->SetRoom(mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room).lock());
 				mManualRoomSelect = mPreviousSelection->GetParentOfType<LRoomDOMNode>(EDOMNodeType::Room);
 			}
 		}
 
 		glm::mat4 view = renderer_scene->getCameraView();
 		glm::mat4 proj = renderer_scene->getCameraProj();
-		
+
 		if(mSelectionManager.GetPrimarySelection()->GetNodeType() != EDOMNodeType::Room){
 			glm::mat4* m = static_cast<LBGRenderDOMNode*>(mSelectionManager.GetPrimarySelection().get())->GetMat();
 			glm::mat4 delta(1.0f);
@@ -223,7 +226,7 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 				if(!mGizmoWasUsing){ // if we we arent already using the gizmo, invert the transform this just did and set that as the original transform
 					mOriginalTransform = *m * glm::inverse(delta);
 				}
-				
+
 				for(auto node : mSelectionManager.GetSelection()){
 					if(node != mSelectionManager.GetPrimarySelection()){
 						(*dynamic_pointer_cast<LBGRenderDOMNode>(node)->GetMat()) *= delta;
@@ -277,7 +280,7 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 
 			glm::mat4 mat = glm::identity<glm::mat4>();
 			glm::mat4 deltaMat = glm::identity<glm::mat4>();
-			
+
 			if(ImGui::IsKeyDown(ImGuiKey_LeftAlt)){
 				mat = glm::translate(mat, data->GetMin());
 			}
@@ -291,7 +294,7 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 
 			if(ImGuizmo::Manipulate(&view[0][0], &proj[0][0], ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::WORLD, &(mat)[0][0], &(deltaMat)[0][0], NULL)){
 				renderer_scene->SetDirty();
-				
+
 				if(ImGui::IsKeyDown(ImGuiKey_LeftAlt)){
 					if(!mGizmoWasUsing){
 						mGizmoTranslationDelta = data->GetMin();
@@ -311,29 +314,109 @@ void LActorMode::RenderGizmo(LEditorScene* renderer_scene){
 					mRoomBoundEdited = false;
 					glm::vec3 translation = glm::vec3(deltaMat[3]);
 					mGizmoTranslationDelta += translation;
-					// add delta to max and min
-					data->SetMax(data->GetMax() + translation);
-					data->SetMin(data->GetMin() + translation);
-					std::shared_ptr<LRoomDOMNode> roomNode = dynamic_pointer_cast<LRoomDOMNode>(mSelectionManager.GetPrimarySelection());
-					roomNode->SetRoomModelDelta(roomNode->GetRoomModelDelta() + translation);
-					// add delta to all child transforms
-					for(auto child : mSelectionManager.GetPrimarySelection()->GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Entity)){
-						(*child->GetMat())[3].x += translation.x;
-						(*child->GetMat())[3].y += translation.y;
-						(*child->GetMat())[3].z += translation.z;
 
-						child->SetPosition(child->GetPosition() + translation);
-					}
+    				// add delta to max and min
+    				data->SetMax(data->GetMax() + translation);
+    				data->SetMin(data->GetMin() + translation);
+    				curRoom->SetRoomModelDelta(curRoom->GetRoomModelDelta() + translation);
+
+    				// add delta to all child transforms
+    				for(auto child : mSelectionManager.GetPrimarySelection()->GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Entity)){
+    					(*child->GetMat())[3].x += translation.x;
+    					(*child->GetMat())[3].y += translation.y;
+    					(*child->GetMat())[3].z += translation.z;
+    					child->SetPosition(child->GetPosition() + translation);
+    				}
 				}
 				mGizmoWasUsing = true;
 			}
 
-			if(!ImGuizmo::IsUsing() && mGizmoWasUsing){ 
+			if(!ImGuizmo::IsUsing() && mGizmoWasUsing){
 				if(mRoomBoundEdited){
 					mHistoryManager.AddUndoItem(std::make_shared<LRoomBoundsHistoryItem>(data, mGizmoTranslationDelta, mOriginalRoomBoundMin, renderer_scene));
+					// Snap bounds to adjacent rooms if needed
+					glm::vec3 roomMin = data->GetMin();
+					glm::vec3 roomMax = data->GetMax();
+					for(std::weak_ptr<LRoomDOMNode> roomRef : data->GetAdjacencyList()){
+					    if(std::shared_ptr<LRoomDOMNode> room = roomRef.lock()){
+							std::shared_ptr<LRoomDataDOMNode> roomData = room->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
+							glm::vec3 adjacentMin = roomData->GetMin();
+							glm::vec3 adjacentMax = roomData->GetMax();
+
+							glm::vec3 snap {0,0,0};
+
+							if(glm::abs(roomMin.x - adjacentMax.x) < 150){
+							    snap.x = adjacentMax.x - roomMin.x;
+							}
+
+							if(glm::abs(roomMax.x - adjacentMin.x) < 150){
+							    snap.x = adjacentMin.x - roomMax.x;
+							}
+
+							if(glm::abs(roomMin.z - adjacentMax.z) < 150){
+							    snap.z = adjacentMax.z - roomMin.z;
+							}
+
+							if(glm::abs(roomMax.z - adjacentMin.z) < 150){
+							    snap.x = adjacentMin.z - roomMax.z;
+							}
+
+							if(snap != glm::vec3(0, 0, 0)){
+    							data->SetMax(data->GetMax() + snap);
+    							data->SetMin(data->GetMin() + snap);
+							}
+						}
+					}
 				} else {
 					mHistoryManager.AddUndoItem(std::make_shared<LRoomMoveHistoryItem>(std::static_pointer_cast<LRoomDOMNode>(mSelectionManager.GetPrimarySelection()), mGizmoTranslationDelta, renderer_scene));
+
+					// If we finish placing a room and we're really close to another room's bounds, snap to them
+					glm::vec3 roomMin = data->GetMin();
+					glm::vec3 roomMax = data->GetMax();
+					for(std::weak_ptr<LRoomDOMNode> roomRef : data->GetAdjacencyList()){
+					    if(std::shared_ptr<LRoomDOMNode> room = roomRef.lock()){
+							std::shared_ptr<LRoomDataDOMNode> roomData = room->GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0];
+							glm::vec3 adjacentMin = roomData->GetMin();
+							glm::vec3 adjacentMax = roomData->GetMax();
+
+							glm::vec3 snap {0,0,0};
+
+							if(glm::abs(roomMin.x - adjacentMax.x) < 150){
+							    snap.x = adjacentMax.x - roomMin.x;
+							}
+
+							if(glm::abs(roomMax.x - adjacentMin.x) < 150){
+							    snap.x = adjacentMin.x - roomMax.x;
+							}
+
+							if(glm::abs(roomMin.z - adjacentMax.z) < 150){
+							    snap.z = adjacentMax.z - roomMin.z;
+							}
+
+							if(glm::abs(roomMax.z - adjacentMin.z) < 150){
+							    snap.x = adjacentMin.z - roomMax.z;
+							}
+
+							if(snap != glm::vec3(0, 0, 0)){
+    							data->SetMax(data->GetMax() + snap);
+    							data->SetMin(data->GetMin() + snap);
+    							curRoom->SetRoomModelDelta(curRoom->GetRoomModelDelta() + snap);
+
+    							for(auto child : mSelectionManager.GetPrimarySelection()->GetChildrenOfType<LEntityDOMNode>(EDOMNodeType::Entity)){
+    								(*child->GetMat())[3].x += snap.x;
+    								(*child->GetMat())[3].y += snap.y;
+    								(*child->GetMat())[3].z += snap.z;
+
+    								child->SetPosition(child->GetPosition() + snap);
+    							}
+							}
+						}
+					}
+
 				}
+
+				renderer_scene->SetDirty();
+
 				mGizmoTranslationDelta = {0,0,0};
 				mGizmoWasUsing = false;
 			}

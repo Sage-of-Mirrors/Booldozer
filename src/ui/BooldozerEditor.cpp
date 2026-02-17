@@ -50,8 +50,6 @@ LBooldozerEditor::LBooldozerEditor()
 {
 	CurrentMode = EEditorMode::Actor_Mode;
 	mCurrentMode = &mActorMode;
-
-	LResUtility::LoadUserSettings();
 }
 
 LBooldozerEditor::~LBooldozerEditor(){}
@@ -152,8 +150,6 @@ void LBooldozerEditor::LoadMap(std::string path, LEditorScene* scene){
 	OpenMap(path);
 
 	OPTIONS.mLastOpenedMap = path;
-	LResUtility::SaveUserSettings();
-
 	loadLock.lock();
 	mapLoading = false;
 	loadLock.unlock();
@@ -163,7 +159,6 @@ void LBooldozerEditor::SaveMap(std::string path){
 	SaveMapToArchive(path);
 
 	OPTIONS.mLastSavedDirectory = path;
-	LResUtility::SaveUserSettings();
 
 	loadLock.lock();
 	mapLoading = false;

@@ -53,7 +53,7 @@ void InitResourcePaths(){
     CoTaskMemFree(pathTmp);
 
     if(!std::filesystem::exists(RES_BASE_PATH)){
-        RES_BASE_PATH = RES_BASE_PATH / "res";;
+        RES_BASE_PATH = RES_BASE_PATH / "res";
         if(!std::filesystem::exists(RES_BASE_PATH)){
             std::filesystem::create_directory(RES_BASE_PATH);
         }
