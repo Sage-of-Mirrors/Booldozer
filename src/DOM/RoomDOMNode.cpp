@@ -8,8 +8,8 @@
 #include "DOM/RoomDataDOMNode.hpp"
 #include "GXGeometryData.hpp"
 #include "GenUtil.hpp"
-#include "ImGuiFileDialog.h"
 #include "DOM/RoomDOMNode.hpp"
+#include "ImGuiFileDialog.h"
 #include "DOM/ObserverDOMNode.hpp"
 #include "DOM/EnemyDOMNode.hpp"
 #include "ImGuiNotify.hpp"
@@ -51,6 +51,7 @@ namespace {
     };
 
     namespace ResourceManager {
+        bool ClickedOpenModal = false;
         std::shared_ptr<Archive::Rarc> ActiveRoomArchive = nullptr;
         std::shared_ptr<Archive::File> EditFileName = nullptr;
         std::shared_ptr<Archive::File> SelectedFile = nullptr;
@@ -367,6 +368,14 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
 {
     // This checkbox toggles rendering of the room and all of its children.
     LUIUtility::RenderCheckBox(this);
+
+    ImGui::SameLine();
+    ImGui::Text(ICON_FK_ARCHIVE);
+    if(ImGui::IsItemClicked(0)){
+        mode_selection->ClearSelection();
+        mode_selection->AddToSelection(self); // Set our current selection to this - room modal render is rendered by the node so open & render will use 'this' to get information about the room being edited.
+        ResourceManager::ClickedOpenModal = true; // for some reason you can't open the popup from here. Odd!
+    }
     ImGui::SameLine();
 
     // Room tree start
@@ -393,48 +402,12 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
         }
 
         if(ImGui::Button("Shrinkwrap Bounds")){
-            auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
-
-            std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
-            LGenUtility::Log << "[RoomDOMNode]: Loading arc " << resPath.string() << std::endl;
-
-            if(!std::filesystem::exists(std::filesystem::path(resPath))) {
-                ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Couldn't Find Room Archive\nPath: {}", resPath.string()).data()});
-            } else if(std::filesystem::exists(resPath) && resPath.extension().string() == ".arc"){
-                std::shared_ptr<Archive::Rarc> arc  = Archive::Rarc::Create();
-                bStream::CFileStream arcFile(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
-                if(arc->Load(&arcFile)){
-                    std::shared_ptr<Archive::File> file = arc->GetFile("room.bin");
-                    bStream::CMemoryStream modelStream(file->GetData(), file->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
-                    BIN::Model roomModel;
-                    roomModel.Load(&modelStream);
-
-                    if(roomModel.mGraphNodes.size() > 0){
-
-                        glm::vec4 modelMin = glm::vec4(roomModel.mGraphNodes[0].BoundingBoxMin, 0);
-                        glm::vec4 modelMax = glm::vec4(roomModel.mGraphNodes[0].BoundingBoxMax, 0);
-
-                        //modelMin = roomModel.mGraphNodes[0].Transform * modelMin;
-                        //modelMax = roomModel.mGraphNodes[0].Transform * modelMax;
-
-                        data->SetMin(glm::vec3(modelMin.z, modelMin.y, modelMin.x));
-                        data->SetMax(glm::vec3(modelMax.z, modelMax.y, modelMax.x));
-                        LEditorScene::GetEditorScene()->SetDirty();
-                        ImGui::InsertNotification({ImGuiToastType::Info, 3000, std::format("Set Room Bounds to ({}, {}, {}), ({}, {}, {})", modelMin.x, modelMin.y, modelMin.z, modelMax.x, modelMax.y, modelMax.z).data() });
-                    } else {
-                        ImGui::InsertNotification({ImGuiToastType::Error, 3000, "Couldn't find root graph node"});
-                    }
-                } else {
-                    ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Couldn't Open Room Archive\nPath: {}", resPath.string()).data()});
-                }
-
-            }
+            ShrinkWrap();
         }
 
         ImGui::EndPopup();
     }
 
-    bool openRoomRes = false;
     if(GetIsSelected()){
         if(PreviousRoomID != mRoomNumber && GCResourceManager.mLoadedGameArchive){
             PreviousRoomID = mRoomNumber;
@@ -452,677 +425,6 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
             glTextureStorage2D(CurRoomNameImgID, 1, GL_RGBA8, RoomTitlecard.mWidth, RoomTitlecard.mHeight);
             glTextureSubImage2D(CurRoomNameImgID, 0, 0, 0, RoomTitlecard.mWidth, RoomTitlecard.mHeight, GL_RGBA, GL_UNSIGNED_BYTE, roomImage);
 
-        }
-
-        ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-        ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-        if(ImGui::BeginPopupModal("##roomResources", nullptr, ImGuiWindowFlags_AlwaysAutoResize)){
-            if(ResourceManager::ActiveRoomArchive != nullptr){
-
-                if(!PreviewWidget::GetActive()){
-                    PreviewWidget::SetActive();
-                }
-
-                // show resources in room archive, allow add/delete of models
-                // notify when archive size is > 430kb!
-                ImGui::Text("Room Resource Files");
-                ImGui::SameLine();
-                ImGui::Text(ICON_FK_PLUS_CIRCLE);
-                if(ImGui::IsItemClicked()){
-                    PreviewWidget::NewFurnitureModel();
-                    std::shared_ptr<Archive::File> newBin = Archive::File::Create();
-                    newBin->SetName("new.bin");
-                    ResourceManager::EditFileName = newBin;
-                    ResourceManager::SelectedFile = newBin;
-                    ResourceManager::ActiveRoomArchive->GetRoot()->AddFile(newBin);
-                }
-                ImGui::SameLine();
-                ImGui::Text(ICON_FK_UPLOAD);
-                if(ImGui::IsItemClicked()){
-                    IGFD::FileDialogConfig config;
-                    config.path = ".";
-                    config.countSelectionMax = 1;
-                    config.sidePane = std::bind(&ImportModelPane, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-                    config.sidePaneWidth = 200.0f;
-                    config.flags = 1 << 9;
-                    ImGuiFileDialog::Instance()->OpenDialog("addModelToRoomArchiveDialog", "Select Room Resource", "Resource (*.bin *.anm *.bas){.bin,.anm,.bas},FBX Model (*.fbx){.fbx},OBJ Model (*.obj){.obj}", config);
-                }
-                ImGui::Separator();
-
-                if(ResourceManager::ActiveRoomArchive->GetRoot()->GetFolder("anm") == nullptr){
-                    std::shared_ptr<Archive::Folder> anmFolder = Archive::Folder::Create(ResourceManager::ActiveRoomArchive);
-                    anmFolder->SetName("anm");
-                    ResourceManager::ActiveRoomArchive->GetRoot()->AddSubdirectory(anmFolder);
-                }
-
-                ImGui::BeginChild("##roomResourceTree", {250, 500});
-                RoomResourceManagerHandleType(self, ResourceManager::ActiveRoomArchive->GetRoot(), "Models", ".bin");
-                RoomResourceManagerHandleType(self, ResourceManager::ActiveRoomArchive->GetRoot()->GetFolder("anm"), "Animations", ".anm");
-                RoomResourceManagerHandleType(self, ResourceManager::ActiveRoomArchive->GetRoot(), "Sounds", ".bas");
-                ImGui::EndChild();
-
-                ImGui::SameLine();
-                ImGui::BeginChild("##roomResourcePreview",  {600, 500});
-                ImGui::Image(static_cast<uintptr_t>(PreviewWidget::PreviewID()), {600, 500},  {0.0f, 1.0f}, {1.0f, 0.0f});
-
-                if(ImGui::IsItemHovered()){
-                    if(ImGui::IsKeyDown(ImGuiKey_ModShift)){
-                        PreviewWidget::DoRotate(ImGui::GetIO().MouseWheel * 0.1f);
-                    } else {
-                        PreviewWidget::DoZoom(ImGui::GetIO().MouseWheel*50);
-                    }
-                }
-
-
-                ImGui::EndChild();
-
-                if(PreviewWidget::GetFurnitureModel() != nullptr){
-                    ImGui::SameLine();
-                    ImGui::BeginChild("##binEditorPanels", {250, 500});
-                    ImGui::Text("SceneGraph");
-                    ImGui::SameLine();
-                    float widthNeeded = ImGui::CalcTextSize("Save").x + ImGui::GetStyle().FramePadding.x * 2.f;
-                    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - widthNeeded);
-                    if(ImGui::Button("Save")){
-                        bStream::CMemoryStream modelData(12, bStream::Endianess::Big, bStream::OpenMode::Out);
-                        PreviewWidget::SaveModel(&modelData);
-
-                        auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
-                        std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
-                        if(std::filesystem::exists(resPath) && resPath.extension().string() == ".arc"){
-                            ResourceManager::SelectedFile->SetData(modelData.getBuffer(), modelData.tell());
-                            ResourceManager::ActiveRoomArchive->SaveToFile(resPath.string());
-                        }
-                    }
-                    ImGui::Separator();
-                    ImGui::BeginChild("##binTree", {250, 125});
-                    BinTreeNodeUI(PreviewWidget::GetFurnitureModel(), 0);
-                    ImGui::EndChild();
-                    ImGui::Text("Resources");
-                    ImGui::Separator();
-                    ImGui::BeginChild("##binResources", {250, 125});
-                    bool  open = ImGui::TreeNode(ICON_FK_CUBE " Batches");
-                    ImGui::SameLine();
-                    ImGui::Spacing();
-                    ImGui::SameLine();
-                    ImGui::Text(ICON_FK_PLUS_CIRCLE);
-                    if(ImGui::IsItemClicked(0)){
-                        int id = PreviewWidget::GetFurnitureModel()->mBatches.size();
-                        for(int idx = 0; idx < PreviewWidget::GetFurnitureModel()->mBatches.size(); idx++){
-                            if(!PreviewWidget::GetFurnitureModel()->mBatches.contains(idx)){
-                                id = idx;
-                                break;
-                            }
-                        }
-                        PreviewWidget::GetFurnitureModel()->mBatches[id] = {};
-                    }
-                    if(open){
-                        uint16_t deleteIdx = UINT16_MAX;
-                        for(auto [idx, batch] : PreviewWidget::GetFurnitureModel()->mBatches){
-                            if(&PreviewWidget::GetFurnitureModel()->mBatches[idx] == ResourceManager::BinSelectedResource){
-                                ImGui::TextColored({0x00, 0xFF, 0x00, 0xFF}, "Batch %d", idx);
-                            } else {
-                                ImGui::Text("Batch %d", idx);
-                            }
-                            if(ImGui::IsItemClicked(0)){
-                                ResourceManager::SelectedType = SelectedResourceType::Batch;
-                                ResourceManager::BinSelectedResource = &PreviewWidget::GetFurnitureModel()->mBatches[idx];
-                            }
-                            if(ImGui::BeginPopupContextItem(std::format("##batchResourceContextMenu{}",idx).c_str())){
-                                if(ImGui::Selectable("Delete")){
-                                    deleteIdx = idx;
-                                }
-                                ImGui::EndPopup();
-                            }
-                        }
-                        if(deleteIdx != UINT16_MAX){
-                            ResourceManager::BinSelectedResource = nullptr;
-                            ResourceManager::SelectedType = SelectedResourceType::None;
-                            for(auto [idx, node] : PreviewWidget::GetFurnitureModel()->mGraphNodes){
-                                for(int i = 0; i < node.mDrawElements.size(); i++){
-                                    if(node.mDrawElements[i].BatchIndex == deleteIdx){
-                                        PreviewWidget::GetFurnitureModel()->mGraphNodes[idx].mDrawElements[i].BatchIndex = -1;
-                                    }
-                                }
-                            }
-                            PreviewWidget::GetFurnitureModel()->mBatches.erase(deleteIdx);
-                        }
-                        ImGui::TreePop();
-                    }
-
-                    open = ImGui::TreeNode(ICON_FK_PAINT_BRUSH " Materials");
-                    ImGui::SameLine();
-                    ImGui::Spacing();
-                    ImGui::SameLine();
-                    ImGui::Text(ICON_FK_PLUS_CIRCLE);
-                    if(ImGui::IsItemClicked(0)){
-                        int id = PreviewWidget::GetFurnitureModel()->mMaterials.size();
-                        for(int idx = 0; idx < PreviewWidget::GetFurnitureModel()->mMaterials.size(); idx++){
-                            if(!PreviewWidget::GetFurnitureModel()->mMaterials.contains(idx)){
-                                id = idx;
-                                break;
-                            }
-                        }
-                        PreviewWidget::GetFurnitureModel()->mMaterials[id] = {};
-                    }
-                    if(open){
-                        uint16_t deleteIdx = UINT16_MAX;
-                        for(auto [idx, material] : PreviewWidget::GetFurnitureModel()->mMaterials){
-                            if(&PreviewWidget::GetFurnitureModel()->mMaterials[idx] == ResourceManager::BinSelectedResource){
-                                ImGui::TextColored({0x00, 0xFF, 0x00, 0xFF}, "Material %d", idx);
-                            } else {
-                                ImGui::Text("Material %d", idx);
-                            }
-                            if(ImGui::IsItemClicked(0)){
-                                ResourceManager::SelectedType = SelectedResourceType::Material;
-                                ResourceManager::BinSelectedResource = &PreviewWidget::GetFurnitureModel()->mMaterials[idx];
-                            }
-                            if(ImGui::BeginPopupContextItem(std::format("##materialResourceContextMenu{}",idx).c_str())){
-                                if(ImGui::Selectable("Delete")){
-                                    deleteIdx = idx;
-                                }
-                                ImGui::EndPopup();
-                            }
-                        }
-                        if(deleteIdx != UINT16_MAX){
-                            ResourceManager::BinSelectedResource = nullptr;
-                            ResourceManager::SelectedType = SelectedResourceType::None;
-                            for(auto [idx, node] : PreviewWidget::GetFurnitureModel()->mGraphNodes){
-                                for(int i = 0; i < node.mDrawElements.size(); i++){
-                                    if(node.mDrawElements[i].MaterialIndex == deleteIdx){
-                                        PreviewWidget::GetFurnitureModel()->mGraphNodes[idx].mDrawElements[i].MaterialIndex = -1;
-                                    }
-                                }
-                            }
-                            PreviewWidget::GetFurnitureModel()->mMaterials.erase(deleteIdx);
-                        }
-                        ImGui::TreePop();
-                    }
-
-                    open = ImGui::TreeNode(ICON_FK_PAINT_BRUSH " Samplers");
-                    ImGui::SameLine();
-                    ImGui::Spacing();
-                    ImGui::SameLine();
-                    ImGui::Text(ICON_FK_PLUS_CIRCLE);
-                    if(ImGui::IsItemClicked(0)){
-                        int id = PreviewWidget::GetFurnitureModel()->mSamplers.size();
-                        for(int idx = 0; idx < PreviewWidget::GetFurnitureModel()->mSamplers.size(); idx++){
-                            if(!PreviewWidget::GetFurnitureModel()->mSamplers.contains(idx)){
-                                id = idx;
-                                break;
-                            }
-                        }
-                        PreviewWidget::GetFurnitureModel()->mSamplers[id] = {};
-                    }
-                    if(open){
-                        uint16_t deleteIdx = UINT16_MAX;
-                        for(auto [idx, sampler] : PreviewWidget::GetFurnitureModel()->mSamplers){
-                            if(&PreviewWidget::GetFurnitureModel()->mSamplers[idx] == ResourceManager::BinSelectedResource){
-                                ImGui::TextColored({0x00, 0xFF, 0x00, 0xFF}, "Sampler %d", idx);
-                            } else {
-                                ImGui::Text("Sampler %d", idx);
-                            }
-                            if(ImGui::IsItemClicked(0)){
-                                ResourceManager::SelectedType = SelectedResourceType::Sampler;
-                                ResourceManager::BinSelectedResource = &PreviewWidget::GetFurnitureModel()->mSamplers[idx];
-                            }
-                            if(ImGui::BeginPopupContextItem(std::format("##samplerResourceContextMenu{}",idx).c_str())){
-                                if(ImGui::Selectable("Delete")){
-                                    deleteIdx = idx;
-                                }
-                                ImGui::EndPopup();
-                            }
-                        }
-                        if(deleteIdx != UINT16_MAX){
-                            for(auto [idx, material] : PreviewWidget::GetFurnitureModel()->mMaterials){
-                                if(PreviewWidget::GetFurnitureModel()->mMaterials[idx].SamplerIndices[0] == deleteIdx){
-                                    PreviewWidget::GetFurnitureModel()->mMaterials[idx].SamplerIndices[0] = -1;
-                                    ResourceManager::BinSelectedResource = nullptr;
-                                    ResourceManager::SelectedType = SelectedResourceType::None;
-                                }
-                            }
-                            PreviewWidget::GetFurnitureModel()->mSamplers.erase(deleteIdx);
-                        }
-                        ImGui::TreePop();
-                    }
-
-                    open = ImGui::TreeNode(ICON_FK_PICTURE_O " Textures");
-                    ImGui::SameLine();
-                    ImGui::Spacing();
-                    ImGui::SameLine();
-                    ImGui::Text(ICON_FK_PLUS_CIRCLE);
-                    if(ImGui::IsItemClicked(0)){
-                        int id = PreviewWidget::GetFurnitureModel()->mTextureHeaders.size();
-                        for(int idx = 0; idx < PreviewWidget::GetFurnitureModel()->mTextureHeaders.size(); idx++){
-                            if(!PreviewWidget::GetFurnitureModel()->mTextureHeaders.contains(idx)){
-                                id = idx;
-                                break;
-                            }
-                        }
-                        PreviewWidget::GetFurnitureModel()->mTextureHeaders[id] = {};
-                    }
-                    if(open){
-                        uint16_t deleteIdx = UINT16_MAX;
-                        for(auto [idx, texture] : PreviewWidget::GetFurnitureModel()->mTextureHeaders){
-                            ImGui::Image(static_cast<uintptr_t>(texture.TextureID), {16, 16});
-                            ImGui::SameLine();
-                            if(&PreviewWidget::GetFurnitureModel()->mTextureHeaders[idx] == ResourceManager::BinSelectedResource){
-                                ImGui::TextColored({0x00, 0xFF, 0x00, 0xFF}, "Texture %d", idx);
-                            } else {
-                                ImGui::Text("Texture %d", idx);
-                            }
-                            if(ImGui::IsItemClicked(0)){
-                                ResourceManager::SelectedType = SelectedResourceType::Texture;
-                                ResourceManager::BinSelectedResource = &PreviewWidget::GetFurnitureModel()->mTextureHeaders[idx];
-                            }
-                            if(ImGui::BeginPopupContextItem(std::format("##textureResourceContextMenu{}",idx).c_str())){
-                                if(ImGui::Selectable("Delete")){
-                                    deleteIdx = idx;
-                                }
-                                if(ImGui::Selectable("Replace")){
-                                    IGFD::FileDialogConfig cfg { .path = OPTIONS.mRootPath, .flags = ImGuiFileDialogFlags_Modal };
-                                    ImGuiFileDialog::Instance()->OpenDialog("replaceTextureImageDialog", "Replace Texture", "PNG Image (*.png){.png}", cfg);
-                                    ResourceManager::BinSelectedResource = &PreviewWidget::GetFurnitureModel()->mTextureHeaders[idx];
-                                }
-                                if(ImGui::Selectable("Export")){
-                                    IGFD::FileDialogConfig cfg { .path = OPTIONS.mRootPath, .flags = ImGuiFileDialogFlags_Modal };
-                                    ImGuiFileDialog::Instance()->OpenDialog("exportTextureImageDialog", "Export Texture", "PNG Image (*.png){.png}", cfg);
-                                    ResourceManager::BinSelectedResource = &PreviewWidget::GetFurnitureModel()->mTextureHeaders[idx];
-                                }
-                                ImGui::EndPopup();
-                            }
-                        }
-
-                        if(deleteIdx != UINT16_MAX){
-                            PreviewWidget::GetFurnitureModel()->mTextureHeaders.erase(deleteIdx);
-                            for(auto [idx, sampler] : PreviewWidget::GetFurnitureModel()->mSamplers){
-                                if(PreviewWidget::GetFurnitureModel()->mSamplers[idx].TextureIndex == deleteIdx){
-                                    PreviewWidget::GetFurnitureModel()->mSamplers[idx].TextureIndex = -1;
-                                    ResourceManager::BinSelectedResource = nullptr;
-                                    ResourceManager::SelectedType = SelectedResourceType::None;
-                                }
-                            }
-                        }
-
-                        ImGui::TreePop();
-                    }
-                    ImGui::EndChild();
-                    ImGui::BeginChild("##binResourceSelected", {180, 280});
-                    if(ResourceManager::SelectedType != SelectedResourceType::None && ResourceManager::BinSelectedResource != nullptr){
-                        switch(ResourceManager::SelectedType){
-                            case SelectedResourceType::GraphNode: {
-                                ImGui::Text("Graph Node");
-                                ImGui::Separator();
-                                auto node = reinterpret_cast<BIN::SceneGraphNode*>(ResourceManager::BinSelectedResource);
-                                ImGui::Text("Render Flags");
-                                bool value = node->CastShadow();
-                                if(ImGui::Checkbox("Cast Shadow", &value)){
-                                    node->CastShadow(value);
-                                }
-                                value = node->FourthWall();
-                                if(ImGui::Checkbox("Fourth Wall", &value)){
-                                    node->FourthWall(value);
-                                }
-                                value = node->Transparent();
-                                if(ImGui::Checkbox("Transparent", &value)){
-                                    node->Transparent(value);
-                                }
-                                value = node->FullBright();
-                                if(ImGui::Checkbox("Full Bright", &value)){
-                                    node->FullBright(value);
-                                }
-                                value = node->Ceiling();
-                                if(ImGui::Checkbox("Ceiling", &value)){
-                                    node->Ceiling(value);
-                                }
-
-                                if(ImGui::InputFloat3("Scale", &node->Scale.x) || ImGui::InputFloat3("Rotation", &node->Rotation.x) || ImGui::InputFloat3("Translation", &node->Position.x)){
-                                    node->Transform = glm::mat4(1.0f);
-                                    node->Transform = glm::scale(node->Transform, node->Scale);
-                                    node->Transform = glm::rotate(node->Transform, glm::radians(node->Rotation.z), {1.0f, 0.0f, 0.0f});
-                                    node->Transform = glm::rotate(node->Transform, glm::radians(node->Rotation.y), {0.0f, 1.0f, 0.0f});
-                                    node->Transform = glm::rotate(node->Transform, glm::radians(node->Rotation.x), {0.0f, 0.0f, 1.0f});
-                                    node->Transform = glm::translate(node->Transform, {node->Position.z, node->Position.y, node->Position.x});
-                                }
-
-                                ImGui::InputFloat3("Min Bounds", &node->BoundingBoxMin.x);
-                                ImGui::InputFloat3("Max Bounds", &node->BoundingBoxMax.x);
-
-                                break;
-                            }
-                            case SelectedResourceType::Batch: {
-                                ImGui::Text("Batch");
-                                ImGui::Separator();
-                                auto batch = reinterpret_cast<BIN::Batch*>(ResourceManager::BinSelectedResource);
-                                ImGui::Text("NBT Enabled");
-                                bool clicked = ImGui::IsItemClicked(); ImGui::SameLine();
-                                ImGui::Text(batch->NBTFlag == 1 ? ICON_FK_CHECK_CIRCLE : ICON_FK_CIRCLE_O);
-                                clicked |= ImGui::IsItemClicked();
-                                if(clicked){
-                                    if(batch->NBTFlag == 0){
-                                        batch->NBTFlag = 1;
-                                        batch->TexCoordFlag = 2;
-                                        batch->VertexAttributes |= (1 << (int)GXAttribute::Tex1);
-                                    } else {
-                                        batch->NBTFlag = 0;
-                                        batch->TexCoordFlag = 1;
-                                        batch->VertexAttributes &= ~(1 << (int)GXAttribute::Tex1);
-                                    }
-                                }
-
-                                if(ImGui::Button("Import")){
-                                    IGFD::FileDialogConfig cfg { .path = OPTIONS.mRootPath, .flags = ImGuiFileDialogFlags_Modal };
-                                    ImGuiFileDialog::Instance()->OpenDialog("replaceBatchDialog", "Replace Batch", "OBJ Model (*.obj){.obj}", cfg);
-                                }
-                                break;
-                            }
-                            case SelectedResourceType::Texture: {
-                                ImGui::Text("Texture");
-                                ImGui::Separator();
-                                auto texture = reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource);
-                                if(ImGui::BeginCombo("Texture Format", TextureFormatNames[texture->Format])){
-                                    for(int i = 0; i < TextureFormatNames.size(); i++){
-                                        if(std::string(TextureFormatNames[i]) == "???") continue;
-                                        if(ImGui::Selectable(TextureFormatNames[i])){
-                                            texture->Format = i;
-                                        }
-                                    }
-                                    ImGui::EndCombo();
-                                }
-
-                                if(ImGui::Button("Replace")){
-                                    IGFD::FileDialogConfig cfg { .path = OPTIONS.mRootPath, .flags = ImGuiFileDialogFlags_Modal };
-                                    ImGuiFileDialog::Instance()->OpenDialog("replaceTextureImageDialog", "Replace Texture", "PNG Image (*.png){.png}", cfg);
-                                }
-                                ImGui::SameLine();
-                                if(ImGui::Button("Export")){
-                                    IGFD::FileDialogConfig cfg { .path = OPTIONS.mRootPath, .flags = ImGuiFileDialogFlags_Modal };
-                                    ImGuiFileDialog::Instance()->OpenDialog("exportTextureImageDialog", "Export Texture", "PNG Image (*.png){.png}", cfg);
-                                }
-
-                                ImGui::Image(static_cast<uintptr_t>(texture->TextureID), {static_cast<float>(texture->Width), static_cast<float>(texture->Height)});
-                                break;
-                            }
-                            case SelectedResourceType::Material: {
-                                ImGui::Text("Material");
-                                ImGui::Separator();
-                                auto material = reinterpret_cast<BIN::Material*>(ResourceManager::BinSelectedResource);
-                                bool isLit = material->LightEnabled;
-                                ImGui::Checkbox("Lit", &isLit);
-                                material->LightEnabled = isLit;
-
-                                int val = material->Unk0;
-                                ImGui::InputInt("Unknown Value 1", &val);
-                                material->Unk0 = val;
-
-                                val = material->Unk1;
-                                ImGui::InputInt("Unknown Value 2", &val);
-                                material->Unk1 = val;
-
-                                ImGui::ColorPicker4("Color", (float *)&material->Color.x, 0);
-                                for(int i = 0; i < 8; i++){
-                                    if(ImGui::BeginCombo(std::format("Sampler Slot {}", i).c_str(), std::format("Sampler {}", material->SamplerIndices[i]).c_str())){
-                                        for(auto [idx, sampler] : PreviewWidget::GetFurnitureModel()->mSamplers){
-                                            if(ImGui::Selectable(std::format("Sampler {}", idx).c_str())){
-                                                material->SamplerIndices[i] = idx;
-                                            }
-                                        }
-                                        ImGui::EndCombo();
-                                    }
-                                }
-                                break;
-                            }
-                            case SelectedResourceType::Sampler: {
-                                ImGui::Text("Sampler");
-                                ImGui::Separator();
-                                auto sampler = reinterpret_cast<BIN::Sampler*>(ResourceManager::BinSelectedResource);
-
-                                if(ImGui::BeginCombo("Wrap U", WrapModes[sampler->WrapU])){
-                                    for(int i = 0; i < 3; i++){
-                                        if(ImGui::Selectable(WrapModes[i], sampler->WrapU == i)){
-                                            sampler->WrapU = i;
-                                        }
-                                    }
-                                    ImGui::EndCombo();
-                                   }
-
-                                if(ImGui::BeginCombo("Wrap V", WrapModes[sampler->WrapV])){
-                                    for(int i = 0; i < 3; i++){
-                                        if(ImGui::Selectable(WrapModes[i], sampler->WrapV == i)){
-                                            sampler->WrapV = i;
-                                        }
-                                    }
-                                    ImGui::EndCombo();
-                                }
-
-                                int val = sampler->Unk;
-                                ImGui::InputInt("Unknown Value 1", &val);
-                                sampler->Unk = val;
-
-                                if(ImGui::BeginCombo("Texture", std::format("Texture {}", sampler->TextureIndex).c_str())){
-                                    for(auto [idx, texture] : PreviewWidget::GetFurnitureModel()->mTextureHeaders){
-                                        if(ImGui::Selectable(std::format("Texture {}", idx).c_str())){
-                                            sampler->TextureIndex = idx;
-                                        }
-                                    }
-                                    ImGui::EndCombo();
-                                   }
-                                break;
-                            }
-                        }
-                    }
-                    ImGui::EndChild();
-                    ImGui::EndChild();
-                }
-
-                if(ImGui::Button("Done")){
-                    if(ResourceManager::ActiveRoomArchive->GetFile("room.bin") == nullptr){
-                        ImGui::InsertNotification({ImGuiToastType::Error, 3000, "Room requires a 'room.bin' file!"});
-                    }  else if (ResourceManager::ActiveRoomArchive->Size() > MaxRoomArcSize) {
-                        ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Room archive too big! Game will crash!\nDelete resources then save. {}kb/450kb", ResourceManager::ActiveRoomArchive->Size()/1024).data()});
-                    } else {
-                        auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
-                        ImGui::InsertNotification({ImGuiToastType::Success, 3000, std::format("Saved Room Archive {}", data->GetResourcePath()).c_str()});
-                        ResourceManager::ActiveRoomArchive->SaveToFile(std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path());
-                        ResourceManager::ActiveRoomArchive = nullptr;
-
-                        // Reload room and adjacent rooms in renderer
-                        LEditorScene::GetEditorScene()->SetRoom(GetSharedPtr<LRoomDOMNode>(EDOMNodeType::Room));
-
-                        ResourceManager::EditFileName = nullptr;
-                        ResourceManager::FileName = "";
-                        PreviewWidget::UnloadModel();
-                        PreviewWidget::SetInactive();
-                        ImGui::CloseCurrentPopup();
-                    }
-                }
-
-                if(ResourceManager::SelectedAnimation != nullptr){
-                    ImGui::SameLine();
-                    ImGui::Text(ICON_FK_PLAY);
-                    if(ImGui::IsItemClicked()){
-                        PreviewWidget::PlayAnimation();
-                    }
-
-                    ImGui::SameLine();
-                    ImGui::Text(ICON_FK_STOP);
-                    if(ImGui::IsItemClicked()){
-                        PreviewWidget::PauseAnimation();
-                    }
-                }
-
-            }
-            ImGui::EndPopup();
-        }
-
-        std::string filePath;
-        auto fileRes = LUIUtility::RenderFileDialog("replaceBatchDialog", filePath);
-        if(fileRes == LUIUtility::FileDialogResult::Ok){// error check should be here oops!
-            if(ResourceManager::BinSelectedResource != nullptr){
-                auto batch = reinterpret_cast<BIN::Batch*>(ResourceManager::BinSelectedResource);
-                batch->Primitives.clear();
-
-                tinyobj::attrib_t attributes;
-                std::vector<tinyobj::shape_t> shapes;
-                std::vector<tinyobj::material_t> materials;
-
-                std::string warn;
-                std::string err;
-                bool ret = tinyobj::LoadObj(&attributes, &shapes, &materials, &warn, &err, std::filesystem::path(filePath).string().c_str(), std::filesystem::path(filePath).parent_path().string().c_str(), true);
-                if(!ret){
-                    ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Failed to load OBJ\nErr: {}\nPath: {}", err, filePath).data()});
-                } else {
-
-                    std::vector<Vertex> vertices;
-                    std::vector<std::size_t> indices;
-                    uint32_t stripCount = 0;
-                    uint32_t triangleCount = 0;
-                    for(auto shp : shapes){
-                        if(shp.mesh.indices.size() == 0) continue;
-                        for(int i = 0; i < shp.mesh.indices.size(); i++){
-                            Vertex vtx;
-                            int v = shp.mesh.indices[i].vertex_index;
-                            int n = shp.mesh.indices[i].normal_index;
-                            int t = shp.mesh.indices[i].texcoord_index;
-                            vtx.Position = glm::vec3(attributes.vertices[v * 3], attributes.vertices[(v * 3) + 1], attributes.vertices[(v * 3) + 2]);
-                            vtx.Normal = glm::vec3(attributes.normals[n * 3], attributes.normals[(n * 3) + 1], attributes.normals[(n * 3) + 2]);
-                            vtx.Texcoord = glm::vec2(attributes.texcoords[t * 2], attributes.texcoords[(t * 2) + 1]);
-
-                            auto vtxIdx = std::find_if(vertices.begin(), vertices.end(), [i=vtx](const Vertex& o){
-                                return i.Position == o.Position && i.Normal == o.Normal && i.Texcoord == o.Texcoord;
-                            });
-
-                            if(vtxIdx != vertices.end()){
-                                indices.push_back(vtxIdx - vertices.begin());
-                            } else {
-                                indices.push_back(vertices.size());
-                                vertices.push_back(vtx);
-                            }
-                        }
-
-                        triangle_stripper::tri_stripper stripify(indices);
-                        triangle_stripper::primitive_vector primitives;
-                        stripify.SetBackwardSearch(false);
-                        stripify.Strip(&primitives);
-
-                        int indexCount = 0;
-                        for(auto p : primitives){
-                            Primitive primitive;
-                            primitive.Opcode = (p.Type == triangle_stripper::TRIANGLE_STRIP ? GXPrimitiveType::TriangleStrip : GXPrimitiveType::Triangles);
-                            for(int i = 0; i < p.Indices.size(); i++){
-                                primitive.Vertices.push_back(vertices[p.Indices[i]]);
-                            }
-                            indexCount += p.Indices.size();
-                            batch->Primitives.push_back(primitive);
-                        }
-
-                        stripCount += indexCount;
-                        triangleCount += shp.mesh.indices.size();
-                    }
-                    ImGui::InsertNotification({ImGuiToastType::Info, 1000, std::format("TriStripped Faces {} / {}", stripCount, triangleCount).data()});
-
-                    batch->ReloadMeshes();
-                }
-
-                ImGui::OpenPopup("##roomResources");
-            }
-        } else if(fileRes == LUIUtility::FileDialogResult::Cancel){
-            ImGui::OpenPopup("##roomResources");
-        }
-
-        fileRes = LUIUtility::RenderFileDialog("replaceTextureImageDialog", filePath);
-        if(fileRes == LUIUtility::FileDialogResult::Ok){
-            if(ResourceManager::BinSelectedResource != nullptr){
-                int w, h, channels;
-                unsigned char* img = stbi_load(filePath.c_str(), &w, &h, &channels, 4);
-                if(img != nullptr){
-                    reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->SetImage(img, w*h*4, w, h);
-                    stbi_image_free(img);
-                } else {
-                    ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Failed to load image\nPath: {}", filePath).data()});
-                }
-            }
-            ImGui::OpenPopup("##roomResources");
-        } else if(fileRes == LUIUtility::FileDialogResult::Cancel){
-            ImGui::OpenPopup("##roomResources");
-        }
-
-        fileRes = LUIUtility::RenderFileDialog("exportTextureImageDialog", filePath);
-        if(fileRes == LUIUtility::FileDialogResult::Ok){
-            if(ResourceManager::BinSelectedResource != nullptr && reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->ImageData != nullptr){
-                if(!stbi_write_png(filePath.c_str(), reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->Width, reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->Height, 4, reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->ImageData, 4*reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->Width)){
-                    ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Failed to Write Image\nPath: {}", filePath).data()});
-                }
-            }
-            ImGui::OpenPopup("##roomResources");
-        } else if(fileRes == LUIUtility::FileDialogResult::Cancel) {
-            ImGui::OpenPopup("##roomResources");
-        }
-
-        fileRes = LUIUtility::RenderFileDialog("addModelToRoomArchiveDialog", filePath);
-        if(fileRes == LUIUtility::FileDialogResult::Ok){
-            auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
-
-            std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
-            LGenUtility::Log << "[RoomDOMNode]: Loading arc " << resPath.string() << std::endl;
-
-            if(!std::filesystem::exists(std::filesystem::path(filePath))) {
-                ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Couldn't Open Resource\nPath: {}", resPath.string()).data()});
-            } else if(std::filesystem::exists(resPath) && resPath.extension().string() == ".arc"){
-                if(ResourceManager::ActiveRoomArchive != nullptr){
-                    std::shared_ptr<Archive::File> newFile = Archive::File::Create();
-                    std::string ext = std::filesystem::path(filePath).extension().string();
-                    if(ext == ".obj"){
-                        BIN::Model model = BIN::Model::FromOBJ(filePath);
-                        bStream::CMemoryStream modelData(0x24, bStream::Endianess::Big, bStream::OpenMode::Out);
-                        model.Write(&modelData);
-                        newFile->SetName(std::filesystem::path(filePath).filename().replace_extension(".bin").string());
-                        newFile->SetData(modelData.getBuffer(), modelData.tell());
-                        mRoomModels.push_back(std::filesystem::path(filePath).filename().stem().string());
-                    } else if(ext == ".fbx"){
-                        BIN::Model model = BIN::Model::FromFBX(filePath, ImportSettings::EnableVertexColors);
-                        bStream::CMemoryStream modelData(0x24, bStream::Endianess::Big, bStream::OpenMode::Out);
-                        model.Write(&modelData);
-                        newFile->SetName(std::filesystem::path(filePath).filename().replace_extension(".bin").string());
-                        newFile->SetData(modelData.getBuffer(), modelData.tell());
-                        mRoomModels.push_back(std::filesystem::path(filePath).filename().stem().string());
-                    } else {
-                        bStream::CFileStream modelFile(filePath, bStream::Endianess::Big, bStream::OpenMode::In);
-
-                        uint8_t* modelData = new uint8_t[modelFile.getSize()]{};
-                        modelFile.readBytesTo(modelData, modelFile.getSize());
-
-
-                        LGenUtility::Log << "[RoomDOMNode]: Adding model " << std::filesystem::path(filePath).filename().string() << " to archive" << resPath.string() << std::endl;
-                        if(ext == ".bin"){
-                            mRoomModels.push_back(std::filesystem::path(filePath).filename().stem().string());
-                        }
-                        newFile->SetName(std::filesystem::path(filePath).filename().string());
-                        newFile->SetData(modelData, modelFile.getSize());
-
-                        delete[] modelData;
-
-                    }
-                    if(ext == ".anm"){
-                        std::shared_ptr<Archive::Folder> animFolder = ResourceManager::ActiveRoomArchive->GetRoot()->GetFolder("anm");
-
-                        if(animFolder == nullptr){
-                            animFolder = Archive::Folder::Create(ResourceManager::ActiveRoomArchive);
-                            animFolder->SetName("anm");
-                            ResourceManager::ActiveRoomArchive->GetRoot()->AddSubdirectory(animFolder);
-                        }
-
-                        animFolder->AddFile(newFile);
-
-                    } else {
-                        ResourceManager::ActiveRoomArchive->GetRoot()->AddFile(newFile);
-                    }
-                    ResourceManager::ActiveRoomArchive->SaveToFile(resPath.string());
-                }
-            }
-            ImGui::OpenPopup("##roomResources");
-        } else if(fileRes == LUIUtility::FileDialogResult::Cancel) {
-            ImGui::OpenPopup("##roomResources");
         }
     }
 
@@ -1235,72 +537,12 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                     }
                 }
             }
-
         }
         ImGui::EndDragDropTarget();
     }
 
     if (treeOpened)
     {
-        if(GetIsSelected()){
-            ImGui::SameLine();
-            ImGui::Spacing();
-            ImGui::SameLine();
-            ImGui::Text(ICON_FK_ARCHIVE);
-            if(ImGui::IsItemClicked(0)){
-                openRoomRes = true;
-                auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
-                std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
-                LGenUtility::Log << "[RoomDOMNode]: Loading room archive " << resPath.string() << std::endl;
-                if(std::filesystem::exists(resPath)){
-                    if(resPath.extension() == ".arc"){
-                        ResourceManager::ActiveRoomArchive = Archive::Rarc::Create();
-                        bStream::CFileStream arcFile(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
-                        if(!ResourceManager::ActiveRoomArchive->Load(&arcFile)){
-                            ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Failed to load Room Archive\nPath: {}", resPath.string()).data()});
-                            ResourceManager::ActiveRoomArchive = nullptr;
-                        }
-                    } else {
-                        // This is for archive editing so we need to make an archive if its just a model
-                        ResourceManager::ActiveRoomArchive = Archive::Rarc::Create();
-
-                        auto rootFolder = Archive::Folder::Create(ResourceManager::ActiveRoomArchive);
-                        rootFolder->SetName(resPath.filename().stem().string());
-
-                        ResourceManager::ActiveRoomArchive->SetRoot(rootFolder);
-
-                        auto roomModel = Archive::File::Create();
-                        roomModel->SetName("room.bin");
-
-                        bStream::CFileStream modelFile(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
-                        std::size_t modelFileSize = modelFile.getSize();
-
-                        uint8_t* modelData = new uint8_t[modelFileSize];
-
-                        modelFile.readBytesTo(modelData, modelFileSize);
-                        roomModel->SetData(modelData, modelFileSize);
-
-                        ResourceManager::ActiveRoomArchive->GetRoot()->AddFile(roomModel);
-
-                        delete[] modelData;
-
-                        std::filesystem::path path(data->GetResourcePath());
-
-                        path.replace_extension(".arc");
-
-                        data->SetRoomResourcePath(path.string());
-
-                        ResourceManager::ActiveRoomArchive->SaveToFile(resPath.string());
-                    }
-                } else {
-                    ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Couldn't find Room Archive\nPath: {}", resPath.string()).data()});
-                }
-            }
-
-            if(openRoomRes && ResourceManager::ActiveRoomArchive != nullptr){
-                ImGui::OpenPopup("##roomResources");
-            }
-        }
 
         // Iterating all of the entity types
         for (uint32_t i = 0; i < LRoomEntityType_Max; i++)
@@ -1531,6 +773,790 @@ void LRoomDOMNode::RenderWaveHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEd
         }
 
         ImGui::TreePop();
+    }
+}
+
+void LRoomDOMNode::RenderRoomArchiveModal(){
+    if(ResourceManager::ClickedOpenModal){
+        OpenRoomResourcesModal();
+        ResourceManager::ClickedOpenModal = false;
+    }
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    if(ImGui::BeginPopupModal("##roomResources", nullptr, ImGuiWindowFlags_AlwaysAutoResize)){
+        if(ResourceManager::ActiveRoomArchive != nullptr){
+            if(!PreviewWidget::GetActive()){
+                PreviewWidget::SetActive();
+            }
+
+            // show resources in room archive, allow add/delete of models
+            // notify when archive size is > 430kb!
+            ImGui::Text("Room Resource Files");
+            ImGui::SameLine();
+            ImGui::Text(ICON_FK_PLUS_CIRCLE);
+            if(ImGui::IsItemClicked()){
+                PreviewWidget::NewFurnitureModel();
+                std::shared_ptr<Archive::File> newBin = Archive::File::Create();
+                newBin->SetName("new.bin");
+                ResourceManager::EditFileName = newBin;
+                ResourceManager::SelectedFile = newBin;
+                ResourceManager::ActiveRoomArchive->GetRoot()->AddFile(newBin);
+            }
+            ImGui::SameLine();
+            ImGui::Text(ICON_FK_UPLOAD);
+            if(ImGui::IsItemClicked()){
+                IGFD::FileDialogConfig config;
+                config.path = ".";
+                config.countSelectionMax = 1;
+                config.sidePane = std::bind(&ImportModelPane, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+                config.sidePaneWidth = 200.0f;
+                config.flags = 1 << 9;
+                ImGuiFileDialog::Instance()->OpenDialog("addModelToRoomArchiveDialog", "Select Room Resource", "Resource (*.bin *.anm *.bas){.bin,.anm,.bas},FBX Model (*.fbx){.fbx},OBJ Model (*.obj){.obj}", config);
+            }
+            ImGui::Separator();
+
+            if(ResourceManager::ActiveRoomArchive->GetRoot()->GetFolder("anm") == nullptr){
+                std::shared_ptr<Archive::Folder> anmFolder = Archive::Folder::Create(ResourceManager::ActiveRoomArchive);
+                anmFolder->SetName("anm");
+                ResourceManager::ActiveRoomArchive->GetRoot()->AddSubdirectory(anmFolder);
+            }
+
+            ImGui::BeginChild("##roomResourceTree", {250, 500});
+            RoomResourceManagerHandleType(GetSharedPtr<LDOMNodeBase>(EDOMNodeType::Base), ResourceManager::ActiveRoomArchive->GetRoot(), "Models", ".bin");
+            RoomResourceManagerHandleType(GetSharedPtr<LDOMNodeBase>(EDOMNodeType::Base), ResourceManager::ActiveRoomArchive->GetRoot()->GetFolder("anm"), "Animations", ".anm");
+            RoomResourceManagerHandleType(GetSharedPtr<LDOMNodeBase>(EDOMNodeType::Base), ResourceManager::ActiveRoomArchive->GetRoot(), "Sounds", ".bas");
+            ImGui::EndChild();
+
+            ImGui::SameLine();
+            ImGui::BeginChild("##roomResourcePreview",  {600, 500});
+       	    //ImGuizmo::SetDrawlist(ImGui::GetWindowDrawList());
+            //ImGuizmo::SetRect(cursorPos.x, cursorPos.y, winSize.x, winSize.y);
+            ImGui::Image(static_cast<uintptr_t>(PreviewWidget::PreviewID()), {600, 500},  {0.0f, 1.0f}, {1.0f, 0.0f});
+
+            if(ImGui::IsItemHovered()){
+                if(ImGui::IsKeyDown(ImGuiKey_ModShift)){
+                    PreviewWidget::DoRotate(ImGui::GetIO().MouseWheel * 0.1f);
+                } else {
+                    PreviewWidget::DoZoom(ImGui::GetIO().MouseWheel*50);
+                }
+            }
+
+            if(PreviewWidget::GetFurnitureModel() != nullptr && ResourceManager::BinSelectedResource != nullptr && ResourceManager::SelectedType == SelectedResourceType::GraphNode){
+                //ImGuizmo::Manipulate(PreviewWidget::G, &proj[0][0], ImGuizmo::OPERATION::Translation, ImGuizmo::WORLD, &(*m)[0][0], &delta[0][0], NULL);
+            }
+
+            ImGui::EndChild();
+
+            if(PreviewWidget::GetFurnitureModel() != nullptr){
+                ImGui::SameLine();
+                ImGui::BeginChild("##binEditorPanels", {250, 500});
+                ImGui::Text("SceneGraph");
+                ImGui::SameLine();
+                float widthNeeded = ImGui::CalcTextSize("Save").x + ImGui::GetStyle().FramePadding.x * 2.f;
+                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - widthNeeded);
+                if(ImGui::Button("Save")){
+                    bStream::CMemoryStream modelData(12, bStream::Endianess::Big, bStream::OpenMode::Out);
+                    PreviewWidget::SaveModel(&modelData);
+
+                    auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+                    std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
+                    if(std::filesystem::exists(resPath) && resPath.extension().string() == ".arc"){
+                        ResourceManager::SelectedFile->SetData(modelData.getBuffer(), modelData.tell());
+                        ResourceManager::ActiveRoomArchive->SaveToFile(resPath.string());
+                    }
+                }
+                ImGui::Separator();
+                ImGui::BeginChild("##binTree", {250, 125});
+                BinTreeNodeUI(PreviewWidget::GetFurnitureModel(), 0);
+                ImGui::EndChild();
+                ImGui::Text("Resources");
+                ImGui::Separator();
+                ImGui::BeginChild("##binResources", {250, 125});
+                bool  open = ImGui::TreeNode(ICON_FK_CUBE " Batches");
+                ImGui::SameLine();
+                ImGui::Spacing();
+                ImGui::SameLine();
+                ImGui::Text(ICON_FK_PLUS_CIRCLE);
+                if(ImGui::IsItemClicked(0)){
+                    int id = PreviewWidget::GetFurnitureModel()->mBatches.size();
+                    for(int idx = 0; idx < PreviewWidget::GetFurnitureModel()->mBatches.size(); idx++){
+                        if(!PreviewWidget::GetFurnitureModel()->mBatches.contains(idx)){
+                            id = idx;
+                            break;
+                        }
+                    }
+                    PreviewWidget::GetFurnitureModel()->mBatches[id] = {};
+                }
+                if(open){
+                    uint16_t deleteIdx = UINT16_MAX;
+                    for(auto [idx, batch] : PreviewWidget::GetFurnitureModel()->mBatches){
+                        if(&PreviewWidget::GetFurnitureModel()->mBatches[idx] == ResourceManager::BinSelectedResource){
+                            ImGui::TextColored({0x00, 0xFF, 0x00, 0xFF}, "Batch %d", idx);
+                        } else {
+                            ImGui::Text("Batch %d", idx);
+                        }
+                        if(ImGui::IsItemClicked(0)){
+                            ResourceManager::SelectedType = SelectedResourceType::Batch;
+                            ResourceManager::BinSelectedResource = &PreviewWidget::GetFurnitureModel()->mBatches[idx];
+                        }
+                        if(ImGui::BeginPopupContextItem(std::format("##batchResourceContextMenu{}",idx).c_str())){
+                            if(ImGui::Selectable("Delete")){
+                                deleteIdx = idx;
+                            }
+                            ImGui::EndPopup();
+                        }
+                    }
+                    if(deleteIdx != UINT16_MAX){
+                        ResourceManager::BinSelectedResource = nullptr;
+                        ResourceManager::SelectedType = SelectedResourceType::None;
+                        for(auto [idx, node] : PreviewWidget::GetFurnitureModel()->mGraphNodes){
+                            for(int i = 0; i < node.mDrawElements.size(); i++){
+                                if(node.mDrawElements[i].BatchIndex == deleteIdx){
+                                    PreviewWidget::GetFurnitureModel()->mGraphNodes[idx].mDrawElements[i].BatchIndex = -1;
+                                }
+                            }
+                        }
+                        PreviewWidget::GetFurnitureModel()->mBatches.erase(deleteIdx);
+                    }
+                    ImGui::TreePop();
+                }
+
+                open = ImGui::TreeNode(ICON_FK_PAINT_BRUSH " Materials");
+                ImGui::SameLine();
+                ImGui::Spacing();
+                ImGui::SameLine();
+                ImGui::Text(ICON_FK_PLUS_CIRCLE);
+                if(ImGui::IsItemClicked(0)){
+                    int id = PreviewWidget::GetFurnitureModel()->mMaterials.size();
+                    for(int idx = 0; idx < PreviewWidget::GetFurnitureModel()->mMaterials.size(); idx++){
+                        if(!PreviewWidget::GetFurnitureModel()->mMaterials.contains(idx)){
+                            id = idx;
+                            break;
+                        }
+                    }
+                    PreviewWidget::GetFurnitureModel()->mMaterials[id] = {};
+                }
+                if(open){
+                    uint16_t deleteIdx = UINT16_MAX;
+                    for(auto [idx, material] : PreviewWidget::GetFurnitureModel()->mMaterials){
+                        if(&PreviewWidget::GetFurnitureModel()->mMaterials[idx] == ResourceManager::BinSelectedResource){
+                            ImGui::TextColored({0x00, 0xFF, 0x00, 0xFF}, "Material %d", idx);
+                        } else {
+                            ImGui::Text("Material %d", idx);
+                        }
+                        if(ImGui::IsItemClicked(0)){
+                            ResourceManager::SelectedType = SelectedResourceType::Material;
+                            ResourceManager::BinSelectedResource = &PreviewWidget::GetFurnitureModel()->mMaterials[idx];
+                        }
+                        if(ImGui::BeginPopupContextItem(std::format("##materialResourceContextMenu{}",idx).c_str())){
+                            if(ImGui::Selectable("Delete")){
+                                deleteIdx = idx;
+                            }
+                            ImGui::EndPopup();
+                        }
+                    }
+                    if(deleteIdx != UINT16_MAX){
+                        ResourceManager::BinSelectedResource = nullptr;
+                        ResourceManager::SelectedType = SelectedResourceType::None;
+                        for(auto [idx, node] : PreviewWidget::GetFurnitureModel()->mGraphNodes){
+                            for(int i = 0; i < node.mDrawElements.size(); i++){
+                                if(node.mDrawElements[i].MaterialIndex == deleteIdx){
+                                    PreviewWidget::GetFurnitureModel()->mGraphNodes[idx].mDrawElements[i].MaterialIndex = -1;
+                                }
+                            }
+                        }
+                        PreviewWidget::GetFurnitureModel()->mMaterials.erase(deleteIdx);
+                    }
+                    ImGui::TreePop();
+                }
+
+                open = ImGui::TreeNode(ICON_FK_PAINT_BRUSH " Samplers");
+                ImGui::SameLine();
+                ImGui::Spacing();
+                ImGui::SameLine();
+                ImGui::Text(ICON_FK_PLUS_CIRCLE);
+                if(ImGui::IsItemClicked(0)){
+                    int id = PreviewWidget::GetFurnitureModel()->mSamplers.size();
+                    for(int idx = 0; idx < PreviewWidget::GetFurnitureModel()->mSamplers.size(); idx++){
+                        if(!PreviewWidget::GetFurnitureModel()->mSamplers.contains(idx)){
+                            id = idx;
+                            break;
+                        }
+                    }
+                    PreviewWidget::GetFurnitureModel()->mSamplers[id] = {};
+                }
+                if(open){
+                    uint16_t deleteIdx = UINT16_MAX;
+                    for(auto [idx, sampler] : PreviewWidget::GetFurnitureModel()->mSamplers){
+                        if(&PreviewWidget::GetFurnitureModel()->mSamplers[idx] == ResourceManager::BinSelectedResource){
+                            ImGui::TextColored({0x00, 0xFF, 0x00, 0xFF}, "Sampler %d", idx);
+                        } else {
+                            ImGui::Text("Sampler %d", idx);
+                        }
+                        if(ImGui::IsItemClicked(0)){
+                            ResourceManager::SelectedType = SelectedResourceType::Sampler;
+                            ResourceManager::BinSelectedResource = &PreviewWidget::GetFurnitureModel()->mSamplers[idx];
+                        }
+                        if(ImGui::BeginPopupContextItem(std::format("##samplerResourceContextMenu{}",idx).c_str())){
+                            if(ImGui::Selectable("Delete")){
+                                deleteIdx = idx;
+                            }
+                            ImGui::EndPopup();
+                        }
+                    }
+                    if(deleteIdx != UINT16_MAX){
+                        for(auto [idx, material] : PreviewWidget::GetFurnitureModel()->mMaterials){
+                            if(PreviewWidget::GetFurnitureModel()->mMaterials[idx].SamplerIndices[0] == deleteIdx){
+                                PreviewWidget::GetFurnitureModel()->mMaterials[idx].SamplerIndices[0] = -1;
+                                ResourceManager::BinSelectedResource = nullptr;
+                                ResourceManager::SelectedType = SelectedResourceType::None;
+                            }
+                        }
+                        PreviewWidget::GetFurnitureModel()->mSamplers.erase(deleteIdx);
+                    }
+                    ImGui::TreePop();
+                }
+
+                open = ImGui::TreeNode(ICON_FK_PICTURE_O " Textures");
+                ImGui::SameLine();
+                ImGui::Spacing();
+                ImGui::SameLine();
+                ImGui::Text(ICON_FK_PLUS_CIRCLE);
+                if(ImGui::IsItemClicked(0)){
+                    int id = PreviewWidget::GetFurnitureModel()->mTextureHeaders.size();
+                    for(int idx = 0; idx < PreviewWidget::GetFurnitureModel()->mTextureHeaders.size(); idx++){
+                        if(!PreviewWidget::GetFurnitureModel()->mTextureHeaders.contains(idx)){
+                            id = idx;
+                            break;
+                        }
+                    }
+                    PreviewWidget::GetFurnitureModel()->mTextureHeaders[id] = {};
+                }
+                if(open){
+                    uint16_t deleteIdx = UINT16_MAX;
+                    for(auto [idx, texture] : PreviewWidget::GetFurnitureModel()->mTextureHeaders){
+                        ImGui::Image(static_cast<uintptr_t>(texture.TextureID), {16, 16});
+                        ImGui::SameLine();
+                        if(&PreviewWidget::GetFurnitureModel()->mTextureHeaders[idx] == ResourceManager::BinSelectedResource){
+                            ImGui::TextColored({0x00, 0xFF, 0x00, 0xFF}, "Texture %d", idx);
+                        } else {
+                            ImGui::Text("Texture %d", idx);
+                        }
+                        if(ImGui::IsItemClicked(0)){
+                            ResourceManager::SelectedType = SelectedResourceType::Texture;
+                            ResourceManager::BinSelectedResource = &PreviewWidget::GetFurnitureModel()->mTextureHeaders[idx];
+                        }
+                        if(ImGui::BeginPopupContextItem(std::format("##textureResourceContextMenu{}",idx).c_str())){
+                            if(ImGui::Selectable("Delete")){
+                                deleteIdx = idx;
+                            }
+                            if(ImGui::Selectable("Replace")){
+                                IGFD::FileDialogConfig cfg { .path = OPTIONS.mRootPath, .flags = ImGuiFileDialogFlags_Modal };
+                                ImGuiFileDialog::Instance()->OpenDialog("replaceTextureImageDialog", "Replace Texture", "PNG Image (*.png){.png}", cfg);
+                                ResourceManager::BinSelectedResource = &PreviewWidget::GetFurnitureModel()->mTextureHeaders[idx];
+                            }
+                            if(ImGui::Selectable("Export")){
+                                IGFD::FileDialogConfig cfg { .path = OPTIONS.mRootPath, .flags = ImGuiFileDialogFlags_Modal };
+                                ImGuiFileDialog::Instance()->OpenDialog("exportTextureImageDialog", "Export Texture", "PNG Image (*.png){.png}", cfg);
+                                ResourceManager::BinSelectedResource = &PreviewWidget::GetFurnitureModel()->mTextureHeaders[idx];
+                            }
+                            ImGui::EndPopup();
+                        }
+                    }
+
+                    if(deleteIdx != UINT16_MAX){
+                        PreviewWidget::GetFurnitureModel()->mTextureHeaders.erase(deleteIdx);
+                        for(auto [idx, sampler] : PreviewWidget::GetFurnitureModel()->mSamplers){
+                            if(PreviewWidget::GetFurnitureModel()->mSamplers[idx].TextureIndex == deleteIdx){
+                                PreviewWidget::GetFurnitureModel()->mSamplers[idx].TextureIndex = -1;
+                                ResourceManager::BinSelectedResource = nullptr;
+                                ResourceManager::SelectedType = SelectedResourceType::None;
+                            }
+                        }
+                    }
+
+                    ImGui::TreePop();
+                }
+                ImGui::EndChild();
+                ImGui::BeginChild("##binResourceSelected", {180, 280});
+                if(ResourceManager::SelectedType != SelectedResourceType::None && ResourceManager::BinSelectedResource != nullptr){
+                    switch(ResourceManager::SelectedType){
+                        case SelectedResourceType::GraphNode: {
+                            ImGui::Text("Graph Node");
+                            ImGui::Separator();
+                            auto node = reinterpret_cast<BIN::SceneGraphNode*>(ResourceManager::BinSelectedResource);
+                            ImGui::Text("Render Flags");
+                            bool value = node->CastShadow();
+                            if(ImGui::Checkbox("Cast Shadow", &value)){
+                                node->CastShadow(value);
+                            }
+                            value = node->FourthWall();
+                            if(ImGui::Checkbox("Fourth Wall", &value)){
+                                node->FourthWall(value);
+                            }
+                            value = node->Transparent();
+                            if(ImGui::Checkbox("Transparent", &value)){
+                                node->Transparent(value);
+                            }
+                            value = node->FullBright();
+                            if(ImGui::Checkbox("Full Bright", &value)){
+                                node->FullBright(value);
+                            }
+                            value = node->Ceiling();
+                            if(ImGui::Checkbox("Ceiling", &value)){
+                                node->Ceiling(value);
+                            }
+
+                            if(ImGui::InputFloat3("Scale", &node->Scale.x) || ImGui::InputFloat3("Rotation", &node->Rotation.x) || ImGui::InputFloat3("Translation", &node->Position.x)){
+                                node->Transform = glm::mat4(1.0f);
+                                node->Transform = glm::scale(node->Transform, node->Scale);
+                                node->Transform = glm::rotate(node->Transform, glm::radians(node->Rotation.z), {1.0f, 0.0f, 0.0f});
+                                node->Transform = glm::rotate(node->Transform, glm::radians(node->Rotation.y), {0.0f, 1.0f, 0.0f});
+                                node->Transform = glm::rotate(node->Transform, glm::radians(node->Rotation.x), {0.0f, 0.0f, 1.0f});
+                                node->Transform = glm::translate(node->Transform, {node->Position.z, node->Position.y, node->Position.x});
+                            }
+
+                            ImGui::InputFloat3("Min Bounds", &node->BoundingBoxMin.x);
+                            ImGui::InputFloat3("Max Bounds", &node->BoundingBoxMax.x);
+
+                            break;
+                        }
+                        case SelectedResourceType::Batch: {
+                            ImGui::Text("Batch");
+                            ImGui::Separator();
+                            auto batch = reinterpret_cast<BIN::Batch*>(ResourceManager::BinSelectedResource);
+                            ImGui::Text("NBT Enabled");
+                            bool clicked = ImGui::IsItemClicked(); ImGui::SameLine();
+                            ImGui::Text(batch->NBTFlag == 1 ? ICON_FK_CHECK_CIRCLE : ICON_FK_CIRCLE_O);
+                            clicked |= ImGui::IsItemClicked();
+                            if(clicked){
+                                if(batch->NBTFlag == 0){
+                                    batch->NBTFlag = 1;
+                                    batch->TexCoordFlag = 2;
+                                    batch->VertexAttributes |= (1 << (int)GXAttribute::Tex1);
+                                } else {
+                                    batch->NBTFlag = 0;
+                                    batch->TexCoordFlag = 1;
+                                    batch->VertexAttributes &= ~(1 << (int)GXAttribute::Tex1);
+                                }
+                            }
+
+                            if(ImGui::Button("Import")){
+                                IGFD::FileDialogConfig cfg { .path = OPTIONS.mRootPath, .flags = ImGuiFileDialogFlags_Modal };
+                                ImGuiFileDialog::Instance()->OpenDialog("replaceBatchDialog", "Replace Batch", "OBJ Model (*.obj){.obj}", cfg);
+                            }
+                            break;
+                        }
+                        case SelectedResourceType::Texture: {
+                            ImGui::Text("Texture");
+                            ImGui::Separator();
+                            auto texture = reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource);
+                            if(ImGui::BeginCombo("Texture Format", TextureFormatNames[texture->Format])){
+                                for(int i = 0; i < TextureFormatNames.size(); i++){
+                                    if(std::string(TextureFormatNames[i]) == "???") continue;
+                                    if(ImGui::Selectable(TextureFormatNames[i])){
+                                        texture->Format = i;
+                                    }
+                                }
+                                ImGui::EndCombo();
+                            }
+
+                            if(ImGui::Button("Replace")){
+                                IGFD::FileDialogConfig cfg { .path = OPTIONS.mRootPath, .flags = ImGuiFileDialogFlags_Modal };
+                                ImGuiFileDialog::Instance()->OpenDialog("replaceTextureImageDialog", "Replace Texture", "PNG Image (*.png){.png}", cfg);
+                            }
+                            ImGui::SameLine();
+                            if(ImGui::Button("Export")){
+                                IGFD::FileDialogConfig cfg { .path = OPTIONS.mRootPath, .flags = ImGuiFileDialogFlags_Modal };
+                                ImGuiFileDialog::Instance()->OpenDialog("exportTextureImageDialog", "Export Texture", "PNG Image (*.png){.png}", cfg);
+                            }
+
+                            ImGui::Image(static_cast<uintptr_t>(texture->TextureID), {static_cast<float>(texture->Width), static_cast<float>(texture->Height)});
+                            break;
+                        }
+                        case SelectedResourceType::Material: {
+                            ImGui::Text("Material");
+                            ImGui::Separator();
+                            auto material = reinterpret_cast<BIN::Material*>(ResourceManager::BinSelectedResource);
+                            bool isLit = material->LightEnabled;
+                            ImGui::Checkbox("Lit", &isLit);
+                            material->LightEnabled = isLit;
+
+                            int val = material->Unk0;
+                            ImGui::InputInt("Unknown Value 1", &val);
+                            material->Unk0 = val;
+
+                            val = material->Unk1;
+                            ImGui::InputInt("Unknown Value 2", &val);
+                            material->Unk1 = val;
+
+                            ImGui::ColorPicker4("Color", (float *)&material->Color.x, 0);
+                            for(int i = 0; i < 8; i++){
+                                if(ImGui::BeginCombo(std::format("Sampler Slot {}", i).c_str(), std::format("Sampler {}", material->SamplerIndices[i]).c_str())){
+                                    for(auto [idx, sampler] : PreviewWidget::GetFurnitureModel()->mSamplers){
+                                        if(ImGui::Selectable(std::format("Sampler {}", idx).c_str())){
+                                            material->SamplerIndices[i] = idx;
+                                        }
+                                    }
+                                    ImGui::EndCombo();
+                                }
+                            }
+                            break;
+                        }
+                        case SelectedResourceType::Sampler: {
+                            ImGui::Text("Sampler");
+                            ImGui::Separator();
+                            auto sampler = reinterpret_cast<BIN::Sampler*>(ResourceManager::BinSelectedResource);
+
+                            if(ImGui::BeginCombo("Wrap U", WrapModes[sampler->WrapU])){
+                                for(int i = 0; i < 3; i++){
+                                    if(ImGui::Selectable(WrapModes[i], sampler->WrapU == i)){
+                                        sampler->WrapU = i;
+                                    }
+                                }
+                                ImGui::EndCombo();
+                            }
+
+                            if(ImGui::BeginCombo("Wrap V", WrapModes[sampler->WrapV])){
+                                for(int i = 0; i < 3; i++){
+                                    if(ImGui::Selectable(WrapModes[i], sampler->WrapV == i)){
+                                        sampler->WrapV = i;
+                                    }
+                                }
+                                ImGui::EndCombo();
+                            }
+
+                            int val = sampler->Unk;
+                            ImGui::InputInt("Unknown Value 1", &val);
+                            sampler->Unk = val;
+
+                            if(ImGui::BeginCombo("Texture", std::format("Texture {}", sampler->TextureIndex).c_str())){
+                                for(auto [idx, texture] : PreviewWidget::GetFurnitureModel()->mTextureHeaders){
+                                    if(ImGui::Selectable(std::format("Texture {}", idx).c_str())){
+                                        sampler->TextureIndex = idx;
+                                    }
+                                }
+                                ImGui::EndCombo();
+                            }
+                            break;
+                        }
+                    }
+                }
+                ImGui::EndChild();
+                ImGui::EndChild();
+            }
+
+            if(ImGui::Button("Done")){
+                if(ResourceManager::ActiveRoomArchive->GetFile("room.bin") == nullptr){
+                    ImGui::InsertNotification({ImGuiToastType::Error, 3000, "Room requires a 'room.bin' file!"});
+                }  else if (ResourceManager::ActiveRoomArchive->Size() > MaxRoomArcSize) {
+                    ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Room archive too big! Game will crash!\nDelete resources then save. {}kb/450kb", ResourceManager::ActiveRoomArchive->Size()/1024).data()});
+                } else {
+                    auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+                    ImGui::InsertNotification({ImGuiToastType::Success, 3000, std::format("Saved Room Archive {}", data->GetResourcePath()).c_str()});
+                    ResourceManager::ActiveRoomArchive->SaveToFile(std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path());
+                    ResourceManager::ActiveRoomArchive = nullptr;
+
+                    // Reload room and adjacent rooms in renderer
+                    LEditorScene::GetEditorScene()->SetRoom(GetSharedPtr<LRoomDOMNode>(EDOMNodeType::Room));
+
+                    ResourceManager::BinSelectedResource = nullptr;
+                    ResourceManager::SelectedFile = nullptr;
+                    ResourceManager::SelectedAnimation = nullptr;
+                    ResourceManager::EditFileName = nullptr;
+                    ResourceManager::FileName = "";
+                    PreviewWidget::UnloadModel();
+                    PreviewWidget::SetInactive();
+                    ImGui::CloseCurrentPopup();
+                }
+            }
+
+            if(ResourceManager::SelectedAnimation != nullptr){
+                ImGui::SameLine();
+                ImGui::Text(ICON_FK_PLAY);
+                if(ImGui::IsItemClicked()){
+                    PreviewWidget::PlayAnimation();
+                }
+
+                ImGui::SameLine();
+                ImGui::Text(ICON_FK_STOP);
+                if(ImGui::IsItemClicked()){
+                    PreviewWidget::PauseAnimation();
+                }
+            }
+
+        }
+        ImGui::EndPopup();
+    }
+
+    std::string filePath;
+    auto fileRes = LUIUtility::RenderFileDialog("replaceBatchDialog", filePath);
+    if(fileRes == LUIUtility::FileDialogResult::Ok){// error check should be here oops!
+        if(ResourceManager::BinSelectedResource != nullptr){
+            auto batch = reinterpret_cast<BIN::Batch*>(ResourceManager::BinSelectedResource);
+            batch->Primitives.clear();
+
+            tinyobj::attrib_t attributes;
+            std::vector<tinyobj::shape_t> shapes;
+            std::vector<tinyobj::material_t> materials;
+
+            std::string warn;
+            std::string err;
+            bool ret = tinyobj::LoadObj(&attributes, &shapes, &materials, &warn, &err, std::filesystem::path(filePath).string().c_str(), std::filesystem::path(filePath).parent_path().string().c_str(), true);
+            if(!ret){
+                ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Failed to load OBJ\nErr: {}\nPath: {}", err, filePath).data()});
+            } else {
+
+                std::vector<Vertex> vertices;
+                std::vector<std::size_t> indices;
+                uint32_t stripCount = 0;
+                uint32_t triangleCount = 0;
+                for(auto shp : shapes){
+                    if(shp.mesh.indices.size() == 0) continue;
+                    for(int i = 0; i < shp.mesh.indices.size(); i++){
+                        Vertex vtx;
+                        int v = shp.mesh.indices[i].vertex_index;
+                        int n = shp.mesh.indices[i].normal_index;
+                        int t = shp.mesh.indices[i].texcoord_index;
+                        vtx.Position = glm::vec3(attributes.vertices[v * 3], attributes.vertices[(v * 3) + 1], attributes.vertices[(v * 3) + 2]);
+                        vtx.Normal = glm::vec3(attributes.normals[n * 3], attributes.normals[(n * 3) + 1], attributes.normals[(n * 3) + 2]);
+                        vtx.Texcoord = glm::vec2(attributes.texcoords[t * 2], attributes.texcoords[(t * 2) + 1]);
+
+                        auto vtxIdx = std::find_if(vertices.begin(), vertices.end(), [i=vtx](const Vertex& o){
+                            return i.Position == o.Position && i.Normal == o.Normal && i.Texcoord == o.Texcoord;
+                        });
+
+                        if(vtxIdx != vertices.end()){
+                            indices.push_back(vtxIdx - vertices.begin());
+                        } else {
+                            indices.push_back(vertices.size());
+                            vertices.push_back(vtx);
+                        }
+                    }
+
+                    triangle_stripper::tri_stripper stripify(indices);
+                    triangle_stripper::primitive_vector primitives;
+                    stripify.SetBackwardSearch(false);
+                    stripify.Strip(&primitives);
+
+                    int indexCount = 0;
+                    for(auto p : primitives){
+                        Primitive primitive;
+                        primitive.Opcode = (p.Type == triangle_stripper::TRIANGLE_STRIP ? GXPrimitiveType::TriangleStrip : GXPrimitiveType::Triangles);
+                        for(int i = 0; i < p.Indices.size(); i++){
+                            primitive.Vertices.push_back(vertices[p.Indices[i]]);
+                        }
+                        indexCount += p.Indices.size();
+                        batch->Primitives.push_back(primitive);
+                    }
+
+                    stripCount += indexCount;
+                    triangleCount += shp.mesh.indices.size();
+                }
+                ImGui::InsertNotification({ImGuiToastType::Info, 1000, std::format("TriStripped Faces {} / {}", stripCount, triangleCount).data()});
+
+                batch->ReloadMeshes();
+            }
+
+            ImGui::OpenPopup("##roomResources");
+        }
+    } else if(fileRes == LUIUtility::FileDialogResult::Cancel){
+        ImGui::OpenPopup("##roomResources");
+    }
+
+    fileRes = LUIUtility::RenderFileDialog("replaceTextureImageDialog", filePath);
+    if(fileRes == LUIUtility::FileDialogResult::Ok){
+        if(ResourceManager::BinSelectedResource != nullptr){
+            int w, h, channels;
+            unsigned char* img = stbi_load(filePath.c_str(), &w, &h, &channels, 4);
+            if(img != nullptr){
+                reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->SetImage(img, w*h*4, w, h);
+                stbi_image_free(img);
+            } else {
+                ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Failed to load image\nPath: {}", filePath).data()});
+            }
+        }
+        ImGui::OpenPopup("##roomResources");
+    } else if(fileRes == LUIUtility::FileDialogResult::Cancel){
+        ImGui::OpenPopup("##roomResources");
+    }
+
+    fileRes = LUIUtility::RenderFileDialog("exportTextureImageDialog", filePath);
+    if(fileRes == LUIUtility::FileDialogResult::Ok){
+        if(ResourceManager::BinSelectedResource != nullptr && reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->ImageData != nullptr){
+            if(!stbi_write_png(filePath.c_str(), reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->Width, reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->Height, 4, reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->ImageData, 4*reinterpret_cast<BIN::TextureHeader*>(ResourceManager::BinSelectedResource)->Width)){
+                ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Failed to Write Image\nPath: {}", filePath).data()});
+            }
+        }
+        ImGui::OpenPopup("##roomResources");
+    } else if(fileRes == LUIUtility::FileDialogResult::Cancel) {
+        ImGui::OpenPopup("##roomResources");
+    }
+
+    fileRes = LUIUtility::RenderFileDialog("addModelToRoomArchiveDialog", filePath);
+    if(fileRes == LUIUtility::FileDialogResult::Ok){
+        auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+
+        std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
+        LGenUtility::Log << "[RoomDOMNode]: Loading arc " << resPath.string() << std::endl;
+
+        if(!std::filesystem::exists(std::filesystem::path(filePath))) {
+            ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Couldn't Open Resource\nPath: {}", resPath.string()).data()});
+        } else if(std::filesystem::exists(resPath) && resPath.extension().string() == ".arc"){
+            if(ResourceManager::ActiveRoomArchive != nullptr){
+                std::shared_ptr<Archive::File> newFile = Archive::File::Create();
+                std::string ext = std::filesystem::path(filePath).extension().string();
+                if(ext == ".obj"){
+                    BIN::Model model = BIN::Model::FromOBJ(filePath);
+                    bStream::CMemoryStream modelData(0x24, bStream::Endianess::Big, bStream::OpenMode::Out);
+                    model.Write(&modelData);
+                    newFile->SetName(std::filesystem::path(filePath).filename().replace_extension(".bin").string());
+                    newFile->SetData(modelData.getBuffer(), modelData.tell());
+                    mRoomModels.push_back(std::filesystem::path(filePath).filename().stem().string());
+                } else if(ext == ".fbx"){
+                    BIN::Model model = BIN::Model::FromFBX(filePath, ImportSettings::EnableVertexColors);
+                    bStream::CMemoryStream modelData(0x24, bStream::Endianess::Big, bStream::OpenMode::Out);
+                    model.Write(&modelData);
+                    newFile->SetName(std::filesystem::path(filePath).filename().replace_extension(".bin").string());
+                    newFile->SetData(modelData.getBuffer(), modelData.tell());
+                    mRoomModels.push_back(std::filesystem::path(filePath).filename().stem().string());
+                } else {
+                    bStream::CFileStream modelFile(filePath, bStream::Endianess::Big, bStream::OpenMode::In);
+
+                    uint8_t* modelData = new uint8_t[modelFile.getSize()]{};
+                    modelFile.readBytesTo(modelData, modelFile.getSize());
+
+
+                    LGenUtility::Log << "[RoomDOMNode]: Adding model " << std::filesystem::path(filePath).filename().string() << " to archive" << resPath.string() << std::endl;
+                    if(ext == ".bin"){
+                        mRoomModels.push_back(std::filesystem::path(filePath).filename().stem().string());
+                    }
+                    newFile->SetName(std::filesystem::path(filePath).filename().string());
+                    newFile->SetData(modelData, modelFile.getSize());
+
+                    delete[] modelData;
+
+                }
+                if(ext == ".anm"){
+                    std::shared_ptr<Archive::Folder> animFolder = ResourceManager::ActiveRoomArchive->GetRoot()->GetFolder("anm");
+
+                    if(animFolder == nullptr){
+                        animFolder = Archive::Folder::Create(ResourceManager::ActiveRoomArchive);
+                        animFolder->SetName("anm");
+                        ResourceManager::ActiveRoomArchive->GetRoot()->AddSubdirectory(animFolder);
+                    }
+
+                    animFolder->AddFile(newFile);
+
+                } else {
+                    ResourceManager::ActiveRoomArchive->GetRoot()->AddFile(newFile);
+                }
+                ResourceManager::ActiveRoomArchive->SaveToFile(resPath.string());
+            }
+        }
+        ImGui::OpenPopup("##roomResources");
+    } else if(fileRes == LUIUtility::FileDialogResult::Cancel) {
+        ImGui::OpenPopup("##roomResources");
+    }
+}
+
+void LRoomDOMNode::OpenRoomResourcesModal(){
+    if(ResourceManager::ActiveRoomArchive == nullptr){
+        LGenUtility::Log << "[RoomDOMNode]: Opening Room Modal" << std::endl;
+        auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+        std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
+        LGenUtility::Log << "[RoomDOMNode]: Room Resources" << resPath.string() << std::endl;
+        if(std::filesystem::exists(resPath)){
+            if(resPath.extension() == ".arc"){
+                LGenUtility::Log << "[RoomDOMNode]: Res Path for Archive, Loading" << resPath.string() << std::endl;
+                ResourceManager::ActiveRoomArchive = Archive::Rarc::Create();
+                bStream::CFileStream arcFile(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
+                if(!ResourceManager::ActiveRoomArchive->Load(&arcFile)){
+                    ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Failed to load Room Archive\nPath: {}", resPath.string()).data()});
+                    ResourceManager::ActiveRoomArchive = nullptr;
+                }
+            } else {
+                LGenUtility::Log << "[RoomDOMNode]: Res Path for Bin, Creating Archive and Loading" << resPath.string() << std::endl;
+                // This is for archive editing so we need to make an archive if its just a model
+                ResourceManager::ActiveRoomArchive = Archive::Rarc::Create();
+
+                auto rootFolder = Archive::Folder::Create(ResourceManager::ActiveRoomArchive);
+                rootFolder->SetName(resPath.filename().stem().string());
+
+                ResourceManager::ActiveRoomArchive->SetRoot(rootFolder);
+
+                auto roomModel = Archive::File::Create();
+                roomModel->SetName("room.bin");
+
+                bStream::CFileStream modelFile(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
+                std::size_t modelFileSize = modelFile.getSize();
+
+                uint8_t* modelData = new uint8_t[modelFileSize];
+
+                modelFile.readBytesTo(modelData, modelFileSize);
+                roomModel->SetData(modelData, modelFileSize);
+
+                ResourceManager::ActiveRoomArchive->GetRoot()->AddFile(roomModel);
+
+                delete[] modelData;
+
+                std::filesystem::path path(data->GetResourcePath());
+
+                path.replace_extension(".arc");
+                resPath.replace_extension(".arc");
+
+                data->SetRoomResourcePath(path.string());
+
+                ResourceManager::ActiveRoomArchive->SaveToFile(resPath.string());
+            }
+        } else {
+            ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Couldn't find Room Archive\nPath: {}", resPath.string()).data()});
+        }
+    }
+
+    if(ResourceManager::ActiveRoomArchive != nullptr){
+        LGenUtility::Log << "[RoomDOMNode]: Valid room arc, opening popup" << std::endl;
+        ImGui::OpenPopup("##roomResources");
+    }
+}
+
+void LRoomDOMNode::ShrinkWrap(){
+    auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
+
+    std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
+    LGenUtility::Log << "[RoomDOMNode]: Loading arc " << resPath.string() << std::endl;
+
+    if(!std::filesystem::exists(std::filesystem::path(resPath))) {
+        ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Couldn't Find Room Archive\nPath: {}", resPath.string()).data()});
+    } else if(std::filesystem::exists(resPath) && resPath.extension().string() == ".arc"){
+        std::shared_ptr<Archive::Rarc> arc  = Archive::Rarc::Create();
+        bStream::CFileStream arcFile(resPath.string(), bStream::Endianess::Big, bStream::OpenMode::In);
+        if(arc->Load(&arcFile)){
+            std::shared_ptr<Archive::File> file = arc->GetFile("room.bin");
+            bStream::CMemoryStream modelStream(file->GetData(), file->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
+            BIN::Model roomModel;
+            roomModel.Load(&modelStream);
+
+            if(roomModel.mGraphNodes.size() > 0){
+
+                glm::vec4 modelMin = glm::vec4(roomModel.mGraphNodes[0].BoundingBoxMin, 0);
+                glm::vec4 modelMax = glm::vec4(roomModel.mGraphNodes[0].BoundingBoxMax, 0);
+
+
+                data->SetMin(glm::vec3(modelMin.z, modelMin.y, modelMin.x));
+                data->SetMax(glm::vec3(modelMax.z, modelMax.y, modelMax.x));
+                LEditorScene::GetEditorScene()->SetDirty();
+
+                // Update Children to keep them in room bounds
+
+                ImGui::InsertNotification({ImGuiToastType::Info, 3000, std::format("Set Room Bounds to ({}, {}, {}), ({}, {}, {})", modelMin.x, modelMin.y, modelMin.z, modelMax.x, modelMax.y, modelMax.z).data() });
+            } else {
+                ImGui::InsertNotification({ImGuiToastType::Error, 3000, "Couldn't find root graph node"});
+            }
+        } else {
+            ImGui::InsertNotification({ImGuiToastType::Error, 3000, std::format("Couldn't Open Room Archive\nPath: {}", resPath.string()).data()});
+        }
+
     }
 }
 

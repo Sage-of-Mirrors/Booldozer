@@ -61,7 +61,7 @@ void LCollisionIO::LoadFBX(std::filesystem::path path, std::weak_ptr<LMapDOMNode
 
     if(isBlender) opts.space_conversion = UFBX_SPACE_CONVERSION_MODIFY_GEOMETRY; // in case of blender
 
-    scene = ufbx_load_file(path.c_str(), &opts, nullptr);
+    scene = ufbx_load_file(path.string().c_str(), &opts, nullptr);
 
     for(ufbx_node* node : scene->nodes){
         if(node->attrib_type != ufbx_element_type::UFBX_ELEMENT_MESH){

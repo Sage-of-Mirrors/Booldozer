@@ -48,7 +48,7 @@ struct LStaticRoomDefinition
 	uint8_t mRoomID;
 
 	uint32_t mCameraBehavior;
-	
+
 	glm::vec3 mBoundingBoxMin;
 	glm::vec3 mBoundingBoxMax;
 	glm::vec3 mBoundingBoxCenter;
@@ -76,7 +76,7 @@ struct LSpawnGroup
 	{
 		if (CreateName == "----")
 			return "Default Group";
-		
+
 		return "Group " + CreateName;
 	}
 };
@@ -156,16 +156,21 @@ public:
 
 	int32_t GetRoomIndex() { return GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0]->GetRoomIndex(); }
 	int32_t GetRoomID() { return GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData)[0]->GetRoomID(); }
-	
+
 	bool GetSkyboxEnabled() { return mShouldRenderSkybox; }
-	
+
+	void ShrinkWrap();
+
+	void OpenRoomResourcesModal();
+
 	LAlternateResource GetAlternateResource() const { return mAlternateResource; }
-	
+
 	glm::vec3 GetRoomModelDelta() { return mRoomModelDelta; }
 	void SetRoomModelDelta(glm::vec3 v) { mRoomModelDelta = v; }
 
 	std::vector<std::string> GetAvailableFurniture(){ return mRoomModels; }
 
+	void RenderRoomArchiveModal();
 	virtual void RenderDetailsUI(float dt) override;
 	virtual void RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection) override;
 	void RenderWaveHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditorSelection* mode_selection);

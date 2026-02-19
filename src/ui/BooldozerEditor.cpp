@@ -7,6 +7,8 @@
 #include <thread>
 #include <mutex>
 
+#include "DOM/DOMNodeBase.hpp"
+#include "DOM/RoomDOMNode.hpp"
 #include "ResUtil.hpp"
 #include "UIUtil.hpp"
 #include "DOL.hpp"
@@ -510,6 +512,18 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		ImGui::EndPopup();
 	}
 
+	if(ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S) && GetSelectionManager()->GetPrimarySelection() != nullptr && GetSelectionManager()->GetPrimarySelection()->IsNodeType(EDOMNodeType::Room)){
+        GetSelectionManager()->GetPrimarySelection()->GetSharedPtr<LRoomDOMNode>(EDOMNodeType::Room)->ShrinkWrap();
+	}
+
+	if(ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_A) && GetSelectionManager()->GetPrimarySelection() != nullptr && GetSelectionManager()->GetPrimarySelection()->IsNodeType(EDOMNodeType::Room)){
+        GetSelectionManager()->GetPrimarySelection()->GetSharedPtr<LRoomDOMNode>(EDOMNodeType::Room)->OpenRoomResourcesModal();
+	}
+
+	if(GetSelectionManager()->GetPrimarySelection() != nullptr && GetSelectionManager()->GetPrimarySelection()->IsNodeType(EDOMNodeType::Room)){
+	    GetSelectionManager()->GetPrimarySelection()->GetSharedPtr<LRoomDOMNode>(EDOMNodeType::Room)->RenderRoomArchiveModal();
+	}
+
 	if(ImGui::IsKeyChordPressed(ImGuiKey_S | ImGuiMod_Ctrl)){
         mSaveMapClicked = true;
 	}
@@ -944,6 +958,7 @@ void LBooldozerEditor::Render(float dt, LEditorScene* renderer_scene)
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 		glReadBuffer(GL_COLOR_ATTACHMENT1);
 		glReadPixels(mousePos.x - cursorPos.x, ((uint32_t)winSize.y) - (mousePos.y - cursorPos.y), 1, 1, GL_RED_INTEGER, GL_INT, (void*)&id);
+
 
 		if(id == -1){
 			GetSelectionManager()->ClearSelection();
