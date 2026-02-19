@@ -13,17 +13,17 @@ struct GridCell {
 };
 
 struct CollisionTriangle {
-    uint16_t mVtx1;
-    uint16_t mVtx2;
-    uint16_t mVtx3;
-    uint16_t mNormal;
-    uint16_t mEdgeTan1;
-    uint16_t mEdgeTan2;
-    uint16_t mEdgeTan3;
-    uint16_t mUnkIdx;
-    float mDot;
-    uint16_t mMask;
-    uint16_t mFriction;
+    uint16_t mVtx1 { 0 };
+    uint16_t mVtx2 { 0 };
+    uint16_t mVtx3 { 0 };
+    uint16_t mNormal { 0 };
+    uint16_t mEdgeTan1 { 0 };
+    uint16_t mEdgeTan2 { 0 };
+    uint16_t mEdgeTan3 { 0 };
+    uint16_t mUnkIdx { 0 };
+    float mDot { 0.0f };
+    uint16_t mMask { 0x8000 };
+    uint16_t mFriction { 0 };
 
     uint32_t mSound;
     uint32_t mSoundEchoSwitch;
@@ -37,7 +37,7 @@ struct CollisionTriangle {
 };
 
 struct ColModel {
-    glm::vec3 min, max;
+    glm::vec3 bbmin, bbmax;
     std::vector<glm::vec3> mVertices;
     std::vector<glm::vec3> mNormals;
     std::vector<CollisionTriangle> mTriangles;
@@ -47,7 +47,8 @@ class LCollisionIO {
 public:
     void LoadMp(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map);
     void LoadObj(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map, std::map<std::string, std::string> propertyMap, bool bakeFurniture);
-    void LoadFBX(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map, std::map<std::string, std::string> propertyMap, bool bakeFurniture){}
+    void LoadFBX(std::filesystem::path path, std::weak_ptr<LMapDOMNode> map);
+
 
     LCollisionIO(){}
     ~LCollisionIO(){}

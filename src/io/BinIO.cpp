@@ -9,9 +9,11 @@
 #include "Util.hpp"
 #include "bstream.h"
 #include "constants.hpp"
+#include "glm/common.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/fwd.hpp"
 #include "glm/glm.hpp"
+#include "glm/gtc/type_ptr.hpp"
 #include "glm/gtx/quaternion.hpp"
 #include "glm/trigonometric.hpp"
 #include "io/Util.hpp"
@@ -1184,26 +1186,14 @@ namespace BIN {
                         }
                         v.Texcoord = { mesh->vertex_uv[index].x, mesh->vertex_uv[index].y };
 
-                        // Check bounding box
-                        if(v.Position.x < mdl.mBatches[batchIdx].mMin.x){
-                            mdl.mBatches[batchIdx].mMin.x = v.Position.x;
-                        }
-                        if(v.Position.y < mdl.mBatches[batchIdx].mMin.y){
-                            mdl.mBatches[batchIdx].mMin.y = v.Position.y;
-                        }
-                        if(v.Position.z < mdl.mBatches[batchIdx].mMin.z){
-                            mdl.mBatches[batchIdx].mMin.z = v.Position.z;
-                        }
+                        // Generate bounding box
+                        mdl.mBatches[batchIdx].mMin.x = glm::min(mdl.mBatches[batchIdx].mMin.x, v.Position.x);
+                        mdl.mBatches[batchIdx].mMin.y = glm::min(mdl.mBatches[batchIdx].mMin.y, v.Position.y);
+                        mdl.mBatches[batchIdx].mMin.z = glm::min(mdl.mBatches[batchIdx].mMin.z, v.Position.z);
 
-                        if(v.Position.x > mdl.mBatches[batchIdx].mMax.x){
-                            mdl.mBatches[batchIdx].mMax.x = v.Position.x;
-                        }
-                        if(v.Position.y > mdl.mBatches[batchIdx].mMax.y){
-                            mdl.mBatches[batchIdx].mMax.y = v.Position.y;
-                        }
-                        if(v.Position.z > mdl.mBatches[batchIdx].mMax.z){
-                            mdl.mBatches[batchIdx].mMax.z = v.Position.z;
-                        }
+                        mdl.mBatches[batchIdx].mMax.x = glm::max(mdl.mBatches[batchIdx].mMax.x, v.Position.x);
+                        mdl.mBatches[batchIdx].mMax.y = glm::max(mdl.mBatches[batchIdx].mMax.y, v.Position.y);
+                        mdl.mBatches[batchIdx].mMax.z = glm::max(mdl.mBatches[batchIdx].mMax.z, v.Position.z);
 
                         vertices.push_back(v);
                     }
@@ -1282,30 +1272,23 @@ namespace BIN {
                 glm::vec3* bbmin = &mdl.mGraphNodes[node->typed_id].BoundingBoxMin;
                 glm::vec3* bbmax = &mdl.mGraphNodes[node->typed_id].BoundingBoxMax;
 
-                glm::vec4 batchMin = mdl.mGraphNodes[node->typed_id].Transform * glm::vec4(mdl.mBatches[element.BatchIndex].mMin, 0);
-                glm::vec4 batchMax = mdl.mGraphNodes[node->typed_id].Transform * glm::vec4(mdl.mBatches[element.BatchIndex].mMax, 0);
-
-                if(bbmin->x > batchMin.x){
-                    bbmin->x = batchMin.x;
-                }
-                if(bbmin->y > batchMin.y){
-                    bbmin->y = batchMin.y;
-                }
-                if(bbmin->z > batchMin.z){
-                    bbmin->z = batchMin.z;
+                glm::mat4 nodetransform = mdl.mGraphNodes[node->typed_id].Transform;
+                ufbx_node* parent = node->parent;
+                while(parent != nullptr){
+                    nodetransform = mdl.mGraphNodes[parent->typed_id].Transform * nodetransform;
+                    parent = parent->parent;
                 }
 
-                if(bbmax->x < batchMax.x){
-                    bbmax->x = batchMax.x;
-                }
-                if(bbmax->y < batchMax.y){
-                    bbmax->y = batchMax.y;
-                }
-                if(bbmax->z < batchMax.z){
-                    bbmax->z = batchMax.z;
-                }
+                glm::vec3 batchMin = nodetransform * glm::vec4(mdl.mBatches[element.BatchIndex].mMin, 0);
+                glm::vec3 batchMax = nodetransform * glm::vec4(mdl.mBatches[element.BatchIndex].mMax, 0);
 
+                bbmin->x = glm::min(bbmin->x, batchMin.x);
+                bbmin->y = glm::min(bbmin->y, batchMin.y);
+                bbmin->z = glm::min(bbmin->z, batchMin.z);
 
+                bbmax->x = glm::max(bbmax->x, batchMax.x);
+                bbmax->y = glm::max(bbmax->y, batchMax.y);
+                bbmax->z = glm::max(bbmax->z, batchMax.z);
 
                 mdl.mGraphNodes[node->typed_id].mDrawElements.push_back(element);
             }
@@ -1318,26 +1301,17 @@ namespace BIN {
         for(int i = 1; i < mdl.mGraphNodes.size(); i++){
             glm::vec3 childMin = mdl.mGraphNodes[i].BoundingBoxMin;
             glm::vec3 childMax = mdl.mGraphNodes[i].BoundingBoxMax;
-            if(bbmin->x > childMin.x){
-                bbmin->x = childMin.x;
-            }
-            if(bbmin->y > childMin.y){
-                bbmin->y = childMin.y;
-            }
-            if(bbmin->z > childMin.z){
-                bbmin->z = childMin.z;
-            }
+            bbmin->x = glm::min(bbmin->x, childMin.x);
+            bbmin->y = glm::min(bbmin->y, childMin.y);
+            bbmin->z = glm::min(bbmin->z, childMin.z);
 
-            if(bbmax->x < childMax.x){
-                bbmax->x = childMax.x;
-            }
-            if(bbmax->y < childMax.y){
-                bbmax->y = childMax.y;
-            }
-            if(bbmax->z < childMax.z){
-                bbmax->z = childMax.z;
-            }
+            bbmax->x = glm::max(bbmax->x, childMax.x);
+            bbmax->y = glm::max(bbmax->y, childMax.y);
+            bbmax->z = glm::max(bbmax->z, childMax.z);
         }
+
+        std::cout << std::format("Model Min: {} {} {}", bbmin->x, bbmin->y, bbmin->z) << std::endl;
+        std::cout << std::format("Model Max: {} {} {}", bbmax->x, bbmax->y, bbmax->z) << std::endl;
 
         ufbx_free_scene(scene);
 

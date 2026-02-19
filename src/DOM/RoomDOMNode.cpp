@@ -392,7 +392,7 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
             ImGui::CloseCurrentPopup();
         }
 
-        if(ImGui::Button("Snap Bounds to Model")){
+        if(ImGui::Button("Shrinkwrap Bounds")){
             auto data = GetChildrenOfType<LRoomDataDOMNode>(EDOMNodeType::RoomData).front();
 
             std::filesystem::path resPath = std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path();
@@ -414,11 +414,11 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                         glm::vec4 modelMin = glm::vec4(roomModel.mGraphNodes[0].BoundingBoxMin, 0);
                         glm::vec4 modelMax = glm::vec4(roomModel.mGraphNodes[0].BoundingBoxMax, 0);
 
-                        modelMin = roomModel.mGraphNodes[0].Transform * modelMin;
-                        modelMax = roomModel.mGraphNodes[0].Transform * modelMax;
+                        //modelMin = roomModel.mGraphNodes[0].Transform * modelMin;
+                        //modelMax = roomModel.mGraphNodes[0].Transform * modelMax;
 
-                        data->SetMin(glm::vec3(modelMin));
-                        data->SetMax(glm::vec3(modelMax));
+                        data->SetMin(glm::vec3(modelMin.z, modelMin.y, modelMin.x));
+                        data->SetMax(glm::vec3(modelMax.z, modelMax.y, modelMax.x));
                         LEditorScene::GetEditorScene()->SetDirty();
                         ImGui::InsertNotification({ImGuiToastType::Info, 3000, std::format("Set Room Bounds to ({}, {}, {}), ({}, {}, {})", modelMin.x, modelMin.y, modelMin.z, modelMax.x, modelMax.y, modelMax.z).data() });
                     } else {
@@ -925,6 +925,9 @@ void LRoomDOMNode::RenderHierarchyUI(std::shared_ptr<LDOMNodeBase> self, LEditor
                         ImGui::InsertNotification({ImGuiToastType::Success, 3000, std::format("Saved Room Archive {}", data->GetResourcePath()).c_str()});
                         ResourceManager::ActiveRoomArchive->SaveToFile(std::filesystem::path(OPTIONS.mRootPath) / "files" / std::filesystem::path(data->GetResourcePath()).relative_path());
                         ResourceManager::ActiveRoomArchive = nullptr;
+
+                        // Reload room and adjacent rooms in renderer
+                        LEditorScene::GetEditorScene()->SetRoom(GetSharedPtr<LRoomDOMNode>(EDOMNodeType::Room));
 
                         ResourceManager::EditFileName = nullptr;
                         ResourceManager::FileName = "";

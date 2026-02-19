@@ -54,7 +54,7 @@ public:
 
 	bool FromMap();
 
-	void ImportObj(std::string path);
+	void ImportModel(std::string path);
 
 	bool Load(bStream::CMemoryStream* stream);
 	bool Save(bStream::CMemoryStream* stream);

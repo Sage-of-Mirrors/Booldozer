@@ -92,7 +92,7 @@ namespace BIN {
         uint32_t VertexCount { 0 };
         uint32_t PrimitiveOffset { 0 };
 
-        glm::vec3 mMin { 0, 0, 0 }, mMax { 0, 0, 0 };
+        glm::vec3 mMin { std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max() }, mMax { std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min() };
 
         std::vector<Primitive> Primitives;
 
@@ -113,7 +113,7 @@ namespace BIN {
         uint8_t RenderFlags { 0 };
 
         glm::vec3 Scale { 1.0f, 1.0f, 1.0f }, Rotation { 0.0f, 0.0f, 0.0f }, Position { 0.0f, 0.0f, 0.0f };
-        glm::vec3 BoundingBoxMin { 0.0f, 0.0f, 0.0f }, BoundingBoxMax { 0.0f, 0.0f, 0.0f };
+        glm::vec3 BoundingBoxMin { std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max() }, BoundingBoxMax { std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min() };
         float Radius { 0.0f };
         glm::mat4 Transform { 1.0f };
 
@@ -188,7 +188,6 @@ namespace BIN {
     public:
         Header mHeader;
 
-
         std::map<uint16_t, TextureHeader> mTextureHeaders;
 
         std::map<uint16_t, Sampler> mSamplers;
@@ -205,8 +204,6 @@ namespace BIN {
 
         void ReadSceneGraphNode(bStream::CStream* stream, uint32_t index);
         void DrawScenegraphNode(uint32_t idx, glm::mat4 transform, Animation* animation);
-
-        glm::vec3 bbMax {0, 0, 0}, bbMin {0, 0, 0};
 
         void Draw(glm::mat4* transform, int32_t id, bool selected, Animation* animation = nullptr);
 

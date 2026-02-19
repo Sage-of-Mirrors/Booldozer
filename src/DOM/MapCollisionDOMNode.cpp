@@ -29,11 +29,19 @@ std::string LMapCollisionDOMNode::GetName()
 	return "Collision"; //uh
 }
 
-void LMapCollisionDOMNode::ImportObj(std::string path){
+void LMapCollisionDOMNode::ImportModel(std::string path){
 	auto map = GetParentOfType<LMapDOMNode>(EDOMNodeType::Map);
 
+	std::filesystem::path modelPath = std::filesystem::path(path);
+
 	LCollisionIO col;
-	col.LoadObj(std::filesystem::path(path), GetParentOfType<LMapDOMNode>(EDOMNodeType::Map), mMatColProp, mBakeFurniture);
+
+	if(modelPath.has_extension() && modelPath.extension() == ".obj"){
+        col.LoadObj(modelPath, GetParentOfType<LMapDOMNode>(EDOMNodeType::Map), mMatColProp, false);
+	} else if (modelPath.has_extension() && modelPath.extension() == ".fbx"){
+	    col.LoadFBX(modelPath, GetParentOfType<LMapDOMNode>(EDOMNodeType::Map));
+	}
+
 
 	auto mapArc = map.lock()->GetArchive().lock();
 	auto colFile = mapArc->GetFile("col.mp");
@@ -122,7 +130,16 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 
 			if(ImGui::Button("Import")){
 			    IGFD::FileDialogConfig cfg { .path = OPTIONS.mRootPath, .flags = ImGuiFileDialogFlags_Modal };
-				ImGuiFileDialog::Instance()->OpenDialog("ImportObjColDlg", "Import OBJ", "Wavefront Obj (*.obj){.obj}", cfg);
+				ImGuiFileDialog::Instance()->OpenDialog("ImportModelColDlg", "Import OBJ", "Wavefront Obj (*.obj){.obj}", cfg);
+			}
+			ImGui::EndTabItem();
+		}
+
+		if(ImGui::BeginTabItem("FBX")){
+
+			if(ImGui::Button("Import")){
+			    IGFD::FileDialogConfig cfg { .path = OPTIONS.mRootPath, .flags = ImGuiFileDialogFlags_Modal };
+				ImGuiFileDialog::Instance()->OpenDialog("ImportModelColDlg", "Import FBX", "Wavefront Obj (*.fbx){.fbx}", cfg);
 			}
 			ImGui::EndTabItem();
 		}
@@ -133,13 +150,13 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
     ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-	if (ImGui::BeginPopupModal("Importing Obj", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
+	if (ImGui::BeginPopupModal("Importing Collision Model", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar))
 	{
         const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
 		ImGui::AlignTextToFramePadding();
 		ImGui::Spinner("##loadmapSpinner", 5.0f, 2, col);
 		ImGui::SameLine();
-		ImGui::Text("Importing Obj Collision...");
+		ImGui::Text("Importing Collision Model...");
 
 		importLock.lock();
 		if(isImportingCol == false){
@@ -169,16 +186,16 @@ void LMapCollisionDOMNode::RenderDetailsUI(float dt)
 
 	}
 
-	if (LUIUtility::RenderFileDialog("ImportObjColDlg", path))
+	if (LUIUtility::RenderFileDialog("ImportModelColDlg", path))
 	{
 		// shouldn't _need_ to worry about this but just in case - lock
 		importLock.lock();
 		isImportingCol = true;
 		importLock.unlock();
 
-		importModelThread = std::thread(&LMapCollisionDOMNode::ImportObj, std::ref(*this), path);
+		importModelThread = std::thread(&LMapCollisionDOMNode::ImportModel, std::ref(*this), path);
 
-		ImGui::OpenPopup("Importing Obj");
+		ImGui::OpenPopup("Importing Collision Model");
 
 	}
 
