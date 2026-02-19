@@ -1,4 +1,5 @@
 #include "scene/EditorScene.hpp"
+#include "glm/fwd.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <fstream>
 #include <iostream>
@@ -49,6 +50,17 @@ void LEditorScene::LoadResFromRoot(){
 			bStream::CMemoryStream bin_data(doorModelFile->GetData(), doorModelFile->GetSize(), bStream::Endianess::Big, bStream::OpenMode::In);
 
 			auto doorModel = std::make_shared<BIN::Model>(&bin_data);
+			// fix stupid broken regular door model, weird rendering for some reason
+			if(door_id == 1){
+				doorModel->mGraphNodes[1].Transform = glm::mat4(1.0f);
+				doorModel->mGraphNodes[1].Transform = glm::scale(doorModel->mGraphNodes[1].Transform, doorModel->mGraphNodes[1].Scale);
+				doorModel->mGraphNodes[1].Transform = glm::rotate(doorModel->mGraphNodes[1].Transform, glm::radians(doorModel->mGraphNodes[1].Rotation.z), {1.0f, 0.0f, 0.0f});
+				doorModel->mGraphNodes[1].Transform = glm::rotate(doorModel->mGraphNodes[1].Transform, glm::radians(doorModel->mGraphNodes[1].Rotation.y), {0.0f, 1.0f, 0.0f});
+				doorModel->mGraphNodes[1].Transform = glm::rotate(doorModel->mGraphNodes[1].Transform, glm::radians(doorModel->mGraphNodes[1].Rotation.x), {0.0f, 0.0f, 1.0f});
+				doorModel->mGraphNodes[1].Transform = glm::translate(doorModel->mGraphNodes[1].Transform, {0,0,100});
+
+				doorModel->mGraphNodes[2].Transform = glm::translate(doorModel->mGraphNodes[2].Transform, glm::vec3(0, -500, 0));
+			}
 			mDoorModels.push_back(doorModel);
 		}
 	}
@@ -337,9 +349,6 @@ void LEditorScene::RenderSubmit(uint32_t m_width, uint32_t m_height){
 				doorMat = glm::rotate(doorMat, glm::radians(90.0f), glm::vec3(0, 1, 0));
 
 			// The Square Mansion Door model is fucked, so this is a hack to make sure it shows up (mostly) correctly in the editor.
-			bool bIgnoreTransforms = doorType == EDoorModel::Square_Mansion_Door;
-			if (bIgnoreTransforms)
-				doorMat = glm::translate(doorMat, glm::vec3(0, 0, 100));
 
 			// Double doors need to be rendered twice, with the two halves moved accordingly.
 			if (doorType == EDoorModel::Parlor_Double_Door || doorType == EDoorModel::Hearts_Double_Door)

@@ -48,7 +48,7 @@ void LCollisionIO::LoadFBX(std::filesystem::path path, std::weak_ptr<LMapDOMNode
 
     // Get some metadata, ignore loading content other than metadata
     opts.ignore_all_content = true;
-    scene = ufbx_load_file(path.c_str(), &opts, nullptr);
+    scene = ufbx_load_file(path.string().c_str(), &opts, nullptr);
 
     opts.ignore_all_content = false;
 
